@@ -57,6 +57,11 @@ SMTP_FROM = os.getenv("SMTP_FROM", "").strip()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "").strip()
 
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
+STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "").strip()
+STRIPE_PRICE_ID = os.getenv("STRIPE_PRICE_ID", "").strip()  # created below if empty
+SUBSCRIPTION_PRICE_EUR = 499  # cents = 4.99€
+
 REMINDER_LOOP_SECONDS = int(os.getenv("REMINDER_LOOP_SECONDS", "30"))
 THERAPIST_TOKEN_SECRET = os.getenv("THERAPIST_TOKEN_SECRET", APP_SECRET + "-therapist")
 
@@ -99,6 +104,7 @@ class Patient(Base):
     magic_token_hash = Column(String(128), nullable=True)
     magic_token_expires_at = Column(DateTime, nullable=True)
     subscription_active = Column(Boolean, default=False)
+    subscription_stripe_session = Column(String(255), nullable=True)
     reminder_enabled = Column(Boolean, default=True)
     reminder_time_local = Column(String(5), default="08:00")
     last_reminder_sent_on = Column(String(10), nullable=True)
@@ -853,7 +859,7 @@ def checkin_1(request: Request, db=Depends(get_db)):
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       recognition = new SR();
       recognition.lang = "de-DE";
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
 
       recognition.onstart = () => {
@@ -869,7 +875,22 @@ def checkin_1(request: Request, db=Depends(get_db)):
           else interim += e.results[i][0].transcript;
         }
         showTranscript(final || interim);
-        if (final) handleAnswer(final.trim());
+        if (interim || final) {
+          document.getElementById("confirm-btn").style.display = "inline-block";
+        }
+        if (final) {
+          clearTimeout(window._answerTimer);
+          window._pendingAnswer = (window._pendingAnswer || "") + " " + final.trim();
+          window._pendingAnswer = window._pendingAnswer.trim();
+          showTranscript(window._pendingAnswer);
+          // Wait 2.5 seconds after last word before accepting
+          window._answerTimer = setTimeout(() => {
+            recognition && recognition.stop();
+            handleAnswer(window._pendingAnswer);
+            window._pendingAnswer = "";
+            document.getElementById("confirm-btn").style.display = "none";
+          }, 2500);
+        }
       };
 
       recognition.onerror = (e) => {
@@ -950,6 +971,16 @@ def checkin_1(request: Request, db=Depends(get_db)):
       form.submit();
     }
 
+    function confirmAnswer() {
+      if (window._pendingAnswer) {
+        clearTimeout(window._answerTimer);
+        recognition && recognition.stop();
+        handleAnswer(window._pendingAnswer);
+        window._pendingAnswer = "";
+        document.getElementById("confirm-btn").style.display = "none";
+      }
+    }
+
     function startVoiceCheck() {
       document.getElementById("start-screen").style.display = "none";
       document.getElementById("voice-screen").style.display = "block";
@@ -1008,6 +1039,9 @@ def checkin_1(request: Request, db=Depends(get_db)):
             <span id="mic-icon">🎙️</span>
           </button>
           <p class="small" id="status" style="margin-top:8px">Tippe um zu sprechen</p>
+          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:10px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:10px 20px;font-size:14px;cursor:pointer;">
+            ✓ Antwort bestätigen
+          </button>
         </div>
 
         <!-- Answers so far -->
@@ -1249,6 +1283,7 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
         <a href="/progress">Progress</a> •
         <a href="/profile">Body Profile</a> •
         <a href="/timeline">Timeline</a> •
+        <a href="/upgrade">{'⭐ Premium' if not p.subscription_active else '✅ Premium'}</a> •
         <a href="/logout">Logout</a>
       </p>
     """
@@ -1594,8 +1629,396 @@ def timeline_page(request: Request, db=Depends(get_db)):
 
 
 # =========================================================
-# THERAPIST
+# STRIPE PAYMENTS
 # =========================================================
+
+def _stripe_headers():
+    return {
+        "Authorization": f"Bearer {STRIPE_SECRET_KEY}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+def _get_or_create_price() -> str:
+    """Get or create a recurring 4.99€/month price in Stripe."""
+    if STRIPE_PRICE_ID:
+        return STRIPE_PRICE_ID
+    # Create product + price on the fly
+    try:
+        r = requests.post("https://api.stripe.com/v1/products",
+            headers=_stripe_headers(),
+            data={"name": "PTGO Premium", "description": "Unlimitierte Check-ins + KI Empfehlungen"},
+            timeout=10)
+        product_id = r.json()["id"]
+        r2 = requests.post("https://api.stripe.com/v1/prices",
+            headers=_stripe_headers(),
+            data={
+                "product": product_id,
+                "unit_amount": str(SUBSCRIPTION_PRICE_EUR),
+                "currency": "eur",
+                "recurring[interval]": "month",
+            },
+            timeout=10)
+        return r2.json()["id"]
+    except Exception as e:
+        print("[WARN] Stripe price creation failed:", e)
+        return ""
+
+@app.get("/upgrade", response_class=HTMLResponse)
+def upgrade_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    if p.subscription_active:
+        body = f"""
+          <h1>Du bist Premium ✅</h1>
+          <p>Dein Account hat vollen Zugriff auf alle Features.</p>
+          <div class="hr"></div>
+          <p class="small">
+            <a href="/checkin/1">Check starten</a> •
+            <a href="/subscription/cancel">Abo kündigen</a>
+          </p>
+        """
+        return _page("PTGO • Premium", body, request=request)
+
+    body = f"""
+      <h1>PTGO Premium</h1>
+      <p>Schalte alle Features frei.</p>
+      <div class="hr"></div>
+
+      <div class="action-box">
+        <b style="font-size:22px;color:#f59e0b">4,99€ / Monat</b>
+        <div class="hr"></div>
+        <p>✅ Unlimitierte Voice Check-ins</p>
+        <p>✅ KI Pattern Analyse</p>
+        <p>✅ Body Profile & Timeline</p>
+        <p>✅ WhatsApp Ergebnisse</p>
+        <p>✅ Therapeuten Dashboard</p>
+      </div>
+
+      <div class="hr"></div>
+      <form method="post" action="/subscription/create">
+        <button type="submit" style="font-size:18px;padding:16px">
+          💳 Jetzt für 4,99€/Monat starten
+        </button>
+      </form>
+      <p class="small" style="margin-top:12px">Sicher über Stripe • Jederzeit kündbar • Keine versteckten Kosten</p>
+      <div class="hr"></div>
+      <p class="small"><a href="/checkin/1">Zurück</a></p>
+    """
+    return _page("PTGO • Upgrade", body, request=request)
+
+
+@app.post("/subscription/create", response_class=HTMLResponse)
+def subscription_create(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    if not STRIPE_SECRET_KEY:
+        return _page("Fehler", "<h1>Stripe nicht konfiguriert</h1>", request=request)
+
+    price_id = _get_or_create_price()
+    if not price_id:
+        return _page("Fehler", "<h1>Stripe Fehler – bitte später nochmal</h1>", request=request)
+
+    try:
+        r = requests.post(
+            "https://api.stripe.com/v1/checkout/sessions",
+            headers=_stripe_headers(),
+            data={
+                "mode": "subscription",
+                "line_items[0][price]": price_id,
+                "line_items[0][quantity]": "1",
+                "customer_email": p.email,
+                "success_url": f"{BASE_URL}/subscription/success?session_id={{CHECKOUT_SESSION_ID}}",
+                "cancel_url": f"{BASE_URL}/upgrade",
+                "metadata[patient_id]": str(p.id),
+            },
+            timeout=15,
+        )
+        session = r.json()
+        checkout_url = session.get("url")
+        if not checkout_url:
+            raise Exception(f"No URL in response: {session}")
+        return RedirectResponse(checkout_url, status_code=303)
+    except Exception as e:
+        print("[WARN] Stripe checkout failed:", e)
+        return _page("Fehler", f"<h1>Stripe Fehler</h1><p>{e}</p><p><a href='/upgrade'>Zurück</a></p>", request=request)
+
+
+@app.get("/subscription/success", response_class=HTMLResponse)
+def subscription_success(request: Request, session_id: str = "", db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Verify with Stripe
+    try:
+        r = requests.get(
+            f"https://api.stripe.com/v1/checkout/sessions/{session_id}",
+            headers=_stripe_headers(),
+            timeout=10,
+        )
+        session = r.json()
+        if session.get("payment_status") == "paid":
+            p.subscription_active = True
+            db.commit()
+    except Exception as e:
+        print("[WARN] Stripe verify failed:", e)
+
+    body = f"""
+      <h1>Willkommen bei Premium! 🎉</h1>
+      <p>Dein Account ist jetzt freigeschaltet.</p>
+      <div class="hr"></div>
+      <a class="btn" href="/checkin/1">🎙️ Ersten Check starten</a>
+    """
+    return _page("PTGO • Premium aktiv", body, request=request)
+
+
+@app.get("/subscription/cancel", response_class=HTMLResponse)
+def subscription_cancel_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    body = f"""
+      <h1>Abo kündigen</h1>
+      <p>Möchtest du dein Premium Abo wirklich kündigen?</p>
+      <div class="hr"></div>
+      <form method="post" action="/subscription/cancel">
+        <button type="submit" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:14px;padding:12px 20px;font-size:15px;cursor:pointer;width:100%">
+          Ja, kündigen
+        </button>
+      </form>
+      <div style="height:10px"></div>
+      <a class="btn btn-outline" href="/upgrade">Nein, behalten</a>
+    """
+    return _page("PTGO • Kündigen", body, request=request)
+
+@app.post("/subscription/cancel", response_class=HTMLResponse)
+def subscription_cancel(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    p.subscription_active = False
+    db.commit()
+    body = """
+      <h1>Abo gekündigt</h1>
+      <p>Dein Premium Abo wurde beendet. Du kannst es jederzeit wieder aktivieren.</p>
+      <div class="hr"></div>
+      <a class="btn" href="/upgrade">Wieder upgraden</a>
+    """
+    return _page("PTGO • Gekündigt", body, request=request)
+
+
+# =========================================================
+# STRIPE – SUBSCRIPTION
+# =========================================================
+
+def _stripe_enabled() -> bool:
+    return bool(STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY)
+
+def _stripe_headers() -> dict:
+    return {
+        "Authorization": f"Bearer {STRIPE_SECRET_KEY}",
+        "Content-Type": "application/x-www-form-urlencoded",
+    }
+
+def _get_or_create_price() -> Optional[str]:
+    """Get existing price or create one for 4.99€/month."""
+    if STRIPE_PRICE_ID:
+        return STRIPE_PRICE_ID
+    try:
+        # Create product
+        r = requests.post("https://api.stripe.com/v1/products",
+            headers=_stripe_headers(),
+            data={"name": "PTGO Premium", "description": "Unlimited Check-ins + AI + WhatsApp"},
+            timeout=10)
+        product_id = r.json()["id"]
+
+        # Create price
+        r = requests.post("https://api.stripe.com/v1/prices",
+            headers=_stripe_headers(),
+            data={
+                "product": product_id,
+                "unit_amount": SUBSCRIPTION_PRICE_EUR,
+                "currency": "eur",
+                "recurring[interval]": "month",
+            },
+            timeout=10)
+        return r.json()["id"]
+    except Exception as e:
+        print("[WARN] Stripe price creation failed:", e)
+        return None
+
+
+@app.get("/subscribe", response_class=HTMLResponse)
+def subscribe_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    if p.subscription_active:
+        body = f"""
+          <h1>Du bist bereits Premium ✅</h1>
+          <p>Dein Abo ist aktiv. Du hast Zugang zu allen Features.</p>
+          <div class="hr"></div>
+          <form method="post" action="/subscribe/cancel">
+            <button type="submit" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:10px;padding:10px 16px;font-size:13px;cursor:pointer;">
+              Abo kündigen
+            </button>
+          </form>
+          <div class="hr"></div>
+          <a class="btn" href="/checkin/1">Zurück zum Check-in</a>
+        """
+        return _page("PTGO • Premium", body, request=request)
+
+    if not _stripe_enabled():
+        body = """
+          <h1>Premium</h1>
+          <p>Zahlung noch nicht konfiguriert. Bitte kontaktiere deinen Therapeuten.</p>
+        """
+        return _page("PTGO • Premium", body, request=request)
+
+    body = f"""
+      <h1>PTGO Premium</h1>
+      <p>Unbegrenzte Check-ins, KI-Analyse, WhatsApp Reminder.</p>
+
+      <div class="action-box" style="margin:16px 0">
+        <div style="font-size:32px;font-weight:700;color:#f59e0b">4,99€<span style="font-size:14px;color:#6b7280">/Monat</span></div>
+        <div class="hr"></div>
+        <p style="margin:6px 0">✅ Unbegrenzte Voice Check-ins</p>
+        <p style="margin:6px 0">✅ KI Pattern-Analyse</p>
+        <p style="margin:6px 0">✅ WhatsApp Daily Reminder</p>
+        <p style="margin:6px 0">✅ Body Profile + Timeline</p>
+        <p style="margin:6px 0">✅ Therapeuten-Berichte</p>
+      </div>
+
+      <div id="payment-form">
+        <div id="card-element" style="background:#0b1223;border:1px solid #263246;border-radius:12px;padding:14px;margin:12px 0"></div>
+        <div id="card-errors" style="color:#fecaca;font-size:13px;margin:6px 0"></div>
+        <button id="pay-btn" onclick="startPayment()" style="font-size:18px;padding:16px;">
+          💳 Jetzt abonnieren
+        </button>
+      </div>
+
+      <p class="small" style="margin-top:12px">Sicher über Stripe • Jederzeit kündbar • Keine versteckten Kosten</p>
+
+      <script src="https://js.stripe.com/v3/"></script>
+      <script>
+        const stripe = Stripe('{STRIPE_PUBLISHABLE_KEY}');
+        const elements = stripe.elements();
+        const card = elements.create('card', {{
+          style: {{
+            base: {{
+              color: '#e5e7eb',
+              fontFamily: '-apple-system, sans-serif',
+              fontSize: '16px',
+              '::placeholder': {{ color: '#6b7280' }}
+            }}
+          }}
+        }});
+        card.mount('#card-element');
+
+        card.on('change', (e) => {{
+          document.getElementById('card-errors').textContent = e.error ? e.error.message : '';
+        }});
+
+        async function startPayment() {{
+          const btn = document.getElementById('pay-btn');
+          btn.disabled = true;
+          btn.textContent = 'Wird verarbeitet...';
+
+          const r = await fetch('/subscribe/create-session', {{method: 'POST'}});
+          const data = await r.json();
+
+          if (data.error) {{
+            document.getElementById('card-errors').textContent = data.error;
+            btn.disabled = false;
+            btn.textContent = '💳 Jetzt abonnieren';
+            return;
+          }}
+
+          const result = await stripe.redirectToCheckout({{ sessionId: data.session_id }});
+          if (result.error) {{
+            document.getElementById('card-errors').textContent = result.error.message;
+            btn.disabled = false;
+            btn.textContent = '💳 Jetzt abonnieren';
+          }}
+        }}
+      </script>
+    """
+    return _page("PTGO • Premium", body, request=request)
+
+
+@app.post("/subscribe/create-session")
+async def create_checkout_session(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    if not _stripe_enabled():
+        return {"error": "Stripe nicht konfiguriert"}
+
+    price_id = _get_or_create_price()
+    if not price_id:
+        return {"error": "Preis konnte nicht erstellt werden"}
+
+    try:
+        r = requests.post(
+            "https://api.stripe.com/v1/checkout/sessions",
+            headers=_stripe_headers(),
+            data={
+                "payment_method_types[]": "card",
+                "mode": "subscription",
+                "line_items[0][price]": price_id,
+                "line_items[0][quantity]": "1",
+                "success_url": f"{BASE_URL}/subscribe/success?session_id={{CHECKOUT_SESSION_ID}}",
+                "cancel_url": f"{BASE_URL}/subscribe",
+                "customer_email": p.email,
+                "metadata[patient_id]": str(p.id),
+            },
+            timeout=15,
+        )
+        data = r.json()
+        if "error" in data:
+            return {"error": data["error"]["message"]}
+        return {"session_id": data["id"]}
+    except Exception as e:
+        print("[WARN] Stripe session failed:", e)
+        return {"error": "Zahlung fehlgeschlagen"}
+
+
+@app.get("/subscribe/success", response_class=HTMLResponse)
+def subscribe_success(request: Request, session_id: str = "", db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Verify with Stripe
+    if session_id and STRIPE_SECRET_KEY:
+        try:
+            r = requests.get(
+                f"https://api.stripe.com/v1/checkout/sessions/{session_id}",
+                headers=_stripe_headers(),
+                timeout=10,
+            )
+            data = r.json()
+            if data.get("payment_status") == "paid":
+                p.subscription_active = True
+                p.subscription_stripe_session = session_id
+                db.commit()
+        except Exception as e:
+            print("[WARN] Stripe verify failed:", e)
+
+    body = f"""
+      <h1>Willkommen bei Premium! 🎉</h1>
+      <p>Dein Abo ist aktiv. Du hast jetzt Zugang zu allen Features.</p>
+      <div class="hr"></div>
+      <a class="btn" href="/checkin/1">Check-in starten</a>
+    """
+    return _page("PTGO • Premium aktiv", body, request=request)
+
+
+@app.post("/subscribe/cancel", response_class=HTMLResponse)
+def subscribe_cancel(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    p.subscription_active = False
+    db.commit()
+    body = """
+      <h1>Abo gekündigt</h1>
+      <p>Dein Abo wurde gekündigt. Du kannst es jederzeit wieder aktivieren.</p>
+      <div class="hr"></div>
+      <a class="btn" href="/subscribe">Wieder abonnieren</a>
+    """
+    return _page("PTGO • Gekündigt", body, request=request)
+
+
+
 
 @app.get("/therapist/login", response_class=HTMLResponse)
 def therapist_login_page(request: Request):
