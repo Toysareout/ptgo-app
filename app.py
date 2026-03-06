@@ -814,14 +814,52 @@ def checkin_1(request: Request, db=Depends(get_db)):
 
     voice_js = """
     <script>
-    // ── Voice Check-in Engine ──────────────────────────────
+    // ── PTGO Voice Check-in Engine v3 ─────────────────────
+    // Deep questions from the wisest healers, body map, avatar, correction
+
     const QUESTIONS = [
-      { key: "overall_text",  prompt: "Wie geht es dir heute wirklich? Beschreibe kurz dein Gefühl." },
-      { key: "context_text",  prompt: "Was fordert dich heute am meisten? Arbeit, Familie, oder etwas anderes?" },
-      { key: "body_text",     prompt: "Wie fühlt sich dein Körper an? Gibt es Verspannungen oder Schmerzen?" },
-      { key: "mental_text",   prompt: "Gibt es etwas, das du gerade vermeidest oder das dich beunruhigt?" },
-      { key: "goal_text",     prompt: "Was wäre heute ein guter Tag für dich? In einem Satz." },
-      { key: "confirm",       prompt: "Ich habe alles. Soll ich das jetzt an deinen Therapeuten senden? Sag Ja oder Nein." },
+      {
+        key: "overall_text",
+        prompt: "Schließ kurz die Augen. Atme einmal tief ein. Wie fühlt sich dein innerer Zustand gerade wirklich an – nicht wie du sein solltest, sondern wie du bist?",
+        avatar: "🧘",
+        bodyZone: null,
+      },
+      {
+        key: "context_text",
+        prompt: "Was trägt dein Nervensystem heute? Gibt es etwas das dich seit dem Aufwachen begleitet – eine Anspannung, ein Gedanke, eine Situation?",
+        avatar: "🧠",
+        bodyZone: null,
+      },
+      {
+        key: "body_text",
+        prompt: "Scanne deinen Körper von oben nach unten. Wo spürst du Widerstand, Schwere, Enge oder Schmerz? Beschreibe was du wahrnimmst – auch wenn es klein ist.",
+        avatar: "🫀",
+        bodyZone: "show",
+      },
+      {
+        key: "sleep_text",
+        prompt: "Wie war deine letzte Nacht wirklich? War dein Schlaf erholsam – hast du tief geschlafen, oder war da Unruhe, Aufwachen, schwere Träume?",
+        avatar: "🌙",
+        bodyZone: null,
+      },
+      {
+        key: "mental_text",
+        prompt: "Gibt es etwas das du gerade vor dir herschiebst oder vermeidest? Einen Gedanken, eine Aufgabe, ein Gespräch – etwas dem du ausweichst?",
+        avatar: "🪞",
+        bodyZone: null,
+      },
+      {
+        key: "goal_text",
+        prompt: "Was braucht dein System heute wirklich? Nicht was du leisten sollst – sondern was dir heute gut täte. In einem Satz.",
+        avatar: "🌱",
+        bodyZone: null,
+      },
+      {
+        key: "confirm",
+        prompt: "Ich habe alles aufgenommen. Soll ich diese Einschätzung jetzt an deinen Therapeuten senden? Sag Ja oder Nein.",
+        avatar: "✅",
+        bodyZone: null,
+      },
     ];
 
     let currentQ = 0;
@@ -829,31 +867,219 @@ def checkin_1(request: Request, db=Depends(get_db)):
     let recognition = null;
     let synth = window.speechSynthesis;
     let isListening = false;
+    let bodyMapData = [];
+    let drawMode = "point"; // point | line | area
+    let isDrawing = false;
+    let drawStart = null;
 
+    // ── Avatar ─────────────────────────────────────────────
+    function updateAvatar(emoji, pulse) {
+      const av = document.getElementById("avatar");
+      if (!av) return;
+      av.textContent = emoji;
+      av.style.animation = pulse ? "avatarPulse 1.5s infinite" : "none";
+    }
+
+    // ── Speech ─────────────────────────────────────────────
     function speak(text, callback) {
       synth.cancel();
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "de-DE";
-      utter.rate = 0.95;
+      utter.rate = 0.9;
+      utter.pitch = 1.0;
       utter.onend = () => { if (callback) callback(); };
       synth.speak(utter);
     }
 
     function updateUI(state, text) {
       document.getElementById("status").textContent = text;
-      document.getElementById("mic-btn").className =
-        state === "listening" ? "mic-btn listening" : "mic-btn";
-      document.getElementById("mic-icon").textContent =
-        state === "listening" ? "🔴" : "🎙️";
+      const btn = document.getElementById("mic-btn");
+      btn.className = state === "listening" ? "mic-btn listening" : "mic-btn";
+      document.getElementById("mic-icon").textContent = state === "listening" ? "🔴" : "🎙️";
+      updateAvatar(QUESTIONS[currentQ]?.avatar || "🧘", state === "listening");
     }
 
     function showTranscript(text) {
       document.getElementById("transcript").textContent = text;
     }
 
+    // ── Body Map ───────────────────────────────────────────
+    function initBodyMap() {
+      const canvas = document.getElementById("body-canvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+
+      // Draw body silhouette (front + back)
+      drawBodySilhouette(ctx);
+
+      // Draw mode buttons
+      document.querySelectorAll(".draw-mode-btn").forEach(btn => {
+        btn.onclick = () => {
+          drawMode = btn.dataset.mode;
+          document.querySelectorAll(".draw-mode-btn").forEach(b => b.style.borderColor = "#374151");
+          btn.style.borderColor = "#f59e0b";
+        };
+      });
+
+      // Touch/mouse events
+      canvas.addEventListener("mousedown", startDraw);
+      canvas.addEventListener("mousemove", continueDraw);
+      canvas.addEventListener("mouseup", endDraw);
+      canvas.addEventListener("touchstart", e => { e.preventDefault(); startDraw(e.touches[0]); }, {passive:false});
+      canvas.addEventListener("touchmove", e => { e.preventDefault(); continueDraw(e.touches[0]); }, {passive:false});
+      canvas.addEventListener("touchend", e => { e.preventDefault(); endDraw(e.changedTouches[0]); }, {passive:false});
+    }
+
+    function getCanvasPos(e) {
+      const canvas = document.getElementById("body-canvas");
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function startDraw(e) {
+      isDrawing = true;
+      drawStart = getCanvasPos(e);
+      if (drawMode === "point") {
+        const pos = drawStart;
+        bodyMapData.push({type:"point", x:pos.x, y:pos.y});
+        redrawBodyMap();
+        isDrawing = false;
+      }
+    }
+
+    function continueDraw(e) {
+      if (!isDrawing || drawMode === "point") return;
+      // Preview
+    }
+
+    function endDraw(e) {
+      if (!isDrawing) return;
+      isDrawing = false;
+      const pos = getCanvasPos(e);
+      if (drawMode === "line") {
+        bodyMapData.push({type:"line", x1:drawStart.x, y1:drawStart.y, x2:pos.x, y2:pos.y});
+      } else if (drawMode === "area") {
+        bodyMapData.push({type:"area", x:drawStart.x, y:drawStart.y, w:pos.x-drawStart.x, h:pos.y-drawStart.y});
+      }
+      redrawBodyMap();
+    }
+
+    function redrawBodyMap() {
+      const canvas = document.getElementById("body-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBodySilhouette(ctx);
+
+      bodyMapData.forEach(item => {
+        ctx.strokeStyle = "#ef4444";
+        ctx.fillStyle = "rgba(239,68,68,0.4)";
+        ctx.lineWidth = 3;
+        if (item.type === "point") {
+          ctx.beginPath();
+          ctx.arc(item.x, item.y, 8, 0, Math.PI*2);
+          ctx.fill();
+        } else if (item.type === "line") {
+          ctx.beginPath();
+          ctx.moveTo(item.x1, item.y1);
+          ctx.lineTo(item.x2, item.y2);
+          ctx.stroke();
+        } else if (item.type === "area") {
+          ctx.beginPath();
+          ctx.rect(item.x, item.y, item.w, item.h);
+          ctx.fill();
+        }
+      });
+    }
+
+    function drawBodySilhouette(ctx) {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.strokeStyle = "#4b5563";
+      ctx.lineWidth = 2;
+      ctx.fillStyle = "rgba(30,41,59,0.8)";
+
+      // ── Front body (left half) ──
+      const fx = 70, fy = 20;
+      // Head
+      ctx.beginPath(); ctx.arc(fx, fy+20, 18, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      // Neck
+      ctx.beginPath(); ctx.moveTo(fx-6,fy+37); ctx.lineTo(fx-6,fy+50); ctx.lineTo(fx+6,fy+50); ctx.lineTo(fx+6,fy+37); ctx.stroke();
+      // Torso
+      ctx.beginPath(); ctx.moveTo(fx-22,fy+50); ctx.lineTo(fx-25,fy+110); ctx.lineTo(fx+25,fy+110); ctx.lineTo(fx+22,fy+50); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // Arms
+      ctx.beginPath(); ctx.moveTo(fx-22,fy+55); ctx.lineTo(fx-38,fy+100); ctx.lineTo(fx-32,fy+100); ctx.lineTo(fx-16,fy+56); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx+22,fy+55); ctx.lineTo(fx+38,fy+100); ctx.lineTo(fx+32,fy+100); ctx.lineTo(fx+16,fy+56); ctx.fill(); ctx.stroke();
+      // Legs
+      ctx.beginPath(); ctx.moveTo(fx-20,fy+110); ctx.lineTo(fx-22,fy+180); ctx.lineTo(fx-8,fy+180); ctx.lineTo(fx-4,fy+110); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(fx+20,fy+110); ctx.lineTo(fx+22,fy+180); ctx.lineTo(fx+8,fy+180); ctx.lineTo(fx+4,fy+110); ctx.fill(); ctx.stroke();
+      // Label
+      ctx.fillStyle = "#6b7280"; ctx.font = "10px sans-serif"; ctx.fillText("Vorne", fx-14, fy+200);
+      ctx.fillStyle = "rgba(30,41,59,0.8)";
+
+      // ── Back body (right half) ──
+      const bx = 210, by = 20;
+      ctx.strokeStyle = "#4b5563";
+      // Head
+      ctx.beginPath(); ctx.arc(bx, by+20, 18, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+      // Neck
+      ctx.beginPath(); ctx.moveTo(bx-6,by+37); ctx.lineTo(bx-6,by+50); ctx.lineTo(bx+6,by+50); ctx.lineTo(bx+6,by+37); ctx.stroke();
+      // Torso
+      ctx.beginPath(); ctx.moveTo(bx-22,by+50); ctx.lineTo(bx-25,by+110); ctx.lineTo(bx+25,by+110); ctx.lineTo(bx+22,by+50); ctx.closePath(); ctx.fill(); ctx.stroke();
+      // Arms
+      ctx.beginPath(); ctx.moveTo(bx-22,by+55); ctx.lineTo(bx-38,by+100); ctx.lineTo(bx-32,by+100); ctx.lineTo(bx-16,by+56); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx+22,by+55); ctx.lineTo(bx+38,by+100); ctx.lineTo(bx+32,by+100); ctx.lineTo(bx+16,by+56); ctx.fill(); ctx.stroke();
+      // Legs
+      ctx.beginPath(); ctx.moveTo(bx-20,by+110); ctx.lineTo(bx-22,by+180); ctx.lineTo(bx-8,by+180); ctx.lineTo(bx-4,by+110); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bx+20,by+110); ctx.lineTo(bx+22,by+180); ctx.lineTo(bx+8,by+180); ctx.lineTo(bx+4,by+110); ctx.fill(); ctx.stroke();
+      // Label
+      ctx.fillStyle = "#6b7280"; ctx.font = "10px sans-serif"; ctx.fillText("Hinten", bx-14, by+200);
+      ctx.fillStyle = "rgba(30,41,59,0.8)";
+
+      // Divider
+      ctx.strokeStyle = "#1f2937"; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(140, 0); ctx.lineTo(140, 220); ctx.stroke();
+    }
+
+    function clearBodyMap() {
+      bodyMapData = [];
+      const canvas = document.getElementById("body-canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBodySilhouette(ctx);
+    }
+
+    function showBodyMap(show) {
+      const bm = document.getElementById("body-map-section");
+      if (bm) bm.style.display = show ? "block" : "none";
+      if (show) setTimeout(initBodyMap, 100);
+    }
+
+    // ── Correction ─────────────────────────────────────────
+    function correctAnswer(key) {
+      // Find which question this was
+      const idx = QUESTIONS.findIndex(q => q.key === key);
+      if (idx < 0) return;
+
+      // Remove the answer card
+      const cards = document.querySelectorAll(".answer-card");
+      cards.forEach(c => { if (c.dataset.key === key) c.remove(); });
+
+      delete answers[key];
+      currentQ = idx;
+      updateProgress();
+      showBodyMap(QUESTIONS[currentQ].bodyZone === "show");
+
+      speak("Okay, ich frage nochmal. " + QUESTIONS[currentQ].prompt, () => {
+        setTimeout(startListening, 500);
+      });
+    }
+
+    // ── Listening ──────────────────────────────────────────
     function startListening() {
       if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert("Dein Browser unterstützt keine Spracherkennung. Bitte Chrome nutzen.");
+        alert("Bitte Chrome nutzen für Spracherkennung.");
         return;
       }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -868,22 +1094,17 @@ def checkin_1(request: Request, db=Depends(get_db)):
       };
 
       recognition.onresult = (e) => {
-        let interim = "";
-        let final = "";
+        let interim = "", final = "";
         for (let i = e.resultIndex; i < e.results.length; i++) {
           if (e.results[i].isFinal) final += e.results[i][0].transcript;
           else interim += e.results[i][0].transcript;
         }
         showTranscript(final || interim);
-        if (interim || final) {
-          document.getElementById("confirm-btn").style.display = "inline-block";
-        }
+        if (interim || final) document.getElementById("confirm-btn").style.display = "inline-block";
         if (final) {
           clearTimeout(window._answerTimer);
-          window._pendingAnswer = (window._pendingAnswer || "") + " " + final.trim();
-          window._pendingAnswer = window._pendingAnswer.trim();
+          window._pendingAnswer = ((window._pendingAnswer || "") + " " + final.trim()).trim();
           showTranscript(window._pendingAnswer);
-          // Wait 2.5 seconds after last word before accepting
           window._answerTimer = setTimeout(() => {
             recognition && recognition.stop();
             handleAnswer(window._pendingAnswer);
@@ -893,18 +1114,8 @@ def checkin_1(request: Request, db=Depends(get_db)):
         }
       };
 
-      recognition.onerror = (e) => {
-        updateUI("idle", "Fehler – nochmal tippen.");
-        isListening = false;
-      };
-
-      recognition.onend = () => {
-        isListening = false;
-        if (document.getElementById("transcript").textContent === "") {
-          updateUI("idle", "Nichts gehört – tippe den Mikrofon-Button.");
-        }
-      };
-
+      recognition.onerror = () => { updateUI("idle", "Fehler – Mikrofon-Button tippen."); isListening = false; };
+      recognition.onend  = () => { isListening = false; };
       recognition.start();
     }
 
@@ -923,52 +1134,71 @@ def checkin_1(request: Request, db=Depends(get_db)):
         return;
       }
 
+      // Save body map if this was body question
+      if (q.key === "body_text") {
+        document.getElementById("f_pain_map").value = JSON.stringify(bodyMapData);
+        showBodyMap(false);
+      }
+
       answers[q.key] = text;
       showAnswerCard(q.key, text);
       currentQ++;
 
       if (currentQ < QUESTIONS.length) {
         updateProgress();
+        showBodyMap(QUESTIONS[currentQ].bodyZone === "show");
         setTimeout(() => {
-          speak(QUESTIONS[currentQ].prompt, () => {
-            setTimeout(startListening, 500);
-          });
-        }, 800);
+          speak(QUESTIONS[currentQ].prompt, () => setTimeout(startListening, 500));
+        }, 600);
       }
     }
 
     function showAnswerCard(key, text) {
       const labels = {
-        overall_text: "Stimmung",
-        context_text: "Herausforderung",
+        overall_text: "Innerer Zustand",
+        context_text: "Nervensystem",
         body_text: "Körper",
-        mental_text: "Gedanken",
-        goal_text: "Tagesziel",
+        sleep_text: "Schlaf",
+        mental_text: "Vermeidung",
+        goal_text: "Bedürfnis",
       };
+      const list = document.getElementById("answers-list");
       const card = document.createElement("div");
-      card.style = "background:rgba(255,255,255,.03);border:1px solid #1f2937;border-radius:10px;padding:10px 14px;margin:6px 0;font-size:14px;";
-      card.innerHTML = `<span style="color:#6b7280;font-size:11px">${labels[key] || key}</span><br>${text}`;
-      document.getElementById("answers-list").appendChild(card);
+      card.className = "answer-card";
+      card.dataset.key = key;
+      card.style = "background:rgba(255,255,255,.03);border:1px solid #1f2937;border-radius:10px;padding:10px 14px;margin:6px 0;font-size:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px";
+      card.innerHTML = `
+        <div>
+          <span style="color:#6b7280;font-size:11px">${labels[key] || key}</span><br>
+          <span>${text}</span>
+        </div>
+        <button onclick="correctAnswer('${key}')" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0">
+          ✏️ Korrigieren
+        </button>
+      `;
+      list.appendChild(card);
     }
 
     function updateProgress() {
       const pct = Math.round((currentQ / QUESTIONS.length) * 100);
       document.getElementById("progress-bar").style.width = pct + "%";
-      document.getElementById("progress-text").textContent = `Frage ${currentQ + 1} von ${QUESTIONS.length}`;
-      document.getElementById("question-text").textContent = QUESTIONS[currentQ].prompt;
+      document.getElementById("progress-text").textContent = `Frage ${Math.min(currentQ+1, QUESTIONS.length)} von ${QUESTIONS.length}`;
+      if (QUESTIONS[currentQ]) {
+        document.getElementById("question-text").textContent = QUESTIONS[currentQ].prompt;
+        updateAvatar(QUESTIONS[currentQ].avatar || "🧘", false);
+      }
     }
 
     function submitCheckin() {
       updateUI("idle", "Wird gesendet...");
       document.getElementById("mic-btn").disabled = true;
-
-      const form = document.getElementById("checkin-form");
       document.getElementById("f_overall_text").value = answers.overall_text || "";
       document.getElementById("f_context_text").value = answers.context_text || "";
       document.getElementById("f_body_text").value = answers.body_text || "";
+      document.getElementById("f_sleep_text").value = answers.sleep_text || "";
       document.getElementById("f_mental_text").value = answers.mental_text || "";
       document.getElementById("f_goal_text").value = answers.goal_text || "";
-      form.submit();
+      document.getElementById("checkin-form").submit();
     }
 
     function confirmAnswer() {
@@ -990,11 +1220,8 @@ def checkin_1(request: Request, db=Depends(get_db)):
 
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("mic-btn").onclick = () => {
-        if (isListening) {
-          recognition && recognition.stop();
-        } else {
-          speak(QUESTIONS[currentQ].prompt, () => setTimeout(startListening, 300));
-        }
+        if (isListening) { recognition && recognition.stop(); }
+        else { speak(QUESTIONS[currentQ].prompt, () => setTimeout(startListening, 300)); }
       };
     });
     </script>
@@ -1005,56 +1232,84 @@ def checkin_1(request: Request, db=Depends(get_db)):
 
       <!-- START SCREEN -->
       <div id="start-screen">
-        <h1>Daily Voice Check</h1>
-        <p>Ich stelle dir 5 kurze Fragen per Sprache.<br>Am Ende sendest du mit einem "Ja" an deinen Therapeuten.</p>
+        <!-- Avatar -->
+        <div style="text-align:center;margin:8px 0 16px">
+          <div id="avatar-start" style="font-size:60px;line-height:1">🧘</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">PTGO DAILY CHECK</div>
+        </div>
+        <h1 style="text-align:center">Wie geht es dir heute?</h1>
+        <p style="text-align:center">6 tiefe Fragen. Dein Körper. Dein System. Deine Wahrheit.</p>
         <div class="hr"></div>
-        <p class="small">🎙️ Mikrofon-Zugriff wird benötigt · läuft im Browser · kein Download</p>
+        <p class="small" style="text-align:center">🎙️ Sprachgesteuert · läuft im Browser · kein Download</p>
         <div style="height:16px"></div>
         <button onclick="startVoiceCheck()" style="font-size:18px;padding:18px;">
           🎙️ Check starten
         </button>
+        <div class="hr"></div>
+        <p class="small" style="text-align:center"><a href="/subscribe">⭐ Premium</a> · <a href="/profile">Body Profile</a> · <a href="/logout">Logout</a></p>
       </div>
 
       <!-- VOICE SCREEN -->
       <div id="voice-screen" style="display:none">
+
+        <!-- Avatar -->
+        <div style="text-align:center;margin:4px 0 12px">
+          <div id="avatar" style="font-size:48px;line-height:1;transition:all .3s">🧘</div>
+        </div>
+
         <!-- Progress -->
-        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:8px">
+        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:6px">
           <div id="progress-bar" style="height:4px;background:#f59e0b;border-radius:999px;width:0%;transition:width .4s"></div>
         </div>
-        <p class="small" id="progress-text">Frage 1 von 6</p>
+        <p class="small" id="progress-text" style="text-align:center">Frage 1 von 6</p>
 
-        <!-- Current Question -->
-        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:16px;margin:12px 0">
-          <p style="color:#fbbf24;font-size:16px;margin:0" id="question-text">...</p>
+        <!-- Question -->
+        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:14px 16px;margin:10px 0">
+          <p style="color:#fbbf24;font-size:15px;margin:0;line-height:1.5" id="question-text">...</p>
+        </div>
+
+        <!-- Body Map (shown only for body question) -->
+        <div id="body-map-section" style="display:none;margin:10px 0">
+          <p class="small" style="margin-bottom:6px;color:#a5b4fc">PTGO Body System – Zeichne wo du etwas spürst:</p>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+            <button class="draw-mode-btn" data-mode="point" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">● Punkt</button>
+            <button class="draw-mode-btn" data-mode="line" style="background:rgba(245,158,11,.15);border:1px solid #374151;color:#fcd34d;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">— Linie</button>
+            <button class="draw-mode-btn" data-mode="area" style="background:rgba(99,102,241,.15);border:1px solid #374151;color:#a5b4fc;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">▭ Fläche</button>
+            <button onclick="clearBodyMap()" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">✕ Löschen</button>
+          </div>
+          <canvas id="body-canvas" width="280" height="220" style="width:100%;max-width:320px;border:1px solid #1f2937;border-radius:12px;display:block;margin:0 auto;touch-action:none;background:#0b1223"></canvas>
+          <p class="small" style="text-align:center;margin-top:6px">Tippe oder ziehe auf dem Körper</p>
         </div>
 
         <!-- Transcript -->
-        <div style="min-height:48px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
+        <div style="min-height:44px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
           Deine Antwort erscheint hier...
         </div>
 
-        <!-- Mic Button -->
-        <div style="text-align:center;margin:16px 0">
-          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:80px;height:80px;font-size:32px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
+        <!-- Mic -->
+        <div style="text-align:center;margin:12px 0">
+          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:72px;height:72px;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
             <span id="mic-icon">🎙️</span>
           </button>
-          <p class="small" id="status" style="margin-top:8px">Tippe um zu sprechen</p>
-          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:10px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:10px 20px;font-size:14px;cursor:pointer;">
+          <p class="small" id="status" style="margin-top:6px">Tippe um zu sprechen</p>
+          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:8px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer;">
             ✓ Antwort bestätigen
           </button>
         </div>
 
-        <!-- Answers so far -->
+        <!-- Answers -->
         <div id="answers-list"></div>
       </div>
 
-      <!-- Hidden form for submit -->
+      <!-- Hidden form -->
       <form id="checkin-form" method="post" action="/checkin/voice" style="display:none">
         <input type="hidden" id="f_overall_text" name="overall_text">
         <input type="hidden" id="f_context_text" name="context_text">
         <input type="hidden" id="f_body_text" name="body_text">
+        <input type="hidden" id="f_sleep_text" name="sleep_text">
         <input type="hidden" id="f_mental_text" name="mental_text">
         <input type="hidden" id="f_goal_text" name="goal_text">
+        <input type="hidden" id="f_pain_map" name="pain_map_json">
       </form>
 
       <style>
@@ -1068,12 +1323,100 @@ def checkin_1(request: Request, db=Depends(get_db)):
           0%, 100% {{ transform: scale(1); }}
           50% {{ transform: scale(1.08); }}
         }}
+        @keyframes avatarPulse {{
+          0%, 100% {{ transform: scale(1); opacity:1; }}
+          50% {{ transform: scale(1.15); opacity:0.8; }}
+        }}
       </style>
-
-      <div class="hr"></div>
-      <p class="small"><a href="/logout">Logout</a></p>
     """
     return _page("PTGO • Voice Check", body, request=request)
+
+    body = voice_js + """
+
+      <!-- START SCREEN -->
+      <div id="start-screen">
+        <div style="text-align:center;margin:8px 0 16px">
+          <div id="avatar-start" style="font-size:60px;line-height:1">&#x1F9D8;</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">PTGO DAILY CHECK</div>
+        </div>
+        <h1 style="text-align:center">Wie geht es dir heute?</h1>
+        <p style="text-align:center">6 tiefe Fragen. Dein Koerper. Dein System. Deine Wahrheit.</p>
+        <div class="hr"></div>
+        <p class="small" style="text-align:center">Sprachgesteuert - laeuft im Browser - kein Download</p>
+        <div style="height:16px"></div>
+        <button onclick="startVoiceCheck()" style="font-size:18px;padding:18px;">
+          Check starten
+        </button>
+        <div class="hr"></div>
+        <p class="small" style="text-align:center"><a href="/subscribe">Premium</a> &middot; <a href="/profile">Body Profile</a> &middot; <a href="/logout">Logout</a></p>
+      </div>
+
+      <!-- VOICE SCREEN -->
+      <div id="voice-screen" style="display:none">
+        <div style="text-align:center;margin:4px 0 12px">
+          <div id="avatar" style="font-size:48px;line-height:1;transition:all .3s">&#x1F9D8;</div>
+        </div>
+        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:6px">
+          <div id="progress-bar" style="height:4px;background:#f59e0b;border-radius:999px;width:0%;transition:width .4s"></div>
+        </div>
+        <p class="small" id="progress-text" style="text-align:center">Frage 1 von 6</p>
+        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:14px 16px;margin:10px 0">
+          <p style="color:#fbbf24;font-size:15px;margin:0;line-height:1.5" id="question-text">...</p>
+        </div>
+        <div id="body-map-section" style="display:none;margin:10px 0">
+          <p class="small" style="margin-bottom:6px;color:#a5b4fc">PTGO Body System</p>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+            <button class="draw-mode-btn" data-mode="point" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Punkt</button>
+            <button class="draw-mode-btn" data-mode="line" style="background:rgba(245,158,11,.15);border:1px solid #374151;color:#fcd34d;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Linie</button>
+            <button class="draw-mode-btn" data-mode="area" style="background:rgba(99,102,241,.15);border:1px solid #374151;color:#a5b4fc;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Flaeche</button>
+            <button onclick="clearBodyMap()" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Loeschen</button>
+          </div>
+          <canvas id="body-canvas" width="280" height="220" style="width:100%;max-width:320px;border:1px solid #1f2937;border-radius:12px;display:block;margin:0 auto;touch-action:none;background:#0b1223"></canvas>
+          <p class="small" style="text-align:center;margin-top:6px">Tippe oder ziehe auf dem Koerper</p>
+        </div>
+        <div style="min-height:44px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
+          Deine Antwort erscheint hier...
+        </div>
+        <div style="text-align:center;margin:12px 0">
+          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:72px;height:72px;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
+            <span id="mic-icon">&#x1F399;</span>
+          </button>
+          <p class="small" id="status" style="margin-top:6px">Tippe um zu sprechen</p>
+          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:8px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer;">
+            Antwort bestaetigen
+          </button>
+        </div>
+        <div id="answers-list"></div>
+      </div>
+
+      <form id="checkin-form" method="post" action="/checkin/voice" style="display:none">
+        <input type="hidden" id="f_overall_text" name="overall_text">
+        <input type="hidden" id="f_context_text" name="context_text">
+        <input type="hidden" id="f_body_text" name="body_text">
+        <input type="hidden" id="f_sleep_text" name="sleep_text">
+        <input type="hidden" id="f_mental_text" name="mental_text">
+        <input type="hidden" id="f_goal_text" name="goal_text">
+        <input type="hidden" id="f_pain_map" name="pain_map_json">
+      </form>
+
+      <style>
+        .mic-btn.listening {
+          background: rgba(239,68,68,0.2) !important;
+          border-color: #ef4444 !important;
+          box-shadow: 0px 0px 20px rgba(239,68,68,0.4);
+          animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.08); }
+        }
+        @keyframes avatarPulse {
+          0%, 100% { transform: scale(1); opacity:1; }
+          50% { transform: scale(1.15); opacity:0.8; }
+        }
+      </style>
+    """
+    return _page("PTGO Voice Check", body, request=request)
 
 
 # Keep old routes as redirects for backwards compatibility
@@ -1115,20 +1458,24 @@ def checkin_voice_submit(
     overall_text: str = Form(""),
     context_text: str = Form(""),
     body_text: str = Form(""),
+    sleep_text: str = Form(""),
     mental_text: str = Form(""),
     goal_text: str = Form(""),
+    pain_map_json: str = Form(""),
     db=Depends(get_db),
 ):
     p = require_patient_login(request, db)
-    p = require_patient_login(request, db)
 
-    # Build data from voice answers - Claude extracts numbers from text
+    full_context = context_text.strip()
+    if sleep_text.strip():
+        full_context = full_context + (" | Schlaf: " + sleep_text.strip() if full_context else "Schlaf: " + sleep_text.strip())
+
     data = {
-        "daily_state": 5,  # will be extracted by AI
+        "daily_state": 5,
         "overall_text": overall_text.strip(),
         "stress": 5,
         "sleep": 5,
-        "context_text": context_text.strip(),
+        "context_text": full_context,
         "body": 5,
         "body_text": body_text.strip(),
         "pain_region": _extract_pain_region(body_text),
@@ -1138,7 +1485,6 @@ def checkin_voice_submit(
         "goal_text": goal_text.strip(),
     }
 
-    # Use AI to extract numeric values from voice text
     data = _ai_extract_values(data)
 
     # Modul 2 – Signal Extraction
@@ -1167,6 +1513,7 @@ def checkin_voice_submit(
         body=data["body"],
         body_text=data["body_text"],
         pain_region=data["pain_region"],
+        pain_map_json=pain_map_json or None,
         craving=data["craving"],
         avoidance=data["avoidance"],
         mental_text=data["mental_text"],
