@@ -1,7 +1,8 @@
 # app.py — PTGO v2 — FastAPI
 # Modules: 1 (Conversational), 2 (Signal Extraction), 4 (Login Tracking),
 #          5 (Pattern Engine), 6 (Action Library), 7 (Action Engine),
-#          8 (Result Screen), 9 (Outcome Feedback)
+#          8 (Result Screen), 9 (Outcome Feedback),
+#          16 (Identity Layer), 17 (Recovery Score Engine), 18 (Pattern Timeline)
 #
 # DEPLOY:
 # - Uvicorn behind Nginx (HTTPS)
@@ -288,6 +289,62 @@ def send_whatsapp_to_therapist(patient: Patient, therapist: Optional[Therapist],
         print("[DEV] No therapist WhatsApp target configured.")
         return
     _send_whatsapp(target, f"[PTGO] {patient.name}: " + message)
+
+
+# =========================================================
+# VOICE HELPERS
+# =========================================================
+
+def _extract_pain_region(text: str) -> str:
+    text = text.lower()
+    if any(w in text for w in ["nacken", "hals", "nackenschmerz"]): return "neck"
+    if any(w in text for w in ["schulter", "schultern"]): return "shoulder"
+    if any(w in text for w in ["rücken", "oberer rücken", "oberer"]): return "upper_back"
+    if any(w in text for w in ["unterer rücken", "lendenwirbel", "kreuz"]): return "lower_back"
+    if any(w in text for w in ["kopf", "kopfschmerz", "migräne"]): return "head"
+    if any(w in text for w in ["brust", "herz", "brustkorb"]): return "chest"
+    if any(w in text for w in ["bauch", "magen", "magensch"]): return "stomach"
+    if any(w in text for w in ["bein", "knie", "beine"]): return "legs"
+    return ""
+
+def _ai_extract_values(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Use Claude to extract numeric values (0-10) from voice text."""
+    if not ANTHROPIC_API_KEY:
+        return data
+
+    combined = (
+        f"Stimmung: {data.get('overall_text','')}\n"
+        f"Herausforderung: {data.get('context_text','')}\n"
+        f"Körper: {data.get('body_text','')}\n"
+        f"Gedanken: {data.get('mental_text','')}\n"
+        f"Ziel: {data.get('goal_text','')}"
+    )
+
+    prompt = (
+        f"Analysiere diese Spracheingaben eines Patienten und extrahiere numerische Werte (0-10).\n\n"
+        f"{combined}\n\n"
+        f"Antworte NUR mit validem JSON (keine Erklärung):\n"
+        f'{{"daily_state":5,"stress":5,"sleep":5,"body":5,"craving":0,"avoidance":0}}\n'
+        f"Skala: 0=sehr schlecht/niedrig, 10=sehr gut/hoch. Stress/Craving/Avoidance: 0=keins, 10=extrem."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 150, "messages": [{"role": "user", "content": prompt}]},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        text = resp.json()["content"][0]["text"].strip().replace("```json","").replace("```","").strip()
+        vals = json.loads(text)
+        for k in ["daily_state","stress","sleep","body","craving","avoidance"]:
+            if k in vals:
+                data[k] = _clamp_int(vals[k], 0, 10)
+    except Exception as e:
+        print("[WARN] AI value extraction failed:", e)
+
+    return data
 
 
 # =========================================================
@@ -748,189 +805,307 @@ def logout(request: Request, db=Depends(get_db)):
 @app.get("/checkin/1", response_class=HTMLResponse)
 def checkin_1(request: Request, db=Depends(get_db)):
     p = require_patient_login(request, db)
-    body = f"""
-      <h1>Wie geht es dir heute wirklich?</h1>
-      <p>Sei ehrlich. Niemand außer dir und deinem Therapeuten sieht das.</p>
-      <form method="post" action="/checkin/1">
-        <label>Dein Tagesgefühl</label>
-        <div class="slider-wrap">
-          <input type="range" name="daily_state" min="0" max="10" value="5"
-            oninput="document.getElementById('ds_val').textContent=this.value">
-          <span class="slider-val" id="ds_val">5</span> / 10
-        </div>
-        <label>Was beschäftigt dich heute? (optional)</label>
-        <textarea name="overall_text" rows="3" placeholder="In einem Satz oder frei..."></textarea>
-        <button type="submit">Weiter →</button>
-      </form>
+
+    voice_js = """
+    <script>
+    // ── Voice Check-in Engine ──────────────────────────────
+    const QUESTIONS = [
+      { key: "overall_text",  prompt: "Wie geht es dir heute wirklich? Beschreibe kurz dein Gefühl." },
+      { key: "context_text",  prompt: "Was fordert dich heute am meisten? Arbeit, Familie, oder etwas anderes?" },
+      { key: "body_text",     prompt: "Wie fühlt sich dein Körper an? Gibt es Verspannungen oder Schmerzen?" },
+      { key: "mental_text",   prompt: "Gibt es etwas, das du gerade vermeidest oder das dich beunruhigt?" },
+      { key: "goal_text",     prompt: "Was wäre heute ein guter Tag für dich? In einem Satz." },
+      { key: "confirm",       prompt: "Ich habe alles. Soll ich das jetzt an deinen Therapeuten senden? Sag Ja oder Nein." },
+    ];
+
+    let currentQ = 0;
+    let answers = {};
+    let recognition = null;
+    let synth = window.speechSynthesis;
+    let isListening = false;
+
+    function speak(text, callback) {
+      synth.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "de-DE";
+      utter.rate = 0.95;
+      utter.onend = () => { if (callback) callback(); };
+      synth.speak(utter);
+    }
+
+    function updateUI(state, text) {
+      document.getElementById("status").textContent = text;
+      document.getElementById("mic-btn").className =
+        state === "listening" ? "mic-btn listening" : "mic-btn";
+      document.getElementById("mic-icon").textContent =
+        state === "listening" ? "🔴" : "🎙️";
+    }
+
+    function showTranscript(text) {
+      document.getElementById("transcript").textContent = text;
+    }
+
+    function startListening() {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Dein Browser unterstützt keine Spracherkennung. Bitte Chrome nutzen.");
+        return;
+      }
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = "de-DE";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isListening = true;
+        updateUI("listening", "Ich höre zu...");
+      };
+
+      recognition.onresult = (e) => {
+        let interim = "";
+        let final = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) final += e.results[i][0].transcript;
+          else interim += e.results[i][0].transcript;
+        }
+        showTranscript(final || interim);
+        if (final) handleAnswer(final.trim());
+      };
+
+      recognition.onerror = (e) => {
+        updateUI("idle", "Fehler – nochmal tippen.");
+        isListening = false;
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        if (document.getElementById("transcript").textContent === "") {
+          updateUI("idle", "Nichts gehört – tippe den Mikrofon-Button.");
+        }
+      };
+
+      recognition.start();
+    }
+
+    function handleAnswer(text) {
+      const q = QUESTIONS[currentQ];
+      updateUI("idle", "✓ Verstanden");
+
+      if (q.key === "confirm") {
+        const lower = text.toLowerCase();
+        if (lower.includes("ja") || lower.includes("yes") || lower.includes("senden") || lower.includes("okay") || lower.includes("ok")) {
+          speak("Super. Ich sende es jetzt.", () => submitCheckin());
+        } else {
+          speak("Okay, ich sende nichts. Du kannst das Fenster schließen.");
+          updateUI("idle", "Abgebrochen.");
+        }
+        return;
+      }
+
+      answers[q.key] = text;
+      showAnswerCard(q.key, text);
+      currentQ++;
+
+      if (currentQ < QUESTIONS.length) {
+        updateProgress();
+        setTimeout(() => {
+          speak(QUESTIONS[currentQ].prompt, () => {
+            setTimeout(startListening, 500);
+          });
+        }, 800);
+      }
+    }
+
+    function showAnswerCard(key, text) {
+      const labels = {
+        overall_text: "Stimmung",
+        context_text: "Herausforderung",
+        body_text: "Körper",
+        mental_text: "Gedanken",
+        goal_text: "Tagesziel",
+      };
+      const card = document.createElement("div");
+      card.style = "background:rgba(255,255,255,.03);border:1px solid #1f2937;border-radius:10px;padding:10px 14px;margin:6px 0;font-size:14px;";
+      card.innerHTML = `<span style="color:#6b7280;font-size:11px">${labels[key] || key}</span><br>${text}`;
+      document.getElementById("answers-list").appendChild(card);
+    }
+
+    function updateProgress() {
+      const pct = Math.round((currentQ / QUESTIONS.length) * 100);
+      document.getElementById("progress-bar").style.width = pct + "%";
+      document.getElementById("progress-text").textContent = `Frage ${currentQ + 1} von ${QUESTIONS.length}`;
+      document.getElementById("question-text").textContent = QUESTIONS[currentQ].prompt;
+    }
+
+    function submitCheckin() {
+      updateUI("idle", "Wird gesendet...");
+      document.getElementById("mic-btn").disabled = true;
+
+      const form = document.getElementById("checkin-form");
+      document.getElementById("f_overall_text").value = answers.overall_text || "";
+      document.getElementById("f_context_text").value = answers.context_text || "";
+      document.getElementById("f_body_text").value = answers.body_text || "";
+      document.getElementById("f_mental_text").value = answers.mental_text || "";
+      document.getElementById("f_goal_text").value = answers.goal_text || "";
+      form.submit();
+    }
+
+    function startVoiceCheck() {
+      document.getElementById("start-screen").style.display = "none";
+      document.getElementById("voice-screen").style.display = "block";
+      updateProgress();
+      speak(QUESTIONS[0].prompt, () => setTimeout(startListening, 500));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("mic-btn").onclick = () => {
+        if (isListening) {
+          recognition && recognition.stop();
+        } else {
+          speak(QUESTIONS[currentQ].prompt, () => setTimeout(startListening, 300));
+        }
+      };
+    });
+    </script>
     """
-    return _page("PTGO • Check 1/5", body, request=request, step=1, total=5)
+
+    body = f"""
+      {voice_js}
+
+      <!-- START SCREEN -->
+      <div id="start-screen">
+        <h1>Daily Voice Check</h1>
+        <p>Ich stelle dir 5 kurze Fragen per Sprache.<br>Am Ende sendest du mit einem "Ja" an deinen Therapeuten.</p>
+        <div class="hr"></div>
+        <p class="small">🎙️ Mikrofon-Zugriff wird benötigt · läuft im Browser · kein Download</p>
+        <div style="height:16px"></div>
+        <button onclick="startVoiceCheck()" style="font-size:18px;padding:18px;">
+          🎙️ Check starten
+        </button>
+      </div>
+
+      <!-- VOICE SCREEN -->
+      <div id="voice-screen" style="display:none">
+        <!-- Progress -->
+        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:8px">
+          <div id="progress-bar" style="height:4px;background:#f59e0b;border-radius:999px;width:0%;transition:width .4s"></div>
+        </div>
+        <p class="small" id="progress-text">Frage 1 von 6</p>
+
+        <!-- Current Question -->
+        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:16px;margin:12px 0">
+          <p style="color:#fbbf24;font-size:16px;margin:0" id="question-text">...</p>
+        </div>
+
+        <!-- Transcript -->
+        <div style="min-height:48px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
+          Deine Antwort erscheint hier...
+        </div>
+
+        <!-- Mic Button -->
+        <div style="text-align:center;margin:16px 0">
+          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:80px;height:80px;font-size:32px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
+            <span id="mic-icon">🎙️</span>
+          </button>
+          <p class="small" id="status" style="margin-top:8px">Tippe um zu sprechen</p>
+        </div>
+
+        <!-- Answers so far -->
+        <div id="answers-list"></div>
+      </div>
+
+      <!-- Hidden form for submit -->
+      <form id="checkin-form" method="post" action="/checkin/voice" style="display:none">
+        <input type="hidden" id="f_overall_text" name="overall_text">
+        <input type="hidden" id="f_context_text" name="context_text">
+        <input type="hidden" id="f_body_text" name="body_text">
+        <input type="hidden" id="f_mental_text" name="mental_text">
+        <input type="hidden" id="f_goal_text" name="goal_text">
+      </form>
+
+      <style>
+        .mic-btn.listening {{
+          background: rgba(239,68,68,.2) !important;
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 20px rgba(239,68,68,.4);
+          animation: pulse 1s infinite;
+        }}
+        @keyframes pulse {{
+          0%, 100% {{ transform: scale(1); }}
+          50% {{ transform: scale(1.08); }}
+        }}
+      </style>
+
+      <div class="hr"></div>
+      <p class="small"><a href="/logout">Logout</a></p>
+    """
+    return _page("PTGO • Voice Check", body, request=request)
 
 
+# Keep old routes as redirects for backwards compatibility
 @app.post("/checkin/1", response_class=HTMLResponse)
-def checkin_1_post(request: Request, daily_state: int = Form(5), overall_text: str = Form(""), db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    request.session["ci_daily_state"] = daily_state
-    request.session["ci_overall_text"] = overall_text.strip()
-    return RedirectResponse("/checkin/2", status_code=303)
-
+def checkin_1_post(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.get("/checkin/2", response_class=HTMLResponse)
 def checkin_2(request: Request, db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    body = f"""
-      <h1>Was fordert dich heute am meisten?</h1>
-      <form method="post" action="/checkin/2">
-        <div class="row">
-          <div>
-            <label>Stress</label>
-            <div class="slider-wrap">
-              <input type="range" name="stress" min="0" max="10" value="5"
-                oninput="document.getElementById('st_val').textContent=this.value">
-              <span class="slider-val" id="st_val">5</span>
-            </div>
-          </div>
-          <div>
-            <label>Schlaf letzte Nacht</label>
-            <div class="slider-wrap">
-              <input type="range" name="sleep" min="0" max="10" value="5"
-                oninput="document.getElementById('sl_val').textContent=this.value">
-              <span class="slider-val" id="sl_val">5</span>
-            </div>
-          </div>
-        </div>
-        <label>Kontext (optional)</label>
-        <textarea name="context_text" rows="2" placeholder="Arbeit, Familie, Finanzen..."></textarea>
-        <button type="submit">Weiter →</button>
-      </form>
-    """
-    return _page("PTGO • Check 2/5", body, request=request, step=2, total=5)
-
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.post("/checkin/2", response_class=HTMLResponse)
-def checkin_2_post(request: Request, stress: int = Form(5), sleep: int = Form(5), context_text: str = Form(""), db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    request.session["ci_stress"] = stress
-    request.session["ci_sleep"] = sleep
-    request.session["ci_context_text"] = context_text.strip()
-    return RedirectResponse("/checkin/3", status_code=303)
-
+def checkin_2_post(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.get("/checkin/3", response_class=HTMLResponse)
 def checkin_3(request: Request, db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    body = f"""
-      <h1>Gibt es körperliche Beschwerden?</h1>
-      <form method="post" action="/checkin/3">
-        <label>Körpergefühl</label>
-        <div class="slider-wrap">
-          <input type="range" name="body" min="0" max="10" value="5"
-            oninput="document.getElementById('bo_val').textContent=this.value">
-          <span class="slider-val" id="bo_val">5</span> / 10
-        </div>
-        <label>Wo spürst du etwas? (optional)</label>
-        <textarea name="body_text" rows="2" placeholder="z.B. Nacken, Schultern, Rücken..."></textarea>
-        <label>Region (optional)</label>
-        <select name="pain_region">
-          <option value="">– keine –</option>
-          <option value="neck">Nacken</option>
-          <option value="shoulder">Schultern</option>
-          <option value="upper_back">Oberer Rücken</option>
-          <option value="lower_back">Unterer Rücken</option>
-          <option value="head">Kopf</option>
-          <option value="chest">Brust</option>
-          <option value="stomach">Bauch</option>
-          <option value="legs">Beine</option>
-        </select>
-        <button type="submit">Weiter →</button>
-      </form>
-    """
-    return _page("PTGO • Check 3/5", body, request=request, step=3, total=5)
-
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.post("/checkin/3", response_class=HTMLResponse)
-def checkin_3_post(request: Request, body: int = Form(5), body_text: str = Form(""), pain_region: str = Form(""), db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    request.session["ci_body"] = body
-    request.session["ci_body_text"] = body_text.strip()
-    request.session["ci_pain_region"] = pain_region
-    return RedirectResponse("/checkin/4", status_code=303)
-
+def checkin_3_post(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.get("/checkin/4", response_class=HTMLResponse)
 def checkin_4(request: Request, db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    body = f"""
-      <h1>Gibt es Sorgen oder Dinge, die du vermeidest?</h1>
-      <form method="post" action="/checkin/4">
-        <div class="row">
-          <div>
-            <label>Craving / Impulse</label>
-            <div class="slider-wrap">
-              <input type="range" name="craving" min="0" max="10" value="0"
-                oninput="document.getElementById('cr_val').textContent=this.value">
-              <span class="slider-val" id="cr_val">0</span>
-            </div>
-          </div>
-          <div>
-            <label>Vermeidung</label>
-            <div class="slider-wrap">
-              <input type="range" name="avoidance" min="0" max="10" value="0"
-                oninput="document.getElementById('av_val').textContent=this.value">
-              <span class="slider-val" id="av_val">0</span>
-            </div>
-          </div>
-        </div>
-        <label>Was vermeidest du gerade? (optional)</label>
-        <textarea name="mental_text" rows="2" placeholder="Offen und ehrlich..."></textarea>
-        <button type="submit">Weiter →</button>
-      </form>
-    """
-    return _page("PTGO • Check 4/5", body, request=request, step=4, total=5)
-
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.post("/checkin/4", response_class=HTMLResponse)
-def checkin_4_post(request: Request, craving: int = Form(0), avoidance: int = Form(0), mental_text: str = Form(""), db=Depends(get_db)):
-    p = require_patient_login(request, db)
-    request.session["ci_craving"] = craving
-    request.session["ci_avoidance"] = avoidance
-    request.session["ci_mental_text"] = mental_text.strip()
-    return RedirectResponse("/checkin/5", status_code=303)
-
+def checkin_4_post(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/checkin/1", status_code=303)
 
 @app.get("/checkin/5", response_class=HTMLResponse)
 def checkin_5(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/checkin/1", status_code=303)
+
+@app.post("/checkin/voice", response_class=HTMLResponse)
+def checkin_voice_submit(
+    request: Request,
+    overall_text: str = Form(""),
+    context_text: str = Form(""),
+    body_text: str = Form(""),
+    mental_text: str = Form(""),
+    goal_text: str = Form(""),
+    db=Depends(get_db),
+):
     p = require_patient_login(request, db)
-    body = f"""
-      <h1>Was wäre heute ein guter Tag für dich?</h1>
-      <p>Was müsste passieren damit du heute Abend sagst: "War ein guter Tag"?</p>
-      <form method="post" action="/checkin/5">
-        <label>Dein Tagesziel</label>
-        <textarea name="goal_text" rows="3" placeholder="In einem Satz..."></textarea>
-        <button type="submit">Auswerten →</button>
-      </form>
-    """
-    return _page("PTGO • Check 5/5", body, request=request, step=5, total=5)
-
-
-@app.post("/checkin/5", response_class=HTMLResponse)
-def checkin_5_post(request: Request, goal_text: str = Form(""), db=Depends(get_db)):
     p = require_patient_login(request, db)
 
-    # Collect all data from session
+    # Build data from voice answers - Claude extracts numbers from text
     data = {
-        "daily_state": request.session.pop("ci_daily_state", 5),
-        "overall_text": request.session.pop("ci_overall_text", ""),
-        "stress": request.session.pop("ci_stress", 5),
-        "sleep": request.session.pop("ci_sleep", 5),
-        "context_text": request.session.pop("ci_context_text", ""),
-        "body": request.session.pop("ci_body", 5),
-        "body_text": request.session.pop("ci_body_text", ""),
-        "pain_region": request.session.pop("ci_pain_region", ""),
-        "craving": request.session.pop("ci_craving", 0),
-        "avoidance": request.session.pop("ci_avoidance", 0),
-        "mental_text": request.session.pop("ci_mental_text", ""),
+        "daily_state": 5,  # will be extracted by AI
+        "overall_text": overall_text.strip(),
+        "stress": 5,
+        "sleep": 5,
+        "context_text": context_text.strip(),
+        "body": 5,
+        "body_text": body_text.strip(),
+        "pain_region": _extract_pain_region(body_text),
+        "craving": 0,
+        "avoidance": 0,
+        "mental_text": mental_text.strip(),
         "goal_text": goal_text.strip(),
     }
+
+    # Use AI to extract numeric values from voice text
+    data = _ai_extract_values(data)
 
     # Modul 2 – Signal Extraction
     signals = extract_signals(data)
@@ -941,8 +1116,10 @@ def checkin_5_post(request: Request, goal_text: str = Form(""), db=Depends(get_d
     # Modul 7 – Action Engine
     action_code, action = get_action(pattern_code)
 
-    # Score
-    score, risk = compute_score(data)
+    # Modul 17 – Recovery Score
+    score = compute_recovery_score(data)
+    risk_data = {**data}
+    _, risk = compute_score(risk_data)  # still use old for risk level
 
     local_day = _now_local().date().isoformat()
     c = CheckIn(
@@ -989,17 +1166,23 @@ def checkin_5_post(request: Request, goal_text: str = Form(""), db=Depends(get_d
     except Exception as e:
         print("[WARN] WhatsApp result failed:", e)
 
-    # Therapist alert on high risk
-    if risk == "high":
-        try:
-            tmsg = (
-                f"⚠️ HIGH RISK\n"
-                f"Score {score}/100 • Pattern: {pattern_label}\n"
-                f"Link: {BASE_URL}/therapist/checkin/{c.id}"
-            )
-            send_whatsapp_to_therapist(p, p.therapist, tmsg)
-        except Exception as e:
-            print("[WARN] Therapist alert failed:", e)
+    # Therapist alert – always send full summary
+    try:
+        tmsg = (
+            f"{'⚠️ HIGH RISK' if risk == 'high' else '📋 Daily Check'}\n"
+            f"Patient: {p.name}\n"
+            f"Score {score}/100 • Pattern: {pattern_label}\n\n"
+            f"Stimmung: {data.get('overall_text','–')}\n"
+            f"Herausforderung: {data.get('context_text','–')}\n"
+            f"Körper: {data.get('body_text','–')}\n"
+            f"Gedanken: {data.get('mental_text','–')}\n"
+            f"Tagesziel: {data.get('goal_text','–')}\n\n"
+            f"Action: {action['label']}\n"
+            f"Details: {BASE_URL}/therapist/checkin/{c.id}"
+        )
+        send_whatsapp_to_therapist(p, p.therapist, tmsg)
+    except Exception as e:
+        print("[WARN] Therapist WhatsApp failed:", e)
 
     return RedirectResponse(f"/result/{c.id}", status_code=303)
 
@@ -1064,6 +1247,8 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
       <p class="small">
         <a href="/checkin/1">Neuer Check</a> •
         <a href="/progress">Progress</a> •
+        <a href="/profile">Body Profile</a> •
+        <a href="/timeline">Timeline</a> •
         <a href="/logout">Logout</a>
       </p>
     """
@@ -1167,6 +1352,245 @@ def settings_save(request: Request, enabled: str = Form("1"), time_str: str = Fo
     p.reminder_time_local = (time_str or "08:00")[:5]
     db.commit()
     return RedirectResponse("/settings", status_code=303)
+
+
+# =========================================================
+# MODUL 17 – RECOVERY SCORE ENGINE
+# =========================================================
+
+def compute_recovery_score(data: Dict[str, Any]) -> int:
+    """
+    Recovery Score = 100 minus penalties.
+    Higher = better recovery state.
+    """
+    sleep    = _clamp_int(data.get("sleep", 5), 0, 10)
+    stress   = _clamp_int(data.get("stress", 5), 0, 10)
+    body     = _clamp_int(data.get("body", 5), 0, 10)
+    avoidance= _clamp_int(data.get("avoidance", 0), 0, 10)
+    craving  = _clamp_int(data.get("craving", 0), 0, 10)
+    mood     = _clamp_int(data.get("daily_state", 5), 0, 10)
+
+    sleep_penalty     = max(0, (5 - sleep)) * 6      # poor sleep hurts most
+    stress_weight     = stress * 4                    # high stress reduces score
+    pain_weight       = max(0, (5 - body)) * 3        # body tension penalty
+    avoidance_penalty = avoidance * 2
+    craving_penalty   = craving * 2
+    mood_bonus        = mood * 1                      # good mood adds back
+
+    score = 100 - sleep_penalty - stress_weight - pain_weight - avoidance_penalty - craving_penalty + mood_bonus
+    return _clamp_int(score, 0, 100)
+
+
+# =========================================================
+# MODUL 16 – IDENTITY LAYER
+# =========================================================
+
+def build_body_profile(checkins: list) -> Dict[str, Any]:
+    """Analyze last 30 checkins to build a Body Profile."""
+    if not checkins:
+        return {}
+
+    pattern_counts: Dict[str, int] = {}
+    recovery_scores = []
+    stress_vals = []
+    sleep_vals = []
+
+    for c in checkins:
+        if c.pattern_code:
+            pattern_counts[c.pattern_code] = pattern_counts.get(c.pattern_code, 0) + 1
+        if c.score:
+            recovery_scores.append(c.score)
+        if c.stress is not None:
+            stress_vals.append(c.stress)
+        if c.sleep is not None:
+            sleep_vals.append(c.sleep)
+
+    sorted_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)
+    primary = sorted_patterns[0] if len(sorted_patterns) > 0 else ("balanced", 1)
+    secondary = sorted_patterns[1] if len(sorted_patterns) > 1 else None
+
+    avg_score = int(sum(recovery_scores) / len(recovery_scores)) if recovery_scores else 0
+    avg_stress = sum(stress_vals) / len(stress_vals) if stress_vals else 5
+    avg_sleep = sum(sleep_vals) / len(sleep_vals) if sleep_vals else 5
+
+    # Recovery Sensitivity
+    if avg_score < 50:
+        sensitivity = "High"
+        sensitivity_desc = "Dein System reagiert stark auf Stress und Schlafmangel."
+    elif avg_score < 70:
+        sensitivity = "Medium"
+        sensitivity_desc = "Du erholst dich gut, wenn du auf die Basics achtest."
+    else:
+        sensitivity = "Low"
+        sensitivity_desc = "Du bist resilient – dein System erholt sich schnell."
+
+    return {
+        "primary_pattern": PATTERNS.get(primary[0], primary[0]),
+        "primary_count": primary[1],
+        "secondary_pattern": PATTERNS.get(secondary[0], secondary[0]) if secondary else None,
+        "secondary_count": secondary[1] if secondary else 0,
+        "avg_recovery_score": avg_score,
+        "avg_stress": round(avg_stress, 1),
+        "avg_sleep": round(avg_sleep, 1),
+        "recovery_sensitivity": sensitivity,
+        "sensitivity_desc": sensitivity_desc,
+        "total_checkins": len(checkins),
+    }
+
+
+@app.get("/profile", response_class=HTMLResponse)
+def profile_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    checkins = db.query(CheckIn).filter(CheckIn.patient_id == p.id).order_by(CheckIn.created_at.desc()).limit(30).all()
+    profile = build_body_profile(checkins)
+
+    if not profile:
+        body = """
+          <h1>Your Body Profile</h1>
+          <p>Noch keine Daten. Mach mindestens 3 Check-ins um dein Profil zu sehen.</p>
+          <div class="hr"></div>
+          <a class="btn" href="/checkin/1">Ersten Check starten</a>
+        """
+        return _page("PTGO • Profil", body, request=request)
+
+    secondary_html = ""
+    if profile.get("secondary_pattern"):
+        secondary_html = f"""
+        <div class="kpi">
+          <span class="small">Secondary Pattern</span>
+          <b style="font-size:16px">{profile['secondary_pattern']}</b>
+          <div class="small">{profile['secondary_count']}x erkannt</div>
+        </div>
+        """
+
+    body = f"""
+      <h1>Your Body Profile</h1>
+      <p class="small">Basierend auf deinen letzten {profile['total_checkins']} Check-ins</p>
+
+      <div class="hr"></div>
+
+      <div class="action-box" style="margin-bottom:16px">
+        <div class="small" style="color:#a5b4fc;margin-bottom:6px">PRIMARY PATTERN</div>
+        <b style="font-size:22px;color:#f59e0b">{profile['primary_pattern']}</b>
+        <div class="small" style="margin-top:4px">{profile['primary_count']}x in letzten Checks erkannt</div>
+      </div>
+
+      <div class="grid3" style="margin-bottom:16px">
+        {secondary_html}
+        <div class="kpi">
+          <span class="small">Avg Recovery Score</span>
+          <b>{profile['avg_recovery_score']}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Recovery Sensitivity</span>
+          <b style="font-size:16px">{profile['recovery_sensitivity']}</b>
+        </div>
+      </div>
+
+      <div class="kpi" style="margin-bottom:16px">
+        <span class="small">Was das bedeutet</span>
+        <p style="margin:8px 0 0;font-size:14px">{profile['sensitivity_desc']}</p>
+      </div>
+
+      <div class="grid3">
+        <div class="kpi">
+          <span class="small">Ø Stress</span>
+          <b>{profile['avg_stress']}/10</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Ø Schlaf</span>
+          <b>{profile['avg_sleep']}/10</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Check-ins</span>
+          <b>{profile['total_checkins']}</b>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small">
+        <a href="/timeline">Pattern Timeline</a> •
+        <a href="/progress">Progress</a> •
+        <a href="/checkin/1">Neuer Check</a>
+      </p>
+    """
+    return _page("PTGO • Body Profile", body, request=request)
+
+
+# =========================================================
+# MODUL 18 – PATTERN TIMELINE
+# =========================================================
+
+@app.get("/timeline", response_class=HTMLResponse)
+def timeline_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    checkins = (
+        db.query(CheckIn)
+        .filter(CheckIn.patient_id == p.id)
+        .order_by(CheckIn.created_at.desc())
+        .limit(14)
+        .all()
+    )
+    checkins = list(reversed(checkins))  # oldest first
+
+    PATTERN_COLORS = {
+        "stress_overload":    "#ef4444",
+        "recovery_deficit":   "#f97316",
+        "upper_body_tension": "#eab308",
+        "neck_guarding":      "#84cc16",
+        "impulse_pattern":    "#a855f7",
+        "avoidance_pattern":  "#ec4899",
+        "low_mood":           "#6b7280",
+        "balanced":           "#22c55e",
+    }
+
+    rows = ""
+    for i, c in enumerate(checkins):
+        color = PATTERN_COLORS.get(c.pattern_code or "balanced", "#6b7280")
+        outcome = db.query(Outcome).filter(Outcome.checkin_id == c.id).first()
+        outcome_emoji = ""
+        if outcome:
+            outcome_emoji = {"better": "😌", "same": "😐", "worse": "😔"}.get(outcome.rating, "")
+
+        rows += f"""
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <div style="min-width:80px;font-size:12px;color:#6b7280">{c.local_day}</div>
+          <div style="flex:1;background:rgba(255,255,255,.03);border:1px solid #1f2937;border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="display:inline-block;width:8px;height:8px;border-radius:50%;background:{color};margin-right:8px"></div>
+              <span style="font-size:14px;font-weight:600">{c.pattern_label or "–"}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:13px;color:#f59e0b">{c.score}</span>
+              <span>{outcome_emoji}</span>
+              <a href="/result/{c.id}" style="font-size:11px;color:#6b7280">→</a>
+            </div>
+          </div>
+        </div>
+        """
+
+    empty = "<p class='small'>Noch keine Daten. Mach mindestens 1 Check-in.</p>" if not rows else ""
+
+    body = f"""
+      <h1>Pattern Timeline</h1>
+      <p class="small">Letzte 14 Tage – Selbsterkenntnis durch Muster</p>
+      <div class="hr"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <span style="font-size:11px;color:#6b7280">Legende:</span>
+        {"".join(f'<span style="font-size:11px;padding:2px 8px;border-radius:999px;background:{c};color:#fff">{PATTERNS[k]}</span>' for k, c in PATTERN_COLORS.items())}
+      </div>
+
+      {rows or empty}
+
+      <div class="hr"></div>
+      <p class="small">
+        <a href="/profile">Body Profile</a> •
+        <a href="/progress">Progress</a> •
+        <a href="/checkin/1">Neuer Check</a>
+      </p>
+    """
+    return _page("PTGO • Timeline", body, request=request)
 
 
 # =========================================================
