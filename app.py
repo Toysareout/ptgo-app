@@ -773,6 +773,18 @@ def auth_start(request: Request, name: str = Form(...), phone: str = Form(...), 
     body = f"""
       <h1>Link gesendet ✅</h1>
       <p>Wir haben dir einen 1-Tap Link per WhatsApp geschickt.</p>
+      <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.3);border-radius:14px;padding:14px 16px;margin:14px 0">
+        <p style="color:#4ade80;font-size:13px;font-weight:600;margin:0 0 6px">⚠️ Ersten Schritt nicht vergessen!</p>
+        <p style="font-size:13px;margin:0 0 8px;color:#d1fae5">Damit WhatsApp funktioniert, schick <strong>einmalig</strong> diese Nachricht an unsere Nummer:</p>
+        <div style="background:#0b1223;border:1px solid #1f2937;border-radius:10px;padding:10px 14px;margin:8px 0;font-family:monospace;font-size:15px;color:#f59e0b;text-align:center">
+          join least-fight
+        </div>
+        <p style="font-size:13px;margin:6px 0 0;color:#d1fae5">An diese WhatsApp Nummer senden:</p>
+        <div style="background:#0b1223;border:1px solid #1f2937;border-radius:10px;padding:10px 14px;margin:6px 0;font-family:monospace;font-size:15px;color:#f59e0b;text-align:center">
+          +1 415 523 8886
+        </div>
+        <p class="small" style="margin:8px 0 0;color:#6b7280">Nur einmal nötig · danach funktioniert alles automatisch</p>
+      </div>
       <div style="height:10px"></div>
       <a class="btn" href="/checkin/1">Jetzt starten</a>
       <div style="height:12px"></div>
