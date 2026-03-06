@@ -419,11 +419,12 @@ def _ai_action(answers: Dict[str, Any], ptgo_score: int, risk: str) -> str:
         + (f"- Notiz des Patienten: \"{note}\"\n" if note else "") +
         f"\nGib dem Patienten GENAU 1 klare, konkrete Handlungsempfehlung für die nächsten 24 Stunden.\n"
         f"Regeln:\n"
-        f"- Maximal 2 Sätze\n"
+        f"- Maximal 1-2 kurze Sätze\n"
         f"- Beginne mit 'Heute:'\n"
+        f"- Immer 'du' verwenden, niemals 'Sie'\n"
         f"- Keine Diagnose, kein Medikament\n"
         f"- Praktisch und sofort umsetzbar\n"
-        f"- Empathisch aber direkt\n"
+        f"- Direkt und motivierend\n"
         f"- Auf Deutsch\n"
         f"Antworte NUR mit der Empfehlung, ohne Einleitung oder Erklärung."
     )
