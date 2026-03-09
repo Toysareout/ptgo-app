@@ -1,0 +1,5 @@
+# Clean URLs
+/heal    /heal.html    200
+/portal  /index.html   200
+/musik   /musik.html   200
+/setup   /setup-supabase.html  200
