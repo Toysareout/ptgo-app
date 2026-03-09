@@ -2,6 +2,7 @@
 // Saves to Supabase and sends email notification
 
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 
 const ALLOWED_ORIGINS = [
   'https://thetoysareout.com',
@@ -62,13 +63,12 @@ exports.handler = async (event) => {
       return { statusCode: 500, headers, body: JSON.stringify({ error: 'Save failed' }) };
     }
 
-    // Send notification email via SMTP (if configured)
-    if (process.env.SMTP_HOST) {
+    // Send notification email via SMTP
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
-        await sendNotification({ name, email, reason, duration, tried });
+        await sendNotification({ name, email, phone, reason, duration, tried });
       } catch (mailErr) {
         console.error('Email notification failed:', mailErr.message);
-        // Don't fail the request if email fails
       }
     }
 
@@ -83,9 +83,33 @@ exports.handler = async (event) => {
   }
 };
 
-// Simple SMTP notification (no external dependency, uses fetch to mailgun/sendgrid if configured)
-async function sendNotification({ name, email, reason, duration, tried }) {
-  // Uses Supabase Edge Function or webhook for notifications
-  // This is a placeholder — wire up your preferred email service
-  console.log(`New PTGO application from ${name} (${email})`);
+async function sendNotification({ name, email, phone, reason, duration, tried }) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'mail.gmx.net',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: process.env.SMTP_USER,
+    to: 'thetoysareout@gmx.de',
+    subject: `Neue PTGO Bewerbung von ${name}`,
+    text: [
+      `Neue Bewerbung eingegangen:`,
+      ``,
+      `Name: ${name}`,
+      `E-Mail: ${email}`,
+      `Telefon: ${phone || 'nicht angegeben'}`,
+      ``,
+      `Was führt hierher: ${reason}`,
+      `Dauer des Problems: ${duration || 'nicht angegeben'}`,
+      `Bereits versucht: ${tried || 'nicht angegeben'}`,
+      ``,
+      `— PTGO Method Formular`,
+    ].join('\n'),
+  });
 }
