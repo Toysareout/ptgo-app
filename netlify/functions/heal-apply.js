@@ -4,8 +4,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const ALLOWED_ORIGINS = [
-  'https://thetoysareout.de',
-  'https://www.thetoysareout.de',
+  'https://thetoysareout.com',
+  'https://www.thetoysareout.com',
   'http://localhost:8888',
   'http://127.0.0.1:8888',
 ];
