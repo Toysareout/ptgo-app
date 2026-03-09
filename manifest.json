@@ -1,0 +1,13 @@
+{
+  "name": "PTGO Method — TheToysAreOut",
+  "short_name": "PTGO",
+  "description": "Pain · Trauma · Growth · Outcome. Premium 1:1 Sessions.",
+  "start_url": "/heal",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#2dffa8",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"}
+  ]
+}

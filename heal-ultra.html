@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTGO METHOD</title>
+<meta name="description" content="Dein Körper speichert alles. Ich löse es. Eine Session.">
+<meta property="og:title" content="PTGO METHOD">
+<meta property="og:description" content="Dein Körper speichert alles. Ich löse es. Eine Session.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thetoysareout.com/heal">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2dffa8">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--black:#050505;--heal:#2dffa8;--white:#f0ece4;--dim:#0a0a0a;--border:#1a1a1a}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
+
+/* CURSOR */
+#cur{position:fixed;width:9px;height:9px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s}
+#cur.h{width:32px;height:32px;background:transparent;border:1px solid var(--heal)}
+
+/* GRAIN */
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.04;animation:gr .4s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
+
+/* HERO — Full viewport, nothing else */
+.hero{position:relative;width:100%;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,5,5,.1) 0%,transparent 30%,rgba(5,5,5,.95) 100%);z-index:1;pointer-events:none}
+#organ{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0}
+.hero-content{position:relative;z-index:2;text-align:center;padding:20px}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,12vw,140px);line-height:.85;letter-spacing:.02em}
+.hero-title .acc{color:var(--heal)}
+.hero-line{font-size:clamp(10px,1.2vw,13px);letter-spacing:.4em;text-transform:uppercase;opacity:.18;margin-top:20px;line-height:2}
+
+/* SCROLL INDICATOR */
+.scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:2;opacity:.08;animation:hintPulse 3s ease-in-out infinite}
+.scroll-hint div{width:1px;height:48px;background:linear-gradient(to bottom,transparent,var(--white));margin:0 auto}
+.scroll-hint span{font-size:7px;letter-spacing:.5em;text-transform:uppercase;display:block;text-align:center;margin-top:8px}
+@keyframes hintPulse{0%,100%{opacity:.05}50%{opacity:.15}}
+
+/* SECTION — ultra minimal */
+.sect{padding:clamp(80px,12vh,160px) clamp(24px,8vw,120px);max-width:900px;margin:0 auto}
+.sect-center{text-align:center}
+
+/* VIDEO */
+.video-wrap{position:relative;width:100%;max-width:800px;margin:0 auto;aspect-ratio:16/9;background:var(--black);border:1px solid var(--border);overflow:hidden}
+.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+/* PRICE */
+.price{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,96px);letter-spacing:.02em;text-align:center;margin:24px 0 8px}
+.price-sub{font-size:9px;letter-spacing:.4em;text-transform:uppercase;opacity:.12;text-align:center}
+
+/* CTA */
+.cta-btn{display:inline-block;background:var(--heal);color:var(--black);padding:18px 56px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;text-decoration:none;font-weight:700;transition:all .3s;border:none;cursor:pointer}
+.cta-btn:hover{background:var(--white);transform:translateY(-2px)}
+.cta-ghost{display:inline-block;background:transparent;border:1px solid rgba(240,236,228,.1);color:var(--white);padding:14px 40px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;text-decoration:none;transition:all .3s;cursor:pointer;opacity:.3}
+.cta-ghost:hover{border-color:var(--heal);color:var(--heal);opacity:1}
+
+/* FORM — minimal */
+.form-input{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(240,236,228,.06);color:var(--white);padding:16px 0;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.08em;outline:none;transition:border-color .3s}
+.form-input:focus{border-color:var(--heal)}
+.form-input::placeholder{opacity:.12}
+.form-group{margin-bottom:8px}
+
+/* DIVIDER */
+.div-line{width:40px;height:1px;background:rgba(240,236,228,.04);margin:0 auto}
+
+/* FOOTER */
+footer{padding:60px 24px;text-align:center}
+footer a{font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.08;color:var(--white);text-decoration:none;transition:opacity .3s}
+footer a:hover{opacity:.3}
+
+@media(max-width:600px){
+  .hero-title{font-size:clamp(44px,14vw,80px)}
+  .cta-btn{padding:16px 36px;font-size:9px}
+}
+</style>
+<!-- Analytics: Replace G-XXXXXXXXXX with your GA4 ID -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
+<!-- Meta Pixel: Replace XXXXXXXXXXXXXXXX with your Pixel ID -->
+<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
+</head>
+<body>
+
+<div id="cur"></div>
+<canvas id="grain"></canvas>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- HERO — That's it. One statement. -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="hero">
+  <canvas id="organ"></canvas>
+  <div class="hero-content">
+    <div class="hero-title">DEIN KÖRPER<br>SPEICHERT<br><span class="acc">ALLES.</span></div>
+    <div class="hero-line">Ich löse es. Eine Session.</div>
+  </div>
+  <div class="scroll-hint"><div></div><span>Scroll</span></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VIDEO — The only proof needed -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="sect sect-center">
+  <div class="video-wrap">
+    <iframe src="https://www.youtube.com/embed/miUd-ca7mfE" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- PRICE — No justification needed -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="sect sect-center">
+  <div class="div-line" style="margin-bottom:60px"></div>
+  <div class="price">5.000 €</div>
+  <div class="price-sub">Eine Session · Alles inklusive</div>
+  <div style="margin-top:48px">
+    <a href="#contact" class="cta-btn">Vorgespräch vereinbaren</a>
+  </div>
+  <div style="margin-top:16px">
+    <a href="https://cal.com/thetoysareout/vorgespraech" target="_blank" rel="noopener" class="cta-ghost">Direkt Termin buchen →</a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- CONTACT — Name + Number. That's all. -->
+<!-- ═══════════════════════════════════════════════ -->
+<section class="sect" id="contact" style="max-width:480px">
+  <div class="div-line" style="margin-bottom:60px"></div>
+  <form id="contact-form" onsubmit="submitContact(event)">
+    <div class="form-group"><input class="form-input" type="text" name="name" placeholder="Name" required></div>
+    <div class="form-group"><input class="form-input" type="tel" name="phone" placeholder="Telefon / Signal / WhatsApp" required></div>
+    <div class="form-group"><input class="form-input" type="email" name="email" placeholder="E-Mail (optional)"></div>
+    <div style="margin-top:40px;text-align:center">
+      <button type="submit" class="cta-btn">Absenden</button>
+    </div>
+    <div id="form-status" style="text-align:center;margin-top:20px;font-size:10px;letter-spacing:.2em"></div>
+  </form>
+</section>
+
+<footer>
+  <a href="/impressum" style="margin-right:24px">Impressum</a>
+  <a href="/datenschutz">Datenschutz</a>
+</footer>
+
+<script>
+// ═══ CURSOR ═══
+const cur = document.getElementById('cur');
+let mx=0,my=0,cx=0,cy=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+function sc(){cx+=(mx-cx)*.12;cy+=(my-cy)*.12;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(sc)}
+sc();
+document.querySelectorAll('a,button,.form-input,.cta-btn,.cta-ghost').forEach(el=>{
+  el.addEventListener('mouseenter',()=>cur.classList.add('h'));
+  el.addEventListener('mouseleave',()=>cur.classList.remove('h'));
+});
+
+// ═══ THREE.JS — ORGANIC ═══
+const canvas=document.getElementById('organ');
+const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+const w=Math.min(600,window.innerWidth*.7);
+renderer.setSize(w,w);renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(40,1,.1,100);
+camera.position.z=3.5;
+
+const geo=new THREE.IcosahedronGeometry(1.2,7);
+const posAttr=geo.attributes.position;
+const basePos=new Float32Array(posAttr.array.length);
+basePos.set(posAttr.array);
+
+const mat=new THREE.MeshStandardMaterial({color:0x2dffa8,roughness:.7,metalness:.08,transparent:true,opacity:.06,wireframe:false});
+const mesh=new THREE.Mesh(geo,mat);scene.add(mesh);
+
+const wireMat=new THREE.MeshBasicMaterial({color:0x2dffa8,wireframe:true,transparent:true,opacity:.018});
+const wireMesh=new THREE.Mesh(geo,wireMat);scene.add(wireMesh);
+
+const innerGeo=new THREE.SphereGeometry(.35,32,32);
+const innerMat=new THREE.MeshBasicMaterial({color:0x2dffa8,transparent:true,opacity:.015});
+scene.add(new THREE.Mesh(innerGeo,innerMat));
+
+scene.add(new THREE.PointLight(0x2dffa8,.4,10));
+const pl2=new THREE.PointLight(0x2dffa8,.2,10);pl2.position.set(-2,-1,2);scene.add(pl2);
+scene.add(new THREE.AmbientLight(0xffffff,.04));
+
+function noise3D(x,y,z){return Math.sin(x*1.1+y*2.3+z*3.7)*Math.cos(y*1.7+z)*Math.sin(z*2.1+x)}
+
+let scrollP=0;
+window.addEventListener('scroll',()=>{scrollP=Math.min(1,window.scrollY/(document.body.scrollHeight-window.innerHeight))});
+
+function animate(time){
+  requestAnimationFrame(animate);
+  const t=time*.001;
+  for(let i=0;i<posAttr.count;i++){
+    const bx=basePos[i*3],by=basePos[i*3+1],bz=basePos[i*3+2];
+    const n=noise3D(bx+t*.1,by+t*.075,bz+t*.05);
+    const d=1+n*(.12+scrollP*.06);
+    posAttr.setXYZ(i,bx*d,by*d,bz*d);
+  }
+  posAttr.needsUpdate=true;geo.computeVertexNormals();
+  mesh.rotation.y=t*.05;mesh.rotation.x=Math.sin(t*.03)*.12;
+  wireMesh.rotation.copy(mesh.rotation);
+  mat.opacity=.04+Math.sin(t*.4)*.02;
+  canvas.style.opacity=Math.max(0,1-scrollP*2.5);
+  renderer.render(scene,camera);
+}
+animate(0);
+window.addEventListener('resize',()=>{const s=Math.min(600,window.innerWidth*.7);renderer.setSize(s,s)});
+
+// ═══ FORM SUBMIT ═══
+const SUPA_URL='https://pwdhxarvemcgkhhnvbng.supabase.co';
+const SUPA_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
+const sb=supabase.createClient(SUPA_URL,SUPA_ANON);
+
+async function submitContact(e){
+  e.preventDefault();
+  const form=e.target;
+  const btn=form.querySelector('button');
+  const statusEl=document.getElementById('form-status');
+  const d=Object.fromEntries(new FormData(form));
+  btn.textContent='...';btn.disabled=true;statusEl.textContent='';
+
+  let saved=false;
+  try{
+    const{error}=await sb.from('heal_applications').insert({
+      name:d.name,email:d.email||null,phone:d.phone,
+      reason:'Ultra — Vorgespräch',source:'heal-ultra',status:'new'
+    });
+    if(!error)saved=true;
+  }catch(_){}
+  if(!saved){
+    try{
+      const res=await fetch('/.netlify/functions/heal-apply',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({name:d.name,email:d.email||'',phone:d.phone,reason:'Ultra — Vorgespräch'})
+      });
+      if(res.ok)saved=true;
+    }catch(_){}
+  }
+
+  if(saved){
+    form.innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-family:Bebas Neue,sans-serif;font-size:clamp(32px,5vw,48px)">Erhalten<span style="color:var(--heal)">.</span></div><div style="font-size:9px;letter-spacing:.3em;opacity:.15;margin-top:12px;text-transform:uppercase">Ich melde mich innerhalb von 24h.</div></div>';
+  }else{
+    statusEl.textContent='Fehler. Versuche es erneut.';statusEl.style.color='#ff4444';
+    btn.textContent='Absenden';btn.disabled=false;
+  }
+}
+</script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
+</body>
+</html>
