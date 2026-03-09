@@ -213,6 +213,9 @@ def build_drops_html(drops):
         sold_out = d.get("sold_out", False)
         sold_class = " sold-out" if sold_out else ""
         stock_text = "SOLD OUT" if sold_out else f'<b>{d["stock_left"]}</b> / {d["stock_total"]} übrig'
+        # Escape title for JS string
+        js_title = d['title'].replace("'", "\\'")
+        buy_btn = f"""<button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','{d['number']} — {js_title}',{d['price']})">{d['price']} € — JETZT</button>""" if not sold_out else f"""<button class="btn btn-g" style="width:100%;margin-top:12px;opacity:.3" disabled>VERGRIFFEN</button>"""
 
         html += f"""
     <div class="drop-card{sold_class}">
@@ -223,6 +226,7 @@ def build_drops_html(drops):
         <div class="drop-price">{d['price']} €</div>
         <div class="drop-stock">{stock_text}</div>
       </div>
+      {buy_btn}
     </div>"""
     return html
 
@@ -233,7 +237,7 @@ def build_live_html(session):
     <div class="live-dot"></div>
     <div class="live-date">{session['date']}</div>
     <div class="live-info">{session['title']}<br>{session['time']} Uhr · Exklusiver Livestream<br>Nur für Ticketinhaber</div>
-    <button class="btn btn-p" onclick="alert('Coming soon.')">{session['price']}€ · Ticket sichern →</button>
+    <button class="btn btn-p" onclick="buyItem('ticket','{session['title']}',{session['price']})">{session['price']}€ · Ticket sichern →</button>
     <div class="live-slots">Plätze: <b>{session['tickets_left']}</b> / {session['tickets_total']} verfügbar</div>
   </div>"""
 
@@ -249,7 +253,7 @@ def build_merch_html(merch):
         <div class="merch-price">{merch['price']} €</div>
         <div class="merch-ed">Edition {random.randint(1,99):03d} · {merch['stock_total']} Stück</div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="alert('Coming soon.')">Vorbestellen →</button>
+      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','{merch['name']}',{merch['price']})">{merch['price']} € — Kaufen →</button>
     </div>
   </div>"""
 

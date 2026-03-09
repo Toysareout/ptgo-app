@@ -370,7 +370,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
         <li>Behind-the-Scenes Content</li>
         <li>Monatliches Update</li>
       </ul>
-      <button class="tier-btn tier-btn-g" onclick="alert('Coming soon.')">Beitreten →</button>
+      <button class="tier-btn tier-btn-g" onclick="buyItem('session','Inner Circle Observer — 1 Monat',5)">Beitreten →</button>
     </div>
     <div class="tier featured">
       <div class="tier-name">Insider</div>
@@ -382,7 +382,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
         <li>Früher Zugang zu Drops</li>
         <li>Dein Name in Credits</li>
       </ul>
-      <button class="tier-btn tier-btn-p" onclick="alert('Coming soon.')">Beitreten →</button>
+      <button class="tier-btn tier-btn-p" onclick="buyItem('session','Inner Circle Insider — 1 Monat',10)">Beitreten →</button>
     </div>
     <div class="tier">
       <div class="tier-name">Patron</div>
@@ -394,7 +394,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
         <li>Persönliche Nachricht</li>
         <li>Limitierte Merch-Drops gratis</li>
       </ul>
-      <button class="tier-btn tier-btn-g" onclick="alert('Coming soon.')">Beitreten →</button>
+      <button class="tier-btn tier-btn-g" onclick="buyItem('session','Inner Circle Patron — 1 Monat',25)">Beitreten →</button>
     </div>
   </div>
 </section>
@@ -408,7 +408,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
     <div class="live-dot"></div>
     <div class="live-date">Coming Soon</div>
     <div class="live-info">Exklusiver Livestream<br>Musik · Gespräch · Produktion<br>Nur für Ticketinhaber</div>
-    <button class="btn btn-p" onclick="alert('Coming soon.')">Ticket sichern · 10 € →</button>
+    <button class="btn btn-p" onclick="buyItem('ticket','Live Session',10)">Ticket sichern · 10 € →</button>
     <div class="live-slots">Plätze: <b>20</b> / 20 verfügbar</div>
   </div><!--LIVE-END-->
 </section>
@@ -427,7 +427,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
         <div class="merch-price">39 €</div>
         <div class="merch-ed">Edition 001 · 50 Stück</div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="alert('Coming soon.')">Vorbestellen →</button>
+      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','The Black Tee',39)">39 € — Kaufen →</button>
     </div>
   </div><!--MERCH-END-->
 </section>
@@ -543,7 +543,7 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
   <div id="pay-tier-info"></div>
   <div class="pay-price" id="pay-price-display">1,00 €</div>
   <div class="btns">
-    <button class="btn btn-p" onclick="doPay()">Absenden →</button>
+    <button class="btn btn-p" onclick="buyPhoto()">Absenden →</button>
     <button class="btn btn-g" onclick="closePay()">Abbrechen</button>
   </div>
 </div>
@@ -684,6 +684,15 @@ async function doPay() {
   } catch(e) { console.log('Supabase insert error:', e); }
   document.getElementById('succ').classList.add('open');
 }
+async function buyPhoto() {
+  // Save photo to Supabase first, then redirect to Stripe
+  try {
+    await sb.from('photos').insert({ image_data: captured, status: 'pending', tier: selectedTier });
+  } catch(e) { console.log('Supabase insert error:', e); }
+  closePay(); closePanel('cam-panel');
+  const tierName = selectedTier === 1 ? 'Gesicht' : selectedTier === 5 ? 'Gesicht + Name' : 'Gesicht + Name + Link';
+  buyItem('photo', 'THETOYSAREOUT — ' + tierName, selectedTier);
+}
 function afterSucc() { document.getElementById('succ').classList.remove('open'); openPanel('gal-panel'); }
 
 // ── GALLERY ──
@@ -815,6 +824,34 @@ pwIn.addEventListener('keydown', e => {
     }
   }
 });
+
+// ── STRIPE CHECKOUT ──
+async function buyItem(type, name, price) {
+  try {
+    const r = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item_type: type, item_name: name, price })
+    });
+    const data = await r.json();
+    if (data.url) window.location.href = data.url;
+    else alert('Checkout nicht verfügbar.');
+  } catch(e) { alert('Verbindungsfehler.'); }
+}
+
+// ── SUCCESS BANNER ──
+(function checkPurchase(){
+  const p = new URLSearchParams(location.search);
+  if (p.get('success') === '1') {
+    const type = p.get('purchased') || 'item';
+    const b = document.createElement('div');
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--pink);color:var(--black);text-align:center;padding:14px;font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:3px;animation:mi .4s ease forwards';
+    b.textContent = 'GEKAUFT. DU BIST JETZT TEIL VON THETOYSAREOUT.';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 6000);
+    history.replaceState({}, '', location.pathname);
+  }
+})();
 </script>
 </body>
 </html>
