@@ -4,6 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>THETOYSAREOUT — Wähle deine Welt</title>
+<meta name="description" content="THETOYSAREOUT — Zwei Welten, ein Körper. Musik, Bewegung, Energie trifft Heilung, Körper, Transformation. Wähle deine Welt.">
+<meta name="author" content="THETOYSAREOUT">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thetoysareout.com/">
+<meta property="og:title" content="THETOYSAREOUT — Wähle deine Welt">
+<meta property="og:description" content="Zwei Welten, ein Körper. Musik · Bewegung · Energie trifft Heilung · Körper · Transformation.">
+<meta property="og:image" content="https://thetoysareout.com/og-image.jpg">
+<meta property="og:site_name" content="THETOYSAREOUT">
+<meta property="og:locale" content="de_DE">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@thetoysareout">
+<meta name="twitter:title" content="THETOYSAREOUT — Wähle deine Welt">
+<meta name="twitter:description" content="Zwei Welten, ein Körper. Musik · Bewegung · Energie trifft Heilung · Körper · Transformation.">
+<meta name="twitter:image" content="https://thetoysareout.com/og-image.jpg">
+
+<!-- Canonical -->
+<link rel="canonical" href="https://thetoysareout.com/">
+
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -12,7 +35,7 @@
 html,body{height:100%;overflow:hidden}
 body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none}
 
-#cur{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .3s,height .3s,background .5s}
+#cur{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s,background .5s}
 #cur.music{background:var(--pink)}
 #cur.heal{background:var(--heal)}
 #cur.neutral{background:var(--white);opacity:.5}
@@ -52,14 +75,28 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 @keyframes organPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:1}}
 #organ-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.5em;text-transform:uppercase;opacity:.12;white-space:nowrap}
 
-/* CENTER LINE */
-#divider{position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%);z-index:1}
+/* CENTER LINE — breathing animation */
+#divider{position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%);z-index:1;animation:dividerBreathe 6s ease-in-out infinite}
+@keyframes dividerBreathe{
+  0%,100%{opacity:.6;transform:translateX(-50%) scaleY(1);background:linear-gradient(to bottom,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%)}
+  50%{opacity:1;transform:translateX(-50%) scaleY(1);background:linear-gradient(to bottom,transparent 5%,rgba(255,255,255,.1) 30%,rgba(255,255,255,.1) 70%,transparent 95%)}
+}
 
 /* CORNERS */
 .corner{position:fixed;z-index:20;font-size:8px;letter-spacing:.3em;text-transform:uppercase;pointer-events:none;opacity:.1}
 #p-c1{top:20px;left:28px}
 #p-c2{top:20px;right:28px;text-align:right}
 #p-c3{bottom:20px;left:50%;transform:translateX(-50%);text-align:center}
+
+/* HOURLY TAGLINE */
+#hourly-tagline{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:20;font-size:7px;letter-spacing:.4em;text-transform:uppercase;opacity:0;white-space:nowrap;transition:opacity 2s;color:var(--white)}
+#hourly-tagline.visible{opacity:.1}
+
+/* FLOATING PARTICLES */
+.particle{position:fixed;width:2px;height:2px;border-radius:50%;pointer-events:none;z-index:0;opacity:0}
+.particle.pink{background:var(--pink)}
+.particle.green{background:var(--heal)}
+.particle.white{background:var(--white)}
 
 /* GRAIN */
 #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.08;animation:gr .4s steps(1) infinite}
@@ -81,8 +118,13 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
   #portal{flex-direction:column}
   .world:hover{flex:1.5}
   #organ-wrap{width:140px;height:140px}
-  #divider{left:0;right:0;top:50%;bottom:auto;width:auto;height:1px;background:linear-gradient(to right,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%)}
+  #divider{left:0;right:0;top:50%;bottom:auto;width:auto;height:1px;background:linear-gradient(to right,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%);animation:dividerBreatheH 6s ease-in-out infinite}
+  @keyframes dividerBreatheH{
+    0%,100%{opacity:.6;background:linear-gradient(to right,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%)}
+    50%{opacity:1;background:linear-gradient(to right,transparent 5%,rgba(255,255,255,.1) 30%,rgba(255,255,255,.1) 70%,transparent 95%)}
+  }
   .corner{display:none}
+  #hourly-tagline{font-size:6px;letter-spacing:.3em;bottom:50px}
 }
 </style>
 </head>
@@ -94,6 +136,9 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 <div class="corner" id="p-c1">THETOYSAREOUT</div>
 <div class="corner" id="p-c2">EST. 2026</div>
 <div class="corner" id="p-c3">Wähle deine Welt</div>
+
+<!-- HOURLY TAGLINE -->
+<div id="hourly-tagline"></div>
 
 <!-- EASTER BANNER (auto-hides after Ostern 2026) -->
 <div id="easter-banner">
@@ -137,22 +182,79 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 </div>
 
 <script>
-// ── CURSOR ──
+// ═══════════════════════════════════════════════════════════
+// HOURLY CONTENT SYSTEM — Subtle tagline changes each hour
+// ═══════════════════════════════════════════════════════════
+const HOURLY_TAGLINES = [
+  'Die Nacht gehört den Mutigen',
+  'Stille formt die stärksten Gedanken',
+  'Im Dunkeln wächst, was Licht verdient',
+  'Dein Körper regeneriert — lass ihn',
+  'Zwischen Schlaf und Wachsein liegt Wahrheit',
+  'Der erste Atemzug zählt',
+  'Morgenlicht trifft neue Entscheidungen',
+  'Der Tag beginnt mit einer Wahl',
+  'Energie folgt Intention',
+  'Bewegung ist die Antwort',
+  'Mittag — Zeit für Klarheit',
+  'Im Zentrum liegt die Kraft',
+  'Peak-Stunde — Nutze sie',
+  'Transformation braucht keinen Termin',
+  'Nachmittag — Integration läuft',
+  'Muster brechen sich jetzt',
+  'Der Körper weiß mehr als der Kopf',
+  'Abend — Reflexion beginnt',
+  'Loslassen ist eine Kunst',
+  'Das Nervensystem findet Ruhe',
+  'Nacht — Tiefenarbeit ohne Worte',
+  'Im Stillen passiert das Wesentliche',
+  'Zwei Welten atmen im gleichen Rhythmus',
+  'Die dunkelste Stunde kennt den Weg'
+];
+
+function getHourSeed() { return new Date().getHours(); }
+
+function updateHourlyTagline() {
+  const h = getHourSeed();
+  const el = document.getElementById('hourly-tagline');
+  el.classList.remove('visible');
+  setTimeout(() => {
+    el.textContent = '— ' + HOURLY_TAGLINES[h] + ' —';
+    el.classList.add('visible');
+  }, 500);
+}
+updateHourlyTagline();
+setInterval(updateHourlyTagline, 60000);
+
+// ═══════════════════════════════════════════════════════════
+// SMOOTH CURSOR WITH LERP (like heal.html)
+// ═══════════════════════════════════════════════════════════
 const cur = document.getElementById('cur');
-document.addEventListener('mousemove', e => { cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px' });
-document.querySelectorAll('a,.w-btn').forEach(el => {
+let mx = 0, my = 0, cx = 0, cy = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function smoothCursor() {
+  cx += (mx - cx) * 0.15;
+  cy += (my - cy) * 0.15;
+  cur.style.left = cx + 'px';
+  cur.style.top = cy + 'px';
+  requestAnimationFrame(smoothCursor);
+}
+smoothCursor();
+
+document.querySelectorAll('a,.w-btn,.eb-btn,.eb-close').forEach(el => {
   el.addEventListener('mouseenter', () => cur.classList.add('h'));
   el.addEventListener('mouseleave', () => cur.classList.remove('h'));
 });
 
-// ── WORLD HOVER ──
+// ═══════════════════════════════════════════════════════════
+// WORLD HOVER
+// ═══════════════════════════════════════════════════════════
 let activeWorld = null;
 function hoverWorld(w) {
   activeWorld = w;
   cur.className = w;
   const other = w === 'music' ? 'w-heal' : 'w-music';
   document.getElementById(other).classList.add('dimmed');
-  // Shift organ color
   organHue = w === 'music' ? 0.92 : 0.45;
 }
 function leaveWorld() {
@@ -163,7 +265,42 @@ function leaveWorld() {
   organHue = 0.0;
 }
 
-// ── THREE.JS ORGAN ──
+// ═══════════════════════════════════════════════════════════
+// FLOATING AMBIENT PARTICLES
+// ═══════════════════════════════════════════════════════════
+function createParticles() {
+  const colors = ['pink', 'green', 'white', 'white', 'white'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle ' + colors[i % colors.length];
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = Math.random() * 100 + 'vh';
+    const size = 1 + Math.random() * 2;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    document.body.appendChild(p);
+    animateParticle(p, Math.random() * 5000);
+  }
+}
+function animateParticle(p, delay) {
+  setTimeout(() => {
+    const duration = 18000 + Math.random() * 22000;
+    const x1 = Math.random() * 100, y1 = Math.random() * 100;
+    p.style.transition = 'left ' + duration + 'ms linear, top ' + duration + 'ms linear, opacity ' + (duration * 0.3) + 'ms ease';
+    p.style.opacity = 0.04 + Math.random() * 0.08;
+    p.style.left = x1 + 'vw';
+    p.style.top = y1 + 'vh';
+    setTimeout(() => {
+      p.style.opacity = 0;
+      setTimeout(() => animateParticle(p, 0), 2000);
+    }, duration * 0.7);
+  }, delay);
+}
+createParticles();
+
+// ═══════════════════════════════════════════════════════════
+// THREE.JS ORGAN — Hour-based behavior
+// ═══════════════════════════════════════════════════════════
 let organHue = 0.0;
 const canvas = document.getElementById('organ-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
@@ -217,25 +354,38 @@ function noise3D(x, y, z) {
   return Math.sin(p) * Math.cos(y * 1.7 + z) * Math.sin(z * 2.1 + x);
 }
 
+// Hour-based organism behavior
+function getOrganicParams() {
+  const h = getHourSeed();
+  // Night: slow, deep. Day: more active. Evening: calm
+  if (h >= 0 && h < 6) return { speed: 0.6, intensity: 0.12, rotSpeed: 0.08 };
+  if (h >= 6 && h < 10) return { speed: 0.9, intensity: 0.16, rotSpeed: 0.12 };
+  if (h >= 10 && h < 14) return { speed: 1.2, intensity: 0.22, rotSpeed: 0.18 };
+  if (h >= 14 && h < 18) return { speed: 1.0, intensity: 0.18, rotSpeed: 0.15 };
+  if (h >= 18 && h < 22) return { speed: 0.7, intensity: 0.14, rotSpeed: 0.10 };
+  return { speed: 0.5, intensity: 0.10, rotSpeed: 0.07 };
+}
+
 function animate(time) {
   requestAnimationFrame(animate);
   const t = time * 0.001;
+  const params = getOrganicParams();
 
-  // Displace vertices organically
+  // Displace vertices organically — speed varies by hour
   for (let i = 0; i < posAttr.count; i++) {
     const bx = basePos[i * 3];
     const by = basePos[i * 3 + 1];
     const bz = basePos[i * 3 + 2];
-    const n = noise3D(bx + t * 0.3, by + t * 0.2, bz + t * 0.15);
-    const displacement = 1 + n * 0.18;
+    const n = noise3D(bx + t * 0.3 * params.speed, by + t * 0.2 * params.speed, bz + t * 0.15 * params.speed);
+    const displacement = 1 + n * params.intensity;
     posAttr.setXYZ(i, bx * displacement, by * displacement, bz * displacement);
   }
   posAttr.needsUpdate = true;
   geo.computeVertexNormals();
 
-  // Rotate slowly
-  mesh.rotation.y = t * 0.15;
-  mesh.rotation.x = Math.sin(t * 0.1) * 0.2;
+  // Rotate — speed varies by hour
+  mesh.rotation.y = t * params.rotSpeed;
+  mesh.rotation.x = Math.sin(t * params.rotSpeed * 0.67) * 0.2;
   wire.rotation.copy(mesh.rotation);
 
   // Color shift based on hover
@@ -258,7 +408,9 @@ window.addEventListener('resize', () => {
   renderer.setSize(s, s);
 });
 
-// ── EASTER BANNER: auto-hide after Ostern 2026 ──
+// ═══════════════════════════════════════════════════════════
+// EASTER BANNER: auto-hide after Ostern 2026
+// ═══════════════════════════════════════════════════════════
 (function() {
   const banner = document.getElementById('easter-banner');
   if (!banner) return;
@@ -268,8 +420,9 @@ window.addEventListener('resize', () => {
   }
 })();
 
-// ── TRACK WHICH WORLD USER ENTERED FROM ──
-// Store in sessionStorage so the other pages know
+// ═══════════════════════════════════════════════════════════
+// TRACK WHICH WORLD USER ENTERED FROM
+// ═══════════════════════════════════════════════════════════
 document.querySelectorAll('.w-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const world = btn.closest('#w-music') ? 'music' : 'heal';
