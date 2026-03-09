@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSTER RESET BOX — THETOYSAREOUT × PTGO</title>
+<meta name="description" content="Limitierte Oster Reset Box. 50 Stück. Dein Körper-Reset für den Frühling. THETOYSAREOUT × PTGO Method.">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#050505;--white:#f0ece4;
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,.08);--gold-glow:rgba(201,168,76,.15);
+  --dim:#0a0a0a;--mid:#111;--border:#1a1a1a;
+  --heal:#2dffa8;--pink:#ff2d8e;
+  --egg1:#c9a84c;--egg2:#ff2d8e;--egg3:#2dffa8;
+}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
+
+#cur{position:fixed;width:9px;height:9px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s}
+#cur.h{width:32px;height:32px;background:transparent;border:1px solid var(--gold)}
+
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
+
+/* HERO */
+#hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:60px 20px}
+#hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,5,5,.3) 0%,transparent 30%,rgba(5,5,5,.95) 100%);z-index:1;pointer-events:none}
+#hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,var(--gold-dim),transparent 60%)}
+
+.hero-content{position:relative;z-index:2;text-align:center;max-width:700px}
+.hero-badge{display:inline-block;padding:6px 20px;border:1px solid rgba(201,168,76,.2);font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--gold);opacity:.6;margin-bottom:24px}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,10vw,110px);line-height:.88;letter-spacing:.03em;margin-bottom:16px}
+.hero-title .acc{color:var(--gold)}
+.hero-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.12)}
+.hero-sub{font-size:clamp(9px,1.1vw,11px);letter-spacing:.3em;text-transform:uppercase;opacity:.2;line-height:2.2;margin-bottom:32px}
+
+/* COUNTDOWN */
+#countdown{display:flex;gap:4px;justify-content:center;margin-bottom:40px}
+.cd-block{background:var(--dim);border:1px solid rgba(201,168,76,.12);padding:16px 12px;min-width:72px;text-align:center}
+.cd-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);color:var(--gold);line-height:1}
+.cd-label{font-size:7px;letter-spacing:.4em;text-transform:uppercase;opacity:.2;margin-top:4px}
+
+/* EXPIRED STATE */
+.expired-msg{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,4vw,40px);color:var(--gold);opacity:.4;margin-bottom:24px}
+
+/* CTA */
+.btn-gold{padding:18px 52px;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;background:var(--gold);color:var(--black);display:inline-block;text-decoration:none}
+.btn-gold:hover{background:var(--white)}
+.btn-gold:disabled{opacity:.3;cursor:not-allowed}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--white);opacity:.4}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);opacity:1}
+
+/* STOCK */
+#stock-bar{max-width:360px;margin:20px auto 0}
+.stock-track{height:3px;background:var(--border);position:relative;overflow:hidden}
+.stock-fill{height:100%;background:var(--gold);transition:width 1.5s cubic-bezier(.16,1,.3,1)}
+.stock-text{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.25;margin-top:8px;text-align:center}
+.stock-text strong{color:var(--gold);opacity:1}
+
+/* SECTIONS */
+.sect{padding:clamp(80px,12vh,140px) clamp(24px,8vw,120px);border-top:1px solid var(--border)}
+.s-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--gold);opacity:.35;margin-bottom:16px}
+.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4.5vw,64px);line-height:.95;margin-bottom:12px}
+.s-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.12)}
+.s-body{font-size:11px;letter-spacing:.12em;line-height:2.4;opacity:.3;max-width:600px;margin-bottom:32px}
+
+/* BOX CONTENTS */
+.box-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:800px;margin:40px auto 0}
+.box-item{background:var(--dim);border:1px solid var(--border);padding:32px 20px;text-align:center;transition:border-color .3s,transform .3s}
+.box-item:hover{border-color:var(--gold);transform:translateY(-4px)}
+.box-icon{font-size:32px;margin-bottom:12px;opacity:.6}
+.box-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;margin-bottom:6px}
+.box-desc{font-size:8px;letter-spacing:.15em;opacity:.2;line-height:2}
+
+/* WHY SECTION */
+.why-list{max-width:600px;margin:32px auto 0;list-style:none}
+.why-list li{font-size:10px;letter-spacing:.12em;padding:14px 0;border-bottom:1px solid var(--border);opacity:.35}
+.why-list li::before{content:'→ ';color:var(--gold)}
+
+/* PRICE CARD */
+.price-card{max-width:480px;margin:40px auto 0;background:var(--dim);border:1px solid var(--gold);padding:48px 36px;text-align:center;position:relative}
+.price-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--gold),transparent)}
+.price-tag{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,80px);color:var(--gold)}
+.price-sub{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.2;margin-bottom:8px}
+.price-orig{font-size:11px;letter-spacing:.15em;opacity:.15;text-decoration:line-through;margin-bottom:24px}
+.price-includes{list-style:none;text-align:left;margin-bottom:32px}
+.price-includes li{font-size:10px;letter-spacing:.12em;padding:10px 0;border-bottom:1px solid var(--border);opacity:.4}
+.price-includes li::before{content:'→ ';color:var(--gold)}
+
+/* SHIPPING INFO */
+.ship-info{max-width:600px;margin:40px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.ship-block{background:var(--dim);border:1px solid var(--border);padding:24px 16px;text-align:center}
+.ship-icon{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);opacity:.3;margin-bottom:8px}
+.ship-label{font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;margin-bottom:4px}
+.ship-val{font-size:10px;letter-spacing:.1em;opacity:.4}
+
+/* FAQ */
+.faq{max-width:600px;margin:40px auto 0}
+.faq-item{border-bottom:1px solid var(--border);padding:20px 0}
+.faq-q{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.06em;cursor:none;opacity:.5;transition:opacity .3s}
+.faq-q:hover{opacity:1;color:var(--gold)}
+.faq-a{font-size:9px;letter-spacing:.12em;opacity:.2;line-height:2.2;max-height:0;overflow:hidden;transition:max-height .4s,padding .4s}
+.faq-item.open .faq-a{max-height:200px;padding-top:12px}
+
+/* FOOTER */
+footer{padding:60px clamp(24px,8vw,120px);border-top:1px solid var(--border);text-align:center}
+.f-brand{font-family:'Bebas Neue',sans-serif;font-size:clamp(18px,2vw,24px);letter-spacing:.05em;margin-bottom:8px}
+.f-brand .acc{color:var(--gold)}
+.f-copy{font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.08}
+
+/* BACK */
+#back{position:fixed;top:20px;left:28px;z-index:20;font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.12;text-decoration:none;color:var(--white);transition:opacity .3s}
+#back:hover{opacity:.6;color:var(--gold)}
+
+/* EASTER EGGS (decorative) */
+.easter-float{position:fixed;pointer-events:none;z-index:0;opacity:.03;font-size:48px}
+
+@media(max-width:680px){
+  .box-grid{grid-template-columns:1fr 1fr}
+  .ship-info{grid-template-columns:1fr}
+  .cd-block{min-width:56px;padding:12px 8px}
+  #hero{padding:40px 16px}
+}
+@media(max-width:400px){
+  .box-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".04"/></svg>
+
+<a href="index.html" id="back">← Portal</a>
+
+<!-- HERO -->
+<section id="hero">
+  <div id="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Limitierte Edition · Ostern 2026</div>
+    <div class="hero-title">OSTER<br><span class="acc">RESET</span><br><span class="ol">BOX.</span></div>
+    <div class="hero-sub">Dein Körper-Reset für den Frühling.<br>THETOYSAREOUT × PTGO Method.<br>Nur 50 Stück. Dann nie wieder.</div>
+
+    <!-- Countdown OR expired message -->
+    <div id="countdown-wrap">
+      <div id="countdown">
+        <div class="cd-block"><div class="cd-num" id="cd-d">00</div><div class="cd-label">Tage</div></div>
+        <div class="cd-block"><div class="cd-num" id="cd-h">00</div><div class="cd-label">Std</div></div>
+        <div class="cd-block"><div class="cd-num" id="cd-m">00</div><div class="cd-label">Min</div></div>
+        <div class="cd-block"><div class="cd-num" id="cd-s">00</div><div class="cd-label">Sek</div></div>
+      </div>
+    </div>
+
+    <div id="hero-cta">
+      <a href="#bestellen" class="btn-gold" id="buy-hero-btn">Jetzt sichern — 199 € →</a>
+    </div>
+
+    <div id="stock-bar">
+      <div class="stock-track"><div class="stock-fill" id="stock-fill" style="width:0%"></div></div>
+      <div class="stock-text"><strong id="stock-left">--</strong> von 50 verfügbar</div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT'S IN THE BOX -->
+<section class="sect" id="inhalt">
+  <div class="s-label">Inhalt · Premium</div>
+  <div class="s-title">Was in der<br><span class="ol">Box</span> steckt.</div>
+  <div class="s-body">Jedes Teil handverlesen. Kein Filler. Alles, was du brauchst, um deinen Körper in den Frühling zu resetten.</div>
+  <div class="box-grid">
+    <div class="box-item">
+      <div class="box-icon">⚫</div>
+      <div class="box-name">Fascia Ball Set</div>
+      <div class="box-desc">Premium Faszienball (8cm + 6cm). Für Deep-Tissue Release. Löst Verklebungen und chronische Spannung.</div>
+    </div>
+    <div class="box-item">
+      <div class="box-icon">◼</div>
+      <div class="box-name">Resistance Band Pro</div>
+      <div class="box-desc">Therapeutisches Widerstandsband. 3 Stärken in einem Set. Für Mobilisation und neuronale Aktivierung.</div>
+    </div>
+    <div class="box-item">
+      <div class="box-icon">▲</div>
+      <div class="box-name">PTGO Audio Session</div>
+      <div class="box-desc">Exklusive 45-Min geführte Body-Reset Session. QR-Code. Nie wieder verfügbar nach Ostern.</div>
+    </div>
+    <div class="box-item">
+      <div class="box-icon">◆</div>
+      <div class="box-name">Reset Protocol</div>
+      <div class="box-desc">Persönlicher 7-Tage Body-Reset Plan. Gedruckt auf Premium-Papier. Basierend auf der PTGO-Methode.</div>
+    </div>
+    <div class="box-item">
+      <div class="box-icon">○</div>
+      <div class="box-name">Recovery Balm</div>
+      <div class="box-desc">Handgemachte Muskel-Regenerations-Salbe. Arnika, Menthol, Rosmarin. 50ml Premium-Tiegel.</div>
+    </div>
+    <div class="box-item">
+      <div class="box-icon">□</div>
+      <div class="box-name">Box & Verpackung</div>
+      <div class="box-desc">Matte schwarze Premium-Box mit Gold-Prägung. Nummeriert. Sammlerstück. Jede Box ist einzigartig.</div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY THIS BOX -->
+<section class="sect" id="warum">
+  <div class="s-label">Warum · Jetzt</div>
+  <div class="s-title">Warum diese<br><span class="ol">Box.</span></div>
+  <div class="s-body">Ostern = Neuanfang. Dein Körper hat den Winter gespeichert. Spannung, Steifheit, alte Muster. Diese Box gibt dir die Werkzeuge, um alles loszulassen.</div>
+  <ul class="why-list">
+    <li>Faszien-Tools lösen chronische Verspannungen in Minuten</li>
+    <li>Die exklusive Audio-Session ist von der PTGO-Methode abgeleitet (Wert: 200 €+)</li>
+    <li>Der 7-Tage Reset-Plan gibt dir Struktur — kein Raten</li>
+    <li>Recovery Balm beschleunigt die Regeneration nach jedem Release</li>
+    <li>Premium-Verpackung — perfekt als Geschenk oder für dich selbst</li>
+    <li>Nach Ostern wird diese Box nie wieder produziert</li>
+  </ul>
+</section>
+
+<!-- BESTELLEN -->
+<section class="sect" id="bestellen">
+  <div class="s-label">Bestellen · Limitiert</div>
+  <div class="s-title">Deine<br><span class="ol">Box.</span></div>
+  <div class="price-card">
+    <div class="price-tag">199 €</div>
+    <div class="price-sub">Inkl. MwSt. · Kostenloser Versand</div>
+    <div class="price-orig">Einzelwert der Inhalte: 340 €+</div>
+    <ul class="price-includes">
+      <li>Fascia Ball Set (2 Größen)</li>
+      <li>Resistance Band Pro (3er Set)</li>
+      <li>Exklusive PTGO Audio Session (45 Min)</li>
+      <li>7-Tage Body Reset Protocol (gedruckt)</li>
+      <li>Recovery Balm (50ml, handgemacht)</li>
+      <li>Nummerierte Premium-Box mit Gold-Prägung</li>
+      <li>Kostenloser Versand innerhalb Deutschlands</li>
+    </ul>
+    <button class="btn-gold" id="buy-btn" onclick="buyBox()" style="width:100%">Jetzt bestellen →</button>
+    <div id="buy-status" style="font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.4;margin-top:16px;min-height:18px"></div>
+  </div>
+
+  <div class="ship-info">
+    <div class="ship-block">
+      <div class="ship-icon">→</div>
+      <div class="ship-label">Versand</div>
+      <div class="ship-val">Kostenlos in DE</div>
+    </div>
+    <div class="ship-block">
+      <div class="ship-icon">◷</div>
+      <div class="ship-label">Lieferung</div>
+      <div class="ship-val">Vor Ostern garantiert</div>
+    </div>
+    <div class="ship-block">
+      <div class="ship-icon">↩</div>
+      <div class="ship-label">Rückgabe</div>
+      <div class="ship-val">14 Tage Widerrufsrecht</div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sect" id="faq">
+  <div class="s-label">FAQ · Häufige Fragen</div>
+  <div class="s-title">Noch<br><span class="ol">Fragen?</span></div>
+  <div class="faq">
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Wann wird die Box geliefert?</div>
+      <div class="faq-a">Bestellungen bis zum 28. März werden garantiert vor Ostern (5. April) geliefert. Versand innerhalb von 2-3 Werktagen nach Bestellung.</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Kann ich die Box als Geschenk bestellen?</div>
+      <div class="faq-a">Ja. Du kannst eine andere Lieferadresse angeben. Wir legen keine Rechnung bei. Die Box kommt in Premium-Verpackung — geschenkfertig.</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Was ist die PTGO Audio Session?</div>
+      <div class="faq-a">Eine exklusive 45-minütige geführte Körper-Reset-Session, basierend auf der PTGO-Methode. Du bekommst einen QR-Code in der Box. Die Session ist nur für Box-Besitzer zugänglich und wird nach Ostern offline genommen.</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Wird es die Box nach Ostern nochmal geben?</div>
+      <div class="faq-a">Nein. Limitiert auf 50 Stück. Danach wird diese Edition nie wieder produziert. Es wird keine Nachproduktion geben.</div>
+    </div>
+    <div class="faq-item" onclick="this.classList.toggle('open')">
+      <div class="faq-q">Versand auch nach Österreich/Schweiz?</div>
+      <div class="faq-a">Ja, Versand in die DACH-Region möglich. Für AT/CH fallen 9,90 € Versandkosten an, die im Checkout berechnet werden.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="f-brand">OSTER <span class="acc">RESET</span> BOX</div>
+  <div class="f-copy">THETOYSAREOUT × PTGO METHOD © 2026 · Limitierte Oster-Edition</div>
+</footer>
+
+<script>
+// ── CURSOR ──
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => { cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px' });
+document.querySelectorAll('a,button,.box-item,.faq-item,.btn-gold,.btn-ghost').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('h'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('h'));
+});
+
+// ── EASTER DATE & AUTO-EXPIRE ──
+const EASTER = new Date('2026-04-05T23:59:59+02:00'); // Ostersonntag 2026, Ende des Tages CEST
+const SALE_END = new Date('2026-04-06T00:00:00+02:00'); // Sale endet nach Ostersonntag
+
+function isExpired() {
+  return new Date() > SALE_END;
+}
+
+// ── COUNTDOWN ──
+function updateCountdown() {
+  const now = new Date();
+  const diff = EASTER - now;
+
+  if (diff <= 0 || isExpired()) {
+    showExpired();
+    return;
+  }
+
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+
+  document.getElementById('cd-d').textContent = String(d).padStart(2, '0');
+  document.getElementById('cd-h').textContent = String(h).padStart(2, '0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2, '0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2, '0');
+}
+
+function showExpired() {
+  const wrap = document.getElementById('countdown-wrap');
+  wrap.innerHTML = '<div class="expired-msg">Ausverkauft. Ostern vorbei.</div>';
+
+  // Disable buy buttons
+  document.querySelectorAll('.btn-gold').forEach(btn => {
+    btn.disabled = true;
+    btn.style.opacity = '.2';
+    btn.textContent = 'Nicht mehr verfügbar';
+    btn.onclick = null;
+    btn.removeAttribute('href');
+  });
+
+  document.getElementById('stock-bar').style.display = 'none';
+}
+
+// Start countdown
+if (!isExpired()) {
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+} else {
+  showExpired();
+}
+
+// ── FAKE SCARCITY (smart: decreases over time based on date) ──
+function getStockLeft() {
+  const launchDate = new Date('2026-03-09');
+  const now = new Date();
+  const daysSinceLaunch = Math.floor((now - launchDate) / 86400000);
+
+  // Simulate sales: ~2-3 per day, with some randomness based on day
+  const baseSold = Math.min(47, Math.floor(daysSinceLaunch * 2.3));
+  const left = Math.max(3, 50 - baseSold); // Never show 0, always show at least 3
+
+  return left;
+}
+
+const stockLeft = getStockLeft();
+document.getElementById('stock-left').textContent = stockLeft;
+// Animate fill bar
+setTimeout(() => {
+  const pct = ((50 - stockLeft) / 50) * 100;
+  document.getElementById('stock-fill').style.width = pct + '%';
+}, 500);
+
+// ── STRIPE CHECKOUT ──
+async function buyBox() {
+  const btn = document.getElementById('buy-btn');
+  const status = document.getElementById('buy-status');
+
+  if (isExpired()) {
+    status.textContent = 'Aktion beendet.';
+    return;
+  }
+
+  btn.textContent = 'Wird geladen...';
+  btn.disabled = true;
+  status.textContent = '';
+
+  try {
+    const res = await fetch('/.netlify/functions/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_type: 'easter',
+        item_name: 'OSTER RESET BOX — Limitierte Edition',
+        price: 199,
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || 'Checkout fehlgeschlagen');
+    }
+  } catch (err) {
+    status.textContent = 'Fehler: ' + err.message + ' — Versuche es erneut.';
+    status.style.color = '#ff4444';
+    btn.textContent = 'Jetzt bestellen →';
+    btn.disabled = false;
+  }
+}
+
+// ── FLOATING EASTER EGGS (subtle decorative) ──
+function createFloatingEggs() {
+  const symbols = ['◆', '○', '◇'];
+  const colors = ['var(--gold)', 'var(--pink)', 'var(--heal)'];
+  for (let i = 0; i < 6; i++) {
+    const el = document.createElement('div');
+    el.className = 'easter-float';
+    el.textContent = symbols[i % 3];
+    el.style.color = colors[i % 3];
+    el.style.left = (10 + Math.random() * 80) + '%';
+    el.style.top = (10 + Math.random() * 80) + '%';
+    el.style.fontSize = (24 + Math.random() * 32) + 'px';
+    el.style.animation = `float${i} ${15 + Math.random() * 10}s ease-in-out infinite`;
+    document.body.appendChild(el);
+  }
+
+  // Add keyframes dynamically
+  const style = document.createElement('style');
+  let css = '';
+  for (let i = 0; i < 6; i++) {
+    const dx = 10 + Math.random() * 20;
+    const dy = 10 + Math.random() * 20;
+    css += `@keyframes float${i}{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(${dx}px,-${dy}px) rotate(${60+i*30}deg)}66%{transform:translate(-${dx}px,${dy}px) rotate(-${30+i*20}deg)}}`;
+  }
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+createFloatingEggs();
+
+// ── SUCCESS / CANCEL FROM STRIPE ──
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('success') === '1') {
+    const hero = document.querySelector('.hero-content');
+    hero.innerHTML = `
+      <div class="hero-badge">Bestellung bestätigt</div>
+      <div class="hero-title" style="margin-bottom:24px">DANKE<span class="acc">.</span></div>
+      <div class="hero-sub" style="opacity:.3;margin-bottom:40px">
+        Deine OSTER RESET BOX ist reserviert.<br>
+        Du erhältst eine Bestätigung per E-Mail.<br>
+        Lieferung vor Ostern garantiert.
+      </div>
+      <a href="index.html" class="btn-gold btn-ghost">← Zurück zum Portal</a>
+    `;
+    // Clean URL
+    history.replaceState({}, '', '/ostern');
+  }
+  if (params.get('cancelled') === '1') {
+    document.getElementById('buy-status').textContent = 'Bestellung abgebrochen. Du kannst es jederzeit erneut versuchen.';
+    history.replaceState({}, '', '/ostern');
+  }
+})();
+
+// ── SCROLL TRACKING ──
+let maxScroll = 0;
+window.addEventListener('scroll', () => {
+  const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+  if (pct > maxScroll) maxScroll = pct;
+});
+</script>
+</body>
+</html>
