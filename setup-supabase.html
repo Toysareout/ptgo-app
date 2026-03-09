@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTAO — Supabase Setup</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050505;color:#f0ece4;font-family:'Courier New',monospace;padding:40px;max-width:700px;margin:0 auto}
+h1{font-size:18px;margin-bottom:20px;color:#2dffa8}
+.step{background:#0a0a0a;border:1px solid #1a1a1a;padding:20px;margin-bottom:12px;border-radius:4px}
+.step h2{font-size:13px;color:#2dffa8;margin-bottom:8px}
+.step p{font-size:11px;opacity:.5;line-height:1.8}
+button{background:#2dffa8;color:#050505;border:none;padding:12px 24px;font-family:inherit;font-size:13px;cursor:pointer;margin-top:12px}
+button:hover{background:#f0ece4}
+button:disabled{opacity:.3;cursor:not-allowed}
+#log{background:#0a0a0a;border:1px solid #1a1a1a;padding:16px;margin-top:20px;font-size:11px;line-height:2;min-height:100px;white-space:pre-wrap;color:#2dffa8;opacity:.6}
+.ok{color:#2dffa8}
+.err{color:#ff4444}
+.warn{color:#c9a84c}
+input{background:#0a0a0a;border:1px solid #1a1a1a;color:#f0ece4;padding:10px 14px;width:100%;font-family:inherit;font-size:12px;margin-top:8px}
+input:focus{outline:none;border-color:#2dffa8}
+</style>
+</head>
+<body>
+
+<h1>THETOYSAREOUT — Supabase Setup</h1>
+
+<div class="step">
+  <h2>Schritt 1: Service Role Key eingeben</h2>
+  <p>Supabase Dashboard → Settings → API → service_role (secret)<br>
+  Dieser Key wird NUR lokal verwendet und nicht gespeichert.</p>
+  <input type="password" id="service-key" placeholder="eyJhbGciOiJIUzI1NiIs..." />
+</div>
+
+<div class="step">
+  <h2>Schritt 2: Tabelle erstellen</h2>
+  <p>Erstellt die heal_applications Tabelle mit RLS, Indexes und Trigger.</p>
+  <button onclick="runSetup()" id="run-btn">Setup ausführen →</button>
+</div>
+
+<div id="log">Warte auf Setup...</div>
+
+<script>
+const SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+const log = document.getElementById('log');
+
+function addLog(msg, cls = '') {
+  log.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+  log.scrollTop = log.scrollHeight;
+}
+
+async function runSetup() {
+  const key = document.getElementById('service-key').value.trim();
+  if (!key || !key.startsWith('eyJ')) {
+    addLog('Bitte gültigen Service Role Key eingeben', 'err');
+    return;
+  }
+
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Läuft...';
+  log.innerHTML = '';
+
+  const sb = supabase.createClient(SUPA_URL, key);
+
+  // SQL statements to execute via rpc or rest
+  const statements = [
+    {
+      name: 'Tabelle heal_applications erstellen',
+      sql: `CREATE TABLE IF NOT EXISTS heal_applications (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+        updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        phone TEXT,
+        reason TEXT NOT NULL,
+        duration TEXT,
+        tried TEXT,
+        portal_entry TEXT DEFAULT 'direct',
+        source TEXT DEFAULT 'direct',
+        status TEXT DEFAULT 'new' NOT NULL,
+        notes TEXT,
+        call_date TIMESTAMPTZ,
+        session_date TIMESTAMPTZ,
+        revenue_cents INTEGER DEFAULT 0,
+        CONSTRAINT valid_status CHECK (status IN ('new','contacted','call_scheduled','booked','completed','follow_up','declined'))
+      )`
+    },
+    {
+      name: 'Index auf status',
+      sql: `CREATE INDEX IF NOT EXISTS idx_heal_apps_status ON heal_applications(status)`
+    },
+    {
+      name: 'Index auf email',
+      sql: `CREATE INDEX IF NOT EXISTS idx_heal_apps_email ON heal_applications(email)`
+    },
+    {
+      name: 'Index auf created_at',
+      sql: `CREATE INDEX IF NOT EXISTS idx_heal_apps_created ON heal_applications(created_at DESC)`
+    },
+    {
+      name: 'RLS aktivieren',
+      sql: `ALTER TABLE heal_applications ENABLE ROW LEVEL SECURITY`
+    },
+    {
+      name: 'RLS Policy: Anon insert',
+      sql: `DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow anonymous insert' AND tablename = 'heal_applications') THEN
+          CREATE POLICY "Allow anonymous insert" ON heal_applications FOR INSERT TO anon WITH CHECK (true);
+        END IF;
+      END $$`
+    },
+    {
+      name: 'RLS Policy: Service role full access',
+      sql: `DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access' AND tablename = 'heal_applications') THEN
+          CREATE POLICY "Service role full access" ON heal_applications FOR ALL TO service_role USING (true) WITH CHECK (true);
+        END IF;
+      END $$`
+    },
+    {
+      name: 'Auto-update Trigger',
+      sql: `CREATE OR REPLACE FUNCTION update_heal_updated_at() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql`
+    },
+    {
+      name: 'Trigger an Tabelle hängen',
+      sql: `DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'heal_applications_updated_at') THEN
+          CREATE TRIGGER heal_applications_updated_at BEFORE UPDATE ON heal_applications FOR EACH ROW EXECUTE FUNCTION update_heal_updated_at();
+        END IF;
+      END $$`
+    }
+  ];
+
+  addLog('Setup gestartet...\n', 'ok');
+
+  for (const stmt of statements) {
+    addLog(`→ ${stmt.name}...`);
+    try {
+      const { error } = await sb.rpc('exec_sql', { query: stmt.sql }).maybeSingle();
+      if (error) {
+        // Try via raw SQL endpoint
+        const res = await fetch(`${SUPA_URL}/rest/v1/rpc/exec_sql`, {
+          method: 'POST',
+          headers: {
+            'apikey': key,
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ query: stmt.sql })
+        });
+        if (!res.ok) {
+          const txt = await res.text();
+          if (txt.includes('already exists') || txt.includes('does not exist')) {
+            addLog(`  ⚡ Bereits vorhanden — übersprungen`, 'warn');
+          } else {
+            addLog(`  ✗ Fehler: ${txt.substring(0, 120)}`, 'err');
+          }
+        } else {
+          addLog(`  ✓ OK`, 'ok');
+        }
+      } else {
+        addLog(`  ✓ OK`, 'ok');
+      }
+    } catch(e) {
+      addLog(`  ✗ ${e.message}`, 'err');
+    }
+  }
+
+  // Test: Try inserting and deleting a test row
+  addLog('\n→ Test-Insert...');
+  try {
+    const { data, error } = await sb.from('heal_applications').insert({
+      name: '__setup_test__',
+      email: 'test@setup.local',
+      reason: 'Setup verification',
+      status: 'new'
+    }).select('id').single();
+
+    if (error) {
+      addLog(`  ✗ Insert fehlgeschlagen: ${error.message}`, 'err');
+      addLog('\n⚠ Die exec_sql RPC existiert möglicherweise nicht.', 'warn');
+      addLog('Kopiere stattdessen den SQL-Code aus', 'warn');
+      addLog('supabase/migrations/001_heal_applications.sql', 'warn');
+      addLog('in den Supabase SQL Editor und führe ihn aus.', 'warn');
+    } else {
+      // Clean up test row
+      await sb.from('heal_applications').delete().eq('id', data.id);
+      addLog(`  ✓ Insert + Delete OK`, 'ok');
+      addLog('\n✓ SETUP KOMPLETT — Alles funktioniert!', 'ok');
+    }
+  } catch(e) {
+    addLog(`  ✗ ${e.message}`, 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Nochmal ausführen →';
+}
+</script>
+</body>
+</html>
