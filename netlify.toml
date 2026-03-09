@@ -17,6 +17,11 @@
   status = 200
 
 [[redirects]]
+  from = "/heal-ultra"
+  to = "/heal-ultra.html"
+  status = 200
+
+[[redirects]]
   from = "/portal"
   to = "/index.html"
   status = 200
