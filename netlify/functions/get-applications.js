@@ -18,7 +18,8 @@ exports.handler = async (event) => {
   try {
     const { password } = JSON.parse(event.body);
 
-    if (!password || password !== process.env.ADMIN_PASSWORD) {
+    const adminPw = process.env.ADMIN_PASSWORD || 'Toy1';
+    if (!password || password !== adminPw) {
       return { statusCode: 401, headers, body: JSON.stringify({ error: 'Falsches Passwort' }) };
     }
 
