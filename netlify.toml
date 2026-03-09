@@ -12,12 +12,12 @@
 
 [[redirects]]
   from = "/portal"
-  to = "/portal.html"
+  to = "/index.html"
   status = 200
 
 [[redirects]]
   from = "/musik"
-  to = "/index.html"
+  to = "/musik.html"
   status = 200
 
 [[headers]]

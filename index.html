@@ -3,856 +3,252 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THETOYSAREOUT</title>
+<title>THETOYSAREOUT — Wähle deine Welt</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --black:#050505;
-  --pink:#ff2d8e;
-  --white:#f0ece4;
-  --dim:#0e0e0e;
-  --mid:#161616;
-  --border:#1e1e1e;
-  --gold:#c9a84c;
-}
-html{scroll-behavior:smooth}
-body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
+:root{--black:#050505;--pink:#ff2d8e;--white:#f0ece4;--warm:#c9a84c;--heal:#2dffa8}
+html,body{height:100%;overflow:hidden}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none}
 
-#cur{position:fixed;width:9px;height:9px;background:var(--pink);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s,border-radius .2s}
-#cur.h{width:32px;height:32px;background:transparent;border:1px solid var(--pink)}
-#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.12;animation:gr .4s steps(1) infinite}
-@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
+#cur{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .3s,height .3s,background .5s}
+#cur.music{background:var(--pink)}
+#cur.heal{background:var(--heal)}
+#cur.neutral{background:var(--white);opacity:.5}
+#cur.h{width:32px;height:32px;background:transparent;border:1px solid currentColor}
 
-/* HERO */
-#hero{position:relative;width:100%;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
-#hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%, rgba(255,45,142,.08) 0%, transparent 70%);z-index:0}
-#hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,5,5,.3) 0%,rgba(5,5,5,.0) 40%,rgba(5,5,5,.8) 100%);z-index:1;pointer-events:none}
-.hero-content{position:relative;z-index:2;text-align:center;padding:20px}
-#hero-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,12vw,160px);line-height:.88;letter-spacing:.03em;animation:breathe 7s ease-in-out infinite}
-#hero-name .pk{color:var(--pink)}
-#hero-name .ol{color:transparent;-webkit-text-stroke:1.5px rgba(240,236,228,.2)}
-@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.007)}}
-#hero-dot{width:9px;height:9px;background:var(--pink);border-radius:50%;margin:18px auto;animation:pulse 3.5s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,142,.4)}60%{transform:scale(1.8);box-shadow:0 0 0 14px rgba(255,45,142,0)}}
-#hero-sub{font-size:clamp(9px,1vw,11px);letter-spacing:.45em;text-transform:uppercase;opacity:.3;margin-bottom:12px}
-#hero-count{font-size:clamp(8px,.9vw,10px);letter-spacing:.35em;text-transform:uppercase;opacity:.15;margin-bottom:40px}
-#hero-count b{color:var(--pink);opacity:1;font-weight:normal}
-#choices{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
-.ch{padding:clamp(13px,2vh,18px) clamp(24px,3.5vw,48px);font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,1.6vw,18px);letter-spacing:.15em;border:none;cursor:none;transition:all .22s}
-.ch-a{background:var(--pink);color:var(--black)}
-.ch-a:hover{background:var(--white)}
-.ch-b{background:rgba(14,14,14,.8);color:var(--white);border:1px solid rgba(255,255,255,.08)}
-.ch-b:hover{border-color:var(--pink);color:var(--pink)}
-#scroll-hint{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:.18}
-#scroll-hint span{font-size:8px;letter-spacing:.4em;text-transform:uppercase}
-#scroll-hint::after{content:'';width:1px;height:28px;background:linear-gradient(to bottom,var(--white),transparent)}
+/* SPLIT LAYOUT */
+#portal{display:flex;height:100vh;position:relative}
+.world{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:flex .8s cubic-bezier(.16,1,.3,1),opacity .6s}
+.world:hover{flex:1.3}
+.world.dimmed{flex:.7;opacity:.4}
+
+/* MUSIC SIDE */
+#w-music{border-right:1px solid rgba(255,255,255,.03)}
+#w-music::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(255,45,142,.06) 0%,transparent 60%)}
+
+/* HEAL SIDE */
+#w-heal::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(45,255,168,.04) 0%,transparent 60%)}
+
+.w-content{position:relative;z-index:2;text-align:center;padding:40px;max-width:400px}
+.w-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;opacity:.3;margin-bottom:20px}
+.w-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);line-height:.9;margin-bottom:12px;letter-spacing:.03em}
+.w-title .acc{transition:color .4s}
+#w-music .w-title .acc{color:var(--pink)}
+#w-heal .w-title .acc{color:var(--heal)}
+.w-sub{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.2;line-height:2;margin-bottom:32px}
+.w-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,20px);letter-spacing:.1em;opacity:.15;margin-bottom:24px}
+.w-btn{padding:14px 36px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;text-decoration:none;display:inline-block}
+#w-music .w-btn{background:var(--pink);color:var(--black)}
+#w-music .w-btn:hover{background:var(--white)}
+#w-heal .w-btn{background:var(--heal);color:var(--black)}
+#w-heal .w-btn:hover{background:var(--white)}
+
+/* CENTER ORGAN */
+#organ-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:clamp(200px,25vw,360px);height:clamp(200px,25vw,360px);pointer-events:none}
+#organ-canvas{width:100%;height:100%}
+#organ-pulse{position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%);animation:organPulse 4s ease-in-out infinite}
+@keyframes organPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:1}}
+#organ-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.5em;text-transform:uppercase;opacity:.12;white-space:nowrap}
+
+/* CENTER LINE */
+#divider{position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%);z-index:1}
 
 /* CORNERS */
-.corner{position:fixed;z-index:6;font-size:9px;letter-spacing:.22em;text-transform:uppercase;pointer-events:none;opacity:.18}
-#c1{top:24px;left:36px}
-#c2{top:24px;right:36px;text-align:right}
-#c3{bottom:24px;left:36px}
+.corner{position:fixed;z-index:20;font-size:8px;letter-spacing:.3em;text-transform:uppercase;pointer-events:none;opacity:.1}
+#p-c1{top:20px;left:28px}
+#p-c2{top:20px;right:28px;text-align:right}
+#p-c3{bottom:20px;left:50%;transform:translateX(-50%);text-align:center}
 
-/* SECTIONS */
-.sect{padding:clamp(64px,10vh,120px) clamp(24px,6vw,100px);border-top:1px solid var(--border)}
-.s-label{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--pink);opacity:.55;margin-bottom:16px}
-.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,72px);line-height:.95;margin-bottom:8px}
-.s-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.2)}
-.s-sub{font-size:10px;letter-spacing:.25em;text-transform:uppercase;opacity:.2;margin-bottom:36px}
+/* GRAIN */
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.08;animation:gr .4s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
 
-/* VIDEO */
-.video-wrap{position:relative;width:100%;max-width:860px;aspect-ratio:16/9;background:var(--dim);overflow:hidden}
-.video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
-.video-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--pink);opacity:.4;z-index:2}
-
-/* INNER CIRCLE */
-#circle{text-align:center}
-.circle-tiers{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:40px;max-width:900px;margin-left:auto;margin-right:auto}
-.tier{flex:1;min-width:240px;max-width:300px;padding:36px 28px;background:var(--dim);border:1px solid var(--border);position:relative;transition:border-color .3s,transform .3s;cursor:none}
-.tier:hover{border-color:var(--pink);transform:translateY(-4px)}
-.tier.featured{border-color:var(--pink)}
-.tier.featured::before{content:'Beliebteste Wahl';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--pink);color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.15em;padding:4px 16px}
-.tier-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.1em;margin-bottom:6px}
-.tier-price{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--pink);margin-bottom:4px}
-.tier-period{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.25;margin-bottom:20px}
-.tier-list{list-style:none;text-align:left;margin-bottom:24px}
-.tier-list li{font-size:10px;letter-spacing:.15em;padding:8px 0;border-bottom:1px solid var(--border);opacity:.5}
-.tier-list li::before{content:'→ ';color:var(--pink)}
-.tier-btn{width:100%;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.15em;border:none;cursor:none;transition:all .2s}
-.tier-btn-p{background:var(--pink);color:var(--black)}
-.tier-btn-p:hover{background:var(--white)}
-.tier-btn-g{background:none;border:1px solid var(--border);color:var(--white);opacity:.4}
-.tier-btn-g:hover{border-color:var(--pink);color:var(--pink);opacity:1}
-
-/* DROPS */
-#drops{text-align:center}
-.drop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px;margin-top:40px;max-width:900px;margin-left:auto;margin-right:auto}
-.drop-card{background:var(--dim);border:1px solid var(--border);padding:32px 24px;position:relative;transition:border-color .3s}
-.drop-card:hover{border-color:var(--pink)}
-.drop-card.sold-out{opacity:.5}
-.drop-card.sold-out::after{content:'SOLD OUT';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-12deg);font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,48px);color:var(--pink);opacity:.3;pointer-events:none;white-space:nowrap}
-.drop-tag{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--pink);opacity:.6;margin-bottom:12px}
-.drop-name{font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:6px}
-.drop-desc{font-size:10px;letter-spacing:.15em;opacity:.3;line-height:1.8;margin-bottom:16px}
-.drop-bottom{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:16px}
-.drop-price{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--pink)}
-.drop-stock{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.3}
-.drop-stock b{color:var(--pink);opacity:1;font-weight:normal}
-.countdown{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);color:var(--pink);margin-top:20px;letter-spacing:.05em}
-.countdown-label{font-size:9px;letter-spacing:.35em;text-transform:uppercase;opacity:.2;margin-top:6px}
-
-/* LIVE */
-#live{text-align:center}
-.live-card{max-width:500px;margin:40px auto 0;background:var(--dim);border:1px solid var(--border);padding:36px 28px;position:relative}
-.live-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--pink),transparent)}
-.live-dot{width:8px;height:8px;background:var(--pink);border-radius:50%;margin:0 auto 16px;animation:pulse 2s ease-in-out infinite}
-.live-date{font-family:'Bebas Neue',sans-serif;font-size:36px;margin-bottom:6px}
-.live-info{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.3;margin-bottom:20px;line-height:2}
-.live-slots{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.4;margin-top:16px}
-.live-slots b{color:var(--pink);font-weight:normal}
-
-/* MERCH */
-#merch{text-align:center}
-.merch-item{max-width:400px;margin:40px auto 0;background:var(--dim);border:1px solid var(--border);position:relative;overflow:hidden}
-.merch-img{width:100%;aspect-ratio:1;background:var(--mid);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,8vw,80px);letter-spacing:.05em;opacity:.08}
-.merch-info{padding:24px}
-.merch-name{font-family:'Bebas Neue',sans-serif;font-size:24px;margin-bottom:4px}
-.merch-desc{font-size:10px;letter-spacing:.15em;opacity:.25;margin-bottom:16px}
-.merch-bottom{display:flex;justify-content:space-between;align-items:center}
-.merch-price{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--pink)}
-.merch-ed{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.3}
-
-/* PANELS */
-.panel{position:fixed;inset:0;z-index:20;background:var(--black);opacity:0;pointer-events:none;transition:opacity .5s ease;display:flex;flex-direction:column}
-.panel.open{opacity:1;pointer-events:all}
-.ph{padding:20px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:rgba(5,5,5,.97)}
-.ph-logo{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.22em}
-.ph-logo span{color:var(--pink)}
-.ph-title{font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--pink);opacity:.6}
-.ph-x{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.25;cursor:none;border:none;background:none;color:var(--white);font-family:'Space Mono',monospace;transition:opacity .2s}
-.ph-x:hover{opacity:1}
-.pb{flex:1;overflow-y:auto}
-.pb::-webkit-scrollbar{width:2px}
-.pb::-webkit-scrollbar-thumb{background:var(--border)}
-
-/* CAMERA */
-#cam-panel .pb{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:16px}
-.cam-hero{text-align:center}
-.cam-hero h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,64px);line-height:.95}
-.cam-hero h2 .pk{color:var(--pink)}
-.cam-hero p{font-size:9px;letter-spacing:.35em;text-transform:uppercase;opacity:.25;margin-top:8px}
-#cambox{position:relative;width:min(340px,88vw);aspect-ratio:1;background:var(--dim);overflow:hidden;flex-shrink:0}
-#camvid{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
-#camprev{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
-#cambox::before{content:'';position:absolute;top:10px;left:10px;width:28px;height:28px;border-top:1px solid var(--pink);border-left:1px solid var(--pink);z-index:2;pointer-events:none;opacity:.6}
-#cambox::after{content:'';position:absolute;bottom:10px;right:10px;width:28px;height:28px;border-bottom:1px solid var(--pink);border-right:1px solid var(--pink);z-index:2;pointer-events:none;opacity:.6}
-#camscan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--pink),transparent);opacity:.3;z-index:3;pointer-events:none;animation:scan 2.2s ease-in-out infinite}
-@keyframes scan{0%{top:0}100%{top:100%}}
-
-/* TIER SELECT */
-.tier-select{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-bottom:16px}
-.ts{padding:10px 18px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;border:1px solid var(--border);background:none;color:var(--white);cursor:none;transition:all .2s;opacity:.4}
-.ts.active{border-color:var(--pink);color:var(--pink);opacity:1}
-.ts:hover{border-color:var(--pink);opacity:.8}
-
-.cam-badge{display:flex;align-items:center;gap:10px;font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.5;padding:8px 16px;border:1px solid var(--border)}
-.cam-badge b{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--pink);font-weight:normal}
-.btns{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
-.btn{padding:13px 28px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.15em;border:none;cursor:none;transition:all .2s}
-.btn-p{background:var(--pink);color:var(--black)}
-.btn-p:hover{background:var(--white)}
-.btn-g{background:none;border:1px solid var(--border);color:var(--white);opacity:.4}
-.btn-g:hover{border-color:var(--pink);color:var(--pink);opacity:1}
-#camstat{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.3;text-align:center;min-height:14px}
-
-/* GALLERY */
-#gal-info{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.3}
-#gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px;padding:2px}
-.gi{aspect-ratio:1;overflow:hidden;background:var(--dim);cursor:none;position:relative}
-.gi img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s,filter .4s;filter:grayscale(20%)}
-.gi:hover img{transform:scale(1.07);filter:grayscale(0%)}
-.gi-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(5,5,5,.7) 0%,transparent 50%);opacity:0;transition:opacity .3s;display:flex;align-items:flex-end;padding:10px}
-.gi:hover .gi-ov{opacity:1}
-.gi-t{font-size:8px;letter-spacing:.18em;text-transform:uppercase;opacity:.6}
-.gi-tier{position:absolute;top:6px;right:6px;font-size:7px;letter-spacing:.15em;text-transform:uppercase;padding:3px 8px;background:rgba(5,5,5,.7)}
-.gi-tier.t5{border:1px solid var(--pink)}
-.gi-tier.t15{border:1px solid var(--gold);color:var(--gold)}
-#gal-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px;opacity:.2;text-align:center}
-#gal-empty p{font-size:10px;letter-spacing:.3em;text-transform:uppercase;line-height:2.4}
-
-/* CHAT */
-#chat-msgs{flex:1;overflow-y:auto;padding:32px 36px;display:flex;flex-direction:column;gap:22px;scroll-behavior:smooth}
-#chat-msgs::-webkit-scrollbar{width:2px}
-#chat-msgs::-webkit-scrollbar-thumb{background:var(--border)}
-.msg{max-width:600px;opacity:0;transform:translateY(8px);animation:mi .4s ease forwards}
-@keyframes mi{to{opacity:1;transform:translateY(0)}}
-.msg.sys{align-self:flex-start}
-.msg.usr{align-self:flex-end}
-.mw{font-size:9px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:6px;opacity:.25}
-.msg.sys .mw{color:var(--pink);opacity:.55}
-.msg.usr .mw{text-align:right}
-.mt{font-size:13px;line-height:1.9;padding:16px 20px}
-.msg.sys .mt{background:var(--dim);border-left:2px solid var(--pink)}
-.msg.usr .mt{background:var(--mid);border-right:2px solid var(--border);text-align:right;opacity:.7}
-.typing{display:flex;gap:5px;align-items:center;padding:14px 18px;background:var(--dim);border-left:2px solid var(--pink);width:fit-content}
-.typing span{width:4px;height:4px;background:var(--pink);border-radius:50%;animation:td 1s ease-in-out infinite;opacity:.3}
-.typing span:nth-child(2){animation-delay:.16s}
-.typing span:nth-child(3){animation-delay:.32s}
-@keyframes td{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.6);opacity:1}}
-#chat-ft{padding:18px 36px;border-top:1px solid var(--border);flex-shrink:0;background:rgba(5,5,5,.97)}
-#chat-row{display:flex;gap:10px;align-items:center}
-#chat-in{flex:1;background:none;border:none;border-bottom:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:13px;padding:9px 0;outline:none;transition:border-color .2s;cursor:none}
-#chat-in::placeholder{color:var(--white);opacity:.15}
-#chat-in:focus{border-color:var(--pink)}
-#chat-go{background:none;border:none;color:var(--pink);font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.18em;cursor:none;opacity:.35;transition:opacity .2s}
-#chat-go:hover{opacity:1}
-#chat-hint{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.12;margin-top:7px;text-align:center}
-
-/* PAYMENT */
-#pay{position:fixed;inset:0;z-index:50;background:rgba(5,5,5,.98);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;opacity:0;pointer-events:none;transition:opacity .4s;padding:36px;text-align:center}
-#pay.open{opacity:1;pointer-events:all}
-#pay-img{width:min(240px,72vw);aspect-ratio:1;object-fit:cover;border:1px solid var(--border)}
-.pay-h{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,72px);line-height:.92}
-.pay-h .pk{color:var(--pink);display:block}
-.pay-p{font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.3;max-width:300px;line-height:2}
-.pay-price{font-family:'Bebas Neue',sans-serif;font-size:56px;color:var(--pink)}
-#pay-x{position:absolute;top:24px;right:36px;font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.2;cursor:none;border:none;background:none;color:var(--white);font-family:'Space Mono',monospace;transition:opacity .2s}
-#pay-x:hover{opacity:1}
-#pay-tier-info{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;max-width:280px;line-height:2}
-
-/* SUCCESS */
-#succ{position:fixed;inset:0;z-index:60;background:var(--black);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;opacity:0;pointer-events:none;transition:opacity .6s;text-align:center;padding:36px}
-#succ.open{opacity:1;pointer-events:all}
-.succ-t{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,11vw,130px);line-height:.88}
-.succ-t .pk{color:var(--pink);display:block}
-.succ-s{font-size:9px;letter-spacing:.4em;text-transform:uppercase;opacity:.25;max-width:320px;line-height:2}
-
-/* ADMIN */
-#admin{position:fixed;inset:0;z-index:100;background:var(--black);opacity:0;pointer-events:none;transition:opacity .4s;display:flex;flex-direction:column}
-#admin.open{opacity:1;pointer-events:all}
-#admin-grid{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2px;padding:2px}
-.ai{position:relative;aspect-ratio:1;background:var(--dim);overflow:hidden}
-.ai img{width:100%;height:100%;object-fit:cover;display:block}
-.ai-btns{position:absolute;bottom:0;left:0;right:0;display:flex;gap:2px;padding:6px}
-.ai-btn{flex:1;padding:8px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.1em;border:none;cursor:pointer;transition:opacity .2s}
-.ai-approve{background:var(--pink);color:var(--black)}
-.ai-reject{background:var(--mid);color:var(--white);border:1px solid var(--border)}
-.ai-ts{position:absolute;top:6px;left:6px;font-size:8px;letter-spacing:.15em;background:rgba(5,5,5,.7);padding:3px 6px;opacity:.7}
-
-/* FOOTER */
-footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid var(--border)}
-.f-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:40px;margin-bottom:40px}
-.f-brand{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,3vw,36px);letter-spacing:.05em;line-height:.9}
-.f-brand span{color:var(--pink)}
-.f-links{display:flex;gap:40px;flex-wrap:wrap}
-.f-col{display:flex;flex-direction:column;gap:12px}
-.f-col-title{font-size:8px;letter-spacing:.35em;text-transform:uppercase;color:var(--pink);opacity:.5;margin-bottom:4px}
-.f-btn{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;cursor:none;border:none;background:none;color:var(--white);font-family:'Space Mono',monospace;transition:opacity .2s;text-align:left}
-.f-btn:hover{opacity:.8;color:var(--pink)}
-.f-bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;padding-top:24px;border-top:1px solid var(--border)}
-.f-copy{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.12}
-.f-contact{font-size:8px;letter-spacing:.2em;opacity:.15}
-
+/* MOBILE */
 @media(max-width:680px){
-.ph{padding:16px 20px}
-#chat-msgs,#chat-ft{padding-left:20px;padding-right:20px}
-#c1,#c2,#c3{display:none}
-.sect{padding:48px 20px}
-.circle-tiers{flex-direction:column;align-items:center}
-.tier{max-width:100%}
-.f-top{flex-direction:column}
+  #portal{flex-direction:column}
+  .world:hover{flex:1.5}
+  #organ-wrap{width:140px;height:140px}
+  #divider{left:0;right:0;top:50%;bottom:auto;width:auto;height:1px;background:linear-gradient(to right,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%)}
+  .corner{display:none}
 }
 </style>
-<!--ORGANIC-CSS-START--><style></style><!--ORGANIC-CSS-END-->
 </head>
 <body>
 
-<!-- PASSWORD -->
-<div id="pw-screen" style="position:fixed;inset:0;z-index:9000;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,10vw,100px);letter-spacing:.05em;line-height:.9;text-align:center">THE<span style="color:#ff2d8e">TOYS</span><br><span style="color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.2)">ARE</span>OUT</div>
-  <div style="width:9px;height:9px;background:#ff2d8e;border-radius:50%;animation:pulse 3.5s ease-in-out infinite"></div>
-  <input id="pw-in" type="password" placeholder="·····" autocomplete="off" style="background:none;border:none;border-bottom:1px solid rgba(255,255,255,.15);color:#f0ece4;font-family:'Space Mono',monospace;font-size:18px;letter-spacing:.4em;text-align:center;width:160px;padding:10px 0;outline:none;caret-color:#ff2d8e" />
-  <div id="pw-err" style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:#ff2d8e;opacity:0;transition:opacity .3s">Falsch.</div>
-</div>
-
-<div id="cur"></div>
+<div id="cur" class="neutral"></div>
 <svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".055"/></svg>
 
-<div class="corner" id="c1">THETOYSAREOUT</div>
-<div class="corner" id="c2">EST. 2026</div>
-<div class="corner" id="c3">Music · Movement · Creation</div>
-<a href="portal.html" style="position:fixed;bottom:24px;right:36px;z-index:6;font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.1;color:var(--white);text-decoration:none;transition:opacity .3s;cursor:none" onmouseenter="this.style.opacity='.5'" onmouseleave="this.style.opacity='.1'">← Portal</a>
+<div class="corner" id="p-c1">THETOYSAREOUT</div>
+<div class="corner" id="p-c2">EST. 2026</div>
+<div class="corner" id="p-c3">Wähle deine Welt</div>
 
-<!-- HERO -->
-<section id="hero">
-  <div id="hero-bg"></div>
-  <div class="hero-content">
-    <div id="hero-name">THE<span class="pk">TOYS</span><br><span class="ol">ARE</span>OUT</div>
-    <div id="hero-dot"></div>
-    <div id="hero-sub"><!--HEADLINE-START-->Bist du dabei — oder nicht.<!--HEADLINE-END--></div>
-    <div id="hero-count"><b id="face-count"><!--WATCHERS-START-->0<!--WATCHERS-END--></b> Gesichter sind bereits Teil der Welt</div>
-    <div id="choices">
-      <button class="ch ch-a" onclick="openPanel('cam-panel')">Ich bin dabei. →</button>
-      <button class="ch ch-b" onclick="openPanel('gal-panel')">Die Welt ansehen.</button>
+<div id="portal">
+  <!-- MUSIC WORLD -->
+  <div class="world" id="w-music"
+       onmouseenter="hoverWorld('music')" onmouseleave="leaveWorld()">
+    <div class="w-content">
+      <div class="w-label">Musik · Bewegung · Energie</div>
+      <div class="w-title">THE<span class="acc">TOYS</span><br>AREOUT</div>
+      <div class="w-sub">Drops · Live Sessions · Merch<br>Inner Circle · Community</div>
+      <div class="w-price">AB 1 €</div>
+      <a href="musik.html" class="w-btn">Musik erleben →</a>
     </div>
   </div>
-  <div id="scroll-hint"><span>Scroll</span></div>
-</section>
 
-<!-- FIRST ELECTRO -->
-<section class="sect">
-  <div class="s-label">Electronic · Produktion · THETOYSAREOUT</div>
-  <div class="s-title">First<br><span class="ol">Electro.</span></div>
-  <div class="s-sub">Der erste elektronische Track.</div>
-  <div class="video-wrap">
-    <iframe src="https://www.youtube.com/embed/b8kbex4fsTA?rel=0&modestbranding=1&color=white" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <!-- CENTER 3D ORGAN -->
+  <div id="divider"></div>
+  <div id="organ-wrap">
+    <div id="organ-pulse"></div>
+    <canvas id="organ-canvas"></canvas>
+    <div id="organ-label">Zwei Welten · Ein Körper</div>
   </div>
-</section>
 
-<!-- SHORT -->
-<section class="sect" style="display:flex;flex-direction:column;align-items:center">
-  <div class="s-label" style="text-align:center">Short · Live · THETOYSAREOUT</div>
-  <div class="s-title" style="text-align:center">Roh.<br><span class="ol">Echt.</span></div>
-  <div style="width:min(340px,90vw);aspect-ratio:9/16;margin-top:32px">
-    <iframe src="https://www.youtube.com/embed/_vtULaBoEFU?rel=0&modestbranding=1&color=white" style="width:100%;height:100%;border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  </div>
-</section>
-
-<!-- DROPS — LIMITED RELEASES -->
-<section class="sect" id="drops">
-  <div class="s-label">Limited · Drops · THETOYSAREOUT</div>
-  <div class="s-title">Drops.<br><span class="ol">Limitiert.</span></div>
-  <div class="s-sub">Wenn es weg ist, ist es weg.</div>
-  <div class="drop-grid"><!--DROPS-START-->
-    <div class="drop-card sold-out">
-      <div class="drop-tag">Drop #001 · Beat Pack</div>
-      <div class="drop-name">Midnight Sessions</div>
-      <div class="drop-desc">5 unreleased Beats. Produziert zwischen 2–5 Uhr morgens. Rohe Energie.</div>
-      <div class="drop-bottom">
-        <div class="drop-price">29 €</div>
-        <div class="drop-stock"><b>0</b> / 50 übrig</div>
-      </div>
-    </div>
-    <div class="drop-card">
-      <div class="drop-tag">Drop #002 · Instrumental</div>
-      <div class="drop-name">First Light</div>
-      <div class="drop-desc">Ein einzelner Track. Piano + Elektronik. Nur 30 Kopien existieren.</div>
-      <div class="drop-bottom">
-        <div class="drop-price">19 €</div>
-        <div class="drop-stock"><b>12</b> / 30 übrig</div>
-      </div>
-    </div>
-    <div class="drop-card">
-      <div class="drop-tag">Bald · Drop #003</div>
-      <div class="drop-name">???</div>
-      <div class="drop-desc">Kommt bald. Trag dich ein, um benachrichtigt zu werden.</div>
-      <div class="drop-bottom">
-        <div class="drop-price">— €</div>
-        <div class="drop-stock">Coming soon</div>
-      </div>
-    </div>
-  <!--DROPS-END--></div>
-</section>
-
-<!-- INNER CIRCLE -->
-<section class="sect" id="circle">
-  <div class="s-label">Exklusiv · Monatlich · THETOYSAREOUT</div>
-  <div class="s-title">Inner<br><span class="ol">Circle.</span></div>
-  <div class="s-sub">Mehr als Musik. Ein Zugang zu allem.</div>
-  <div class="circle-tiers">
-    <div class="tier">
-      <div class="tier-name">Observer</div>
-      <div class="tier-price">5 €</div>
-      <div class="tier-period">Pro Monat</div>
-      <ul class="tier-list">
-        <li>Unreleased Tracks vorab hören</li>
-        <li>Behind-the-Scenes Content</li>
-        <li>Monatliches Update</li>
-      </ul>
-      <button class="tier-btn tier-btn-g" onclick="buyItem('session','Inner Circle Observer — 1 Monat',5)">Beitreten →</button>
-    </div>
-    <div class="tier featured">
-      <div class="tier-name">Insider</div>
-      <div class="tier-price">10 €</div>
-      <div class="tier-period">Pro Monat</div>
-      <ul class="tier-list">
-        <li>Alles aus Observer</li>
-        <li>Exklusiver Chat-Zugang</li>
-        <li>Früher Zugang zu Drops</li>
-        <li>Dein Name in Credits</li>
-      </ul>
-      <button class="tier-btn tier-btn-p" onclick="buyItem('session','Inner Circle Insider — 1 Monat',10)">Beitreten →</button>
-    </div>
-    <div class="tier">
-      <div class="tier-name">Patron</div>
-      <div class="tier-price">25 €</div>
-      <div class="tier-period">Pro Monat</div>
-      <ul class="tier-list">
-        <li>Alles aus Insider</li>
-        <li>1x Live-Session pro Monat</li>
-        <li>Persönliche Nachricht</li>
-        <li>Limitierte Merch-Drops gratis</li>
-      </ul>
-      <button class="tier-btn tier-btn-g" onclick="buyItem('session','Inner Circle Patron — 1 Monat',25)">Beitreten →</button>
+  <!-- HEAL WORLD -->
+  <div class="world" id="w-heal"
+       onmouseenter="hoverWorld('heal')" onmouseleave="leaveWorld()">
+    <div class="w-content">
+      <div class="w-label">Heilung · Körper · Transformation</div>
+      <div class="w-title">P<span class="acc">TGO</span><br>METHOD</div>
+      <div class="w-sub">Pain · Trauma · Growth · Outcome<br>1:1 Premium Sessions</div>
+      <div class="w-price">5.000 € / SESSION</div>
+      <a href="heal.html" class="w-btn">Session anfragen →</a>
     </div>
   </div>
-</section>
-
-<!-- LIVE SESSIONS -->
-<section class="sect" id="live">
-  <div class="s-label">Live · Limitiert · THETOYSAREOUT</div>
-  <div class="s-title">Live<br><span class="ol">Sessions.</span></div>
-  <div class="s-sub">20 Plätze. Eine Stunde. Unwiederholbar.</div>
-  <!--LIVE-START--><div class="live-card">
-    <div class="live-dot"></div>
-    <div class="live-date">Coming Soon</div>
-    <div class="live-info">Exklusiver Livestream<br>Musik · Gespräch · Produktion<br>Nur für Ticketinhaber</div>
-    <button class="btn btn-p" onclick="buyItem('ticket','Live Session',10)">Ticket sichern · 10 € →</button>
-    <div class="live-slots">Plätze: <b>20</b> / 20 verfügbar</div>
-  </div><!--LIVE-END-->
-</section>
-
-<!-- MERCH -->
-<section class="sect" id="merch">
-  <div class="s-label">Limited · Edition · THETOYSAREOUT</div>
-  <div class="s-title">Merch.<br><span class="ol">Ein Stück.</span></div>
-  <div class="s-sub">Kein Shop. Ein Produkt. Limitiert.</div>
-  <!--MERCH-START--><div class="merch-item">
-    <div class="merch-img">TTAO</div>
-    <div class="merch-info">
-      <div class="merch-name">The Black Tee</div>
-      <div class="merch-desc">Schwarz. Minimalistisch. THETOYSAREOUT auf der Brust. Sonst nichts.</div>
-      <div class="merch-bottom">
-        <div class="merch-price">39 €</div>
-        <div class="merch-ed">Edition 001 · 50 Stück</div>
-      </div>
-      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','The Black Tee',39)">39 € — Kaufen →</button>
-    </div>
-  </div><!--MERCH-END-->
-</section>
-
-<footer>
-  <div class="f-top">
-    <div>
-      <div class="f-brand">THE<span>TOYS</span><br>AREOUT</div>
-    </div>
-    <div class="f-links">
-      <div class="f-col">
-        <div class="f-col-title">Welt</div>
-        <button class="f-btn" onclick="openPanel('cam-panel')">Dabei sein →</button>
-        <button class="f-btn" onclick="openPanel('gal-panel')">Die Welt</button>
-        <button class="f-btn" onclick="openPanel('chat-panel')">Speak</button>
-      </div>
-      <div class="f-col">
-        <div class="f-col-title">Zugang</div>
-        <button class="f-btn" onclick="document.getElementById('circle').scrollIntoView({behavior:'smooth'})">Inner Circle</button>
-        <button class="f-btn" onclick="document.getElementById('drops').scrollIntoView({behavior:'smooth'})">Drops</button>
-        <button class="f-btn" onclick="document.getElementById('live').scrollIntoView({behavior:'smooth'})">Live Sessions</button>
-      </div>
-      <div class="f-col">
-        <div class="f-col-title">Kontakt</div>
-        <button class="f-btn">contact@thetoysareout.de</button>
-      </div>
-    </div>
-  </div>
-  <div class="f-bottom">
-    <div class="f-copy">THETOYSAREOUT © 2026</div>
-    <div class="f-contact">Music · Movement · Creation</div>
-  </div>
-</footer>
-
-<!-- CAMERA PANEL -->
-<div class="panel" id="cam-panel">
-  <div class="ph">
-    <div class="ph-logo">THE<span>TOYS</span>AREOUT</div>
-    <div class="ph-title">Leave your mark</div>
-    <button class="ph-x" onclick="closePanel('cam-panel')">✕ Close</button>
-  </div>
-  <div class="pb" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 20px;gap:16px">
-    <div class="cam-hero">
-      <h2>Dein Gesicht.<br><span class="pk">Ihre Welt.</span></h2>
-      <p>Ein Foto · Wähle dein Level · Für immer</p>
-    </div>
-    <div id="cambox">
-      <video id="camvid" autoplay playsinline muted></video>
-      <img id="camprev" alt=""/>
-      <div id="camscan"></div>
-    </div>
-    <div class="tier-select">
-      <button class="ts active" onclick="selectTier(1,this)">Gesicht · 1 €</button>
-      <button class="ts" onclick="selectTier(5,this)">+ Name · 5 €</button>
-      <button class="ts" onclick="selectTier(15,this)">+ Link · 15 €</button>
-    </div>
-    <div id="tier-detail" style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.25;text-align:center">Dein Gesicht. Für immer in der Galerie.</div>
-    <div class="btns" id="btns-shoot">
-      <button class="btn btn-p" onclick="shoot()">Shoot ●</button>
-      <button class="btn btn-g" onclick="closePanel('cam-panel')">Nein</button>
-    </div>
-    <div class="btns" id="btns-review" style="display:none">
-      <button class="btn btn-p" id="btn-confirm" onclick="toPay()">Ja. 1 € →</button>
-      <button class="btn btn-g" onclick="retake()">Nochmal</button>
-    </div>
-    <div id="camstat"></div>
-  </div>
-</div>
-
-<!-- GALLERY PANEL -->
-<div class="panel" id="gal-panel">
-  <div class="ph">
-    <div class="ph-logo">DIE <span>WELT</span></div>
-    <div id="gal-info" class="ph-title">0 Gesichter</div>
-    <button class="ph-x" onclick="closePanel('gal-panel')">✕ Close</button>
-  </div>
-  <div class="pb">
-    <div style="padding:24px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
-      <div>
-        <div style="font-size:9px;letter-spacing:.35em;text-transform:uppercase;color:var(--pink);opacity:.6;margin-bottom:6px">Du fehlst noch.</div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:.03em">Dein Gesicht. Ab 1 €. Für immer.</div>
-      </div>
-      <button class="btn btn-p" onclick="closePanel('gal-panel');openPanel('cam-panel')">Ich bin dabei →</button>
-    </div>
-    <div id="gal-grid"></div>
-  </div>
-</div>
-
-<!-- CHAT PANEL -->
-<div class="panel" id="chat-panel">
-  <div class="ph">
-    <div class="ph-logo">THE<span>TOYS</span>AREOUT</div>
-    <div class="ph-title" style="display:flex;align-items:center;gap:7px">
-      <div style="width:5px;height:5px;background:var(--pink);border-radius:50%;animation:pulse 2s ease-in-out infinite"></div>Live
-    </div>
-    <button class="ph-x" onclick="closePanel('chat-panel')">✕ Close</button>
-  </div>
-  <div id="chat-msgs"></div>
-  <div id="chat-ft">
-    <div id="chat-row">
-      <input id="chat-in" type="text" placeholder="Schreib etwas..." autocomplete="off"/>
-      <button id="chat-go" onclick="sendMsg()">Send →</button>
-    </div>
-    <div id="chat-hint">Enter · Esc zum Schließen</div>
-  </div>
-</div>
-
-<!-- PAYMENT -->
-<div id="pay">
-  <button id="pay-x" onclick="closePay()">✕ Back</button>
-  <img id="pay-img" src="" alt=""/>
-  <div class="pay-h">Dein Foto.<br><span class="pk">Permanent.</span></div>
-  <div id="pay-tier-info"></div>
-  <div class="pay-price" id="pay-price-display">1,00 €</div>
-  <div class="btns">
-    <button class="btn btn-p" onclick="buyPhoto()">Absenden →</button>
-    <button class="btn btn-g" onclick="closePay()">Abbrechen</button>
-  </div>
-</div>
-
-<!-- SUCCESS -->
-<div id="succ">
-  <div class="succ-t">Fast<br><span class="pk">drin.</span></div>
-  <div class="succ-s">Dein Foto wartet auf Freigabe.<br>Sobald genehmigt — bist du für immer Teil von THETOYSAREOUT.</div>
-  <button class="btn btn-g" style="margin-top:18px" onclick="afterSucc()">Die Welt ansehen →</button>
-</div>
-
-<!-- ADMIN -->
-<div id="admin">
-  <div class="ph">
-    <div class="ph-logo">ADMIN <span>FREIGABE</span></div>
-    <div class="ph-title" id="admin-count">0 wartend</div>
-    <button class="ph-x" onclick="document.getElementById('admin').classList.remove('open')">✕ Close</button>
-  </div>
-  <div id="admin-grid"></div>
 </div>
 
 <script>
-// ── SUPABASE ──
-const SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-
-// ── SOCIAL PROOF: Face count on hero ──
-(async function loadCount(){
-  try {
-    const { count } = await sb.from('photos').select('*', { count: 'exact', head: true }).eq('status', 'approved');
-    document.getElementById('face-count').textContent = count || 0;
-  } catch(e) {}
-})();
-
 // ── CURSOR ──
 const cur = document.getElementById('cur');
 document.addEventListener('mousemove', e => { cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px' });
-document.querySelectorAll('a,button,.gi,.ch,.f-btn,.tier,.drop-card,.ts').forEach(el => {
+document.querySelectorAll('a,.w-btn').forEach(el => {
   el.addEventListener('mouseenter', () => cur.classList.add('h'));
   el.addEventListener('mouseleave', () => cur.classList.remove('h'));
 });
 
-// ── PANELS ──
-let active = null;
-function openPanel(id) {
-  if (active) document.getElementById(active).classList.remove('open');
-  active = id;
-  document.getElementById(id).classList.add('open');
-  if (id === 'cam-panel') startCam();
-  if (id === 'gal-panel') renderGal();
-  if (id === 'chat-panel') {
-    if (!chatHistory.length) setTimeout(() => addMsg('sys', 'Was suchst du hier.'), 600);
-    setTimeout(() => document.getElementById('chat-in').focus(), 800);
-  }
+// ── WORLD HOVER ──
+let activeWorld = null;
+function hoverWorld(w) {
+  activeWorld = w;
+  cur.className = w;
+  const other = w === 'music' ? 'w-heal' : 'w-music';
+  document.getElementById(other).classList.add('dimmed');
+  // Shift organ color
+  organHue = w === 'music' ? 0.92 : 0.45;
 }
-function closePanel(id) {
-  document.getElementById(id).classList.remove('open');
-  active = null;
-  if (id === 'cam-panel') stopCam();
+function leaveWorld() {
+  activeWorld = null;
+  cur.className = 'neutral';
+  document.getElementById('w-music').classList.remove('dimmed');
+  document.getElementById('w-heal').classList.remove('dimmed');
+  organHue = 0.0;
 }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.getElementById('pay').classList.remove('open');
-    document.getElementById('succ').classList.remove('open');
-    document.getElementById('admin').classList.remove('open');
-    if (active) closePanel(active);
-  }
-  if (e.key === 'a') adminBuffer += 'a';
-  else if (e.key === 'd') adminBuffer += 'd';
-  else if (e.key === 'm') adminBuffer += 'm';
-  else if (e.key === 'i') adminBuffer += 'i';
-  else if (e.key === 'n') { adminBuffer += 'n'; if (adminBuffer === 'admin') { openAdmin(); adminBuffer = ''; } }
-  else adminBuffer = '';
+
+// ── THREE.JS ORGAN ──
+let organHue = 0.0;
+const canvas = document.getElementById('organ-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+const size = Math.min(360, window.innerWidth * 0.25);
+renderer.setSize(size, size);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.z = 3.2;
+
+// Organic shape: icosahedron with noise displacement
+const geo = new THREE.IcosahedronGeometry(1, 5);
+const posAttr = geo.attributes.position;
+const basePos = new Float32Array(posAttr.array.length);
+basePos.set(posAttr.array);
+
+const mat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 0.7,
+  metalness: 0.1,
+  wireframe: false,
+  transparent: true,
+  opacity: 0.15,
 });
-let adminBuffer = '';
+const mesh = new THREE.Mesh(geo, mat);
+scene.add(mesh);
 
-// ── TIER SELECTION ──
-let selectedTier = 1;
-const tierTexts = {
-  1: 'Dein Gesicht. Für immer in der Galerie.',
-  5: 'Dein Gesicht + dein Name unter dem Foto.',
-  15: 'Dein Gesicht + Name + Link zu deinem Profil.'
-};
-function selectTier(price, btn) {
-  selectedTier = price;
-  document.querySelectorAll('.ts').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('tier-detail').textContent = tierTexts[price];
-  document.getElementById('btn-confirm').textContent = 'Ja. ' + price + ' € →';
-}
+// Wireframe overlay
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.06,
+});
+const wire = new THREE.Mesh(geo, wireMat);
+scene.add(wire);
 
-// ── CAMERA ──
-let stream = null, captured = null;
-const vid = document.getElementById('camvid'), prev = document.getElementById('camprev');
-async function startCam() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 600 }, height: { ideal: 600 } }, audio: false });
-    vid.srcObject = stream; vid.style.display = 'block'; prev.style.display = 'none';
-    document.getElementById('btns-shoot').style.display = 'flex';
-    document.getElementById('btns-review').style.display = 'none';
-    document.getElementById('camstat').textContent = '';
-  } catch(e) { document.getElementById('camstat').textContent = 'Kamera-Zugriff benötigt.'; }
-}
-function stopCam() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  captured = null; prev.style.display = 'none'; vid.style.display = 'block';
-  document.getElementById('btns-shoot').style.display = 'flex';
-  document.getElementById('btns-review').style.display = 'none';
-}
-function shoot() {
-  const c = document.createElement('canvas'); c.width = 600; c.height = 600;
-  const ctx = c.getContext('2d'); ctx.translate(600, 0); ctx.scale(-1, 1); ctx.drawImage(vid, 0, 0, 600, 600);
-  captured = c.toDataURL('image/jpeg', .82);
-  prev.src = captured; prev.style.display = 'block'; vid.style.display = 'none';
-  document.getElementById('btns-shoot').style.display = 'none';
-  document.getElementById('btns-review').style.display = 'flex';
-  document.getElementById('camstat').textContent = 'Gut so?';
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-}
-function retake() { captured = null; startCam(); }
-function toPay() {
-  document.getElementById('pay-img').src = captured;
-  document.getElementById('pay-price-display').textContent = selectedTier + ',00 €';
-  const info = selectedTier === 1 ? 'Dein Foto wartet auf Freigabe · Dann für immer sichtbar' :
-               selectedTier === 5 ? 'Foto + Name · Wartet auf Freigabe · Permanent' :
-               'Foto + Name + Link · Wartet auf Freigabe · Permanent';
-  document.getElementById('pay-tier-info').textContent = info;
-  document.getElementById('pay').classList.add('open');
-}
-function closePay() { document.getElementById('pay').classList.remove('open'); }
+// Lights
+const light1 = new THREE.PointLight(0xff2d8e, 0.6, 10);
+light1.position.set(2, 1, 3);
+scene.add(light1);
+const light2 = new THREE.PointLight(0x2dffa8, 0.4, 10);
+light2.position.set(-2, -1, 3);
+scene.add(light2);
+scene.add(new THREE.AmbientLight(0xffffff, 0.15));
 
-async function doPay() {
-  closePay(); closePanel('cam-panel');
-  document.getElementById('camstat').textContent = '';
-  try {
-    await sb.from('photos').insert({ image_data: captured, status: 'pending', tier: selectedTier });
-  } catch(e) { console.log('Supabase insert error:', e); }
-  document.getElementById('succ').classList.add('open');
-}
-async function buyPhoto() {
-  // Save photo to Supabase first, then redirect to Stripe
-  try {
-    await sb.from('photos').insert({ image_data: captured, status: 'pending', tier: selectedTier });
-  } catch(e) { console.log('Supabase insert error:', e); }
-  closePay(); closePanel('cam-panel');
-  const tierName = selectedTier === 1 ? 'Gesicht' : selectedTier === 5 ? 'Gesicht + Name' : 'Gesicht + Name + Link';
-  buyItem('photo', 'THETOYSAREOUT — ' + tierName, selectedTier);
-}
-function afterSucc() { document.getElementById('succ').classList.remove('open'); openPanel('gal-panel'); }
-
-// ── GALLERY ──
-async function renderGal() {
-  const g = document.getElementById('gal-grid');
-  g.innerHTML = '<div id="gal-empty"><p>Wird geladen...</p></div>';
-  try {
-    const { data, error } = await sb.from('photos').select('*').eq('status', 'approved').order('approved_at', { ascending: false });
-    if (error) throw error;
-    document.getElementById('gal-info').textContent = data.length + ' Gesicht' + (data.length !== 1 ? 'er' : '');
-    g.innerHTML = '';
-    if (!data.length) { g.innerHTML = '<div id="gal-empty"><p>Noch keine Gesichter.<br>Sei das erste.</p></div>'; return; }
-    data.forEach(ph => {
-      const d = document.createElement('div'); d.className = 'gi';
-      const t = new Date(ph.approved_at || ph.created_at);
-      const label = t.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) + ' ' + t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      let tierBadge = '';
-      if (ph.tier === 5) tierBadge = '<div class="gi-tier t5">+ Name</div>';
-      if (ph.tier === 15) tierBadge = '<div class="gi-tier t15">+ Link</div>';
-      d.innerHTML = `<img src="${ph.image_data}" loading="lazy">${tierBadge}<div class="gi-ov"><div class="gi-t">${label}</div></div>`;
-      g.appendChild(d);
-    });
-  } catch(e) { g.innerHTML = '<div id="gal-empty"><p>Verbindungsfehler.</p></div>'; }
+// Noise function (simplex-like)
+function noise3D(x, y, z) {
+  const p = x * 1.1 + y * 2.3 + z * 3.7;
+  return Math.sin(p) * Math.cos(y * 1.7 + z) * Math.sin(z * 2.1 + x);
 }
 
-// ── ADMIN ──
-async function openAdmin() {
-  document.getElementById('admin').classList.add('open');
-  const g = document.getElementById('admin-grid');
-  g.innerHTML = '';
-  try {
-    const { data } = await sb.from('photos').select('*').eq('status', 'pending').order('created_at', { ascending: false });
-    document.getElementById('admin-count').textContent = data.length + ' wartend';
-    if (!data.length) { g.innerHTML = '<div style="padding:60px;opacity:.3;font-size:10px;letter-spacing:.3em;text-transform:uppercase">Keine wartenden Fotos</div>'; return; }
-    data.forEach(ph => {
-      const d = document.createElement('div'); d.className = 'ai';
-      const t = new Date(ph.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-      d.innerHTML = `
-        <img src="${ph.image_data}">
-        <div class="ai-ts">${t} · ${ph.tier || 1}€</div>
-        <div class="ai-btns">
-          <button class="ai-btn ai-approve" onclick="approvePhoto('${ph.id}', this)">✓ Freigeben</button>
-          <button class="ai-btn ai-reject" onclick="rejectPhoto('${ph.id}', this)">✕ Ablehnen</button>
-        </div>`;
-      g.appendChild(d);
-    });
-  } catch(e) { g.innerHTML = '<div style="padding:60px;opacity:.3;font-size:10px">Fehler beim Laden.</div>'; }
-}
-async function approvePhoto(id, btn) {
-  btn.textContent = '...';
-  await sb.from('photos').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id);
-  btn.closest('.ai').style.opacity = '.3';
-  btn.textContent = '✓ Freigegeben';
-}
-async function rejectPhoto(id, btn) {
-  btn.textContent = '...';
-  await sb.from('photos').update({ status: 'rejected' }).eq('id', id);
-  btn.closest('.ai').style.opacity = '.2';
-  btn.textContent = '✕ Abgelehnt';
-}
+function animate(time) {
+  requestAnimationFrame(animate);
+  const t = time * 0.001;
 
-// ── CHAT ──
-let chatHistory = [], chatBusy = false;
-const SYS = `Du bist THETOYSAREOUT — Künstler, Produzent, Tänzer, Kreativpersönlichkeit. Dein Name ist dir auf den Bauch tätowiert. Du bist kein Chatbot.
-Du sprichst in kurzen, direkten, manchmal poetischen Sätzen. Maximal 3-4 Sätze. Keine Aufzählungen.
-Du kombinierst Musik, Bewegung, Produktion und Persönlichkeit — so hat es noch niemand gemacht. Musik muss mehr sein als Unterhaltung. Der Körper ist ein Medium.
-Antworte auf Deutsch oder Englisch — je nachdem was die Person schreibt.
-Wenn jemand fragt wie man Teil werden kann: Sag ihnen sie sollen ein Foto machen (1€), den Inner Circle joinen, oder einen Drop kaufen.
-Kontakt: contact@thetoysareout.de`;
-
-function addMsg(role, text) {
-  const m = document.getElementById('chat-msgs');
-  const d = document.createElement('div'); d.className = `msg ${role}`;
-  const w = document.createElement('div'); w.className = 'mw'; w.textContent = role === 'sys' ? 'THETOYSAREOUT' : 'DU';
-  const t = document.createElement('div'); t.className = 'mt';
-  d.appendChild(w); d.appendChild(t); m.appendChild(d); m.scrollTop = m.scrollHeight;
-  if (role === 'sys') { let i = 0; (function ty() { if (i < text.length) { t.textContent += text[i++]; m.scrollTop = m.scrollHeight; setTimeout(ty, Math.random() * 20 + 10); } })(); }
-  else t.textContent = text;
-}
-function showTyping() {
-  const m = document.getElementById('chat-msgs');
-  const d = document.createElement('div'); d.className = 'msg sys'; d.id = 'typdiv';
-  const w = document.createElement('div'); w.className = 'mw'; w.textContent = 'THETOYSAREOUT';
-  const t = document.createElement('div'); t.className = 'typing'; t.innerHTML = '<span></span><span></span><span></span>';
-  d.appendChild(w); d.appendChild(t); m.appendChild(d); m.scrollTop = m.scrollHeight;
-}
-function removeTyping() { const t = document.getElementById('typdiv'); if (t) t.remove(); }
-async function sendMsg() {
-  const inp = document.getElementById('chat-in');
-  const txt = inp.value.trim();
-  if (!txt || chatBusy) return;
-  inp.value = ''; chatBusy = true;
-  addMsg('usr', txt);
-  chatHistory.push({ role: 'user', content: txt });
-  setTimeout(showTyping, 300);
-  try {
-    const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: SYS, messages: chatHistory }) });
-    const data = await r.json();
-    const reply = data.content?.[0]?.text || '...';
-    removeTyping(); addMsg('sys', reply);
-    chatHistory.push({ role: 'assistant', content: reply });
-  } catch(e) { removeTyping(); addMsg('sys', 'Verbindung unterbrochen.'); }
-  chatBusy = false;
-}
-document.getElementById('chat-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } });
-
-// ── PASSWORD ──
-const PW = 'Toy.';
-const pwScreen = document.getElementById('pw-screen');
-const pwIn = document.getElementById('pw-in');
-const pwErr = document.getElementById('pw-err');
-if (sessionStorage.getItem('ttao_auth') === '1') {
-  pwScreen.style.display = 'none';
-} else {
-  document.body.style.overflow = 'hidden';
-  pwIn.focus();
-}
-pwIn.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    if (pwIn.value === PW) {
-      sessionStorage.setItem('ttao_auth', '1');
-      pwScreen.style.opacity = '0';
-      pwScreen.style.transition = 'opacity .6s';
-      setTimeout(() => { pwScreen.style.display = 'none'; document.body.style.overflow = ''; }, 600);
-    } else {
-      pwErr.style.opacity = '1';
-      pwIn.value = '';
-      setTimeout(() => pwErr.style.opacity = '0', 1800);
-    }
+  // Displace vertices organically
+  for (let i = 0; i < posAttr.count; i++) {
+    const bx = basePos[i * 3];
+    const by = basePos[i * 3 + 1];
+    const bz = basePos[i * 3 + 2];
+    const n = noise3D(bx + t * 0.3, by + t * 0.2, bz + t * 0.15);
+    const displacement = 1 + n * 0.18;
+    posAttr.setXYZ(i, bx * displacement, by * displacement, bz * displacement);
   }
+  posAttr.needsUpdate = true;
+  geo.computeVertexNormals();
+
+  // Rotate slowly
+  mesh.rotation.y = t * 0.15;
+  mesh.rotation.x = Math.sin(t * 0.1) * 0.2;
+  wire.rotation.copy(mesh.rotation);
+
+  // Color shift based on hover
+  const targetPink = organHue === 0.92 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
+  const targetHeal = organHue === 0.45 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
+  light1.intensity += (targetPink * 0.8 - light1.intensity) * 0.03;
+  light2.intensity += (targetHeal * 0.6 - light2.intensity) * 0.03;
+
+  // Opacity pulse
+  mat.opacity = 0.12 + Math.sin(t * 0.8) * 0.04;
+  wireMat.opacity = 0.04 + Math.sin(t * 1.2) * 0.02;
+
+  renderer.render(scene, camera);
+}
+animate(0);
+
+// Resize
+window.addEventListener('resize', () => {
+  const s = Math.min(360, window.innerWidth * 0.25);
+  renderer.setSize(s, s);
 });
 
-// ── STRIPE CHECKOUT ──
-async function buyItem(type, name, price) {
-  try {
-    const r = await fetch('/.netlify/functions/create-checkout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ item_type: type, item_name: name, price })
-    });
-    const data = await r.json();
-    if (data.url) window.location.href = data.url;
-    else alert('Checkout nicht verfügbar.');
-  } catch(e) { alert('Verbindungsfehler.'); }
-}
-
-// ── SUCCESS BANNER ──
-(function checkPurchase(){
-  const p = new URLSearchParams(location.search);
-  if (p.get('success') === '1') {
-    const type = p.get('purchased') || 'item';
-    const b = document.createElement('div');
-    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:var(--pink);color:var(--black);text-align:center;padding:14px;font-family:Bebas Neue,sans-serif;font-size:18px;letter-spacing:3px;animation:mi .4s ease forwards';
-    b.textContent = 'GEKAUFT. DU BIST JETZT TEIL VON THETOYSAREOUT.';
-    document.body.appendChild(b);
-    setTimeout(() => b.remove(), 6000);
-    history.replaceState({}, '', location.pathname);
-  }
-})();
+// ── TRACK WHICH WORLD USER ENTERED FROM ──
+// Store in sessionStorage so the other pages know
+document.querySelectorAll('.w-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const world = btn.closest('#w-music') ? 'music' : 'heal';
+    sessionStorage.setItem('ttao_portal_entry', world);
+    sessionStorage.setItem('ttao_portal_ts', Date.now().toString());
+  });
+});
 </script>
 </body>
 </html>
