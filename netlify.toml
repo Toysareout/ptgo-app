@@ -24,7 +24,7 @@
 # Block setup page in production
 [[redirects]]
   from = "/setup-supabase"
-  to = /setup-supabase.html
+  to = "/setup-supabase.html"
   status = 200
 
 # Security headers
