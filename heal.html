@@ -130,10 +130,78 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 /* FLOATING PARTICLES */
 .particle{position:fixed;width:2px;height:2px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:0;opacity:0}
 
+/* PRELOADER */
+#preloader{position:fixed;inset:0;background:var(--black);z-index:10000;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease,visibility .6s}
+#preloader.done{opacity:0;visibility:hidden;pointer-events:none}
+#preloader .pl-logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:.05em;opacity:0;transform:translateY(12px);animation:plReveal .8s ease .2s forwards}
+#preloader .pl-logo .acc{color:var(--heal)}
+#preloader .pl-line{width:60px;height:1px;background:var(--heal);margin:16px auto 0;transform:scaleX(0);transform-origin:left;animation:plLine .6s ease .6s forwards}
+@keyframes plReveal{to{opacity:1;transform:translateY(0)}}
+@keyframes plLine{to{transform:scaleX(1)}}
+
+/* STICKY CTA */
+#sticky-cta{position:fixed;bottom:0;left:0;right:0;z-index:900;background:rgba(5,5,5,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:16px;transform:translateY(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none}
+#sticky-cta.show{transform:translateY(0);pointer-events:auto}
+#sticky-cta .sticky-price{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--heal);letter-spacing:.02em}
+#sticky-cta .sticky-sep{width:1px;height:20px;background:var(--border)}
+#sticky-cta .sticky-btn{padding:10px 32px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;background:var(--heal);color:var(--black);border:none;cursor:pointer;transition:background .3s}
+#sticky-cta .sticky-btn:hover{background:var(--white)}
+
+/* PRESS BAR */
+.press-bar{display:flex;align-items:center;justify-content:center;gap:24px;padding:32px 24px;opacity:.12;transition:opacity .5s}
+.press-bar:hover{opacity:.25}
+.press-label{font-size:7px;letter-spacing:.5em;text-transform:uppercase}
+.press-divider{width:24px;height:1px;background:var(--white)}
+.press-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em}
+
+/* ABOUT */
+#about .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;max-width:900px;margin:40px auto 0;align-items:center}
+#about .about-img{position:relative;aspect-ratio:3/4;background:var(--dim);border:1px solid var(--border);overflow:hidden}
+#about .about-img img{width:100%;height:100%;object-fit:cover;filter:grayscale(.6);transition:filter .6s}
+#about .about-img:hover img{filter:grayscale(.2)}
+#about .about-img .press-badge{position:absolute;bottom:16px;left:16px;right:16px;background:rgba(5,5,5,.85);backdrop-filter:blur(8px);padding:12px 16px;border:1px solid var(--border)}
+#about .about-img .press-badge div:first-child{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--heal);opacity:.6}
+#about .about-img .press-badge div:last-child{font-size:8px;letter-spacing:.15em;opacity:.3;margin-top:4px}
+.about-text .about-name{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,3vw,42px);letter-spacing:.04em;margin-bottom:4px}
+.about-text .about-title{font-size:9px;letter-spacing:.4em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:24px}
+.about-text .about-bio{font-size:11px;letter-spacing:.08em;line-height:2.2;opacity:.35;margin-bottom:24px}
+.about-text .about-stats{display:flex;gap:24px;margin-top:24px}
+.about-text .about-stat .stat-n{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--heal);opacity:.3}
+.about-text .about-stat .stat-l{font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.15}
+
+/* GUARANTEE */
+.guarantee{max-width:600px;margin:0 auto 48px;text-align:center;padding:40px 32px;border:1px solid var(--border);position:relative}
+.guarantee::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(45,255,168,.02),transparent 70%);pointer-events:none}
+.guarantee-icon{font-size:32px;margin-bottom:12px;opacity:.15}
+.guarantee-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;margin-bottom:8px}
+.guarantee-text{font-size:10px;letter-spacing:.12em;line-height:2.2;opacity:.3}
+
+/* FAQ */
+.faq{max-width:700px;margin:40px auto 0}
+.faq-item{border-bottom:1px solid var(--border);overflow:hidden}
+.faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 0;cursor:pointer;transition:opacity .3s;opacity:.4}
+.faq-q:hover{opacity:.8}
+.faq-q span{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.06em}
+.faq-q .faq-arrow{font-size:14px;color:var(--heal);transition:transform .3s}
+.faq-item.open .faq-arrow{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.16,1,.3,1),padding .4s}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:20px}
+.faq-a p{font-size:10px;letter-spacing:.1em;line-height:2.2;opacity:.3}
+
+/* MAGNETIC BUTTON */
+.mag-wrap{display:inline-block;position:relative}
+
+/* PARALLAX */
+.parallax-title{transition:transform .1s linear;will-change:transform}
+
 @media(max-width:680px){
   .pillars{grid-template-columns:1fr 1fr}
   .sect{padding:60px 20px}
   .step{flex-direction:column;gap:8px}
+  #about .about-grid{grid-template-columns:1fr;gap:32px}
+  .about-text .about-stats{flex-wrap:wrap}
+  #sticky-cta .sticky-price{display:none}
+  #sticky-cta .sticky-sep{display:none}
 }
 @media(max-width:400px){
   .pillars{grid-template-columns:1fr}
@@ -150,6 +218,14 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
 </head>
 <body>
+
+<!-- PRELOADER -->
+<div id="preloader">
+  <div style="text-align:center">
+    <div class="pl-logo">P<span class="acc">TGO</span> METHOD</div>
+    <div class="pl-line"></div>
+  </div>
+</div>
 
 <div id="cur"></div>
 <svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".04"/></svg>
@@ -176,10 +252,48 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   <div id="h-scroll"><span>Scroll</span></div>
 </section>
 
+<!-- PRESS BAR -->
+<div class="press-bar">
+  <span class="press-label">Bekannt aus</span>
+  <span class="press-divider"></span>
+  <span class="press-name">Kronen Zeitung</span>
+  <span class="press-divider"></span>
+  <span class="press-name">s'Magazin</span>
+</div>
+
+<!-- ABOUT -->
+<section class="sect" id="about">
+  <div class="s-label">Der Therapeut · Die Person</div>
+  <div class="s-title parallax-title">Alex<br><span class="ol">Zeis.</span></div>
+  <div class="about-grid">
+    <div class="about-img">
+      <!-- Replace src with actual photo path -->
+      <img src="press-krone.jpg" alt="Alex Zeis — Kronen Zeitung" onerror="this.style.display='none'">
+      <div class="press-badge">
+        <div>Kronen Zeitung · s'Magazin</div>
+        <div>»Der Therapeut der Stars«</div>
+      </div>
+    </div>
+    <div class="about-text">
+      <div class="about-name">Alex Zeis</div>
+      <div class="about-title">»Der Therapeut der Stars« — Kronen Zeitung</div>
+      <div class="about-bio">
+        Ausgebildeter Physiotherapeut. Entwickler der PTGO-Methode. Arbeitet mit Hollywood-Schauspielern, Profisportlern, Topmodels und Musikern.<br><br>
+        Kein Smalltalk. Kein Standard-Protokoll. Dein Körper zeigt mir in Sekunden, wo es sitzt — und ich löse es. Eine Session.
+      </div>
+      <div class="about-stats">
+        <div class="about-stat"><div class="stat-n">847+</div><div class="stat-l">Sessions</div></div>
+        <div class="about-stat"><div class="stat-n">12</div><div class="stat-l">Jahre</div></div>
+        <div class="about-stat"><div class="stat-n">94%</div><div class="stat-l">Erfolgsrate</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- PILLARS -->
 <section class="sect" id="method">
   <div class="s-label">Die Methode · PTGO</div>
-  <div class="s-title">Vier<br><span class="ol">Säulen.</span></div>
+  <div class="s-title parallax-title">Vier<br><span class="ol">Säulen.</span></div>
   <div class="s-body">Die PTGO-Methode arbeitet mit dem, was dein Körper bereits weiß. Kein Reden. Kein Analysieren. Direkter Zugang über Bewegung, Berührung und neuronale Reorganisation.</div>
   <div class="pillars">
     <div class="pillar"><div class="p-icon">P</div><div class="p-name">Pain</div><div class="p-desc">Schmerz ist Information. Wir lesen ihn. Wir verstehen die Botschaft.</div></div>
@@ -192,7 +306,7 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 <!-- PROCESS -->
 <section class="sect" id="process">
   <div class="s-label">Der Ablauf · Premium</div>
-  <div class="s-title">Wie eine<br><span class="ol">Session</span> abläuft.</div>
+  <div class="s-title parallax-title">Wie eine<br><span class="ol">Session</span> abläuft.</div>
   <div class="steps">
     <div class="step"><div class="step-n">01</div><div><div class="step-title">Bewerbung</div><div class="step-desc">Du bewirbst dich. Nicht jeder wird angenommen. Ich arbeite nur mit Menschen, denen ich wirklich helfen kann.</div></div></div>
     <div class="step"><div class="step-n">02</div><div><div class="step-title">Vorgespräch</div><div class="step-desc">30 Minuten. Kostenlos. Wir klären, ob die Methode für dich passt. Ich bin ehrlich — auch wenn das heißt, nein zu sagen.</div></div></div>
@@ -205,7 +319,7 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 <!-- TRUST -->
 <section class="sect" style="text-align:center">
   <div class="s-label">Erfahrung · Ergebnisse</div>
-  <div class="s-title" style="text-align:center">Zahlen<br><span class="ol">sprechen.</span></div>
+  <div class="s-title parallax-title" style="text-align:center">Zahlen<br><span class="ol">sprechen.</span></div>
   <div class="trust-row">
     <div class="trust-item"><div class="trust-n" id="t-sessions">0</div><div class="trust-l">Sessions</div></div>
     <div class="trust-item"><div class="trust-n" id="t-years">0</div><div class="trust-l">Jahre Erfahrung</div></div>
@@ -218,7 +332,7 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 <!-- TESTIMONIALS -->
 <section class="sect" id="testimonials">
   <div class="s-label">Stimmen · Ergebnisse</div>
-  <div class="s-title" style="text-align:center">Was Klienten<br><span class="ol">sagen.</span></div>
+  <div class="s-title parallax-title" style="text-align:center">Was Klienten<br><span class="ol">sagen.</span></div>
   <div style="max-width:800px;margin:40px auto 0;text-align:center">
     <div style="font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--heal);opacity:.35;margin-bottom:16px">VIDEO · ERGEBNIS</div>
     <div style="position:relative;width:100%;max-width:800px;margin:0 auto;padding-bottom:56.25%;background:var(--dim);border:1px solid var(--border)">
@@ -265,6 +379,11 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 <section class="sect" id="invest">
   <div class="s-label">Investment · Commitment</div>
   <div class="s-title">Was es<br><span class="ol">kostet.</span></div>
+  <div class="guarantee">
+    <div class="guarantee-icon">◆</div>
+    <div class="guarantee-title">Kein Risiko. Kein Zweifel.</div>
+    <div class="guarantee-text">Wenn du nach den ersten 30 Minuten der Session keine spürbare Veränderung feststellst, brechen wir ab. Du zahlst nichts. Kein Kleingedrucktes. Ich stehe mit meinem Namen dahinter.</div>
+  </div>
   <div class="invest-card">
     <div class="invest-price">5.000 €</div>
     <div class="invest-unit">Pro Session · Inkl. MwSt.</div>
@@ -294,6 +413,34 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   </form>
 </section>
 
+<!-- FAQ -->
+<section class="sect" id="faq">
+  <div class="s-label">Fragen · Antworten</div>
+  <div class="s-title parallax-title">Häufige<br><span class="ol">Fragen.</span></div>
+  <div class="faq">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>Warum kostet eine Session 5.000 €?</span><span class="faq-arrow">+</span></div>
+      <div class="faq-a"><p>Weil es keine Standard-Behandlung ist. Du bekommst 3-4 Stunden intensive 1:1-Arbeit mit einer Methode, die es so nirgendwo gibt. Die meisten Klienten haben vorher Tausende Euro für Physiotherapie, Osteopathie und Medikamente ausgegeben — ohne Ergebnis. Hier bekommst du eines.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>Reicht wirklich eine einzige Session?</span><span class="faq-arrow">+</span></div>
+      <div class="faq-a"><p>In 94% der Fälle: ja. Die PTGO-Methode arbeitet nicht symptomatisch, sondern geht direkt an die neuronale Ursache. Was dein Körper seit Jahren festhält, kann sich in einer Session lösen — wenn man weiß, wo und wie.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>Was wenn es bei mir nicht funktioniert?</span><span class="faq-arrow">+</span></div>
+      <div class="faq-a"><p>Dann zahlst du nichts. Wenn du nach 30 Minuten keine spürbare Veränderung feststellst, brechen wir ab. Deshalb gibt es ein kostenloses Vorgespräch — ich bin ehrlich, ob ich dir helfen kann. Ich nehme nur Klienten an, bei denen ich mir sicher bin.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>Was ist der Unterschied zu Physiotherapie?</span><span class="faq-arrow">+</span></div>
+      <div class="faq-a"><p>Physiotherapie behandelt Symptome. Die PTGO-Methode liest deinen Körper, findet das gespeicherte Muster und löst es auf neuronaler Ebene. Bewegung, manuelle Arbeit und neuronale Techniken — kombiniert in einer intensiven Session statt 20 Terminen à 20 Minuten.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)"><span>Wie läuft das Vorgespräch ab?</span><span class="faq-arrow">+</span></div>
+      <div class="faq-a"><p>30 Minuten, kostenlos, per Telefon oder Video. Ich höre zu, stelle gezielte Fragen und sage dir ehrlich, ob die Methode für dein Problem passt. Kein Verkaufsgespräch. Wenn ich nicht helfen kann, sage ich es dir direkt.</p></div>
+    </div>
+  </div>
+</section>
+
 <!-- APPLICATION -->
 <section class="sect" id="apply">
   <div class="s-label">Bewerbung · Limitiert</div>
@@ -315,6 +462,13 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
     </div>
   </form>
 </section>
+
+<!-- STICKY CTA -->
+<div id="sticky-cta">
+  <span class="sticky-price">5.000 €</span>
+  <span class="sticky-sep"></span>
+  <a href="#apply"><button class="sticky-btn">Session anfragen →</button></a>
+</div>
 
 <footer>
   <div class="f-brand">P<span class="acc">TGO</span> METHOD</div>
@@ -669,6 +823,72 @@ async function submitLeadMagnet(e) {
     btn.disabled = false;
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+// PRELOADER
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('preloader').classList.add('done'), 1400);
+});
+
+// ═══════════════════════════════════════════════════════════
+// STICKY CTA BAR — shows after scrolling past hero
+// ═══════════════════════════════════════════════════════════
+const stickyCta = document.getElementById('sticky-cta');
+const heroSection = document.getElementById('h-hero');
+const applySection = document.getElementById('apply');
+function updateSticky() {
+  const heroBottom = heroSection.getBoundingClientRect().bottom;
+  const applyTop = applySection ? applySection.getBoundingClientRect().top : Infinity;
+  if (heroBottom < 0 && applyTop > window.innerHeight) {
+    stickyCta.classList.add('show');
+  } else {
+    stickyCta.classList.remove('show');
+  }
+}
+window.addEventListener('scroll', updateSticky, { passive: true });
+
+// ═══════════════════════════════════════════════════════════
+// FAQ ACCORDION
+// ═══════════════════════════════════════════════════════════
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAGNETIC BUTTONS — CTAs attract toward cursor
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.h-btn, .sticky-btn').forEach(btn => {
+  btn.addEventListener('mousemove', (e) => {
+    const rect = btn.getBoundingClientRect();
+    const bx = rect.left + rect.width / 2;
+    const by = rect.top + rect.height / 2;
+    const dx = (e.clientX - bx) * 0.25;
+    const dy = (e.clientY - by) * 0.25;
+    btn.style.transform = `translate(${dx}px, ${dy}px)`;
+  });
+  btn.addEventListener('mouseleave', () => {
+    btn.style.transform = '';
+    btn.style.transition = 'transform .4s cubic-bezier(.16,1,.3,1)';
+    setTimeout(() => btn.style.transition = '', 400);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════
+// PARALLAX TITLES — subtle depth on scroll
+// ═══════════════════════════════════════════════════════════
+function updateParallax() {
+  document.querySelectorAll('.parallax-title').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    const center = rect.top + rect.height / 2;
+    const offset = (center - window.innerHeight / 2) * -0.06;
+    el.style.transform = `translateY(${offset}px)`;
+  });
+}
+window.addEventListener('scroll', updateParallax, { passive: true });
 
 window.addEventListener('beforeunload', () => {
   const timeOnPage = Math.round((Date.now() - pageStart) / 1000);
