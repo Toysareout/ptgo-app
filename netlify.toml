@@ -5,6 +5,21 @@
 [functions]
   node_bundler = "esbuild"
 
+[[redirects]]
+  from = "/heal"
+  to = "/heal.html"
+  status = 200
+
+[[redirects]]
+  from = "/portal"
+  to = "/portal.html"
+  status = 200
+
+[[redirects]]
+  from = "/musik"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]

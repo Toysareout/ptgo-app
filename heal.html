@@ -388,37 +388,55 @@ const trustObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.3 });
 trustObserver.observe(document.querySelector('.trust-row'));
 
-// ── SUPABASE (lead capture) ──
+// ── LEAD CAPTURE (dual: Supabase direct + Netlify function fallback) ──
 const SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
-const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
+const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
 
 async function submitApplication(e) {
   e.preventDefault();
   const form = e.target;
-  const status = document.getElementById('form-status');
+  const statusEl = document.getElementById('form-status');
   const btn = form.querySelector('button[type="submit"]');
   const data = Object.fromEntries(new FormData(form));
 
   btn.textContent = 'Wird gesendet...';
   btn.disabled = true;
-  status.textContent = '';
+  statusEl.textContent = '';
 
+  const payload = {
+    name: data.name,
+    email: data.email,
+    phone: data.phone || null,
+    reason: data.reason,
+    duration: data.duration || null,
+    tried: data.tried || null,
+    portal_entry: sessionStorage.getItem('ttao_portal_entry') || 'direct',
+    source: document.referrer || 'direct',
+    status: 'new'
+  };
+
+  let saved = false;
+
+  // Try 1: Direct Supabase insert (RLS allows anon inserts)
   try {
-    // Save to Supabase
-    await sb.from('heal_applications').insert({
-      name: data.name,
-      email: data.email,
-      phone: data.phone || null,
-      reason: data.reason,
-      duration: data.duration || null,
-      tried: data.tried || null,
-      portal_entry: sessionStorage.getItem('ttao_portal_entry') || 'direct',
-      source: document.referrer || 'direct',
-      status: 'new'
-    });
+    const { error } = await sb.from('heal_applications').insert(payload);
+    if (!error) saved = true;
+  } catch(_) {}
 
-    // Show success
+  // Try 2: Netlify function fallback
+  if (!saved) {
+    try {
+      const res = await fetch('/.netlify/functions/heal-apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) saved = true;
+    } catch(_) {}
+  }
+
+  if (saved) {
     form.innerHTML = `
       <div style="text-align:center;padding:60px 0">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,56px);margin-bottom:12px">Erhalten<span style="color:var(--heal)">.</span></div>
@@ -430,14 +448,11 @@ async function submitApplication(e) {
         <a href="portal.html" class="h-btn-g h-btn" style="margin-top:32px;display:inline-block">← Zurück zum Portal</a>
       </div>
     `;
-
-    // Track conversion
     sessionStorage.setItem('ttao_heal_applied', '1');
     sessionStorage.setItem('ttao_heal_applied_ts', Date.now().toString());
-
-  } catch(err) {
-    status.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
-    status.style.color = '#ff4444';
+  } else {
+    statusEl.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
+    statusEl.style.color = '#ff4444';
     btn.textContent = 'Bewerbung absenden →';
     btn.disabled = false;
   }
