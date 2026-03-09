@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PTGO METHOD — Pain · Trauma · Growth · Outcome</title>
+<meta name="description" content="PTGO Method. Dein Körper speichert alles. Schmerz. Trauma. Muster. Ich löse sie. Premium 1:1 Sessions.">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -13,6 +14,7 @@
   --black:#050505;--heal:#2dffa8;--white:#f0ece4;
   --dim:#0a0a0a;--mid:#111;--border:#1a1a1a;
   --warm:rgba(45,255,168,.08);
+  --glow:rgba(45,255,168,.04);
 }
 html{scroll-behavior:smooth}
 body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
@@ -23,65 +25,85 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
 @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
 
+/* LIVING GRID - subtle background grid that breathes */
+#living-grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.015}
+#living-grid canvas{width:100%;height:100%}
+
+/* TIME INDICATOR */
+#time-phase{position:fixed;top:20px;right:28px;z-index:20;text-align:right}
+#time-phase .phase-label{font-size:7px;letter-spacing:.5em;text-transform:uppercase;opacity:.12}
+#time-phase .phase-dot{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--heal);opacity:.3;margin-left:6px;animation:phasePulse 3s ease-in-out infinite}
+@keyframes phasePulse{0%,100%{opacity:.15}50%{opacity:.6}}
+
 /* HERO */
 #h-hero{position:relative;width:100%;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
 #h-hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,rgba(5,5,5,.2) 0%,transparent 30%,rgba(5,5,5,.9) 100%);z-index:1;pointer-events:none}
-#h-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,var(--warm),transparent 65%)}
+#h-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,var(--warm),transparent 65%);transition:background 3s}
 #h-organ{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(500px,60vw);height:min(500px,60vw);z-index:0}
 .h-content{position:relative;z-index:2;text-align:center;padding:20px;max-width:700px}
-.h-label{font-size:8px;letter-spacing:.6em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:20px}
+.h-label{font-size:8px;letter-spacing:.6em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:20px;transition:opacity 2s}
 .h-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,10vw,120px);line-height:.88;letter-spacing:.03em;margin-bottom:16px}
 .h-title .acc{color:var(--heal)}
 .h-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.15)}
-.h-sub{font-size:clamp(9px,1vw,11px);letter-spacing:.35em;text-transform:uppercase;opacity:.2;margin-bottom:40px;line-height:2}
+.h-sub{font-size:clamp(9px,1vw,11px);letter-spacing:.35em;text-transform:uppercase;opacity:.2;margin-bottom:12px;line-height:2;min-height:60px;transition:opacity 1.5s}
+/* Hourly rotating tagline */
+#hourly-mantra{font-size:8px;letter-spacing:.4em;text-transform:uppercase;color:var(--heal);opacity:.15;margin-bottom:40px;transition:opacity 2s}
 #h-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;opacity:.12;font-size:8px;letter-spacing:.4em;text-transform:uppercase}
 #h-scroll::after{content:'';display:block;width:1px;height:28px;background:linear-gradient(to bottom,var(--white),transparent);margin:8px auto 0}
 
 /* SECTIONS */
-.sect{padding:clamp(80px,12vh,140px) clamp(24px,8vw,120px);border-top:1px solid var(--border)}
+.sect{padding:clamp(80px,12vh,140px) clamp(24px,8vw,120px);border-top:1px solid var(--border);position:relative}
+.sect::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--glow),transparent)}
 .s-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--heal);opacity:.35;margin-bottom:16px}
 .s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4.5vw,64px);line-height:.95;margin-bottom:12px}
 .s-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.12)}
 .s-body{font-size:11px;letter-spacing:.12em;line-height:2.4;opacity:.3;max-width:600px;margin-bottom:32px}
 
-/* PILLARS */
+/* PILLARS - now with hover glow */
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:900px;margin:40px auto 0}
-.pillar{background:var(--dim);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:border-color .3s,transform .3s}
-.pillar:hover{border-color:var(--heal);transform:translateY(-4px)}
-.p-icon{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--heal);opacity:.2;margin-bottom:12px}
+.pillar{background:var(--dim);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:all .4s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
+.pillar::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,var(--glow),transparent 70%);opacity:0;transition:opacity .4s}
+.pillar:hover{border-color:var(--heal);transform:translateY(-6px)}.pillar:hover::after{opacity:1}
+.p-icon{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--heal);opacity:.15;margin-bottom:12px;transition:opacity .4s}
+.pillar:hover .p-icon{opacity:.4}
 .p-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;margin-bottom:8px}
 .p-desc{font-size:9px;letter-spacing:.15em;opacity:.25;line-height:2}
 
-/* PROCESS */
+/* PROCESS - animated reveal */
 .steps{max-width:700px;margin:40px auto 0}
-.step{display:flex;gap:24px;padding:28px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.step{display:flex;gap:24px;padding:28px 0;border-bottom:1px solid var(--border);align-items:flex-start;opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.step.visible{opacity:1;transform:translateY(0)}
 .step-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.15;min-width:48px}
 .step-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;margin-bottom:4px}
 .step-desc{font-size:9px;letter-spacing:.15em;opacity:.25;line-height:2}
 
 /* INVESTMENT */
 #invest{text-align:center}
-.invest-card{max-width:500px;margin:40px auto 0;background:var(--dim);border:1px solid var(--heal);padding:48px 36px;position:relative}
+.invest-card{max-width:500px;margin:40px auto 0;background:var(--dim);border:1px solid var(--heal);padding:48px 36px;position:relative;overflow:hidden}
 .invest-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--heal),transparent)}
-.invest-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,80px);color:var(--heal);margin-bottom:4px}
+.invest-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(45,255,168,.03),transparent 60%);pointer-events:none}
+.invest-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,80px);color:var(--heal);margin-bottom:4px;position:relative;z-index:1}
 .invest-unit{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.25;margin-bottom:24px}
-.invest-inc{list-style:none;text-align:left;margin-bottom:32px}
-.invest-inc li{font-size:10px;letter-spacing:.12em;padding:10px 0;border-bottom:1px solid var(--border);opacity:.4}
+.invest-inc{list-style:none;text-align:left;margin-bottom:32px;position:relative;z-index:1}
+.invest-inc li{font-size:10px;letter-spacing:.12em;padding:10px 0;border-bottom:1px solid var(--border);opacity:.4;transition:opacity .3s}
+.invest-inc li:hover{opacity:.8}
 .invest-inc li::before{content:'→ ';color:var(--heal)}
 
 /* CTA BUTTON */
-.h-btn{padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;background:var(--heal);color:var(--black);display:inline-block;text-decoration:none}
-.h-btn:hover{background:var(--white)}
+.h-btn{padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;background:var(--heal);color:var(--black);display:inline-block;text-decoration:none;position:relative;overflow:hidden}
+.h-btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.2);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s}
+.h-btn:hover{background:var(--white)}.h-btn:hover::after{width:300px;height:300px}
 .h-btn-g{background:none;border:1px solid var(--border);color:var(--white);opacity:.4}
 .h-btn-g:hover{border-color:var(--heal);color:var(--heal);opacity:1}
 
 /* APPLICATION FORM */
 #apply{text-align:center}
 #apply-form{max-width:500px;margin:40px auto 0;text-align:left}
-.form-group{margin-bottom:20px}
-.form-label{font-size:8px;letter-spacing:.35em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:8px;display:block}
-.form-input{width:100%;background:var(--dim);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:14px 16px;outline:none;transition:border-color .3s;cursor:none}
-.form-input:focus{border-color:var(--heal)}
+.form-group{margin-bottom:20px;position:relative}
+.form-label{font-size:8px;letter-spacing:.35em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:8px;display:block;transition:opacity .3s}
+.form-group:focus-within .form-label{opacity:.8}
+.form-input{width:100%;background:var(--dim);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:14px 16px;outline:none;transition:border-color .3s,box-shadow .3s;cursor:none}
+.form-input:focus{border-color:var(--heal);box-shadow:0 0 20px rgba(45,255,168,.03)}
 .form-input::placeholder{color:var(--white);opacity:.12}
 textarea.form-input{min-height:120px;resize:vertical}
 .form-note{font-size:8px;letter-spacing:.2em;opacity:.12;text-align:center;margin-top:16px}
@@ -89,7 +111,8 @@ textarea.form-input{min-height:120px;resize:vertical}
 
 /* TRUST */
 .trust-row{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:40px;max-width:700px;margin-left:auto;margin-right:auto}
-.trust-item{flex:1;min-width:140px;padding:24px 16px;background:var(--dim);border:1px solid var(--border);text-align:center}
+.trust-item{flex:1;min-width:140px;padding:24px 16px;background:var(--dim);border:1px solid var(--border);text-align:center;transition:border-color .3s}
+.trust-item:hover{border-color:rgba(45,255,168,.15)}
 .trust-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.3}
 .trust-l{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.15;margin-top:4px}
 
@@ -103,6 +126,9 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 .f-brand .acc{color:var(--heal)}
 .f-copy{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.08}
 .f-contact{font-size:8px;letter-spacing:.2em;opacity:.12;margin-top:8px}
+
+/* FLOATING PARTICLES */
+.particle{position:fixed;width:2px;height:2px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:0;opacity:0}
 
 @media(max-width:680px){
   .pillars{grid-template-columns:1fr 1fr}
@@ -121,6 +147,12 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 
 <a href="index.html" id="back">← Portal</a>
 
+<!-- TIME PHASE INDICATOR -->
+<div id="time-phase">
+  <span class="phase-label" id="phase-text">Phase</span>
+  <span class="phase-dot"></span>
+</div>
+
 <!-- HERO -->
 <section id="h-hero">
   <div id="h-bg"></div>
@@ -128,7 +160,8 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   <div class="h-content">
     <div class="h-label">Pain · Trauma · Growth · Outcome</div>
     <div class="h-title">P<span class="acc">TGO</span><br><span class="ol">Method.</span></div>
-    <div class="h-sub">Dein Körper speichert alles.<br>Schmerz. Trauma. Muster.<br>Ich löse sie.</div>
+    <div class="h-sub" id="hero-sub">Dein Körper speichert alles.<br>Schmerz. Trauma. Muster.<br>Ich löse sie.</div>
+    <div id="hourly-mantra"></div>
     <a href="#apply" class="h-btn">Session anfragen →</a>
   </div>
   <div id="h-scroll"><span>Scroll</span></div>
@@ -140,26 +173,10 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   <div class="s-title">Vier<br><span class="ol">Säulen.</span></div>
   <div class="s-body">Die PTGO-Methode arbeitet mit dem, was dein Körper bereits weiß. Kein Reden. Kein Analysieren. Direkter Zugang über Bewegung, Berührung und neuronale Reorganisation.</div>
   <div class="pillars">
-    <div class="pillar">
-      <div class="p-icon">P</div>
-      <div class="p-name">Pain</div>
-      <div class="p-desc">Schmerz ist Information. Wir lesen ihn. Wir verstehen die Botschaft.</div>
-    </div>
-    <div class="pillar">
-      <div class="p-icon">T</div>
-      <div class="p-name">Trauma</div>
-      <div class="p-desc">Im Gewebe gespeichert. Nicht im Kopf. Der Körper erinnert sich.</div>
-    </div>
-    <div class="pillar">
-      <div class="p-icon">G</div>
-      <div class="p-name">Growth</div>
-      <div class="p-desc">Neue neuronale Pfade. Neue Bewegungsmuster. Transformation.</div>
-    </div>
-    <div class="pillar">
-      <div class="p-icon">O</div>
-      <div class="p-name">Outcome</div>
-      <div class="p-desc">Messbare Veränderung. Weniger Schmerz. Mehr Freiheit. Sofort.</div>
-    </div>
+    <div class="pillar"><div class="p-icon">P</div><div class="p-name">Pain</div><div class="p-desc">Schmerz ist Information. Wir lesen ihn. Wir verstehen die Botschaft.</div></div>
+    <div class="pillar"><div class="p-icon">T</div><div class="p-name">Trauma</div><div class="p-desc">Im Gewebe gespeichert. Nicht im Kopf. Der Körper erinnert sich.</div></div>
+    <div class="pillar"><div class="p-icon">G</div><div class="p-name">Growth</div><div class="p-desc">Neue neuronale Pfade. Neue Bewegungsmuster. Transformation.</div></div>
+    <div class="pillar"><div class="p-icon">O</div><div class="p-name">Outcome</div><div class="p-desc">Messbare Veränderung. Weniger Schmerz. Mehr Freiheit. Sofort.</div></div>
   </div>
 </section>
 
@@ -168,41 +185,11 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   <div class="s-label">Der Ablauf · Premium</div>
   <div class="s-title">Wie eine<br><span class="ol">Session</span> abläuft.</div>
   <div class="steps">
-    <div class="step">
-      <div class="step-n">01</div>
-      <div>
-        <div class="step-title">Bewerbung</div>
-        <div class="step-desc">Du bewirbst dich. Nicht jeder wird angenommen. Ich arbeite nur mit Menschen, denen ich wirklich helfen kann.</div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">02</div>
-      <div>
-        <div class="step-title">Vorgespräch</div>
-        <div class="step-desc">30 Minuten. Kostenlos. Wir klären, ob die Methode für dich passt. Ich bin ehrlich — auch wenn das heißt, nein zu sagen.</div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">03</div>
-      <div>
-        <div class="step-title">Body Reading</div>
-        <div class="step-desc">Dein Körper zeigt mir alles. Haltung, Spannung, Schutzmuster. Bevor ich anfange, weiß ich schon, wo es sitzt.</div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">04</div>
-      <div>
-        <div class="step-title">Session</div>
-        <div class="step-desc">3-4 Stunden. Intensiv. Bewegung, manuelle Arbeit, neuronale Techniken. Kein Small Talk. Nur Arbeit.</div>
-      </div>
-    </div>
-    <div class="step">
-      <div class="step-n">05</div>
-      <div>
-        <div class="step-title">Integration</div>
-        <div class="step-desc">48h Nachbetreuung. Dein Nervensystem braucht Zeit. Ich begleite den Prozess bis die Veränderung stabil ist.</div>
-      </div>
-    </div>
+    <div class="step"><div class="step-n">01</div><div><div class="step-title">Bewerbung</div><div class="step-desc">Du bewirbst dich. Nicht jeder wird angenommen. Ich arbeite nur mit Menschen, denen ich wirklich helfen kann.</div></div></div>
+    <div class="step"><div class="step-n">02</div><div><div class="step-title">Vorgespräch</div><div class="step-desc">30 Minuten. Kostenlos. Wir klären, ob die Methode für dich passt. Ich bin ehrlich — auch wenn das heißt, nein zu sagen.</div></div></div>
+    <div class="step"><div class="step-n">03</div><div><div class="step-title">Body Reading</div><div class="step-desc">Dein Körper zeigt mir alles. Haltung, Spannung, Schutzmuster. Bevor ich anfange, weiß ich schon, wo es sitzt.</div></div></div>
+    <div class="step"><div class="step-n">04</div><div><div class="step-title">Session</div><div class="step-desc">3-4 Stunden. Intensiv. Bewegung, manuelle Arbeit, neuronale Techniken. Kein Small Talk. Nur Arbeit.</div></div></div>
+    <div class="step"><div class="step-n">05</div><div><div class="step-title">Integration</div><div class="step-desc">48h Nachbetreuung. Dein Nervensystem braucht Zeit. Ich begleite den Prozess bis die Veränderung stabil ist.</div></div></div>
   </div>
 </section>
 
@@ -244,30 +231,12 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
   <div class="s-title">Bewerbe<br><span class="ol">dich.</span></div>
   <div class="s-body" style="margin-left:auto;margin-right:auto;text-align:center">Ich nehme maximal 4 neue Klienten pro Monat an.<br>Erzähl mir, was dich hierher gebracht hat.</div>
   <form id="apply-form" onsubmit="submitApplication(event)">
-    <div class="form-group">
-      <label class="form-label">Name</label>
-      <input class="form-input" type="text" name="name" placeholder="Dein Name" required />
-    </div>
-    <div class="form-group">
-      <label class="form-label">E-Mail</label>
-      <input class="form-input" type="email" name="email" placeholder="name@beispiel.de" required />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Telefon</label>
-      <input class="form-input" type="tel" name="phone" placeholder="+49 ..." />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Was führt dich hierher?</label>
-      <textarea class="form-input" name="reason" placeholder="Schmerz, Trauma, Bewegungseinschränkung, chronische Muster..." required></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Wie lange besteht das Problem?</label>
-      <input class="form-input" type="text" name="duration" placeholder="z.B. 3 Jahre, seit einem Unfall, ..." />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Was hast du bereits versucht?</label>
-      <textarea class="form-input" name="tried" placeholder="Physiotherapie, Medikamente, Osteopathie, ..." style="min-height:80px"></textarea>
-    </div>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" name="name" placeholder="Dein Name" required /></div>
+    <div class="form-group"><label class="form-label">E-Mail</label><input class="form-input" type="email" name="email" placeholder="name@beispiel.de" required /></div>
+    <div class="form-group"><label class="form-label">Telefon</label><input class="form-input" type="tel" name="phone" placeholder="+49 ..." /></div>
+    <div class="form-group"><label class="form-label">Was führt dich hierher?</label><textarea class="form-input" name="reason" placeholder="Schmerz, Trauma, Bewegungseinschränkung, chronische Muster..." required></textarea></div>
+    <div class="form-group"><label class="form-label">Wie lange besteht das Problem?</label><input class="form-input" type="text" name="duration" placeholder="z.B. 3 Jahre, seit einem Unfall, ..." /></div>
+    <div class="form-group"><label class="form-label">Was hast du bereits versucht?</label><textarea class="form-input" name="tried" placeholder="Physiotherapie, Medikamente, Osteopathie, ..." style="min-height:80px"></textarea></div>
     <button type="submit" class="h-btn" style="width:100%">Bewerbung absenden →</button>
     <div class="form-note">Antwort innerhalb von 48 Stunden · Vorgespräch kostenlos</div>
     <div id="form-status"></div>
@@ -281,15 +250,81 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 </footer>
 
 <script>
-// ── CURSOR ──
+// ═══════════════════════════════════════════════════════════
+// HOURLY EVOLUTION SYSTEM — Content shifts every hour
+// The page is alive. It breathes. It changes. Never static.
+// ═══════════════════════════════════════════════════════════
+
+const MANTRAS = [
+  'Dein Nervensystem kennt den Weg',
+  'Schmerz ist die Sprache des Körpers',
+  'Jede Spannung erzählt eine Geschichte',
+  'Transformation beginnt im Gewebe',
+  'Der Körper vergisst nichts — aber er kann loslassen',
+  'Heilung ist kein Konzept. Es ist ein Zustand',
+  'Dein Körper wartet auf Erlaubnis',
+  'Muster brechen. Freiheit finden',
+  'Was der Verstand verdrängt, speichert der Körper',
+  'Nicht reden. Fühlen. Lösen',
+  'Jede Zelle erinnert sich',
+  'Tiefe Arbeit. Echte Ergebnisse',
+  'Das Nervensystem reguliert sich selbst — wenn du es lässt',
+  'Trauma sitzt nicht im Kopf. Es sitzt im Körper',
+  'Stille Kraft. Präzise Arbeit',
+  'Veränderung passiert jetzt. Nicht morgen',
+  'Der Körper lügt nie',
+  'Faszien tragen Erinnerungen',
+  'Spannung ist gespeicherte Energie',
+  'Frühling im Nervensystem',
+  'Dein Reset beginnt hier',
+  'Altes loslassen. Neues zulassen',
+  'Bewusstsein durch Berührung',
+  'Jede Session ist einzigartig — wie du',
+];
+
+const PHASES = [
+  'Nachtzyklus · Regeneration','Nachtzyklus · Regeneration','Nachtzyklus · Regeneration',
+  'Nachtzyklus · Regeneration','Nachtzyklus · Regeneration','Morgendämmerung · Erwachen',
+  'Morgendämmerung · Erwachen','Morgenphase · Aktivierung','Morgenphase · Aktivierung',
+  'Morgenphase · Aktivierung','Morgenphase · Aktivierung','Mittagsphase · Peak',
+  'Mittagsphase · Peak','Nachmittag · Integration','Nachmittag · Integration',
+  'Nachmittag · Integration','Nachmittag · Integration','Abendphase · Release',
+  'Abendphase · Release','Abendphase · Release','Nachtphase · Tiefenarbeit',
+  'Nachtphase · Tiefenarbeit','Nachtphase · Tiefenarbeit','Nachtphase · Tiefenarbeit'
+];
+
+function getHourSeed() { return new Date().getHours(); }
+
+function updateHourlyContent() {
+  const h = getHourSeed();
+  document.getElementById('hourly-mantra').textContent = '— ' + MANTRAS[h] + ' —';
+  document.getElementById('phase-text').textContent = PHASES[h];
+}
+updateHourlyContent();
+setInterval(updateHourlyContent, 60000);
+
+// ═══════════════════════════════════════════════════════════
+// CURSOR
+// ═══════════════════════════════════════════════════════════
 const cur = document.getElementById('cur');
-document.addEventListener('mousemove', e => { cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px' });
-document.querySelectorAll('a,button,.pillar,.form-input,.h-btn').forEach(el => {
+let mx = 0, my = 0, cx = 0, cy = 0;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+function smoothCursor() {
+  cx += (mx - cx) * 0.15;
+  cy += (my - cy) * 0.15;
+  cur.style.left = cx + 'px';
+  cur.style.top = cy + 'px';
+  requestAnimationFrame(smoothCursor);
+}
+smoothCursor();
+document.querySelectorAll('a,button,.pillar,.form-input,.h-btn,.trust-item').forEach(el => {
   el.addEventListener('mouseenter', () => cur.classList.add('h'));
   el.addEventListener('mouseleave', () => cur.classList.remove('h'));
 });
 
-// ── THREE.JS HERO ORGAN ──
+// ═══════════════════════════════════════════════════════════
+// THREE.JS — ORGANIC ENTITY (evolves with hour)
+// ═══════════════════════════════════════════════════════════
 const canvas = document.getElementById('h-organ');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
 const w = Math.min(500, window.innerWidth * 0.6);
@@ -301,30 +336,51 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
 camera.position.z = 3.5;
 
-const geo = new THREE.IcosahedronGeometry(1.2, 6);
+// Higher detail icosahedron
+const geo = new THREE.IcosahedronGeometry(1.2, 7);
 const posAttr = geo.attributes.position;
 const basePos = new Float32Array(posAttr.array.length);
 basePos.set(posAttr.array);
 
 const mat = new THREE.MeshStandardMaterial({
-  color: 0x2dffa8, roughness: 0.8, metalness: 0.05,
+  color: 0x2dffa8, roughness: 0.7, metalness: 0.08,
   transparent: true, opacity: 0.08, wireframe: false
 });
 const mesh = new THREE.Mesh(geo, mat);
 scene.add(mesh);
 
-const wireMat = new THREE.MeshBasicMaterial({
-  color: 0x2dffa8, wireframe: true, transparent: true, opacity: 0.03
-});
-scene.add(new THREE.Mesh(geo, wireMat));
+const wireMat = new THREE.MeshBasicMaterial({ color: 0x2dffa8, wireframe: true, transparent: true, opacity: 0.025 });
+const wireMesh = new THREE.Mesh(geo, wireMat);
+scene.add(wireMesh);
 
-scene.add(new THREE.PointLight(0x2dffa8, 0.5, 10).position.set(2, 1, 3) && new THREE.PointLight(0x2dffa8, 0.5, 10));
-const pl = new THREE.PointLight(0x2dffa8, 0.3, 10); pl.position.set(-2, -1, 2); scene.add(pl);
-scene.add(new THREE.AmbientLight(0xffffff, 0.08));
+// Inner glow sphere
+const innerGeo = new THREE.SphereGeometry(0.4, 32, 32);
+const innerMat = new THREE.MeshBasicMaterial({ color: 0x2dffa8, transparent: true, opacity: 0.02 });
+const innerMesh = new THREE.Mesh(innerGeo, innerMat);
+scene.add(innerMesh);
 
-function noise3D(x,y,z){const p=x*1.1+y*2.3+z*3.7;return Math.sin(p)*Math.cos(y*1.7+z)*Math.sin(z*2.1+x)}
+const pl1 = new THREE.PointLight(0x2dffa8, 0.5, 10); pl1.position.set(2, 1, 3); scene.add(pl1);
+const pl2 = new THREE.PointLight(0x2dffa8, 0.3, 10); pl2.position.set(-2, -1, 2); scene.add(pl2);
+const pl3 = new THREE.PointLight(0x1a8fff, 0.15, 10); pl3.position.set(0, 2, -2); scene.add(pl3);
+scene.add(new THREE.AmbientLight(0xffffff, 0.06));
 
-// Scroll-reactive: organ responds to scroll depth
+function noise3D(x,y,z){
+  const p = x*1.1+y*2.3+z*3.7;
+  return Math.sin(p)*Math.cos(y*1.7+z)*Math.sin(z*2.1+x);
+}
+
+// Hour-based organism behavior
+function getOrganicParams() {
+  const h = getHourSeed();
+  // Night: slow, deep breathing. Day: more active. Evening: calm
+  if (h >= 0 && h < 6) return { speed: 0.08, intensity: 0.1, pulse: 0.3 };
+  if (h >= 6 && h < 10) return { speed: 0.15, intensity: 0.14, pulse: 0.6 };
+  if (h >= 10 && h < 14) return { speed: 0.2, intensity: 0.18, pulse: 0.8 };
+  if (h >= 14 && h < 18) return { speed: 0.15, intensity: 0.15, pulse: 0.5 };
+  if (h >= 18 && h < 22) return { speed: 0.1, intensity: 0.12, pulse: 0.4 };
+  return { speed: 0.08, intensity: 0.1, pulse: 0.3 };
+}
+
 let scrollProgress = 0;
 window.addEventListener('scroll', () => {
   scrollProgress = Math.min(1, window.scrollY / (document.body.scrollHeight - window.innerHeight));
@@ -333,26 +389,34 @@ window.addEventListener('scroll', () => {
 function animate(time) {
   requestAnimationFrame(animate);
   const t = time * 0.001;
+  const params = getOrganicParams();
 
   for (let i = 0; i < posAttr.count; i++) {
     const bx = basePos[i*3], by = basePos[i*3+1], bz = basePos[i*3+2];
-    const n = noise3D(bx + t*0.2, by + t*0.15, bz + t*0.1);
-    // More organic displacement, reacts to scroll
-    const intensity = 0.12 + scrollProgress * 0.15;
-    const d = 1 + n * intensity;
+    const n = noise3D(bx + t*params.speed, by + t*params.speed*0.75, bz + t*params.speed*0.5);
+    const scrollBoost = scrollProgress * 0.08;
+    const d = 1 + n * (params.intensity + scrollBoost);
     posAttr.setXYZ(i, bx*d, by*d, bz*d);
   }
   posAttr.needsUpdate = true;
   geo.computeVertexNormals();
 
-  mesh.rotation.y = t * 0.08;
-  mesh.rotation.x = Math.sin(t * 0.06) * 0.15;
+  mesh.rotation.y = t * params.speed * 0.5;
+  mesh.rotation.x = Math.sin(t * params.speed * 0.3) * 0.15;
+  wireMesh.rotation.copy(mesh.rotation);
 
-  // Opacity fades as user scrolls down
+  // Inner glow pulses with hour rhythm
+  innerMesh.scale.setScalar(0.9 + Math.sin(t * params.pulse) * 0.15);
+  innerMat.opacity = 0.015 + Math.sin(t * params.pulse) * 0.01;
+
   const heroOpacity = Math.max(0, 1 - scrollProgress * 3);
   canvas.style.opacity = heroOpacity;
 
   mat.opacity = 0.06 + Math.sin(t * 0.5) * 0.03;
+
+  // Subtle light color shift based on hour
+  const hueShift = (getHourSeed() / 24) * Math.PI * 2;
+  pl3.color.setHSL(0.45 + Math.sin(hueShift) * 0.05, 0.8, 0.5);
 
   renderer.render(scene, camera);
 }
@@ -363,7 +427,49 @@ window.addEventListener('resize', () => {
   renderer.setSize(s, s);
 });
 
-// ── ANIMATED TRUST NUMBERS ──
+// ═══════════════════════════════════════════════════════════
+// FLOATING PARTICLES — ambient life
+// ═══════════════════════════════════════════════════════════
+function createParticles() {
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = Math.random() * 100 + 'vh';
+    document.body.appendChild(p);
+    animateParticle(p);
+  }
+}
+function animateParticle(p) {
+  const duration = 15000 + Math.random() * 20000;
+  const x1 = Math.random() * 100, y1 = Math.random() * 100;
+  p.style.transition = `left ${duration}ms linear, top ${duration}ms linear, opacity ${duration*0.3}ms`;
+  p.style.opacity = 0.08 + Math.random() * 0.12;
+  p.style.left = x1 + 'vw';
+  p.style.top = y1 + 'vh';
+  setTimeout(() => {
+    p.style.opacity = 0;
+    setTimeout(() => animateParticle(p), 2000);
+  }, duration * 0.7);
+}
+createParticles();
+
+// ═══════════════════════════════════════════════════════════
+// SCROLL REVEAL — Steps animate in
+// ═══════════════════════════════════════════════════════════
+const stepObserver = new IntersectionObserver((entries) => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 100);
+      stepObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+document.querySelectorAll('.step').forEach(s => stepObserver.observe(s));
+
+// ═══════════════════════════════════════════════════════════
+// ANIMATED TRUST NUMBERS
+// ═══════════════════════════════════════════════════════════
 function animateNumber(el, target, suffix = '', duration = 2000) {
   const start = performance.now();
   const step = (now) => {
@@ -388,7 +494,9 @@ const trustObserver = new IntersectionObserver((entries) => {
 }, { threshold: 0.3 });
 trustObserver.observe(document.querySelector('.trust-row'));
 
-// ── LEAD CAPTURE (dual: Supabase direct + Netlify function fallback) ──
+// ═══════════════════════════════════════════════════════════
+// LEAD CAPTURE (dual: Supabase direct + Netlify function)
+// ═══════════════════════════════════════════════════════════
 const SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
 const SUPA_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
 const sb = supabase.createClient(SUPA_URL, SUPA_ANON);
@@ -405,31 +513,18 @@ async function submitApplication(e) {
   statusEl.textContent = '';
 
   const payload = {
-    name: data.name,
-    email: data.email,
-    phone: data.phone || null,
-    reason: data.reason,
-    duration: data.duration || null,
-    tried: data.tried || null,
+    name: data.name, email: data.email, phone: data.phone || null,
+    reason: data.reason, duration: data.duration || null, tried: data.tried || null,
     portal_entry: sessionStorage.getItem('ttao_portal_entry') || 'direct',
-    source: document.referrer || 'direct',
-    status: 'new'
+    source: document.referrer || 'direct', status: 'new'
   };
 
   let saved = false;
-
-  // Try 1: Direct Supabase insert (RLS allows anon inserts)
-  try {
-    const { error } = await sb.from('heal_applications').insert(payload);
-    if (!error) saved = true;
-  } catch(_) {}
-
-  // Try 2: Netlify function fallback
+  try { const { error } = await sb.from('heal_applications').insert(payload); if (!error) saved = true; } catch(_) {}
   if (!saved) {
     try {
       const res = await fetch('/.netlify/functions/heal-apply', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       if (res.ok) saved = true;
@@ -449,7 +544,6 @@ async function submitApplication(e) {
       </div>
     `;
     sessionStorage.setItem('ttao_heal_applied', '1');
-    sessionStorage.setItem('ttao_heal_applied_ts', Date.now().toString());
   } else {
     statusEl.textContent = 'Fehler beim Senden. Bitte versuche es erneut.';
     statusEl.style.color = '#ff4444';
@@ -458,21 +552,18 @@ async function submitApplication(e) {
   }
 }
 
-// ── SMART FUNNEL: Track engagement depth ──
+// ═══════════════════════════════════════════════════════════
+// ENGAGEMENT TRACKING
+// ═══════════════════════════════════════════════════════════
 let maxScroll = 0;
-let timeOnPage = 0;
 const pageStart = Date.now();
-
 window.addEventListener('scroll', () => {
   const pct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
   if (pct > maxScroll) maxScroll = pct;
 });
-
-// Before leaving, store engagement data for retargeting
 window.addEventListener('beforeunload', () => {
-  timeOnPage = Math.round((Date.now() - pageStart) / 1000);
-  const engagement = { maxScroll, timeOnPage, appliedForm: !!sessionStorage.getItem('ttao_heal_applied') };
-  sessionStorage.setItem('ttao_heal_engagement', JSON.stringify(engagement));
+  const timeOnPage = Math.round((Date.now() - pageStart) / 1000);
+  sessionStorage.setItem('ttao_heal_engagement', JSON.stringify({ maxScroll, timeOnPage, applied: !!sessionStorage.getItem('ttao_heal_applied') }));
 });
 </script>
 </body>

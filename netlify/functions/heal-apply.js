@@ -72,6 +72,15 @@ exports.handler = async (event) => {
       }
     }
 
+    // Send WhatsApp notification via Twilio
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_WHATSAPP_TO) {
+      try {
+        await sendWhatsApp({ name, email, phone, reason });
+      } catch (waErr) {
+        console.error('WhatsApp notification failed:', waErr.message);
+      }
+    }
+
     return {
       statusCode: 200,
       headers,
@@ -82,6 +91,29 @@ exports.handler = async (event) => {
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Application failed' }) };
   }
 };
+
+async function sendWhatsApp({ name, email, phone, reason }) {
+  const sid = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_WHATSAPP_FROM;
+  const to = process.env.TWILIO_WHATSAPP_TO;
+
+  const msg = `🟢 Neue PTGO Bewerbung\n\nName: ${name}\nE-Mail: ${email}\nTelefon: ${phone || '-'}\nGrund: ${reason}`;
+
+  const params = new URLSearchParams();
+  params.append('From', `whatsapp:${from}`);
+  params.append('To', `whatsapp:${to}`);
+  params.append('Body', msg);
+
+  await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  });
+}
 
 async function sendNotification({ name, email, phone, reason, duration, tried }) {
   const transporter = nodemailer.createTransport({
