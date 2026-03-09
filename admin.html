@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTGO Admin — Bewerbungen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--black:#050505;--heal:#2dffa8;--white:#f0ece4;--dim:#0a0a0a;--border:#1a1a1a;--red:#ff4444;--yellow:#ffaa00}
+body{background:var(--black);color:var(--white);font-family:'Courier New',monospace;min-height:100vh}
+
+.login{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px}
+.login h1{font-size:14px;letter-spacing:.4em;text-transform:uppercase;opacity:.3}
+.login input{background:var(--dim);border:1px solid var(--border);color:var(--white);padding:14px 20px;font-family:inherit;font-size:14px;width:300px;text-align:center;outline:none}
+.login input:focus{border-color:var(--heal)}
+.login button{background:var(--heal);color:var(--black);border:none;padding:12px 40px;font-family:inherit;font-size:12px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+.login button:hover{background:var(--white)}
+.login .error{color:var(--red);font-size:11px;letter-spacing:.15em}
+
+.dashboard{display:none;padding:40px clamp(16px,4vw,60px)}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.dash-title{font-size:11px;letter-spacing:.4em;text-transform:uppercase;opacity:.4}
+.dash-count{font-size:11px;letter-spacing:.2em;color:var(--heal);opacity:.6}
+.dash-refresh{background:none;border:1px solid var(--border);color:var(--white);padding:8px 16px;font-family:inherit;font-size:10px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;opacity:.3}
+.dash-refresh:hover{border-color:var(--heal);color:var(--heal);opacity:1}
+
+.cards{display:grid;gap:12px}
+.card{background:var(--dim);border:1px solid var(--border);padding:24px;transition:border-color .3s}
+.card:hover{border-color:rgba(45,255,168,.2)}
+.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.card-name{font-size:16px;font-weight:bold}
+.card-date{font-size:10px;letter-spacing:.15em;opacity:.2}
+.card-status{display:inline-block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;padding:4px 10px;border:1px solid;margin-bottom:12px}
+.status-new{color:var(--heal);border-color:var(--heal)}
+.status-contacted{color:var(--yellow);border-color:var(--yellow)}
+.status-completed{color:var(--white);border-color:var(--border);opacity:.3}
+
+.card-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:8px}
+.card-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.25;margin-bottom:2px}
+.card-value{font-size:12px;opacity:.6;line-height:1.6}
+.card-reason{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+
+.empty{text-align:center;padding:80px;opacity:.15;font-size:12px;letter-spacing:.3em;text-transform:uppercase}
+
+@media(max-width:600px){
+  .card-row{flex-direction:column;gap:8px}
+  .dashboard{padding:20px 12px}
+}
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <h1>PTGO Admin</h1>
+  <input type="password" id="pw" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()">
+  <button onclick="doLogin()">Einloggen</button>
+  <div class="error" id="login-error"></div>
+</div>
+
+<div class="dashboard" id="dashboard">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">PTGO Bewerbungen</div>
+      <div class="dash-count" id="count"></div>
+    </div>
+    <button class="dash-refresh" onclick="loadData()">Aktualisieren</button>
+  </div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<script>
+let adminPw = '';
+
+async function doLogin() {
+  const pw = document.getElementById('pw').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+
+  try {
+    const res = await fetch('/.netlify/functions/get-applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+
+    if (!res.ok) {
+      errEl.textContent = 'Falsches Passwort';
+      return;
+    }
+
+    adminPw = pw;
+    const data = await res.json();
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    renderCards(data);
+  } catch (e) {
+    errEl.textContent = 'Verbindungsfehler';
+  }
+}
+
+async function loadData() {
+  try {
+    const res = await fetch('/.netlify/functions/get-applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: adminPw })
+    });
+    if (res.ok) renderCards(await res.json());
+  } catch (_) {}
+}
+
+function renderCards(data) {
+  document.getElementById('count').textContent = data.length + ' Bewerbung' + (data.length !== 1 ? 'en' : '');
+  const container = document.getElementById('cards');
+
+  if (!data.length) {
+    container.innerHTML = '<div class="empty">Noch keine Bewerbungen</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(app => {
+    const d = new Date(app.created_at);
+    const date = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const statusClass = app.status === 'new' ? 'status-new' : app.status === 'contacted' ? 'status-contacted' : 'status-completed';
+
+    return `
+      <div class="card">
+        <div class="card-top">
+          <div class="card-name">${esc(app.name)}</div>
+          <div class="card-date">${date}</div>
+        </div>
+        <div class="card-status ${statusClass}">${app.status}</div>
+        <div class="card-row">
+          <div><div class="card-label">E-Mail</div><div class="card-value">${esc(app.email)}</div></div>
+          <div><div class="card-label">Telefon</div><div class="card-value">${esc(app.phone || '—')}</div></div>
+          <div><div class="card-label">Dauer</div><div class="card-value">${esc(app.duration || '—')}</div></div>
+        </div>
+        <div class="card-reason">
+          <div class="card-label">Grund</div>
+          <div class="card-value">${esc(app.reason)}</div>
+        </div>
+        ${app.tried ? `<div style="margin-top:8px"><div class="card-label">Bereits versucht</div><div class="card-value">${esc(app.tried)}</div></div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => { if (adminPw) loadData(); }, 30000);
+</script>
+</body>
+</html>
