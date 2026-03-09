@@ -19,8 +19,18 @@
 html{scroll-behavior:smooth}
 body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
 
-#cur{position:fixed;width:9px;height:9px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .2s,height .2s}
-#cur.h{width:32px;height:32px;background:transparent;border:1px solid var(--heal)}
+/* ORGANIC AMBIENT — living background canvas */
+#organic-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+/* ORGANIC SECTION TRANSITIONS — SVG wave dividers */
+.sect-wave{position:relative;height:60px;overflow:hidden;margin-top:-1px}
+.sect-wave svg{position:absolute;bottom:0;width:100%;height:100%}
+.sect-wave path{fill:var(--dim);opacity:.3}
+
+#cur{position:fixed;width:9px;height:9px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .35s cubic-bezier(.16,1,.3,1),height .35s cubic-bezier(.16,1,.3,1),border-radius .4s}
+#cur.h{width:36px;height:36px;background:transparent;border:1px solid var(--heal)}
+/* Cursor trail — organic ghost */
+.cur-trail{position:fixed;border-radius:50%;pointer-events:none;z-index:9998;background:var(--heal);mix-blend-mode:screen;opacity:0;transition:opacity .6s}
 
 #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
 @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
@@ -41,47 +51,61 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 #h-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,var(--warm),transparent 65%);transition:background 3s}
 #h-organ{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(500px,60vw);height:min(500px,60vw);z-index:0}
 .h-content{position:relative;z-index:2;text-align:center;padding:20px;max-width:700px}
-.h-label{font-size:8px;letter-spacing:.6em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:20px;transition:opacity 2s}
-.h-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,10vw,120px);line-height:.88;letter-spacing:.03em;margin-bottom:16px}
+.h-label{font-size:8px;letter-spacing:.6em;text-transform:uppercase;color:var(--heal);opacity:0;margin-bottom:20px;animation:heroLabelBloom 2s ease .3s forwards}
+@keyframes heroLabelBloom{to{opacity:.4}}
+.h-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,10vw,120px);line-height:.88;letter-spacing:.03em;margin-bottom:16px;opacity:0;transform:translateY(20px) scale(.97);animation:heroTitleBloom 1.5s cubic-bezier(.16,1,.3,1) .4s forwards}
+@keyframes heroTitleBloom{to{opacity:1;transform:translateY(0) scale(1)}}
 .h-title .acc{color:var(--heal)}
 .h-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.15)}
-.h-sub{font-size:clamp(9px,1vw,11px);letter-spacing:.35em;text-transform:uppercase;opacity:.2;margin-bottom:12px;line-height:2;min-height:60px;transition:opacity 1.5s}
+.h-sub{font-size:clamp(9px,1vw,11px);letter-spacing:.35em;text-transform:uppercase;opacity:0;margin-bottom:12px;line-height:2;min-height:60px;transform:translateY(12px);animation:heroSubBloom 2s cubic-bezier(.16,1,.3,1) .6s forwards}
+@keyframes heroSubBloom{to{opacity:.2;transform:translateY(0)}}
 /* Hourly rotating tagline */
-#hourly-mantra{font-size:8px;letter-spacing:.4em;text-transform:uppercase;color:var(--heal);opacity:.15;margin-bottom:40px;transition:opacity 2s}
-#h-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;opacity:.12;font-size:8px;letter-spacing:.4em;text-transform:uppercase}
-#h-scroll::after{content:'';display:block;width:1px;height:28px;background:linear-gradient(to bottom,var(--white),transparent);margin:8px auto 0}
+#hourly-mantra{font-size:8px;letter-spacing:.4em;text-transform:uppercase;color:var(--heal);opacity:0;margin-bottom:40px;animation:mantraBloom 2s ease 1s forwards}
+@keyframes mantraBloom{to{opacity:.15}}
+#h-scroll{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:2;opacity:0;font-size:8px;letter-spacing:.4em;text-transform:uppercase;animation:scrollBloom 2s ease 2s forwards}
+@keyframes scrollBloom{to{opacity:.12}}
+#h-scroll::after{content:'';display:block;width:1px;height:28px;background:linear-gradient(to bottom,var(--white),transparent);margin:8px auto 0;animation:scrollLine 2s ease-in-out infinite}
+@keyframes scrollLine{0%,100%{opacity:.5;transform:scaleY(1)}50%{opacity:1;transform:scaleY(1.2)}}
 
-/* SECTIONS */
+/* SECTIONS — organic reveal */
 .sect{padding:clamp(80px,12vh,140px) clamp(24px,8vw,120px);border-top:1px solid var(--border);position:relative}
 .sect::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--glow),transparent)}
-.s-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--heal);opacity:.35;margin-bottom:16px}
-.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4.5vw,64px);line-height:.95;margin-bottom:12px}
+.s-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--heal);opacity:0;margin-bottom:16px;transform:translateY(12px);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4.5vw,64px);line-height:.95;margin-bottom:12px;opacity:0;transform:translateY(24px);transition:all 1.2s cubic-bezier(.16,1,.3,1) .15s}
 .s-title .ol{color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.12)}
-.s-body{font-size:11px;letter-spacing:.12em;line-height:2.4;opacity:.3;max-width:600px;margin-bottom:32px}
+.s-body{font-size:11px;letter-spacing:.12em;line-height:2.4;opacity:0;max-width:600px;margin-bottom:32px;transform:translateY(16px);transition:all 1s cubic-bezier(.16,1,.3,1) .3s}
+/* Revealed state */
+.sect.revealed .s-label{opacity:.35;transform:translateY(0)}
+.sect.revealed .s-title{opacity:1;transform:translateY(0)}
+.sect.revealed .s-body{opacity:.3;transform:translateY(0)}
 
 /* PILLARS - now with hover glow */
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:900px;margin:40px auto 0}
-.pillar{background:var(--dim);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:all .4s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
-.pillar::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,var(--glow),transparent 70%);opacity:0;transition:opacity .4s}
-.pillar:hover{border-color:var(--heal);transform:translateY(-6px)}.pillar:hover::after{opacity:1}
-.p-icon{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--heal);opacity:.15;margin-bottom:12px;transition:opacity .4s}
-.pillar:hover .p-icon{opacity:.4}
+.pillar{background:var(--dim);border:1px solid var(--border);padding:36px 24px;text-align:center;transition:all .6s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;opacity:0;transform:translateY(30px) scale(.95)}
+.pillar::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--px,50%) var(--py,100%),rgba(45,255,168,.06),transparent 60%);opacity:0;transition:opacity .6s}
+.pillar:hover{border-color:var(--heal);transform:translateY(-8px) scale(1)}.pillar:hover::after{opacity:1}
+.pillar.bloom{opacity:1;transform:translateY(0) scale(1)}
+.p-icon{font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--heal);opacity:.15;margin-bottom:12px;transition:opacity .6s,transform .6s cubic-bezier(.16,1,.3,1)}
+.pillar:hover .p-icon{opacity:.5;transform:scale(1.1)}
 .p-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;margin-bottom:8px}
 .p-desc{font-size:9px;letter-spacing:.15em;opacity:.25;line-height:2}
 
 /* PROCESS - animated reveal */
 .steps{max-width:700px;margin:40px auto 0}
-.step{display:flex;gap:24px;padding:28px 0;border-bottom:1px solid var(--border);align-items:flex-start;opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
-.step.visible{opacity:1;transform:translateY(0)}
-.step-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.15;min-width:48px}
+.step{display:flex;gap:24px;padding:28px 0;border-bottom:1px solid var(--border);align-items:flex-start;opacity:0;transform:translateY(30px) translateX(-10px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.step.visible{opacity:1;transform:translateY(0) translateX(0)}
+.step-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.15;min-width:48px;transition:opacity .6s,transform .6s cubic-bezier(.16,1,.3,1)}
+.step:hover .step-n{opacity:.35;transform:scale(1.1)}
 .step-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.08em;margin-bottom:4px}
 .step-desc{font-size:9px;letter-spacing:.15em;opacity:.25;line-height:2}
 
 /* INVESTMENT */
 #invest{text-align:center}
-.invest-card{max-width:500px;margin:40px auto 0;background:var(--dim);border:1px solid var(--heal);padding:48px 36px;position:relative;overflow:hidden}
-.invest-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--heal),transparent)}
-.invest-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(45,255,168,.03),transparent 60%);pointer-events:none}
+.invest-card{max-width:500px;margin:40px auto 0;background:var(--dim);border:1px solid var(--heal);padding:48px 36px;position:relative;overflow:hidden;opacity:0;transform:translateY(30px) scale(.97);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.invest-card.bloom{opacity:1;transform:translateY(0) scale(1)}
+.invest-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--heal),transparent);animation:investPulse 3s ease-in-out infinite}
+@keyframes investPulse{0%,100%{opacity:.6}50%{opacity:1}}
+.invest-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--px,50%) var(--py,0%),rgba(45,255,168,.04),transparent 60%);pointer-events:none;transition:background .3s}
 .invest-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,8vw,80px);color:var(--heal);margin-bottom:4px;position:relative;z-index:1}
 .invest-unit{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.25;margin-bottom:24px}
 .invest-inc{list-style:none;text-align:left;margin-bottom:32px;position:relative;z-index:1}
@@ -90,9 +114,10 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .invest-inc li::before{content:'→ ';color:var(--heal)}
 
 /* CTA BUTTON */
-.h-btn{padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;background:var(--heal);color:var(--black);display:inline-block;text-decoration:none;position:relative;overflow:hidden}
-.h-btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.2);border-radius:50%;transform:translate(-50%,-50%);transition:width .6s,height .6s}
-.h-btn:hover{background:var(--white)}.h-btn:hover::after{width:300px;height:300px}
+.h-btn{padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em;border:none;cursor:none;transition:all .4s cubic-bezier(.16,1,.3,1);background:var(--heal);color:var(--black);display:inline-block;text-decoration:none;position:relative;overflow:hidden}
+.h-btn::before{content:'';position:absolute;inset:-6px;opacity:0;box-shadow:0 0 40px rgba(45,255,168,.15);transition:opacity .6s;border-radius:2px}
+.h-btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;background:rgba(255,255,255,.15);border-radius:50%;transform:translate(-50%,-50%);transition:width .8s cubic-bezier(.16,1,.3,1),height .8s cubic-bezier(.16,1,.3,1)}
+.h-btn:hover{background:var(--white);transform:scale(1.03)}.h-btn:hover::after{width:350px;height:350px}.h-btn:hover::before{opacity:1}
 .h-btn-g{background:none;border:1px solid var(--border);color:var(--white);opacity:.4}
 .h-btn-g:hover{border-color:var(--heal);color:var(--heal);opacity:1}
 
@@ -102,8 +127,8 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .form-group{margin-bottom:20px;position:relative}
 .form-label{font-size:8px;letter-spacing:.35em;text-transform:uppercase;color:var(--heal);opacity:.4;margin-bottom:8px;display:block;transition:opacity .3s}
 .form-group:focus-within .form-label{opacity:.8}
-.form-input{width:100%;background:var(--dim);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:14px 16px;outline:none;transition:border-color .3s,box-shadow .3s;cursor:none}
-.form-input:focus{border-color:var(--heal);box-shadow:0 0 20px rgba(45,255,168,.03)}
+.form-input{width:100%;background:var(--dim);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:14px 16px;outline:none;transition:border-color .5s cubic-bezier(.16,1,.3,1),box-shadow .5s,transform .3s;cursor:none}
+.form-input:focus{border-color:var(--heal);box-shadow:0 0 30px rgba(45,255,168,.04),inset 0 0 20px rgba(45,255,168,.01);transform:scale(1.005)}
 .form-input::placeholder{color:var(--white);opacity:.12}
 textarea.form-input{min-height:120px;resize:vertical}
 .form-note{font-size:8px;letter-spacing:.2em;opacity:.12;text-align:center;margin-top:16px}
@@ -111,9 +136,11 @@ textarea.form-input{min-height:120px;resize:vertical}
 
 /* TRUST */
 .trust-row{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin-top:40px;max-width:700px;margin-left:auto;margin-right:auto}
-.trust-item{flex:1;min-width:140px;padding:24px 16px;background:var(--dim);border:1px solid var(--border);text-align:center;transition:border-color .3s}
-.trust-item:hover{border-color:rgba(45,255,168,.15)}
-.trust-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.3}
+.trust-item{flex:1;min-width:140px;padding:24px 16px;background:var(--dim);border:1px solid var(--border);text-align:center;transition:all .5s cubic-bezier(.16,1,.3,1);opacity:0;transform:translateY(20px)}
+.trust-item.bloom{opacity:1;transform:translateY(0)}
+.trust-item:hover{border-color:rgba(45,255,168,.15);transform:translateY(-4px)}
+.trust-n{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);opacity:.3;transition:opacity .4s}
+.trust-item:hover .trust-n{opacity:.5}
 .trust-l{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.15;margin-top:4px}
 
 /* BACK LINK */
@@ -131,13 +158,15 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 .particle{position:fixed;width:2px;height:2px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:0;opacity:0}
 
 /* PRELOADER */
-#preloader{position:fixed;inset:0;background:var(--black);z-index:10000;display:flex;align-items:center;justify-content:center;transition:opacity .6s ease,visibility .6s}
+#preloader{position:fixed;inset:0;background:var(--black);z-index:10000;display:flex;align-items:center;justify-content:center;transition:opacity 1.2s cubic-bezier(.16,1,.3,1),visibility 1.2s}
 #preloader.done{opacity:0;visibility:hidden;pointer-events:none}
-#preloader .pl-logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:.05em;opacity:0;transform:translateY(12px);animation:plReveal .8s ease .2s forwards}
+#preloader .pl-logo{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:.05em;opacity:0;transform:translateY(20px) scale(.96);animation:plReveal 1.2s cubic-bezier(.16,1,.3,1) .2s forwards}
 #preloader .pl-logo .acc{color:var(--heal)}
-#preloader .pl-line{width:60px;height:1px;background:var(--heal);margin:16px auto 0;transform:scaleX(0);transform-origin:left;animation:plLine .6s ease .6s forwards}
-@keyframes plReveal{to{opacity:1;transform:translateY(0)}}
+#preloader .pl-line{width:80px;height:1px;background:linear-gradient(90deg,transparent,var(--heal),transparent);margin:16px auto 0;transform:scaleX(0);animation:plLine .8s cubic-bezier(.16,1,.3,1) .6s forwards}
+#preloader .pl-breath{width:4px;height:4px;border-radius:50%;background:var(--heal);margin:20px auto 0;opacity:0;animation:plBreath 1.5s ease .8s infinite}
+@keyframes plReveal{to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes plLine{to{transform:scaleX(1)}}
+@keyframes plBreath{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:.4;transform:scale(1.5)}}
 
 /* STICKY CTA */
 #sticky-cta{position:fixed;bottom:0;left:0;right:0;z-index:900;background:rgba(5,5,5,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:center;gap:16px;transform:translateY(100%);transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none}
@@ -170,9 +199,11 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 .about-text .about-stat .stat-l{font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.15}
 
 /* GUARANTEE */
-.guarantee{max-width:600px;margin:0 auto 48px;text-align:center;padding:40px 32px;border:1px solid var(--border);position:relative}
+.guarantee{max-width:600px;margin:0 auto 48px;text-align:center;padding:40px 32px;border:1px solid var(--border);position:relative;opacity:0;transform:translateY(20px);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.guarantee.bloom{opacity:1;transform:translateY(0)}
 .guarantee::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(45,255,168,.02),transparent 70%);pointer-events:none}
-.guarantee-icon{font-size:32px;margin-bottom:12px;opacity:.15}
+.guarantee-icon{font-size:32px;margin-bottom:12px;opacity:.15;animation:iconBreath 4s ease-in-out infinite}
+@keyframes iconBreath{0%,100%{opacity:.1;transform:scale(1)}50%{opacity:.25;transform:scale(1.1)}}
 .guarantee-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.08em;margin-bottom:8px}
 .guarantee-text{font-size:10px;letter-spacing:.12em;line-height:2.2;opacity:.3}
 
@@ -219,13 +250,17 @@ footer{padding:80px clamp(24px,8vw,120px);border-top:1px solid var(--border);tex
 </head>
 <body>
 
-<!-- PRELOADER -->
+<!-- PRELOADER — organic bloom -->
 <div id="preloader">
   <div style="text-align:center">
     <div class="pl-logo">P<span class="acc">TGO</span> METHOD</div>
     <div class="pl-line"></div>
+    <div class="pl-breath"></div>
   </div>
 </div>
+
+<!-- ORGANIC BACKGROUND — living ambient canvas -->
+<canvas id="organic-bg"></canvas>
 
 <div id="cur"></div>
 <svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".04"/></svg>
@@ -535,20 +570,49 @@ updateHourlyContent();
 setInterval(updateHourlyContent, 60000);
 
 // ═══════════════════════════════════════════════════════════
-// CURSOR
+// ORGANIC CURSOR — with ghost trail
 // ═══════════════════════════════════════════════════════════
 const cur = document.getElementById('cur');
-let mx = 0, my = 0, cx = 0, cy = 0;
-document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
+let mxNorm = 0.5, myNorm = 0.5;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  mxNorm = mx / innerWidth;
+  myNorm = my / innerHeight;
+});
+
+// Cursor ghost trail (3 fading echoes)
+const trails = [];
+for (let i = 0; i < 3; i++) {
+  const t = document.createElement('div');
+  t.className = 'cur-trail';
+  t.style.width = (7 - i * 2) + 'px';
+  t.style.height = (7 - i * 2) + 'px';
+  document.body.appendChild(t);
+  trails.push({ el: t, x: mx, y: my });
+}
+
 function smoothCursor() {
-  cx += (mx - cx) * 0.15;
-  cy += (my - cy) * 0.15;
+  cx += (mx - cx) * 0.12;
+  cy += (my - cy) * 0.12;
   cur.style.left = cx + 'px';
   cur.style.top = cy + 'px';
+
+  // Trail follows with increasing lag
+  trails.forEach((t, i) => {
+    const lerp = 0.06 - i * 0.015;
+    t.x += (mx - t.x) * lerp;
+    t.y += (my - t.y) * lerp;
+    t.el.style.left = t.x + 'px';
+    t.el.style.top = t.y + 'px';
+    t.el.style.opacity = 0.04 - i * 0.012;
+    t.el.style.transform = 'translate(-50%,-50%)';
+  });
+
   requestAnimationFrame(smoothCursor);
 }
 smoothCursor();
-document.querySelectorAll('a,button,.pillar,.form-input,.h-btn,.trust-item').forEach(el => {
+document.querySelectorAll('a,button,.pillar,.form-input,.h-btn,.trust-item,.faq-q').forEach(el => {
   el.addEventListener('mouseenter', () => cur.classList.add('h'));
   el.addEventListener('mouseleave', () => cur.classList.remove('h'));
 });
@@ -672,47 +736,148 @@ function createParticles() {
   }
 }
 function animateParticle(p) {
-  const duration = 15000 + Math.random() * 20000;
+  const duration = 18000 + Math.random() * 24000;
   const x1 = Math.random() * 100, y1 = Math.random() * 100;
-  p.style.transition = `left ${duration}ms linear, top ${duration}ms linear, opacity ${duration*0.3}ms`;
-  p.style.opacity = 0.08 + Math.random() * 0.12;
+  p.style.transition = `left ${duration}ms cubic-bezier(.4,0,.2,1), top ${duration}ms cubic-bezier(.4,0,.2,1), opacity ${duration*0.3}ms ease`;
+  p.style.opacity = 0.05 + Math.random() * 0.1;
   p.style.left = x1 + 'vw';
   p.style.top = y1 + 'vh';
   setTimeout(() => {
     p.style.opacity = 0;
-    setTimeout(() => animateParticle(p), 2000);
-  }, duration * 0.7);
+    setTimeout(() => animateParticle(p), 1500 + Math.random() * 2000);
+  }, duration * 0.65);
 }
 createParticles();
 
 // ═══════════════════════════════════════════════════════════
-// SCROLL REVEAL — Steps animate in
+// ORGANIC BACKGROUND CANVAS — living ambient environment
 // ═══════════════════════════════════════════════════════════
+const orgBg = document.getElementById('organic-bg');
+const obCtx = orgBg.getContext('2d');
+orgBg.width = 48; orgBg.height = 48; // Low-res = organic softness
+orgBg.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.7';
+
+let bgTime = 0;
+function renderOrganicBg() {
+  requestAnimationFrame(renderOrganicBg);
+  bgTime += 0.003;
+  obCtx.clearRect(0, 0, 48, 48);
+
+  // Scroll-reactive glow position
+  const scrollY = window.scrollY / (document.body.scrollHeight - innerHeight || 1);
+  const glowY = 10 + scrollY * 28;
+  const breathe = Math.sin(bgTime * 0.8) * 0.5 + 0.5;
+
+  // Primary heal glow — follows scroll and mouse subtly
+  const g1 = obCtx.createRadialGradient(24 + (mxNorm - 0.5) * 12, glowY, 0, 24, 24, 28);
+  g1.addColorStop(0, 'rgba(45,255,168,' + (0.015 + breathe * 0.008) + ')');
+  g1.addColorStop(1, 'transparent');
+  obCtx.fillStyle = g1;
+  obCtx.fillRect(0, 0, 48, 48);
+
+  // Secondary warm glow — bottom
+  const g2 = obCtx.createRadialGradient(24, 40, 0, 24, 40, 20);
+  g2.addColorStop(0, 'rgba(45,255,168,' + (0.005 + breathe * 0.003) + ')');
+  g2.addColorStop(1, 'transparent');
+  obCtx.fillStyle = g2;
+  obCtx.fillRect(0, 0, 48, 48);
+}
+renderOrganicBg();
+
+// ═══════════════════════════════════════════════════════════
+// ORGANIC SCROLL REVEAL — sections bloom into existence
+// ═══════════════════════════════════════════════════════════
+const sectionObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('revealed');
+      sectionObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+document.querySelectorAll('.sect').forEach(s => sectionObserver.observe(s));
+
+// Steps — organic staggered reveal
 const stepObserver = new IntersectionObserver((entries) => {
   entries.forEach((e, i) => {
     if (e.isIntersecting) {
-      setTimeout(() => e.target.classList.add('visible'), i * 100);
+      setTimeout(() => e.target.classList.add('visible'), i * 150);
       stepObserver.unobserve(e.target);
     }
   });
-}, { threshold: 0.2 });
+}, { threshold: 0.15 });
 document.querySelectorAll('.step').forEach(s => stepObserver.observe(s));
 
+// Pillars — bloom with stagger
+const pillarObserver = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (e.isIntersecting) {
+      const pillars = e.target.querySelectorAll('.pillar');
+      pillars.forEach((p, i) => setTimeout(() => p.classList.add('bloom'), i * 120));
+      pillarObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+const pillarsContainer = document.querySelector('.pillars');
+if (pillarsContainer) pillarObserver.observe(pillarsContainer);
+
+// Trust items — staggered bloom
+const trustItemObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const items = e.target.querySelectorAll('.trust-item');
+      items.forEach((item, i) => setTimeout(() => item.classList.add('bloom'), i * 100));
+      trustItemObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+const trustRow = document.querySelector('.trust-row');
+if (trustRow) trustItemObserver.observe(trustRow);
+
+// Guarantee & invest card bloom
+const bloomObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('bloom');
+      bloomObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+document.querySelectorAll('.guarantee, .invest-card').forEach(el => bloomObserver.observe(el));
+
+// Testimonial cards — organic stagger
+const testObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+      testObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('#testimonials > div:last-child > div').forEach((card, i) => {
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(24px)';
+  card.style.transition = 'all .8s cubic-bezier(.16,1,.3,1) ' + (i * 0.12) + 's';
+  testObserver.observe(card);
+});
+
 // ═══════════════════════════════════════════════════════════
-// ANIMATED TRUST NUMBERS
+// ANIMATED TRUST NUMBERS — organic easing
 // ═══════════════════════════════════════════════════════════
-function animateNumber(el, target, suffix = '', duration = 2000) {
+function animateNumber(el, target, suffix = '', duration = 2500) {
   const start = performance.now();
   const step = (now) => {
     const progress = Math.min(1, (now - start) / duration);
-    const eased = 1 - Math.pow(1 - progress, 3);
+    // Organic ease-out-expo
+    const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
     el.textContent = Math.round(target * eased) + suffix;
     if (progress < 1) requestAnimationFrame(step);
   };
   requestAnimationFrame(step);
 }
 
-const trustObserver = new IntersectionObserver((entries) => {
+const trustNumObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       animateNumber(document.getElementById('t-sessions'), 847);
@@ -720,11 +885,11 @@ const trustObserver = new IntersectionObserver((entries) => {
       animateNumber(document.getElementById('t-rate'), 94, '%');
       animateNumber(document.getElementById('t-wait'), 6);
       animateNumber(document.getElementById('t-spots'), 2);
-      trustObserver.disconnect();
+      trustNumObserver.disconnect();
     }
   });
 }, { threshold: 0.3 });
-trustObserver.observe(document.querySelector('.trust-row'));
+if (trustRow) trustNumObserver.observe(trustRow);
 
 // ═══════════════════════════════════════════════════════════
 // LEAD CAPTURE (dual: Supabase direct + Netlify function)
@@ -828,7 +993,7 @@ async function submitLeadMagnet(e) {
 // PRELOADER
 // ═══════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  setTimeout(() => document.getElementById('preloader').classList.add('done'), 1400);
+  setTimeout(() => document.getElementById('preloader').classList.add('done'), 1800);
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -857,6 +1022,17 @@ function toggleFaq(el) {
   document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
   if (!wasOpen) item.classList.add('open');
 }
+
+// ═══════════════════════════════════════════════════════════
+// MOUSE-REACTIVE GLOW — pillars & cards track cursor
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.pillar, .invest-card').forEach(el => {
+  el.addEventListener('mousemove', e => {
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty('--px', ((e.clientX - rect.left) / rect.width * 100) + '%');
+    el.style.setProperty('--py', ((e.clientY - rect.top) / rect.height * 100) + '%');
+  });
+});
 
 // ═══════════════════════════════════════════════════════════
 // MAGNETIC BUTTONS — CTAs attract toward cursor
