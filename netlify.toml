@@ -31,6 +31,16 @@
   to = "/admin.html"
   status = 200
 
+[[redirects]]
+  from = "/impressum"
+  to = "/impressum.html"
+  status = 200
+
+[[redirects]]
+  from = "/datenschutz"
+  to = "/impressum.html"
+  status = 200
+
 # Block setup page in production
 [[redirects]]
   from = "/setup-supabase"

@@ -4,155 +4,400 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PTGO Admin — Bewerbungen</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--black:#050505;--heal:#2dffa8;--white:#f0ece4;--dim:#0a0a0a;--border:#1a1a1a;--red:#ff4444;--yellow:#ffaa00}
-body{background:var(--black);color:var(--white);font-family:'Courier New',monospace;min-height:100vh}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#050505;--heal:#2dffa8;--white:#f0ece4;
+  --dim:#0a0a0a;--mid:#111;--border:#1a1a1a;
+  --warm:rgba(45,255,168,.08);
+  --glow:rgba(45,255,168,.04);
+  --red:#ff4444;--yellow:#ffaa00;--blue:#44aaff;--purple:#aa66ff;
+}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden}
 
-.login{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px}
-.login h1{font-size:14px;letter-spacing:.4em;text-transform:uppercase;opacity:.3}
-.login input{background:var(--dim);border:1px solid var(--border);color:var(--white);padding:14px 20px;font-family:inherit;font-size:14px;width:300px;text-align:center;outline:none}
+/* GRAIN OVERLAY */
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.04;animation:gr .4s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
+
+/* LOGIN */
+.login{display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:20px;position:relative;z-index:1}
+.login-label{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,56px);letter-spacing:.06em;margin-bottom:4px}
+.login-label .acc{color:var(--heal)}
+.login-sub{font-size:8px;letter-spacing:.5em;text-transform:uppercase;opacity:.15;margin-bottom:24px}
+.login input{background:var(--dim);border:1px solid var(--border);color:var(--white);padding:14px 24px;font-family:'Space Mono',monospace;font-size:13px;width:320px;text-align:center;outline:none;letter-spacing:.1em;transition:border-color .3s}
 .login input:focus{border-color:var(--heal)}
-.login button{background:var(--heal);color:var(--black);border:none;padding:12px 40px;font-family:inherit;font-size:12px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
-.login button:hover{background:var(--white)}
-.login .error{color:var(--red);font-size:11px;letter-spacing:.15em}
+.login button{background:var(--heal);color:var(--black);border:none;padding:14px 48px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;cursor:pointer;font-weight:700;transition:all .3s}
+.login button:hover{background:var(--white);transform:translateY(-1px)}
+.login .error{color:var(--red);font-size:10px;letter-spacing:.15em;min-height:16px}
 
-.dashboard{display:none;padding:40px clamp(16px,4vw,60px)}
-.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.dash-title{font-size:11px;letter-spacing:.4em;text-transform:uppercase;opacity:.4}
-.dash-count{font-size:11px;letter-spacing:.2em;color:var(--heal);opacity:.6}
-.dash-refresh{background:none;border:1px solid var(--border);color:var(--white);padding:8px 16px;font-family:inherit;font-size:10px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;opacity:.3}
-.dash-refresh:hover{border-color:var(--heal);color:var(--heal);opacity:1}
+/* DASHBOARD */
+.dashboard{display:none;padding:32px clamp(16px,4vw,60px);position:relative;z-index:1}
 
+/* HEADER */
+.dash-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.dash-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:.06em;line-height:1}
+.dash-title .acc{color:var(--heal)}
+.dash-actions{display:flex;gap:8px;align-items:center}
+.btn-ghost{background:none;border:1px solid var(--border);color:var(--white);padding:8px 16px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;opacity:.3;transition:all .3s}
+.btn-ghost:hover{border-color:var(--heal);color:var(--heal);opacity:1}
+
+/* STATS BAR */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:2px;margin-bottom:24px}
+.stat-box{background:var(--dim);border:1px solid var(--border);padding:20px 16px;text-align:center;position:relative;overflow:hidden;transition:border-color .3s}
+.stat-box::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,var(--glow),transparent 70%);opacity:0;transition:opacity .4s}
+.stat-box:hover{border-color:rgba(45,255,168,.2)}.stat-box:hover::after{opacity:1}
+.stat-number{font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--heal);line-height:1;margin-bottom:4px}
+.stat-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.25}
+.stat-box.active{border-color:var(--heal)}
+.stat-box.active .stat-label{opacity:.6;color:var(--heal)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.filter-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.2;margin-right:8px}
+.filter-btn{background:none;border:1px solid var(--border);color:var(--white);padding:6px 14px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;opacity:.25;transition:all .3s}
+.filter-btn:hover{opacity:.6}
+.filter-btn.active{border-color:var(--heal);color:var(--heal);opacity:.8}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 8px}
+.sort-select{background:var(--dim);border:1px solid var(--border);color:var(--white);padding:6px 12px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;outline:none;cursor:pointer;opacity:.4}
+.sort-select:focus{border-color:var(--heal);opacity:.8}
+
+/* CARDS */
 .cards{display:grid;gap:12px}
-.card{background:var(--dim);border:1px solid var(--border);padding:24px;transition:border-color .3s}
-.card:hover{border-color:rgba(45,255,168,.2)}
-.card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.card-name{font-size:16px;font-weight:bold}
-.card-date{font-size:10px;letter-spacing:.15em;opacity:.2}
-.card-status{display:inline-block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;padding:4px 10px;border:1px solid;margin-bottom:12px}
+.card{background:var(--dim);border:1px solid var(--border);padding:24px;transition:all .3s;position:relative;overflow:hidden}
+.card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,var(--glow),transparent 70%);opacity:0;transition:opacity .4s;pointer-events:none}
+.card:hover{border-color:rgba(45,255,168,.15)}.card:hover::after{opacity:1}
+
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px}
+.card-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.04em;line-height:1}
+.card-date{font-size:9px;letter-spacing:.15em;opacity:.15;white-space:nowrap;padding-top:4px}
+
+/* STATUS DROPDOWN */
+.status-wrap{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.status-badge{display:inline-block;font-size:8px;letter-spacing:.2em;text-transform:uppercase;padding:4px 10px;border:1px solid;font-family:'Space Mono',monospace;white-space:nowrap}
 .status-new{color:var(--heal);border-color:var(--heal)}
 .status-contacted{color:var(--yellow);border-color:var(--yellow)}
-.status-completed{color:var(--white);border-color:var(--border);opacity:.3}
+.status-call_scheduled{color:var(--blue);border-color:var(--blue)}
+.status-booked{color:var(--purple);border-color:var(--purple)}
+.status-completed{color:var(--white);border-color:var(--border);opacity:.35}
 
+.status-select{background:var(--black);border:1px solid var(--border);color:var(--white);padding:4px 8px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;outline:none;cursor:pointer;opacity:.3;transition:all .3s}
+.status-select:hover,.status-select:focus{border-color:var(--heal);opacity:.7}
+
+/* CARD CONTENT */
 .card-row{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:8px}
-.card-label{font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.25;margin-bottom:2px}
-.card-value{font-size:12px;opacity:.6;line-height:1.6}
+.card-label{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.2;margin-bottom:2px}
+.card-value{font-size:11px;opacity:.5;line-height:1.8;letter-spacing:.04em}
 .card-reason{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
 
-.empty{text-align:center;padding:80px;opacity:.15;font-size:12px;letter-spacing:.3em;text-transform:uppercase}
+/* NOTES */
+.notes-wrap{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.notes-textarea{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;line-height:1.8;resize:vertical;min-height:48px;outline:none;opacity:.4;transition:all .3s}
+.notes-textarea:focus{border-color:var(--heal);opacity:.8}
+.notes-textarea::placeholder{opacity:.2}
+.notes-actions{display:flex;justify-content:flex-end;margin-top:6px;gap:6px}
+.btn-save{background:var(--heal);color:var(--black);border:none;padding:6px 16px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;font-weight:700;opacity:0;transition:all .3s;pointer-events:none}
+.btn-save.visible{opacity:1;pointer-events:auto}
+.btn-save:hover{background:var(--white)}
+.save-status{font-size:8px;letter-spacing:.15em;opacity:0;transition:opacity .3s;padding:6px 0;color:var(--heal)}
+.save-status.show{opacity:.6}
+
+.empty{text-align:center;padding:80px;opacity:.1;font-size:11px;letter-spacing:.4em;text-transform:uppercase;font-family:'Bebas Neue',sans-serif;font-size:24px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dim);border:1px solid var(--heal);padding:12px 28px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--heal);z-index:999;transition:transform .4s cubic-bezier(.16,1,.3,1);pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0)}
 
 @media(max-width:600px){
   .card-row{flex-direction:column;gap:8px}
-  .dashboard{padding:20px 12px}
+  .dashboard{padding:16px 12px}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+  .filter-bar{gap:4px}
+  .filter-btn{padding:5px 10px;font-size:8px}
+  .dash-header{flex-direction:column;gap:12px}
 }
 </style>
 </head>
 <body>
 
+<!-- GRAIN -->
+<canvas id="grain"></canvas>
+
+<!-- LOGIN -->
 <div class="login" id="login">
-  <h1>PTGO Admin</h1>
+  <div class="login-label">PTGO <span class="acc">ADMIN</span></div>
+  <div class="login-sub">Bewerbungsverwaltung</div>
   <input type="password" id="pw" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()">
-  <button onclick="doLogin()">Einloggen</button>
+  <button onclick="doLogin()">Zugang</button>
   <div class="error" id="login-error"></div>
 </div>
 
+<!-- DASHBOARD -->
 <div class="dashboard" id="dashboard">
+
+  <!-- HEADER -->
   <div class="dash-header">
     <div>
-      <div class="dash-title">PTGO Bewerbungen</div>
-      <div class="dash-count" id="count"></div>
+      <div class="dash-title">BEWERBUNGEN <span class="acc">ADMIN</span></div>
     </div>
-    <button class="dash-refresh" onclick="loadData()">Aktualisieren</button>
+    <div class="dash-actions">
+      <button class="btn-ghost" onclick="loadData()">Aktualisieren</button>
+    </div>
   </div>
+
+  <!-- STATS BAR -->
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-box" onclick="setFilter('all')" id="stat-all">
+      <div class="stat-number" id="stat-total">0</div>
+      <div class="stat-label">Gesamt</div>
+    </div>
+    <div class="stat-box" onclick="setFilter('new')" id="stat-new">
+      <div class="stat-number" id="stat-new-n">0</div>
+      <div class="stat-label">Neu</div>
+    </div>
+    <div class="stat-box" onclick="setFilter('contacted')" id="stat-contacted">
+      <div class="stat-number" id="stat-contacted-n">0</div>
+      <div class="stat-label">Kontaktiert</div>
+    </div>
+    <div class="stat-box" onclick="setFilter('call_scheduled')" id="stat-call_scheduled">
+      <div class="stat-number" id="stat-call_scheduled-n">0</div>
+      <div class="stat-label">Call geplant</div>
+    </div>
+    <div class="stat-box" onclick="setFilter('booked')" id="stat-booked">
+      <div class="stat-number" id="stat-booked-n">0</div>
+      <div class="stat-label">Gebucht</div>
+    </div>
+    <div class="stat-box" onclick="setFilter('completed')" id="stat-completed">
+      <div class="stat-number" id="stat-completed-n">0</div>
+      <div class="stat-label">Abgeschlossen</div>
+    </div>
+  </div>
+
+  <!-- FILTER / SORT -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter</span>
+    <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">Alle</button>
+    <button class="filter-btn" data-filter="new" onclick="setFilter('new')">Neu</button>
+    <button class="filter-btn" data-filter="contacted" onclick="setFilter('contacted')">Kontaktiert</button>
+    <button class="filter-btn" data-filter="call_scheduled" onclick="setFilter('call_scheduled')">Call</button>
+    <button class="filter-btn" data-filter="booked" onclick="setFilter('booked')">Gebucht</button>
+    <button class="filter-btn" data-filter="completed" onclick="setFilter('completed')">Fertig</button>
+    <div class="filter-sep"></div>
+    <span class="filter-label">Sortierung</span>
+    <select class="sort-select" id="sort-select" onchange="applySort()">
+      <option value="date-desc">Neueste zuerst</option>
+      <option value="date-asc">Alteste zuerst</option>
+      <option value="status">Nach Status</option>
+      <option value="name">Nach Name</option>
+    </select>
+  </div>
+
+  <!-- CARDS -->
   <div class="cards" id="cards"></div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <script>
+/* ── STATE ── */
 let adminPw = '';
+let allData = [];
+let currentFilter = 'all';
+const STATUS_ORDER = ['new','contacted','call_scheduled','booked','completed'];
+const STATUS_LABELS = {new:'Neu',contacted:'Kontaktiert',call_scheduled:'Call geplant',booked:'Gebucht',completed:'Abgeschlossen'};
 
-async function doLogin() {
-  const pw = document.getElementById('pw').value;
-  const errEl = document.getElementById('login-error');
-  errEl.textContent = '';
-
-  try {
-    const res = await fetch('/.netlify/functions/get-applications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw })
-    });
-
-    if (!res.ok) {
-      errEl.textContent = 'Falsches Passwort';
-      return;
-    }
-
-    adminPw = pw;
-    const data = await res.json();
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    renderCards(data);
-  } catch (e) {
-    errEl.textContent = 'Verbindungsfehler';
+/* ── GRAIN ── */
+(function initGrain(){
+  const c=document.getElementById('grain'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function draw(){
+    const d=ctx.createImageData(c.width,c.height);
+    for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=18}
+    ctx.putImageData(d,0,0);requestAnimationFrame(draw);
   }
-}
+  window.addEventListener('resize',resize);resize();draw();
+})();
 
-async function loadData() {
-  try {
-    const res = await fetch('/.netlify/functions/get-applications', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: adminPw })
+/* ── LOGIN ── */
+async function doLogin(){
+  const pw=document.getElementById('pw').value;
+  const errEl=document.getElementById('login-error');
+  errEl.textContent='';
+  try{
+    const res=await fetch('/.netlify/functions/get-applications',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:pw})
     });
-    if (res.ok) renderCards(await res.json());
-  } catch (_) {}
+    if(!res.ok){errEl.textContent='Falsches Passwort';return}
+    adminPw=pw;
+    allData=await res.json();
+    document.getElementById('login').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    updateStats();renderCards();
+  }catch(e){errEl.textContent='Verbindungsfehler'}
 }
 
-function renderCards(data) {
-  document.getElementById('count').textContent = data.length + ' Bewerbung' + (data.length !== 1 ? 'en' : '');
-  const container = document.getElementById('cards');
+/* ── LOAD DATA ── */
+async function loadData(){
+  try{
+    const res=await fetch('/.netlify/functions/get-applications',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPw})
+    });
+    if(res.ok){allData=await res.json();updateStats();renderCards();toast('Daten aktualisiert')}
+  }catch(_){}
+}
 
-  if (!data.length) {
-    container.innerHTML = '<div class="empty">Noch keine Bewerbungen</div>';
+/* ── STATS ── */
+function updateStats(){
+  document.getElementById('stat-total').textContent=allData.length;
+  STATUS_ORDER.forEach(s=>{
+    const el=document.getElementById('stat-'+s+'-n');
+    if(el) el.textContent=allData.filter(a=>a.status===s).length;
+  });
+  // highlight active stat
+  document.querySelectorAll('.stat-box').forEach(el=>el.classList.remove('active'));
+  const activeStatEl=document.getElementById('stat-'+(currentFilter==='all'?'all':currentFilter));
+  if(activeStatEl) activeStatEl.classList.add('active');
+}
+
+/* ── FILTER ── */
+function setFilter(f){
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));
+  updateStats();renderCards();
+}
+
+/* ── SORT ── */
+function getFilteredSorted(){
+  let data=currentFilter==='all'?[...allData]:allData.filter(a=>a.status===currentFilter);
+  const sort=document.getElementById('sort-select').value;
+  switch(sort){
+    case'date-desc':data.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));break;
+    case'date-asc':data.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));break;
+    case'status':data.sort((a,b)=>STATUS_ORDER.indexOf(a.status)-STATUS_ORDER.indexOf(b.status));break;
+    case'name':data.sort((a,b)=>(a.name||'').localeCompare(b.name||''));break;
+  }
+  return data;
+}
+function applySort(){renderCards()}
+
+/* ── RENDER CARDS ── */
+function renderCards(){
+  const data=getFilteredSorted();
+  const container=document.getElementById('cards');
+
+  if(!data.length){
+    container.innerHTML='<div class="empty">Keine Bewerbungen</div>';
     return;
   }
 
-  container.innerHTML = data.map(app => {
-    const d = new Date(app.created_at);
-    const date = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    const statusClass = app.status === 'new' ? 'status-new' : app.status === 'contacted' ? 'status-contacted' : 'status-completed';
+  container.innerHTML=data.map(app=>{
+    const d=new Date(app.created_at);
+    const date=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const statusClass='status-'+app.status;
+    const statusLabel=STATUS_LABELS[app.status]||app.status;
+    const notesVal=app.notes||'';
 
     return `
-      <div class="card">
+      <div class="card" id="card-${app.id}">
         <div class="card-top">
           <div class="card-name">${esc(app.name)}</div>
           <div class="card-date">${date}</div>
         </div>
-        <div class="card-status ${statusClass}">${app.status}</div>
+        <div class="status-wrap">
+          <span class="status-badge ${statusClass}">${esc(statusLabel)}</span>
+          <select class="status-select" onchange="changeStatus('${app.id}',this.value)">
+            ${STATUS_ORDER.map(s=>`<option value="${s}"${s===app.status?' selected':''}>${esc(STATUS_LABELS[s])}</option>`).join('')}
+          </select>
+        </div>
         <div class="card-row">
-          <div><div class="card-label">E-Mail</div><div class="card-value">${esc(app.email)}</div></div>
-          <div><div class="card-label">Telefon</div><div class="card-value">${esc(app.phone || '—')}</div></div>
-          <div><div class="card-label">Dauer</div><div class="card-value">${esc(app.duration || '—')}</div></div>
+          <div><div class="card-label">E-Mail</div><div class="card-value"><a href="mailto:${esc(app.email)}" style="color:var(--heal);opacity:.6;text-decoration:none">${esc(app.email)}</a></div></div>
+          <div><div class="card-label">Telefon</div><div class="card-value">${esc(app.phone||'\u2014')}</div></div>
+          <div><div class="card-label">Dauer</div><div class="card-value">${esc(app.duration||'\u2014')}</div></div>
         </div>
         <div class="card-reason">
           <div class="card-label">Grund</div>
           <div class="card-value">${esc(app.reason)}</div>
         </div>
-        ${app.tried ? `<div style="margin-top:8px"><div class="card-label">Bereits versucht</div><div class="card-value">${esc(app.tried)}</div></div>` : ''}
+        ${app.tried?`<div style="margin-top:8px"><div class="card-label">Bereits versucht</div><div class="card-value">${esc(app.tried)}</div></div>`:''}
+        <div class="notes-wrap">
+          <div class="card-label" style="margin-bottom:6px">Notizen</div>
+          <textarea class="notes-textarea" placeholder="Notizen hinzufugen..." data-id="${app.id}" oninput="onNotesInput(this)">${esc(notesVal)}</textarea>
+          <div class="notes-actions">
+            <span class="save-status" id="save-status-${app.id}"></span>
+            <button class="btn-save" id="save-btn-${app.id}" onclick="saveNotes('${app.id}')">Speichern</button>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
 }
 
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+/* ── NOTES INPUT ── */
+function onNotesInput(el){
+  const id=el.dataset.id;
+  const btn=document.getElementById('save-btn-'+id);
+  if(btn) btn.classList.add('visible');
 }
 
-// Auto-refresh every 30 seconds
-setInterval(() => { if (adminPw) loadData(); }, 30000);
+/* ── SAVE NOTES ── */
+async function saveNotes(id){
+  const textarea=document.querySelector(`textarea[data-id="${id}"]`);
+  if(!textarea) return;
+  const notes=textarea.value;
+  try{
+    const res=await fetch('/.netlify/functions/update-application',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPw,id,notes})
+    });
+    if(res.ok){
+      const updated=await res.json();
+      const idx=allData.findIndex(a=>a.id===id);
+      if(idx>=0) allData[idx]=updated;
+      const btn=document.getElementById('save-btn-'+id);
+      if(btn) btn.classList.remove('visible');
+      const status=document.getElementById('save-status-'+id);
+      if(status){status.textContent='Gespeichert';status.classList.add('show');setTimeout(()=>status.classList.remove('show'),2000)}
+      toast('Notiz gespeichert');
+    }else{toast('Fehler beim Speichern')}
+  }catch(e){toast('Verbindungsfehler')}
+}
+
+/* ── CHANGE STATUS ── */
+async function changeStatus(id,newStatus){
+  try{
+    const res=await fetch('/.netlify/functions/update-application',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:adminPw,id,status:newStatus})
+    });
+    if(res.ok){
+      const updated=await res.json();
+      const idx=allData.findIndex(a=>a.id===id);
+      if(idx>=0) allData[idx]=updated;
+      updateStats();renderCards();
+      toast('Status: '+STATUS_LABELS[newStatus]);
+    }else{toast('Fehler beim Aktualisieren')}
+  }catch(e){toast('Verbindungsfehler')}
+}
+
+/* ── TOAST ── */
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+/* ── ESCAPE ── */
+function esc(s){
+  if(!s) return '';
+  const d=document.createElement('div');d.textContent=s;return d.innerHTML;
+}
+
+/* ── AUTO REFRESH ── */
+setInterval(()=>{if(adminPw)loadData()},60000);
 </script>
 </body>
 </html>
