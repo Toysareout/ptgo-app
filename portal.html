@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THETOYSAREOUT — Wähle deine Welt</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--black:#050505;--pink:#ff2d8e;--white:#f0ece4;--warm:#c9a84c;--heal:#2dffa8}
+html,body{height:100%;overflow:hidden}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none}
+
+#cur{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .3s,height .3s,background .5s}
+#cur.music{background:var(--pink)}
+#cur.heal{background:var(--heal)}
+#cur.neutral{background:var(--white);opacity:.5}
+#cur.h{width:32px;height:32px;background:transparent;border:1px solid currentColor}
+
+/* SPLIT LAYOUT */
+#portal{display:flex;height:100vh;position:relative}
+.world{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:flex .8s cubic-bezier(.16,1,.3,1),opacity .6s}
+.world:hover{flex:1.3}
+.world.dimmed{flex:.7;opacity:.4}
+
+/* MUSIC SIDE */
+#w-music{border-right:1px solid rgba(255,255,255,.03)}
+#w-music::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(255,45,142,.06) 0%,transparent 60%)}
+
+/* HEAL SIDE */
+#w-heal::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(45,255,168,.04) 0%,transparent 60%)}
+
+.w-content{position:relative;z-index:2;text-align:center;padding:40px;max-width:400px}
+.w-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;opacity:.3;margin-bottom:20px}
+.w-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);line-height:.9;margin-bottom:12px;letter-spacing:.03em}
+.w-title .acc{transition:color .4s}
+#w-music .w-title .acc{color:var(--pink)}
+#w-heal .w-title .acc{color:var(--heal)}
+.w-sub{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.2;line-height:2;margin-bottom:32px}
+.w-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,20px);letter-spacing:.1em;opacity:.15;margin-bottom:24px}
+.w-btn{padding:14px 36px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.15em;border:none;cursor:none;transition:all .3s;text-decoration:none;display:inline-block}
+#w-music .w-btn{background:var(--pink);color:var(--black)}
+#w-music .w-btn:hover{background:var(--white)}
+#w-heal .w-btn{background:var(--heal);color:var(--black)}
+#w-heal .w-btn:hover{background:var(--white)}
+
+/* CENTER ORGAN */
+#organ-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:clamp(200px,25vw,360px);height:clamp(200px,25vw,360px);pointer-events:none}
+#organ-canvas{width:100%;height:100%}
+#organ-pulse{position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%);animation:organPulse 4s ease-in-out infinite}
+@keyframes organPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:1}}
+#organ-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.5em;text-transform:uppercase;opacity:.12;white-space:nowrap}
+
+/* CENTER LINE */
+#divider{position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%);z-index:1}
+
+/* CORNERS */
+.corner{position:fixed;z-index:20;font-size:8px;letter-spacing:.3em;text-transform:uppercase;pointer-events:none;opacity:.1}
+#p-c1{top:20px;left:28px}
+#p-c2{top:20px;right:28px;text-align:right}
+#p-c3{bottom:20px;left:50%;transform:translateX(-50%);text-align:center}
+
+/* GRAIN */
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.08;animation:gr .4s steps(1) infinite}
+@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
+
+/* MOBILE */
+@media(max-width:680px){
+  #portal{flex-direction:column}
+  .world:hover{flex:1.5}
+  #organ-wrap{width:140px;height:140px}
+  #divider{left:0;right:0;top:50%;bottom:auto;width:auto;height:1px;background:linear-gradient(to right,transparent 10%,rgba(255,255,255,.06) 30%,rgba(255,255,255,.06) 70%,transparent 90%)}
+  .corner{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="cur" class="neutral"></div>
+<svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".055"/></svg>
+
+<div class="corner" id="p-c1">THETOYSAREOUT</div>
+<div class="corner" id="p-c2">EST. 2026</div>
+<div class="corner" id="p-c3">Wähle deine Welt</div>
+
+<div id="portal">
+  <!-- MUSIC WORLD -->
+  <div class="world" id="w-music"
+       onmouseenter="hoverWorld('music')" onmouseleave="leaveWorld()">
+    <div class="w-content">
+      <div class="w-label">Musik · Bewegung · Energie</div>
+      <div class="w-title">THE<span class="acc">TOYS</span><br>AREOUT</div>
+      <div class="w-sub">Drops · Live Sessions · Merch<br>Inner Circle · Community</div>
+      <div class="w-price">AB 1 €</div>
+      <a href="index.html" class="w-btn">Musik erleben →</a>
+    </div>
+  </div>
+
+  <!-- CENTER 3D ORGAN -->
+  <div id="divider"></div>
+  <div id="organ-wrap">
+    <div id="organ-pulse"></div>
+    <canvas id="organ-canvas"></canvas>
+    <div id="organ-label">Zwei Welten · Ein Körper</div>
+  </div>
+
+  <!-- HEAL WORLD -->
+  <div class="world" id="w-heal"
+       onmouseenter="hoverWorld('heal')" onmouseleave="leaveWorld()">
+    <div class="w-content">
+      <div class="w-label">Heilung · Körper · Transformation</div>
+      <div class="w-title">P<span class="acc">TGO</span><br>METHOD</div>
+      <div class="w-sub">Pain · Trauma · Growth · Outcome<br>1:1 Premium Sessions</div>
+      <div class="w-price">5.000 € / SESSION</div>
+      <a href="heal.html" class="w-btn">Session anfragen →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CURSOR ──
+const cur = document.getElementById('cur');
+document.addEventListener('mousemove', e => { cur.style.left = e.clientX+'px'; cur.style.top = e.clientY+'px' });
+document.querySelectorAll('a,.w-btn').forEach(el => {
+  el.addEventListener('mouseenter', () => cur.classList.add('h'));
+  el.addEventListener('mouseleave', () => cur.classList.remove('h'));
+});
+
+// ── WORLD HOVER ──
+let activeWorld = null;
+function hoverWorld(w) {
+  activeWorld = w;
+  cur.className = w;
+  const other = w === 'music' ? 'w-heal' : 'w-music';
+  document.getElementById(other).classList.add('dimmed');
+  // Shift organ color
+  organHue = w === 'music' ? 0.92 : 0.45;
+}
+function leaveWorld() {
+  activeWorld = null;
+  cur.className = 'neutral';
+  document.getElementById('w-music').classList.remove('dimmed');
+  document.getElementById('w-heal').classList.remove('dimmed');
+  organHue = 0.0;
+}
+
+// ── THREE.JS ORGAN ──
+let organHue = 0.0;
+const canvas = document.getElementById('organ-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+const size = Math.min(360, window.innerWidth * 0.25);
+renderer.setSize(size, size);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+camera.position.z = 3.2;
+
+// Organic shape: icosahedron with noise displacement
+const geo = new THREE.IcosahedronGeometry(1, 5);
+const posAttr = geo.attributes.position;
+const basePos = new Float32Array(posAttr.array.length);
+basePos.set(posAttr.array);
+
+const mat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  roughness: 0.7,
+  metalness: 0.1,
+  wireframe: false,
+  transparent: true,
+  opacity: 0.15,
+});
+const mesh = new THREE.Mesh(geo, mat);
+scene.add(mesh);
+
+// Wireframe overlay
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.06,
+});
+const wire = new THREE.Mesh(geo, wireMat);
+scene.add(wire);
+
+// Lights
+const light1 = new THREE.PointLight(0xff2d8e, 0.6, 10);
+light1.position.set(2, 1, 3);
+scene.add(light1);
+const light2 = new THREE.PointLight(0x2dffa8, 0.4, 10);
+light2.position.set(-2, -1, 3);
+scene.add(light2);
+scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+
+// Noise function (simplex-like)
+function noise3D(x, y, z) {
+  const p = x * 1.1 + y * 2.3 + z * 3.7;
+  return Math.sin(p) * Math.cos(y * 1.7 + z) * Math.sin(z * 2.1 + x);
+}
+
+function animate(time) {
+  requestAnimationFrame(animate);
+  const t = time * 0.001;
+
+  // Displace vertices organically
+  for (let i = 0; i < posAttr.count; i++) {
+    const bx = basePos[i * 3];
+    const by = basePos[i * 3 + 1];
+    const bz = basePos[i * 3 + 2];
+    const n = noise3D(bx + t * 0.3, by + t * 0.2, bz + t * 0.15);
+    const displacement = 1 + n * 0.18;
+    posAttr.setXYZ(i, bx * displacement, by * displacement, bz * displacement);
+  }
+  posAttr.needsUpdate = true;
+  geo.computeVertexNormals();
+
+  // Rotate slowly
+  mesh.rotation.y = t * 0.15;
+  mesh.rotation.x = Math.sin(t * 0.1) * 0.2;
+  wire.rotation.copy(mesh.rotation);
+
+  // Color shift based on hover
+  const targetPink = organHue === 0.92 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
+  const targetHeal = organHue === 0.45 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
+  light1.intensity += (targetPink * 0.8 - light1.intensity) * 0.03;
+  light2.intensity += (targetHeal * 0.6 - light2.intensity) * 0.03;
+
+  // Opacity pulse
+  mat.opacity = 0.12 + Math.sin(t * 0.8) * 0.04;
+  wireMat.opacity = 0.04 + Math.sin(t * 1.2) * 0.02;
+
+  renderer.render(scene, camera);
+}
+animate(0);
+
+// Resize
+window.addEventListener('resize', () => {
+  const s = Math.min(360, window.innerWidth * 0.25);
+  renderer.setSize(s, s);
+});
+
+// ── TRACK WHICH WORLD USER ENTERED FROM ──
+// Store in sessionStorage so the other pages know
+document.querySelectorAll('.w-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const world = btn.closest('#w-music') ? 'music' : 'heal';
+    sessionStorage.setItem('ttao_portal_entry', world);
+    sessionStorage.setItem('ttao_portal_ts', Date.now().toString());
+  });
+});
+</script>
+</body>
+</html>
