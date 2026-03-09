@@ -1,0 +1,37 @@
+name: Hourly Specials Update
+
+on:
+  schedule:
+    # Every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  update-specials:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Generate new specials
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python generate_specials.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "THETOYSAREOUT Bot"
+          git config user.email "bot@thetoysareout.com"
+          git add index.html
+          git diff --cached --quiet && echo "No changes" && exit 0
+          git commit -m "$(date -u '+%Y-%m-%d %H:%M') — fresh specials drop"
+          git push
