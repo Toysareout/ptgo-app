@@ -1,11 +1,13 @@
 """
-THETOYSAREOUT — Hourly Specials Generator
+THETOYSAREOUT — Hourly Specials & Organic Layout Generator
 Runs via GitHub Action every hour. Uses Claude API to generate fresh
 drops, sessions, and merch specials, then injects them into index.html.
+Also shifts the visual layout organically based on time of day.
 """
 
 import anthropic
 import json
+import math
 import random
 import re
 import os
@@ -97,6 +99,161 @@ Rules:
 """
 
 
+# ── Organic Layout Engine ────────────────────────────────────────────
+
+def generate_organic_css():
+    """Generate CSS overrides that shift the visual feel based on time."""
+    # Use hour as a continuous wave for smooth transitions
+    t = HOUR / 24.0  # 0.0 to 1.0
+    wave = math.sin(t * math.pi * 2)      # -1 to 1, peaks at 6h
+    wave2 = math.cos(t * math.pi * 2)     # -1 to 1, peaks at 0h/24h
+
+    # ── Accent color: pink hue drifts through the day ──
+    # Base pink: hsl(334, 100%, 59%) = #ff2d8e
+    # Night: cooler/bluer (320°), Morning: warmer (340°), Afternoon: hot (345°), Evening: purple (315°)
+    hue_shift = {
+        range(0, 6): -14,    # 320° — cold neon
+        range(6, 12): 6,     # 340° — warm sunrise
+        range(12, 18): 11,   # 345° — hot peak
+        range(18, 24): -19,  # 315° — purple night
+    }
+    hue_offset = 0
+    for r, v in hue_shift.items():
+        if HOUR in r:
+            hue_offset = v
+            break
+    accent_hue = 334 + hue_offset + random.randint(-3, 3)
+
+    # ── Background darkness shifts ──
+    # Deeper black at night, slightly lifted in afternoon
+    bg_lightness = max(1, min(4, int(2 + wave * 1.5)))
+
+    # ── Grain intensity: heavier at night, lighter during day ──
+    grain_opacity = round(0.08 + (1 - t if t < 0.5 else t) * 0.08, 3)
+
+    # ── Hero glow radius: expands in afternoon, contracts at night ──
+    glow_size = int(55 + wave2 * 15 + random.randint(-5, 5))
+
+    # ── Section spacing: breathes with time ──
+    section_pad_min = int(56 + wave * 12)
+    section_pad_max = int(110 + wave * 20)
+
+    # ── Drop grid: column count shifts ──
+    if 0 <= HOUR < 6:
+        grid_min = "300px"  # fewer, wider cards at night
+    elif 12 <= HOUR < 18:
+        grid_min = "220px"  # more cards, tighter grid at peak
+    else:
+        grid_min = "260px"  # default
+
+    # ── Border style variations ──
+    border_styles = {
+        range(0, 6): "1px solid rgba(255,255,255,.04)",    # barely visible
+        range(6, 12): "1px solid var(--border)",            # clean
+        range(12, 18): "1px solid rgba(255,45,142,.15)",    # pink tint
+        range(18, 24): "1px solid rgba(201,168,76,.08)",    # gold whisper
+    }
+    border_style = "1px solid var(--border)"
+    for r, v in border_styles.items():
+        if HOUR in r:
+            border_style = v
+            break
+
+    # ── Animation speeds: slower at night, snappier in afternoon ──
+    breathe_speed = round(5 + (1 - abs(wave)) * 6, 1)  # 5-11s
+    pulse_speed = round(2.5 + (1 - abs(wave)) * 3, 1)   # 2.5-5.5s
+
+    # ── Card hover transform: subtle shifts ──
+    hover_y = random.choice([-3, -4, -5, -6])
+    hover_scale = round(1 + random.uniform(0.005, 0.02), 3)
+
+    # ── Hero name sizing: pulses slightly ──
+    hero_size_min = random.choice([52, 56, 60])
+    hero_size_max = random.choice([140, 150, 160])
+
+    # ── Scroll hint opacity ──
+    scroll_opacity = round(0.12 + random.uniform(0, 0.12), 2)
+
+    # ── Sub-label letter-spacing: tighter or wider ──
+    label_spacing = round(0.3 + random.uniform(0, 0.2), 2)
+
+    css = f"""
+/*ORGANIC-GENERATED {NOW.strftime('%Y-%m-%d %H:%M')} Berlin*/
+:root{{
+  --pink:hsl({accent_hue},100%,59%);
+  --black:hsl(0,0%,{bg_lightness}%);
+  --dim:hsl(0,0%,{bg_lightness + 3}%);
+  --mid:hsl(0,0%,{bg_lightness + 5}%);
+}}
+#grain{{opacity:{grain_opacity}}}
+#hero-bg{{background:radial-gradient(ellipse at 50% 60%, hsla({accent_hue},100%,59%,.08) 0%, transparent {glow_size}%)}}
+@keyframes breathe{{0%,100%{{transform:scale(1)}}50%{{transform:scale(1.007)}}}}
+#hero-name{{animation:breathe {breathe_speed}s ease-in-out infinite;font-size:clamp({hero_size_min}px,12vw,{hero_size_max}px)}}
+@keyframes pulse{{0%,100%{{transform:scale(1);box-shadow:0 0 0 0 hsla({accent_hue},100%,59%,.4)}}60%{{transform:scale(1.8);box-shadow:0 0 0 14px hsla({accent_hue},100%,59%,0)}}}}
+#hero-dot{{animation:pulse {pulse_speed}s ease-in-out infinite}}
+.sect{{padding:clamp({section_pad_min}px,10vh,{section_pad_max}px) clamp(24px,6vw,100px);border-top:{border_style}}}
+.s-label{{letter-spacing:{label_spacing}em}}
+.drop-grid{{grid-template-columns:repeat(auto-fill,minmax({grid_min},1fr))}}
+.drop-card{{border:{border_style}}}
+.drop-card:hover{{border-color:var(--pink);transform:translateY({hover_y}px) scale({hover_scale})}}
+.tier:hover{{transform:translateY({hover_y}px)}}
+.live-card{{border:{border_style}}}
+.merch-item{{border:{border_style}}}
+#scroll-hint{{opacity:{scroll_opacity}}}
+"""
+    return css.strip()
+
+
+# ── Content Builders (use existing CSS classes) ──────────────────────
+
+def build_drops_html(drops):
+    """Generate HTML for the drops section using existing CSS classes."""
+    html = ""
+    for d in drops:
+        sold_out = d.get("sold_out", False)
+        sold_class = " sold-out" if sold_out else ""
+        stock_text = "SOLD OUT" if sold_out else f'<b>{d["stock_left"]}</b> / {d["stock_total"]} übrig'
+
+        html += f"""
+    <div class="drop-card{sold_class}">
+      <div class="drop-tag">{d['number']}</div>
+      <div class="drop-name">{d['title']}</div>
+      <div class="drop-desc">{d['subtitle']}</div>
+      <div class="drop-bottom">
+        <div class="drop-price">{d['price']} €</div>
+        <div class="drop-stock">{stock_text}</div>
+      </div>
+    </div>"""
+    return html
+
+
+def build_live_html(session):
+    """Generate HTML for the live session section using existing CSS classes."""
+    return f"""<div class="live-card">
+    <div class="live-dot"></div>
+    <div class="live-date">{session['date']}</div>
+    <div class="live-info">{session['title']}<br>{session['time']} Uhr · Exklusiver Livestream<br>Nur für Ticketinhaber</div>
+    <button class="btn btn-p" onclick="alert('Coming soon.')">{session['price']}€ · Ticket sichern →</button>
+    <div class="live-slots">Plätze: <b>{session['tickets_left']}</b> / {session['tickets_total']} verfügbar</div>
+  </div>"""
+
+
+def build_merch_html(merch):
+    """Generate HTML for the merch section using existing CSS classes."""
+    return f"""<div class="merch-item">
+    <div class="merch-img">{merch['type'].upper()}</div>
+    <div class="merch-info">
+      <div class="merch-name">{merch['name']}</div>
+      <div class="merch-desc">Nur {merch['stock_left']} von {merch['stock_total']} — Single Drop. Limitiert.</div>
+      <div class="merch-bottom">
+        <div class="merch-price">{merch['price']} €</div>
+        <div class="merch-ed">Edition {random.randint(1,99):03d} · {merch['stock_total']} Stück</div>
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="alert('Coming soon.')">Vorbestellen →</button>
+    </div>
+  </div>"""
+
+
 def generate_specials():
     """Call Claude API and return specials dict."""
     client = anthropic.Anthropic()
@@ -112,67 +269,26 @@ def generate_specials():
     return json.loads(text)
 
 
-def build_drops_html(drops):
-    """Generate HTML for the drops section."""
-    html = ""
-    for d in drops:
-        sold_out = d.get("sold_out", False)
-        badge = '<span style="background:var(--pink);color:var(--black);padding:2px 10px;font-size:.7rem;letter-spacing:2px">SOLD OUT</span>' if sold_out else ""
-        stock_info = f'<span style="color:var(--pink);font-size:.85rem">{d["stock_left"]}/{d["stock_total"]} left</span>' if not sold_out else ""
-        btn = f'<button onclick="alert(\'Coming soon.\')" style="padding:10px 30px;background:var(--pink);color:var(--black);border:none;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">{d["price"]}€ — JETZT</button>' if not sold_out else '<button disabled style="padding:10px 30px;background:var(--border);color:#555;border:none;font-family:\'Bebas Neue\',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:not-allowed">VERGRIFFEN</button>'
-
-        html += f"""
-<div style="border:1px solid var(--border);padding:28px;{'opacity:.5;' if sold_out else ''}">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-    <span style="font-size:.75rem;color:var(--pink);letter-spacing:3px">{d['number']}</span>
-    {badge}
-  </div>
-  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:3px;margin-bottom:4px">{d['title']}</h3>
-  <p style="font-size:.85rem;color:#888;margin-bottom:16px">{d['subtitle']}</p>
-  <div style="display:flex;justify-content:space-between;align-items:center">
-    {btn}
-    {stock_info}
-  </div>
-</div>"""
-    return html
-
-
-def build_live_html(session):
-    """Generate HTML for the live session section."""
-    return f"""
-<div style="border:1px solid var(--pink);padding:32px;text-align:center">
-  <p style="font-size:.75rem;color:var(--pink);letter-spacing:4px;margin-bottom:8px">NÄCHSTE SESSION</p>
-  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:3px;margin-bottom:8px">{session['title']}</h3>
-  <p style="color:#888;margin-bottom:4px">{session['date']} — {session['time']} Uhr</p>
-  <p style="color:var(--pink);font-size:.9rem;margin-bottom:20px">{session['tickets_left']}/{session['tickets_total']} Tickets übrig</p>
-  <button onclick="alert('Coming soon.')" style="padding:12px 40px;background:var(--pink);color:var(--black);border:none;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">{session['price']}€ — TICKET SICHERN</button>
-</div>"""
-
-
-def build_merch_html(merch):
-    """Generate HTML for the merch section."""
-    return f"""
-<div style="border:1px solid var(--border);padding:28px;text-align:center">
-  <div style="width:100%;height:200px;background:var(--mid);display:flex;align-items:center;justify-content:center;margin-bottom:16px">
-    <span style="font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:4px;color:#333">{merch['type'].upper()}</span>
-  </div>
-  <h3 style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:3px;margin-bottom:4px">{merch['name']}</h3>
-  <p style="color:var(--pink);font-size:.85rem;margin-bottom:16px">Nur {merch['stock_left']} von {merch['stock_total']} — Single Drop</p>
-  <button onclick="alert('Coming soon.')" style="padding:10px 30px;background:var(--pink);color:var(--black);border:none;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;cursor:pointer">{merch['price']}€ — KAUFEN</button>
-</div>"""
-
-
 def inject_into_html(specials):
     """Replace dynamic sections in index.html with fresh content."""
     html_path = os.path.join(os.path.dirname(__file__), "index.html")
     with open(html_path, "r", encoding="utf-8") as f:
         html = f.read()
 
+    # Inject organic CSS overrides
+    organic_css = generate_organic_css()
+    html = re.sub(
+        r"(<!--ORGANIC-CSS-START-->).*?(<!--ORGANIC-CSS-END-->)",
+        rf"\1<style>\n{organic_css}\n</style>\2",
+        html,
+        flags=re.DOTALL,
+    )
+
     # Replace drops section
     drops_html = build_drops_html(specials["drops"])
     html = re.sub(
         r"(<!--DROPS-START-->).*?(<!--DROPS-END-->)",
-        rf"\1{drops_html}\2",
+        rf"\1{drops_html}\n  \2",
         html,
         flags=re.DOTALL,
     )
@@ -214,12 +330,14 @@ def inject_into_html(specials):
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print(f"[{NOW.strftime('%Y-%m-%d %H:%M')}] Specials updated:")
+    print(f"[{NOW.strftime('%Y-%m-%d %H:%M')}] Specials + layout updated:")
     print(f"  Drops: {', '.join(d['title'] for d in specials['drops'])}")
     print(f"  Live: {specials['live_session']['title']}")
     print(f"  Merch: {specials['merch']['name']}")
     print(f"  Watchers: {specials['watchers']}")
     print(f"  Headline: {specials['headline']}")
+    print(f"  Accent hue: shifted for {HOUR}:00")
+    print(f"  Layout: organic override applied")
 
 
 if __name__ == "__main__":
