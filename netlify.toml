@@ -21,6 +21,11 @@
   to = "/musik.html"
   status = 200
 
+[[redirects]]
+  from = "/ostern"
+  to = "/ostern.html"
+  status = 200
+
 # Block setup page in production
 [[redirects]]
   from = "/setup-supabase"

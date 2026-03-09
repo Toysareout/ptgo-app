@@ -65,6 +65,17 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.08;animation:gr .4s steps(1) infinite}
 @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
 
+/* EASTER BANNER */
+#easter-banner{position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(90deg,#050505 0%,rgba(201,168,76,.1) 50%,#050505 100%);border-top:1px solid rgba(201,168,76,.2);padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:bannerIn .8s ease-out}
+@keyframes bannerIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+#easter-banner .eb-text{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.5}
+#easter-banner .eb-text strong{color:#c9a84c;opacity:1}
+#easter-banner .eb-btn{padding:8px 24px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;border:none;background:#c9a84c;color:#050505;cursor:none;text-decoration:none;transition:background .3s}
+#easter-banner .eb-btn:hover{background:#f0ece4}
+#easter-banner .eb-close{background:none;border:none;color:rgba(240,236,228,.2);font-size:16px;cursor:none;padding:4px 8px;transition:color .3s}
+#easter-banner .eb-close:hover{color:#c9a84c}
+.eb-hidden{display:none!important}
+
 /* MOBILE */
 @media(max-width:680px){
   #portal{flex-direction:column}
@@ -83,6 +94,13 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 <div class="corner" id="p-c1">THETOYSAREOUT</div>
 <div class="corner" id="p-c2">EST. 2026</div>
 <div class="corner" id="p-c3">Wähle deine Welt</div>
+
+<!-- EASTER BANNER (auto-hides after Ostern 2026) -->
+<div id="easter-banner">
+  <span class="eb-text"><strong>OSTER RESET BOX</strong> — Limitiert auf 50 Stück. Nur bis Ostern.</span>
+  <a href="ostern.html" class="eb-btn">Jetzt sichern →</a>
+  <button class="eb-close" onclick="this.parentElement.classList.add('eb-hidden')" aria-label="Schließen">✕</button>
+</div>
 
 <div id="portal">
   <!-- MUSIC WORLD -->
@@ -239,6 +257,16 @@ window.addEventListener('resize', () => {
   const s = Math.min(360, window.innerWidth * 0.25);
   renderer.setSize(s, s);
 });
+
+// ── EASTER BANNER: auto-hide after Ostern 2026 ──
+(function() {
+  const banner = document.getElementById('easter-banner');
+  if (!banner) return;
+  const easterEnd = new Date('2026-04-06T00:00:00+02:00');
+  if (new Date() > easterEnd) {
+    banner.classList.add('eb-hidden');
+  }
+})();
 
 // ── TRACK WHICH WORLD USER ENTERED FROM ──
 // Store in sessionStorage so the other pages know

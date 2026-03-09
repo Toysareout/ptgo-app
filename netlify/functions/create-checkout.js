@@ -42,6 +42,7 @@ exports.handler = async (event) => {
       merch: { min: 10, max: 200 },
       session: { min: 100, max: 10000 },
       photo: { min: 1, max: 15 },
+      easter: { min: 100, max: 300 },
     };
     const limit = limits[item_type] || { min: 1, max: 10000 };
     const cents = Math.round(price * 100);
@@ -64,8 +65,15 @@ exports.handler = async (event) => {
         },
         quantity,
       }],
-      success_url: `${corsOrigin}?purchased=${item_type}&success=1`,
-      cancel_url: `${corsOrigin}?cancelled=1`,
+      success_url: item_type === 'easter'
+        ? `${corsOrigin}/ostern?success=1`
+        : `${corsOrigin}?purchased=${item_type}&success=1`,
+      cancel_url: item_type === 'easter'
+        ? `${corsOrigin}/ostern?cancelled=1`
+        : `${corsOrigin}?cancelled=1`,
+      shipping_address_collection: item_type === 'easter'
+        ? { allowed_countries: ['DE', 'AT', 'CH'] }
+        : undefined,
       metadata: {
         item_type,
         item_name,
