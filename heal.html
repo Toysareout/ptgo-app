@@ -229,6 +229,121 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 /* PARALLAX */
 .parallax-title{transition:transform .1s linear;will-change:transform}
 
+/* LIVE VIEWER COUNT — social proof */
+#live-viewers{position:fixed;bottom:70px;left:20px;z-index:800;display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(5,5,5,.88);backdrop-filter:blur(12px);border:1px solid var(--border);opacity:0;transform:translateX(-20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+#live-viewers.show{opacity:1;transform:translateX(0)}
+#live-viewers .lv-dot{width:6px;height:6px;border-radius:50%;background:#2dffa8;animation:lvPulse 2s ease-in-out infinite}
+@keyframes lvPulse{0%,100%{opacity:.4;box-shadow:0 0 0 0 rgba(45,255,168,.3)}50%{opacity:1;box-shadow:0 0 0 4px rgba(45,255,168,0)}}
+#live-viewers .lv-text{font-size:9px;letter-spacing:.15em;opacity:.5}
+#live-viewers .lv-count{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:14px}
+
+/* URGENCY BADGE on invest card */
+.urgency-badge{position:absolute;top:-1px;right:-1px;background:var(--heal);color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.12em;padding:6px 14px;z-index:2;animation:urgPulse 3s ease-in-out infinite}
+@keyframes urgPulse{0%,100%{opacity:.9}50%{opacity:1;box-shadow:0 0 20px rgba(45,255,168,.3)}}
+
+/* FOMO TOAST — activity notifications */
+#fomo-toast{position:fixed;bottom:80px;right:20px;z-index:850;max-width:280px;background:rgba(5,5,5,.92);backdrop-filter:blur(12px);border:1px solid var(--border);border-left:2px solid var(--heal);padding:14px 18px;opacity:0;transform:translateX(30px) scale(.95);transition:all .5s cubic-bezier(.16,1,.3,1);pointer-events:none}
+#fomo-toast.show{opacity:1;transform:translateX(0) scale(1)}
+#fomo-toast .ft-city{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--heal);opacity:.5;margin-bottom:4px}
+#fomo-toast .ft-text{font-size:10px;letter-spacing:.08em;opacity:.45;line-height:1.8}
+#fomo-toast .ft-time{font-size:8px;letter-spacing:.2em;opacity:.15;margin-top:6px}
+
+/* EXIT INTENT OVERLAY */
+#exit-overlay{position:fixed;inset:0;z-index:9500;background:rgba(5,5,5,.94);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s}
+#exit-overlay.show{opacity:1;visibility:visible}
+.exit-card{max-width:460px;padding:48px 40px;text-align:center;border:1px solid var(--border);position:relative;background:var(--dim);transform:translateY(30px) scale(.95);transition:transform .6s cubic-bezier(.16,1,.3,1)}
+#exit-overlay.show .exit-card{transform:translateY(0) scale(1)}
+.exit-card .exit-close{position:absolute;top:16px;right:18px;font-size:18px;opacity:.15;cursor:pointer;transition:opacity .3s;background:none;border:none;color:var(--white);font-family:'Space Mono',monospace}
+.exit-card .exit-close:hover{opacity:.6}
+.exit-card .exit-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:.03em;margin-bottom:8px}
+.exit-card .exit-title .acc{color:var(--heal)}
+.exit-card .exit-sub{font-size:10px;letter-spacing:.12em;line-height:2.2;opacity:.35;margin-bottom:28px}
+.exit-card .exit-stat{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--heal);opacity:.4;margin-bottom:4px}
+.exit-card .exit-stat-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.15;margin-bottom:24px}
+
+/* LOSS AVERSION — hero sub-element */
+.loss-line{font-size:9px;letter-spacing:.2em;opacity:0;color:#ff6b6b;margin-top:8px;animation:lossBloom 2s ease 1.2s forwards}
+@keyframes lossBloom{to{opacity:.2}}
+
+/* PRICE ANCHORING */
+.anchor-compare{text-align:center;margin-bottom:24px;opacity:0;transform:translateY(10px);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.invest-card.bloom .anchor-compare{opacity:1;transform:translateY(0)}
+.anchor-old{font-family:'Bebas Neue',sans-serif;font-size:16px;opacity:.2;text-decoration:line-through;letter-spacing:.04em}
+.anchor-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.15;margin-top:4px}
+
+/* SOCIAL PROOF NEAR CTA */
+.cta-proof{font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;margin-top:12px;text-align:center}
+.cta-proof .proof-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:13px}
+
+/* MICRO-COMMITMENT QUIZ */
+#self-check{max-width:500px;margin:0 auto 40px;text-align:center}
+.check-q{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.04em;margin-bottom:20px;opacity:.6}
+.check-opts{display:flex;flex-direction:column;gap:8px}
+.check-opt{padding:14px 20px;background:var(--dim);border:1px solid var(--border);font-size:10px;letter-spacing:.12em;opacity:.35;cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1);text-align:left}
+.check-opt:hover{border-color:rgba(45,255,168,.3);opacity:.6;transform:translateX(4px)}
+.check-opt.selected{border-color:var(--heal);opacity:.8;background:rgba(45,255,168,.03)}
+.check-result{margin-top:20px;padding:20px;border:1px solid var(--heal);opacity:0;transform:translateY(10px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.check-result.show{opacity:1;transform:translateY(0)}
+.check-result .cr-title{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--heal);margin-bottom:6px}
+.check-result .cr-text{font-size:9px;letter-spacing:.12em;line-height:2;opacity:.35}
+
+/* COUNTDOWN TIMER */
+.countdown{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.cd-unit{text-align:center}
+.cd-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--heal);opacity:.5}
+.cd-l{font-size:7px;letter-spacing:.2em;text-transform:uppercase;opacity:.12}
+
+/* ═══ HACKER-LEVEL PERSUASION ═══ */
+
+/* ENGAGEMENT PROGRESS BAR — Zeigarnik Effect */
+#engage-bar{position:fixed;top:0;left:0;right:0;z-index:9000;height:2px;background:transparent;pointer-events:none}
+#engage-fill{height:100%;width:0%;background:linear-gradient(90deg,transparent,var(--heal));transition:width .3s;box-shadow:0 0 8px rgba(45,255,168,.3)}
+#engage-label{position:fixed;top:6px;right:60px;z-index:9000;font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:0;transition:opacity .4s;pointer-events:none;color:var(--heal)}
+
+/* SUNK COST TIME TRACKER */
+#time-invest{position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:9000;font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:0;transition:opacity .6s;pointer-events:none;color:var(--white)}
+#time-invest.show{opacity:.12}
+#time-invest .ti-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:11px}
+
+/* RESERVATION TIMER */
+#reservation{position:fixed;top:40px;left:50%;transform:translateX(-50%);z-index:800;background:rgba(5,5,5,.92);backdrop-filter:blur(12px);border:1px solid rgba(45,255,168,.15);padding:8px 18px;display:flex;align-items:center;gap:10px;opacity:0;transform:translateX(-50%) translateY(-10px);transition:all .6s cubic-bezier(.16,1,.3,1);pointer-events:none}
+#reservation.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#reservation .res-icon{width:6px;height:6px;border-radius:50%;background:#ff6b6b;animation:resPulse 1.5s ease-in-out infinite}
+@keyframes resPulse{0%,100%{opacity:.4}50%{opacity:1}}
+#reservation .res-text{font-size:8px;letter-spacing:.2em;opacity:.4}
+#reservation .res-time{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--heal)}
+
+/* RETURN VISITOR BANNER */
+#return-banner{position:fixed;top:0;left:0;right:0;z-index:8000;background:linear-gradient(90deg,rgba(45,255,168,.06),rgba(45,255,168,.02));border-bottom:1px solid rgba(45,255,168,.08);padding:10px 24px;text-align:center;font-size:9px;letter-spacing:.15em;opacity:0;transform:translateY(-100%);transition:all .6s cubic-bezier(.16,1,.3,1)}
+#return-banner.show{opacity:1;transform:translateY(0)}
+#return-banner .rb-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--white);opacity:.15;cursor:pointer;font-size:14px}
+#return-banner .rb-acc{color:var(--heal)}
+#return-banner .rb-cta{color:var(--heal);text-decoration:underline;cursor:pointer;opacity:.6}
+
+/* TYPING INDICATOR on form */
+.typing-indicator{display:flex;align-items:center;gap:6px;padding:8px 0;opacity:0;transition:opacity .4s}
+.typing-indicator.show{opacity:1}
+.typing-indicator .ti-dots{display:flex;gap:3px}
+.typing-indicator .ti-dot{width:4px;height:4px;border-radius:50%;background:var(--heal);animation:typeDot 1.4s ease-in-out infinite}
+.typing-indicator .ti-dot:nth-child(2){animation-delay:.2s}
+.typing-indicator .ti-dot:nth-child(3){animation-delay:.4s}
+@keyframes typeDot{0%,100%{opacity:.15;transform:translateY(0)}50%{opacity:.6;transform:translateY(-3px)}}
+.typing-indicator .ti-label{font-size:8px;letter-spacing:.2em;opacity:.2}
+
+/* SPOTS REDUCING — dynamic scarcity near form */
+#spots-warning{text-align:center;padding:12px;border:1px solid rgba(255,107,107,.15);margin-bottom:20px;opacity:0;transform:translateY(8px);transition:all .5s}
+#spots-warning.show{opacity:1;transform:translateY(0)}
+#spots-warning .sw-n{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#ff6b6b}
+#spots-warning .sw-text{font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.3}
+
+/* CONFIRMSHAMING — exit overlay variation */
+.exit-shame{font-size:9px;letter-spacing:.1em;opacity:.12;margin-top:16px;cursor:pointer;transition:opacity .3s}
+.exit-shame:hover{opacity:.3}
+
+/* APPLICATION COUNTER near form */
+#app-counter{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.15;text-align:center;margin-bottom:16px}
+#app-counter .ac-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:13px}
+
 @media(max-width:680px){
   .pillars{grid-template-columns:1fr 1fr}
   .sect{padding:60px 20px}
@@ -237,6 +352,9 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   .about-text .about-stats{flex-wrap:wrap}
   #sticky-cta .sticky-price{display:none}
   #sticky-cta .sticky-sep{display:none}
+  #live-viewers{bottom:60px;left:10px}
+  #fomo-toast{right:10px;bottom:70px;max-width:240px}
+  .exit-card{margin:20px;padding:36px 24px}
 }
 @media(max-width:400px){
   .pillars{grid-template-columns:1fr}
@@ -253,6 +371,28 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
 </head>
 <body>
+
+<!-- ENGAGEMENT PROGRESS BAR -->
+<div id="engage-bar"><div id="engage-fill"></div></div>
+<div id="engage-label"></div>
+
+<!-- SUNK COST TIME TRACKER -->
+<div id="time-invest"><span class="ti-n" id="ti-min">0</span> Min. auf dieser Seite investiert</div>
+
+<!-- RESERVATION TIMER -->
+<div id="reservation">
+  <span class="res-icon"></span>
+  <span class="res-text">Dein Platz ist reserviert für</span>
+  <span class="res-time" id="res-countdown">15:00</span>
+</div>
+
+<!-- RETURN VISITOR BANNER -->
+<div id="return-banner">
+  <span>Du warst schon <span class="rb-acc" id="rb-visits">2</span>× hier. </span>
+  <span>Die Plätze werden weniger. </span>
+  <a class="rb-cta" href="#apply">Jetzt bewerben →</a>
+  <button class="rb-close" onclick="document.getElementById('return-banner').classList.remove('show')">&times;</button>
+</div>
 
 <!-- PRELOADER — organic bloom -->
 <div id="preloader">
@@ -285,6 +425,7 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="h-label">Pain · Trauma · Growth · Outcome</div>
     <div class="h-title">P<span class="acc">TGO</span><br><span class="ol">Method.</span></div>
     <div class="h-sub" id="hero-sub">Dein Körper speichert alles.<br>Schmerz. Trauma. Muster.<br>Ich löse sie.</div>
+    <div class="loss-line">⚠ Jeder Tag mit Schmerz ist ein verlorener Tag.</div>
     <div id="hourly-mantra"></div>
     <a href="#apply" class="h-btn">Session anfragen →</a>
   </div>
@@ -424,6 +565,11 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="guarantee-text">Wenn du nach den ersten 30 Minuten der Session keine spürbare Veränderung feststellst, brechen wir ab. Du zahlst nichts. Kein Kleingedrucktes. Ich stehe mit meinem Namen dahinter.</div>
   </div>
   <div class="invest-card">
+    <div class="urgency-badge">Nur noch 2 Plätze in Q2 2026</div>
+    <div class="anchor-compare">
+      <div class="anchor-old">∅ 15.000 – 40.000 € für jahrelange Therapie ohne Ergebnis</div>
+      <div class="anchor-label">Was die meisten vorher ausgeben</div>
+    </div>
     <div class="invest-price">5.000 €</div>
     <div class="invest-unit">Pro Session · Inkl. MwSt.</div>
     <ul class="invest-inc">
@@ -436,6 +582,9 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
       <li>Direkter Zugang per Signal/WhatsApp</li>
     </ul>
     <a href="#apply" class="h-btn" style="width:100%">Jetzt bewerben →</a>
+    <div class="cta-proof"><span class="proof-n">87%</span> buchen nach dem Vorgespräch</div>
+    <div class="countdown" id="invest-countdown"></div>
+    <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.1;text-align:center" id="cd-label">Nächster freier Termin</div>
   </div>
 </section>
 
@@ -485,7 +634,25 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   <div class="s-label">Bewerbung · Limitiert</div>
   <div class="s-title">Bewerbe<br><span class="ol">dich.</span></div>
   <div class="s-body" style="margin-left:auto;margin-right:auto;text-align:center">Ich nehme maximal 4 neue Klienten pro Monat an.<br>Erzähl mir, was dich hierher gebracht hat.</div>
+  <div id="self-check">
+    <div class="check-q">Wie lange lebst du schon mit diesem Problem?</div>
+    <div class="check-opts">
+      <div class="check-opt" onclick="selectCheck(this, 0)">Weniger als 6 Monate</div>
+      <div class="check-opt" onclick="selectCheck(this, 1)">6 Monate – 2 Jahre</div>
+      <div class="check-opt" onclick="selectCheck(this, 2)">2 – 5 Jahre</div>
+      <div class="check-opt" onclick="selectCheck(this, 3)">Über 5 Jahre</div>
+    </div>
+    <div class="check-result" id="check-result">
+      <div class="cr-title" id="cr-title"></div>
+      <div class="cr-text" id="cr-text"></div>
+    </div>
+  </div>
+  <div id="app-counter"><span class="ac-n" id="ac-n">47</span> Bewerbungen diesen Monat · <span class="ac-n">4</span> Plätze</div>
   <form id="apply-form" onsubmit="submitApplication(event)">
+    <div id="spots-warning">
+      <div class="sw-n" id="sw-spots">2</div>
+      <div class="sw-text">Plätze noch frei für dieses Quartal</div>
+    </div>
     <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" name="name" placeholder="Dein Name" required /></div>
     <div class="form-group"><label class="form-label">E-Mail</label><input class="form-input" type="email" name="email" placeholder="name@beispiel.de" required /></div>
     <div class="form-group"><label class="form-label">Telefon</label><input class="form-input" type="tel" name="phone" placeholder="+49 ..." /></div>
@@ -493,6 +660,10 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="form-group"><label class="form-label">Wie lange besteht das Problem?</label><input class="form-input" type="text" name="duration" placeholder="z.B. 3 Jahre, seit einem Unfall, ..." /></div>
     <div class="form-group"><label class="form-label">Was hast du bereits versucht?</label><textarea class="form-input" name="tried" placeholder="Physiotherapie, Medikamente, Osteopathie, ..." style="min-height:80px"></textarea></div>
     <button type="submit" class="h-btn" style="width:100%">Bewerbung absenden →</button>
+    <div class="typing-indicator" id="form-typing">
+      <div class="ti-dots"><span class="ti-dot"></span><span class="ti-dot"></span><span class="ti-dot"></span></div>
+      <span class="ti-label">Alex überprüft Bewerbungen gerade live...</span>
+    </div>
     <div class="form-note">Antwort innerhalb von 48 Stunden · Vorgespräch kostenlos</div>
     <div id="form-status"></div>
     <div style="margin-top:32px;padding-top:32px;border-top:1px solid var(--border);text-align:center">
@@ -502,8 +673,37 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   </form>
 </section>
 
+<!-- LIVE VIEWER COUNT -->
+<div id="live-viewers">
+  <span class="lv-dot"></span>
+  <span class="lv-text"><span class="lv-count" id="lv-n">0</span> Personen sehen sich diese Seite gerade an</span>
+</div>
+
+<!-- FOMO TOAST -->
+<div id="fomo-toast">
+  <div class="ft-city" id="ft-city"></div>
+  <div class="ft-text" id="ft-text"></div>
+  <div class="ft-time" id="ft-time"></div>
+</div>
+
+<!-- EXIT INTENT OVERLAY -->
+<div id="exit-overlay">
+  <div class="exit-card">
+    <button class="exit-close" onclick="closeExitOverlay()">&times;</button>
+    <div class="exit-title">Warte<span class="acc">.</span></div>
+    <div class="exit-sub">Bevor du gehst — wusstest du, dass die meisten unserer Klienten vorher jahrelang ohne Ergebnis behandelt wurden?<br><br>Du hast bereits <span id="exit-time-spent">0</span> Minuten auf dieser Seite verbracht. Das zeigt, dass dich etwas hierher geführt hat.</div>
+    <div class="exit-stat">94%</div>
+    <div class="exit-stat-label">Spüren Veränderung in einer Session</div>
+    <a href="#apply" class="h-btn" onclick="closeExitOverlay()" style="display:inline-block">Ja, ich will mein kostenloses Vorgespräch →</a>
+    <div class="cta-proof" style="margin-top:16px">Kein Risiko · 30 Min · Kostenlos</div>
+    <div class="exit-shame" onclick="closeExitOverlay()">Nein danke, ich lebe lieber weiter mit dem Schmerz.</div>
+  </div>
+</div>
+
 <!-- STICKY CTA -->
 <div id="sticky-cta">
+  <span style="font-size:8px;letter-spacing:.2em;opacity:.25">Nur noch 2 Plätze</span>
+  <span class="sticky-sep"></span>
   <span class="sticky-price">5.000 €</span>
   <span class="sticky-sep"></span>
   <a href="#apply"><button class="sticky-btn">Session anfragen →</button></a>
@@ -1182,6 +1382,372 @@ window.addEventListener('beforeunload', () => {
   const timeOnPage = Math.round((Date.now() - pageStart) / 1000);
   sessionStorage.setItem('ttao_heal_engagement', JSON.stringify({ maxScroll, timeOnPage, applied: !!sessionStorage.getItem('ttao_heal_applied') }));
 });
+
+// ═══════════════════════════════════════════════════════════
+// PSYCHOLOGICAL TRIGGERS — Conversion Optimization
+// ═══════════════════════════════════════════════════════════
+
+// ── LIVE VIEWER COUNT (Social Proof) ──
+// Simulates realistic viewer count with organic fluctuations
+const lvEl = document.getElementById('lv-n');
+const lvContainer = document.getElementById('live-viewers');
+let viewerCount = 3 + Math.floor(Math.random() * 5); // 3-7 base
+lvEl.textContent = viewerCount;
+setTimeout(() => lvContainer.classList.add('show'), 4000);
+
+setInterval(() => {
+  const delta = Math.random() < 0.4 ? 1 : (Math.random() < 0.5 ? -1 : 0);
+  viewerCount = Math.max(2, Math.min(14, viewerCount + delta));
+  lvEl.textContent = viewerCount;
+}, 8000 + Math.random() * 12000);
+
+// ── FOMO TOAST ENGINE (Social Proof + Scarcity) ──
+const fomoData = [
+  { city: 'Wien', text: 'hat sich gerade für ein Vorgespräch beworben', time: 'vor 3 Minuten' },
+  { city: 'München', text: 'hat eine Session gebucht', time: 'vor 8 Minuten' },
+  { city: 'Zürich', text: 'hat sich gerade beworben', time: 'vor 12 Minuten' },
+  { city: 'Hamburg', text: 'hat das PDF heruntergeladen', time: 'vor 18 Minuten' },
+  { city: 'Berlin', text: 'hat ein Vorgespräch angefragt', time: 'vor 24 Minuten' },
+  { city: 'Frankfurt', text: 'hat sich für Q2 beworben', time: 'vor 31 Minuten' },
+  { city: 'Graz', text: 'hat eine Session gebucht', time: 'vor 42 Minuten' },
+  { city: 'Salzburg', text: 'hat sich gerade beworben', time: 'vor 55 Minuten' },
+  { city: 'Düsseldorf', text: 'hat das Vorgespräch gebucht', time: 'vor 1 Stunde' },
+  { city: 'Köln', text: 'hat sich beworben', time: 'vor 2 Stunden' },
+];
+let fomoIdx = Math.floor(Math.random() * fomoData.length);
+const fomoToast = document.getElementById('fomo-toast');
+
+function showFomoToast() {
+  const d = fomoData[fomoIdx % fomoData.length];
+  document.getElementById('ft-city').textContent = 'Jemand aus ' + d.city;
+  document.getElementById('ft-text').textContent = d.text;
+  document.getElementById('ft-time').textContent = d.time;
+  fomoToast.classList.add('show');
+  fomoIdx++;
+  setTimeout(() => fomoToast.classList.remove('show'), 5000);
+}
+
+// First toast after 25s, then every 35-60s
+setTimeout(() => {
+  showFomoToast();
+  setInterval(showFomoToast, 35000 + Math.random() * 25000);
+}, 25000);
+
+// ── EXIT INTENT OVERLAY (Loss Aversion) ──
+let exitShown = false;
+const exitOverlay = document.getElementById('exit-overlay');
+
+document.addEventListener('mouseout', (e) => {
+  if (exitShown) return;
+  if (sessionStorage.getItem('ttao_heal_applied')) return;
+  if (e.clientY < 5 && e.relatedTarget === null) {
+    exitOverlay.classList.add('show');
+    exitShown = true;
+    sessionStorage.setItem('ttao_exit_shown', '1');
+  }
+});
+
+function closeExitOverlay() {
+  exitOverlay.classList.remove('show');
+}
+
+// Close on ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeExitOverlay();
+});
+
+// ── MICRO-COMMITMENT SELF-CHECK ──
+const checkResults = [
+  { title: 'Frühphase — guter Zeitpunkt.', text: 'Je früher du handelst, desto schneller die Lösung. Dein Körper hat noch keine tiefen Kompensationsmuster aufgebaut.' },
+  { title: 'Das Muster verfestigt sich.', text: 'Nach 6 Monaten beginnt dein Nervensystem, den Schmerz als „normal" zu akzeptieren. Jetzt handeln verhindert Chronifizierung.' },
+  { title: 'Dein Körper hat sich angepasst.', text: 'Nach Jahren hat dein Nervensystem tiefe Schutzmuster aufgebaut. Die PTGO-Methode ist genau dafür entwickelt — diese Muster in einer Session zu lösen.' },
+  { title: 'Über 5 Jahre. Das ist zu lang.', text: 'Du hast genug gewartet. Genug versucht. Die meisten meiner Klienten kommen nach 5+ Jahren — und wünschten, sie hätten es früher getan. Eine Session kann alles verändern.' },
+];
+
+function selectCheck(el, idx) {
+  document.querySelectorAll('.check-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const r = checkResults[idx];
+  document.getElementById('cr-title').textContent = r.title;
+  document.getElementById('cr-text').textContent = r.text;
+  document.getElementById('check-result').classList.add('show');
+  // Scroll form into view after a moment
+  setTimeout(() => {
+    document.getElementById('apply-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1200);
+}
+
+// ── COUNTDOWN TO NEXT AVAILABLE SLOT (Urgency) ──
+function updateCountdown() {
+  const now = new Date();
+  // Next slot: always ~3-6 weeks out, anchored to a fixed future date
+  const target = new Date(now);
+  target.setDate(target.getDate() + 21 + (now.getDate() % 14));
+  target.setHours(10, 0, 0, 0);
+  const diff = target - now;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const el = document.getElementById('invest-countdown');
+  if (el) {
+    el.innerHTML =
+      '<div class="cd-unit"><div class="cd-n">' + days + '</div><div class="cd-l">Tage</div></div>' +
+      '<div class="cd-unit"><div class="cd-n">' + hours + '</div><div class="cd-l">Std</div></div>' +
+      '<div class="cd-unit"><div class="cd-n">' + mins + '</div><div class="cd-l">Min</div></div>';
+  }
+}
+updateCountdown();
+setInterval(updateCountdown, 60000);
+
+// ═══════════════════════════════════════════════════════════
+// HACKER-LEVEL PERSUASION SYSTEMS
+// ═══════════════════════════════════════════════════════════
+
+// ── 1. ENGAGEMENT PROGRESS BAR (Zeigarnik Effect) ──
+// Humans feel compelled to complete things. Show them their progress.
+const engFill = document.getElementById('engage-fill');
+const engLabel = document.getElementById('engage-label');
+const engMilestones = ['Methode verstehen', 'Ergebnisse sehen', 'Entscheidung treffen', 'Fast da...', 'Bewerbung'];
+let lastMilestone = -1;
+
+function updateEngagementBar() {
+  const scrollPct = Math.min(100, Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100));
+  engFill.style.width = scrollPct + '%';
+
+  const milestoneIdx = Math.min(4, Math.floor(scrollPct / 20));
+  if (milestoneIdx !== lastMilestone && milestoneIdx > 0) {
+    lastMilestone = milestoneIdx;
+    engLabel.textContent = engMilestones[milestoneIdx];
+    engLabel.style.opacity = '.15';
+    setTimeout(() => { engLabel.style.opacity = '0'; }, 2500);
+  }
+}
+window.addEventListener('scroll', updateEngagementBar, { passive: true });
+
+// ── 2. SUNK COST TIME TRACKER ──
+// Show the user how much time they've already invested. Makes leaving feel wasteful.
+const tiEl = document.getElementById('time-invest');
+const tiMin = document.getElementById('ti-min');
+let timeInvestSeconds = 0;
+
+setInterval(() => {
+  timeInvestSeconds++;
+  const mins = Math.floor(timeInvestSeconds / 60);
+  if (mins >= 1) {
+    tiMin.textContent = mins;
+    tiEl.classList.add('show');
+  }
+}, 1000);
+
+// ── 3. RESERVATION TIMER (Artificial Scarcity + Urgency) ──
+// "Your spot is reserved for 15 minutes" — creates panic
+let resSeconds = 15 * 60;
+const resCountdown = document.getElementById('res-countdown');
+const resContainer = document.getElementById('reservation');
+
+// Show after 10 seconds on page
+setTimeout(() => resContainer.classList.add('show'), 10000);
+
+setInterval(() => {
+  if (resSeconds <= 0) return;
+  resSeconds--;
+  const m = Math.floor(resSeconds / 60);
+  const s = resSeconds % 60;
+  resCountdown.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+
+  // Color shifts to red as time runs out
+  if (resSeconds < 180) {
+    resCountdown.style.color = '#ff6b6b';
+    resContainer.style.borderColor = 'rgba(255,107,107,.2)';
+  }
+  if (resSeconds <= 0) {
+    resCountdown.textContent = 'Abgelaufen';
+    resContainer.querySelector('.res-text').textContent = 'Dein reservierter Platz ist';
+  }
+}, 1000);
+
+// ── 4. TAB TITLE HIJACK ──
+// When user leaves the tab, title screams for attention
+const originalTitle = document.title;
+let titleFlashing = false;
+let titleInterval;
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    let flash = false;
+    titleInterval = setInterval(() => {
+      flash = !flash;
+      document.title = flash ? '⚠ Dein Platz läuft ab...' : '(2) PTGO METHOD — Neue Nachricht';
+    }, 1500);
+  } else {
+    clearInterval(titleInterval);
+    document.title = originalTitle;
+  }
+});
+
+// ── 5. RETURN VISITOR DETECTION ──
+// Track visits. Returning visitors get personalized pressure.
+let visitCount = parseInt(localStorage.getItem('ttao_visits') || '0') + 1;
+localStorage.setItem('ttao_visits', visitCount);
+localStorage.setItem('ttao_last_visit', Date.now());
+
+if (visitCount > 1) {
+  const rbEl = document.getElementById('return-banner');
+  document.getElementById('rb-visits').textContent = visitCount;
+  setTimeout(() => rbEl.classList.add('show'), 3000);
+
+  // Also modify hero subtitle for returning visitors
+  const heroSub = document.getElementById('hero-sub');
+  if (visitCount >= 3) {
+    heroSub.innerHTML = 'Du bist wieder da.<br>Das zeigt mir: Du weißt, dass sich etwas ändern muss.<br><span style="color:var(--heal);opacity:.4">Hör auf zu warten.</span>';
+  }
+}
+
+// ── 6. BACK-BUTTON TRAP ──
+// Push history states. When user hits back, show exit overlay instead of leaving.
+history.pushState(null, '', location.href);
+history.pushState(null, '', location.href);
+
+window.addEventListener('popstate', () => {
+  if (!exitShown && !sessionStorage.getItem('ttao_heal_applied')) {
+    exitOverlay.classList.add('show');
+    exitShown = true;
+    history.pushState(null, '', location.href);
+  }
+});
+
+// ── 7. SPOT REDUCTION ON SCROLL (Dynamic Scarcity) ──
+// Available spots decrease as user scrolls deeper. Creates urgency.
+const swSpots = document.getElementById('sw-spots');
+const urgBadge = document.querySelector('.urgency-badge');
+let displayedSpots = 2;
+
+function updateDynamicScarcity() {
+  const scrollPct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  // When they reach the form area, one spot "disappears"
+  if (scrollPct > 0.7 && displayedSpots > 1) {
+    displayedSpots = 1;
+    swSpots.textContent = '1';
+    if (urgBadge) urgBadge.textContent = 'Letzter Platz in Q2 2026';
+
+    // Flash the spots warning
+    const swEl = document.getElementById('spots-warning');
+    swEl.style.borderColor = 'rgba(255,107,107,.3)';
+    swEl.style.background = 'rgba(255,107,107,.03)';
+  }
+}
+window.addEventListener('scroll', updateDynamicScarcity, { passive: true });
+
+// Show spots warning when form section visible
+const spotsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.getElementById('spots-warning').classList.add('show');
+      spotsObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+const applyFormEl = document.getElementById('apply-form');
+if (applyFormEl) spotsObserver.observe(applyFormEl);
+
+// ── 8. GEO PERSONALIZATION ──
+// Use timezone to estimate region. Personalize FOMO toasts.
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+let userRegion = '';
+if (tz.includes('Vienna') || tz.includes('Europe/Vienna')) userRegion = 'Österreich';
+else if (tz.includes('Berlin') || tz.includes('Europe/Berlin')) userRegion = 'Deutschland';
+else if (tz.includes('Zurich') || tz.includes('Europe/Zurich')) userRegion = 'Schweiz';
+
+// Inject geo-relevant FOMO data
+if (userRegion) {
+  fomoData.unshift(
+    { city: 'Deiner Region', text: 'hat sich gerade beworben', time: 'vor 2 Minuten' },
+    { city: 'Deiner Nähe', text: 'hat ein Vorgespräch gebucht', time: 'vor 6 Minuten' }
+  );
+}
+
+// ── 9. TYPING INDICATOR ON FORM ──
+// Shows "Alex is reviewing applications live" — creates feeling of real-time interaction
+const formTyping = document.getElementById('form-typing');
+const applyFormSection = document.getElementById('apply');
+
+if (applyFormSection) {
+  const typingObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        // Show typing after 2s delay — feels organic
+        setTimeout(() => formTyping.classList.add('show'), 2000);
+        // Remove after 8s — feels like Alex moved on
+        setTimeout(() => formTyping.classList.remove('show'), 10000);
+        // Show again periodically
+        setInterval(() => {
+          formTyping.classList.add('show');
+          setTimeout(() => formTyping.classList.remove('show'), 6000);
+        }, 25000);
+        typingObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  typingObserver.observe(applyFormSection);
+}
+
+// ── 10. EXIT INTENT — inject time spent ──
+// Update exit overlay with actual time spent for sunk cost amplification
+const origMouseOut = document.onmouseout;
+const exitTimeSpent = document.getElementById('exit-time-spent');
+setInterval(() => {
+  if (exitTimeSpent) {
+    exitTimeSpent.textContent = Math.floor(timeInvestSeconds / 60);
+  }
+}, 5000);
+
+// ── 11. FORM FIELD COMMITMENT ESCALATION ──
+// As user fills each field, show encouraging micro-feedback
+document.querySelectorAll('#apply-form .form-input').forEach((input, idx) => {
+  const messages = ['Guter Anfang.', 'Fast da...', 'Nur noch 3 Felder.', 'Du bist bereit.', 'Noch eins.', 'Absenden und Platz sichern.'];
+  input.addEventListener('focus', () => {
+    const note = input.closest('.form-group').querySelector('.form-label');
+    if (note && idx > 0) {
+      const orig = note.textContent;
+      const msg = messages[Math.min(idx, messages.length - 1)];
+      note.style.color = 'var(--heal)';
+      note.style.opacity = '.6';
+      setTimeout(() => {
+        note.style.color = '';
+        note.style.opacity = '';
+      }, 2000);
+    }
+  });
+});
+
+// ── 12. SMART APPLICATION COUNTER ──
+// Monthly counter that looks real — based on day of month
+const dayOfMonth = new Date().getDate();
+const monthApps = 12 + dayOfMonth * 2 + Math.floor(Math.random() * 5);
+const acN = document.getElementById('ac-n');
+if (acN) acN.textContent = monthApps;
+
+// ── 13. SCROLL-DEPTH TRIGGERED MESSAGES ──
+// Strategic messages at specific scroll depths
+const scrollMessages = [
+  { pct: 25, msg: '↓ Die Ergebnisse sprechen für sich' },
+  { pct: 50, msg: '↓ Investition & Garantie' },
+  { pct: 75, msg: '↓ Bewirb dich jetzt — letzte Plätze' },
+];
+let shownScrollMsgs = new Set();
+
+function checkScrollMessages() {
+  const scrollPct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+  scrollMessages.forEach(sm => {
+    if (scrollPct >= sm.pct && !shownScrollMsgs.has(sm.pct)) {
+      shownScrollMsgs.add(sm.pct);
+      engLabel.textContent = sm.msg;
+      engLabel.style.opacity = '.2';
+      setTimeout(() => { engLabel.style.opacity = '0'; }, 3000);
+    }
+  });
+}
+window.addEventListener('scroll', checkScrollMessages, { passive: true });
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 </body>
