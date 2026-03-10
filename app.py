@@ -14,8 +14,11 @@ import json
 import time
 import secrets
 import hashlib
+import hmac
+import html as html_mod
 import threading
 import smtplib
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 
@@ -41,6 +44,13 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 # =========================================================
 
 APP_SECRET = os.getenv("APP_SECRET", "dev-secret-change-me")
+if APP_SECRET == "dev-secret-change-me":
+    import warnings
+    warnings.warn(
+        "SECURITY WARNING: APP_SECRET is set to the default value. "
+        "Set a strong, unique APP_SECRET environment variable in production!",
+        stacklevel=1,
+    )
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 APP_TZ = os.getenv("APP_TZ", "Europe/Berlin")
 
@@ -231,6 +241,12 @@ def _now_local() -> datetime:
 def _clamp_int(v, lo: int, hi: int) -> int:
     return max(lo, min(int(v), hi))
 
+def _esc(s) -> str:
+    """Escape user-supplied text for safe HTML rendering."""
+    if s is None:
+        return ""
+    return html_mod.escape(str(s))
+
 def _hash_code(code: str) -> str:
     return hashlib.sha256((code + APP_SECRET).encode("utf-8")).hexdigest()
 
@@ -238,7 +254,25 @@ def _hash_magic(token: str) -> str:
     return hashlib.sha256((token + APP_SECRET + "MAGIC").encode("utf-8")).hexdigest()
 
 def _hash_password(pw: str) -> str:
-    return hashlib.sha256((pw + APP_SECRET + "PW").encode("utf-8")).hexdigest()
+    """Hash password with HMAC-SHA256 and multiple iterations for brute-force resistance."""
+    key = (APP_SECRET + "PW").encode("utf-8")
+    result = pw.encode("utf-8")
+    for _ in range(100_000):
+        result = hmac.new(key, result, hashlib.sha256).digest()
+    return result.hex()
+
+# --- Rate limiter ---
+_rate_limit_store: Dict[str, list] = defaultdict(list)
+
+def _rate_limit(key: str, max_attempts: int, window_seconds: int) -> bool:
+    """Return True if rate limit exceeded."""
+    now = time.time()
+    attempts = _rate_limit_store[key]
+    _rate_limit_store[key] = [t for t in attempts if now - t < window_seconds]
+    if len(_rate_limit_store[key]) >= max_attempts:
+        return True
+    _rate_limit_store[key].append(now)
+    return False
 
 def require_patient_login(request: Request, db) -> Patient:
     pid = request.session.get("patient_id")
@@ -775,7 +809,7 @@ def startup():
 
 @app.get("/health")
 def health():
-    return {"ok": True, "time_utc": int(time.time()), "tz": APP_TZ, "base_url": BASE_URL, "twilio": _twilio_enabled(), "ai": bool(ANTHROPIC_API_KEY)}
+    return {"ok": True}
 
 
 # =========================================================
@@ -847,20 +881,23 @@ def auth_start(request: Request, name: str = Form(...), phone: str = Form(...), 
     phone = phone.strip()
     email = str(email).strip().lower()
 
+    # Rate limit: max 5 auth attempts per IP per 10 minutes
+    client_ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    if _rate_limit(f"auth_start:{client_ip}", max_attempts=5, window_seconds=600):
+        return _page("Fehler", "<h1>Zu viele Versuche</h1><p>Bitte warte einige Minuten.</p><p><a href='/'>Zurück</a></p>", request=request)
+
     patient = db.query(Patient).filter((Patient.phone == phone) | (Patient.email == email)).first()
     if not patient:
-        patient = Patient(name=name, phone=phone, email=email, email_verified=True)
+        patient = Patient(name=name, phone=phone, email=email, email_verified=False)
         db.add(patient)
         db.commit()
         db.refresh(patient)
+        request.session["patient_id"] = patient.id
+        log_login_event(db, request, patient.id, "patient", "login")
     else:
-        patient.name = name
-        patient.phone = phone
-        patient.email = email
-        db.commit()
-
-    request.session["patient_id"] = patient.id
-    log_login_event(db, request, patient.id, "patient", "login")
+        # Existing patient: do NOT auto-login or overwrite data.
+        # Send magic link and require verification.
+        pass
 
     magic = issue_magic_link(db, patient, ttl_minutes=60 * 24)
     try:
@@ -888,7 +925,7 @@ def auth_start(request: Request, name: str = Form(...), phone: str = Form(...), 
       <a class="btn" href="/checkin/1">Jetzt starten</a>
       <div style="height:12px"></div>
       <p class="small">Oder kopiere den Link:</p>
-      <div class="code">{magic}</div>
+      <div class="code">{_esc(magic)}</div>
     """
     return _page("PTGO • Link", body, request=request)
 
@@ -901,6 +938,10 @@ def magic_login(token: str, request: Request, db=Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid link")
     if not patient.magic_token_expires_at or _now_utc() > patient.magic_token_expires_at:
         raise HTTPException(status_code=401, detail="Link expired")
+    # Invalidate magic link after single use
+    patient.magic_token_hash = None
+    patient.magic_token_expires_at = None
+    db.commit()
     request.session["patient_id"] = patient.id
     log_login_event(db, request, patient.id, "patient", "magic")
     return RedirectResponse("/checkin/1", status_code=303)
@@ -1901,7 +1942,7 @@ def settings_page(request: Request, db=Depends(get_db)):
     p = require_patient_login(request, db)
     body = f"""
       <h1>Settings</h1>
-      <p class="small">{p.name} • {p.phone}</p>
+      <p class="small">{_esc(p.name)} • {_esc(p.phone)}</p>
       <div class="hr"></div>
       <form method="post" action="/settings">
         <label>Daily Reminder</label>
@@ -2312,7 +2353,7 @@ def subscription_create(request: Request, db=Depends(get_db)):
         return RedirectResponse(checkout_url, status_code=303)
     except Exception as e:
         print("[WARN] Stripe checkout failed:", e)
-        return _page("Fehler", f"<h1>Stripe Fehler</h1><p>{e}</p><p><a href='/upgrade'>Zurück</a></p>", request=request)
+        return _page("Fehler", f"<h1>Stripe Fehler</h1><p>Ein Fehler ist aufgetreten. Bitte versuche es erneut.</p><p><a href='/upgrade'>Zurück</a></p>", request=request)
 
 
 @app.get("/subscription/success", response_class=HTMLResponse)
@@ -2654,8 +2695,10 @@ def therapist_login_page(request: Request):
         <input name="email" type="email" required>
         <label>Phone (E.164)</label>
         <input name="phone" placeholder="+49...">
-        <label>Passwort</label>
-        <input name="password" type="password" required>
+        <label>Passwort (min. 8 Zeichen)</label>
+        <input name="password" type="password" required minlength="8">
+        <label>Einladungscode</label>
+        <input name="invite_code" required placeholder="Code vom Admin">
         <button type="submit">Account erstellen</button>
       </form>
       <div class="hr"></div>
@@ -2664,10 +2707,16 @@ def therapist_login_page(request: Request):
     return _page("Therapist Login", body, request=request)
 
 @app.post("/therapist/register", response_class=HTMLResponse)
-def therapist_register(request: Request, name: str = Form(...), email: EmailStr = Form(...), phone: str = Form(""), password: str = Form(...), db=Depends(get_db)):
+def therapist_register(request: Request, name: str = Form(...), email: EmailStr = Form(...), phone: str = Form(""), password: str = Form(...), invite_code: str = Form(""), db=Depends(get_db)):
+    # Require invite code for therapist registration
+    expected_code = hashlib.sha256((APP_SECRET + "INVITE").encode()).hexdigest()[:16]
+    if not hmac.compare_digest(invite_code.strip(), expected_code):
+        return _page("Fehler", "<h1>Ungültiger Einladungscode</h1><p>Therapeuten-Registrierung erfordert einen gültigen Einladungscode.</p><p><a href='/therapist/login'>Zurück</a></p>", request=request)
     email = str(email).strip().lower()
     if db.query(Therapist).filter(Therapist.email == email).first():
         return _page("Fehler", "<h1>E-Mail existiert bereits</h1><p><a href='/therapist/login'>Zurück</a></p>", request=request)
+    if len(password) < 8:
+        return _page("Fehler", "<h1>Passwort zu kurz</h1><p>Mindestens 8 Zeichen erforderlich.</p><p><a href='/therapist/login'>Zurück</a></p>", request=request)
     t = Therapist(name=name.strip(), email=email, phone=phone.strip() or None, password_hash=_hash_password(password))
     db.add(t)
     db.commit()
@@ -2677,8 +2726,11 @@ def therapist_register(request: Request, name: str = Form(...), email: EmailStr 
 @app.post("/therapist/login", response_class=HTMLResponse)
 def therapist_login(request: Request, email: EmailStr = Form(...), password: str = Form(...), db=Depends(get_db)):
     email = str(email).strip().lower()
+    # Rate limit: max 5 login attempts per email per 15 minutes
+    if _rate_limit(f"therapist_login:{email}", max_attempts=5, window_seconds=900):
+        return _page("Fehler", "<h1>Zu viele Login-Versuche</h1><p>Bitte warte 15 Minuten.</p><p><a href='/therapist/login'>Zurück</a></p>", request=request)
     t = db.query(Therapist).filter(Therapist.email == email).first()
-    if not t or t.password_hash != _hash_password(password):
+    if not t or not hmac.compare_digest(t.password_hash, _hash_password(password)):
         return _page("Fehler", "<h1>Login fehlgeschlagen</h1><p><a href='/therapist/login'>Zurück</a></p>", request=request)
     request.session["therapist_id"] = t.id
     return RedirectResponse("/therapist", status_code=303)
@@ -2706,8 +2758,8 @@ def therapist_dashboard(request: Request, db=Depends(get_db)):
             when = "-"
         rows += f"""
         <div class="kpi" style="margin-bottom:10px">
-          <div><b>{p.name}</b></div>
-          <div class="small">{p.phone} • {p.email}</div>
+          <div><b>{_esc(p.name)}</b></div>
+          <div class="small">{_esc(p.phone)} • {_esc(p.email)}</div>
           <div style="height:6px"></div>
           {tag} <span class="small">({when})</span> {link}
         </div>
@@ -2715,7 +2767,7 @@ def therapist_dashboard(request: Request, db=Depends(get_db)):
 
     body = f"""
       <h1>Therapist</h1>
-      <p class="small">Eingeloggt als <b>{t.name}</b> • <a href="/therapist/logout">logout</a></p>
+      <p class="small">Eingeloggt als <b>{_esc(t.name)}</b> • <a href="/therapist/logout">logout</a></p>
       <div class="hr"></div>
       <h2>Patient zuweisen</h2>
       <form method="post" action="/therapist/assign">
@@ -2762,8 +2814,8 @@ def therapist_view_checkin(checkin_id: int, request: Request, db=Depends(get_db)
         outcome_html = f"<p><b>Outcome:</b> {emoji} {outcome.rating}</p>"
 
     body = f"""
-      <h1>{p.name}</h1>
-      <p class="small">{p.phone} • {p.email}</p>
+      <h1>{_esc(p.name)}</h1>
+      <p class="small">{_esc(p.phone)} • {_esc(p.email)}</p>
       <div class="hr"></div>
       <div class="grid3">
         <div class="kpi"><span class="small">Score</span><b>{c.score}</b></div>
@@ -2772,9 +2824,9 @@ def therapist_view_checkin(checkin_id: int, request: Request, db=Depends(get_db)
       </div>
       <div class="hr"></div>
       <h2>Pattern</h2>
-      <div class="pattern-tag">{c.pattern_label or "–"}</div>
+      <div class="pattern-tag">{_esc(c.pattern_label) or "–"}</div>
       <h2>Action</h2>
-      <p>{c.action_label}: {c.action_text}</p>
+      <p>{_esc(c.action_label)}: {_esc(c.action_text)}</p>
       {outcome_html}
       <div class="hr"></div>
       <h2>Signals</h2>
