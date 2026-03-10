@@ -233,6 +233,199 @@ INSERT INTO bot_config (key, value) VALUES
   ('vip_thresholds', '{"casual":10,"engaged":30,"superfan":60,"vip":80,"whale":95}'),
   ('daily_report', '{"enabled":true,"time":"09:00","phone":""}')
 ON CONFLICT (key) DO NOTHING;
+
+-- ============================================================
+-- EVOLUTION ENGINE — Self-learning, self-improving bot brain
+-- ============================================================
+
+-- 8. MEMORY
+CREATE TABLE IF NOT EXISTS bot_memory (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  category TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  key TEXT NOT NULL,
+  value JSONB NOT NULL,
+  confidence REAL DEFAULT 0.5,
+  times_reinforced INTEGER DEFAULT 1,
+  last_accessed TIMESTAMPTZ DEFAULT now(),
+  source TEXT DEFAULT 'conversation',
+  UNIQUE(category, subject, key)
+);
+
+-- 9. EVOLUTION LOG
+CREATE TABLE IF NOT EXISTS bot_evolution (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  evolution_type TEXT NOT NULL,
+  component TEXT NOT NULL,
+  before_state TEXT,
+  after_state TEXT,
+  reason TEXT NOT NULL,
+  impact_score REAL DEFAULT 0,
+  reverted BOOLEAN DEFAULT false
+);
+
+-- 10. ERROR LOG
+CREATE TABLE IF NOT EXISTS bot_errors (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  error_type TEXT NOT NULL,
+  context JSONB NOT NULL,
+  what_went_wrong TEXT NOT NULL,
+  lesson_learned TEXT NOT NULL,
+  prevention_strategy TEXT,
+  applied BOOLEAN DEFAULT false,
+  fan_id UUID REFERENCES fans(id),
+  conversation_id UUID REFERENCES conversations(id)
+);
+
+-- 11. DAILY INTELLIGENCE
+CREATE TABLE IF NOT EXISTS bot_intelligence (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  date DATE UNIQUE NOT NULL DEFAULT CURRENT_DATE,
+  total_learnings INTEGER DEFAULT 0,
+  total_errors_analyzed INTEGER DEFAULT 0,
+  total_improvements INTEGER DEFAULT 0,
+  total_memories_created INTEGER DEFAULT 0,
+  response_quality_avg REAL DEFAULT 50,
+  intent_accuracy REAL DEFAULT 50,
+  sentiment_accuracy REAL DEFAULT 50,
+  sales_conversion_rate REAL DEFAULT 0,
+  fan_satisfaction REAL DEFAULT 50,
+  intelligence_score REAL DEFAULT 50,
+  strengths JSONB DEFAULT '[]',
+  weaknesses JSONB DEFAULT '[]',
+  focus_areas JSONB DEFAULT '[]',
+  daily_reflection TEXT,
+  goals_for_tomorrow JSONB DEFAULT '[]',
+  achieved_goals JSONB DEFAULT '[]'
+);
+
+-- 12. LIFE OPTIMIZER
+CREATE TABLE IF NOT EXISTS life_data (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  category TEXT NOT NULL,
+  metric TEXT NOT NULL,
+  value JSONB NOT NULL,
+  trend TEXT DEFAULT 'stable',
+  insight TEXT,
+  UNIQUE(category, metric, created_at::date)
+);
+
+-- 13. STRATEGIES
+CREATE TABLE IF NOT EXISTS bot_strategies (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  name TEXT UNIQUE NOT NULL,
+  trigger_conditions JSONB NOT NULL,
+  response_template TEXT NOT NULL,
+  success_rate REAL DEFAULT 0.5,
+  times_used INTEGER DEFAULT 0,
+  times_succeeded INTEGER DEFAULT 0,
+  category TEXT NOT NULL,
+  fan_tiers TEXT[] DEFAULT '{}'
+);
+
+-- 14. KNOWLEDGE BASE
+CREATE TABLE IF NOT EXISTS bot_knowledge (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  domain TEXT NOT NULL,
+  topic TEXT NOT NULL,
+  content TEXT NOT NULL,
+  source TEXT,
+  verified BOOLEAN DEFAULT false,
+  relevance_score REAL DEFAULT 0.5,
+  UNIQUE(domain, topic)
+);
+
+-- EVOLUTION INDEXES
+CREATE INDEX IF NOT EXISTS idx_memory_category ON bot_memory(category);
+CREATE INDEX IF NOT EXISTS idx_memory_subject ON bot_memory(subject);
+CREATE INDEX IF NOT EXISTS idx_memory_confidence ON bot_memory(confidence DESC);
+CREATE INDEX IF NOT EXISTS idx_evolution_type ON bot_evolution(evolution_type);
+CREATE INDEX IF NOT EXISTS idx_evolution_created ON bot_evolution(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_errors_type ON bot_errors(error_type);
+CREATE INDEX IF NOT EXISTS idx_errors_applied ON bot_errors(applied);
+CREATE INDEX IF NOT EXISTS idx_intelligence_date ON bot_intelligence(date DESC);
+CREATE INDEX IF NOT EXISTS idx_life_category ON life_data(category);
+CREATE INDEX IF NOT EXISTS idx_strategies_category ON bot_strategies(category);
+CREATE INDEX IF NOT EXISTS idx_strategies_success ON bot_strategies(success_rate DESC);
+CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON bot_knowledge(domain);
+
+-- EVOLUTION RLS
+ALTER TABLE bot_memory ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_evolution ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_errors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_intelligence ENABLE ROW LEVEL SECURITY;
+ALTER TABLE life_data ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_strategies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bot_knowledge ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "srv_memory" ON bot_memory;
+  DROP POLICY IF EXISTS "srv_evolution" ON bot_evolution;
+  DROP POLICY IF EXISTS "srv_errors" ON bot_errors;
+  DROP POLICY IF EXISTS "srv_intelligence" ON bot_intelligence;
+  DROP POLICY IF EXISTS "srv_life" ON life_data;
+  DROP POLICY IF EXISTS "srv_strategies" ON bot_strategies;
+  DROP POLICY IF EXISTS "srv_knowledge" ON bot_knowledge;
+  DROP POLICY IF EXISTS "anon_memory" ON bot_memory;
+  DROP POLICY IF EXISTS "anon_evolution" ON bot_evolution;
+  DROP POLICY IF EXISTS "anon_errors" ON bot_errors;
+  DROP POLICY IF EXISTS "anon_intelligence" ON bot_intelligence;
+  DROP POLICY IF EXISTS "anon_life" ON life_data;
+  DROP POLICY IF EXISTS "anon_strategies" ON bot_strategies;
+  DROP POLICY IF EXISTS "anon_knowledge" ON bot_knowledge;
+END $$;
+
+CREATE POLICY "srv_memory" ON bot_memory FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_evolution" ON bot_evolution FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_errors" ON bot_errors FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_intelligence" ON bot_intelligence FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_life" ON life_data FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_strategies" ON bot_strategies FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_knowledge" ON bot_knowledge FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+CREATE POLICY "anon_memory" ON bot_memory FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_evolution" ON bot_evolution FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_errors" ON bot_errors FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_intelligence" ON bot_intelligence FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_life" ON life_data FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_strategies" ON bot_strategies FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_knowledge" ON bot_knowledge FOR SELECT TO anon USING (true);
+
+-- EVOLUTION TRIGGERS
+CREATE OR REPLACE FUNCTION update_memory_timestamp()
+RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = now(); RETURN NEW; END; $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS memory_updated ON bot_memory;
+CREATE TRIGGER memory_updated BEFORE UPDATE ON bot_memory FOR EACH ROW EXECUTE FUNCTION update_memory_timestamp();
+
+DROP TRIGGER IF EXISTS strategies_updated ON bot_strategies;
+CREATE TRIGGER strategies_updated BEFORE UPDATE ON bot_strategies FOR EACH ROW EXECUTE FUNCTION update_memory_timestamp();
+
+DROP TRIGGER IF EXISTS knowledge_updated ON bot_knowledge;
+CREATE TRIGGER knowledge_updated BEFORE UPDATE ON bot_knowledge FOR EACH ROW EXECUTE FUNCTION update_memory_timestamp();
+
+-- SEED KNOWLEDGE
+INSERT INTO bot_knowledge (domain, topic, content, verified) VALUES
+  ('longevity', 'caloric_restriction', 'Kalorienrestriktion (20-30% weniger) verlängert nachweislich die Lebensspanne. Mechanismus: Aktivierung von Sirtuinen, AMPK und Autophagie.', true),
+  ('longevity', 'rapamycin', 'Rapamycin hemmt mTOR und verlängert die Lebensspanne in Mäusen um 9-14%. Klinische Trials laufen.', true),
+  ('longevity', 'senolytics', 'Senolytika (Dasatinib+Quercetin, Fisetin) eliminieren seneszente Zellen und verjüngen Gewebe.', true),
+  ('longevity', 'nad_boosters', 'NAD+ sinkt mit dem Alter. NMN und NR erhöhen NAD+-Spiegel und verbessern mitochondriale Funktion.', true),
+  ('longevity', 'metformin', 'Metformin aktiviert AMPK, reduziert Krebs-Risiko um 30%. TAME-Studie läuft als erstes Anti-Aging-Trial.', true),
+  ('health', 'sleep_optimization', 'Optimaler Schlaf: 7-8h, konstante Zeiten, 18°C, kein Blaulicht 2h vor Schlaf, Magnesium Glycinat.', true),
+  ('health', 'exercise_longevity', 'Zone 2 Training (3-4h/Woche) + 1-2x Krafttraining maximiert Langlebigkeit. VO2max ist stärkster Mortalitäts-Prädiktor.', true),
+  ('health', 'fasting', 'Intermittierendes Fasten (16:8) aktiviert Autophagie, verbessert Insulinsensitivität, reduziert Entzündungen.', true),
+  ('science', 'consciousness', 'IIT: Bewusstsein = Phi (integrierte Information). Global Workspace Theory: Bewusstsein als Broadcasting-System.', true),
+  ('science', 'quantum_biology', 'Quanteneffekte in der Biologie: Photosynthese nutzt Quantenkohärenz, Vogelnavigation nutzt Quantenverschränkung.', true)
+ON CONFLICT (domain, topic) DO NOTHING;
 `;
 
 // ============================================================

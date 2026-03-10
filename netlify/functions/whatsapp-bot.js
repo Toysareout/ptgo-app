@@ -242,6 +242,9 @@ exports.handler = async (event) => {
     // Update daily analytics
     await updateDailyAnalytics(analysis, responseTime);
 
+    // --- STEP 8: Learn from this conversation (non-blocking) ---
+    learnFromInteraction(fan, convoId, body, analysis, reply, strategy).catch(() => {});
+
     return twimlResponse(reply);
 
   } catch (err) {
@@ -396,7 +399,43 @@ async function generateResponse(fan, body, analysis, creds) {
     `${m.direction === 'inbound' ? 'Fan' : 'Bot'}: ${m.body}`
   ).join('\n');
 
+  // Get memories about this fan
+  let memoriesText = '';
+  try {
+    const { data: memories } = await supabase
+      .from('bot_memory')
+      .select('key, value')
+      .eq('subject', fan.phone)
+      .order('confidence', { ascending: false })
+      .limit(5);
+    if (memories && memories.length > 0) {
+      memoriesText = '\n\nERINNERUNGEN ÜBER DIESEN FAN:\n' +
+        memories.map(m => `- ${m.key}: ${JSON.stringify(m.value)}`).join('\n');
+    }
+  } catch (e) { /* memory table might not exist yet */ }
+
+  // Get learned lessons
+  let lessonsText = '';
+  try {
+    const { data: lessons } = await supabase
+      .from('bot_errors')
+      .select('lesson_learned, prevention_strategy')
+      .eq('applied', false)
+      .order('created_at', { ascending: false })
+      .limit(3);
+    if (lessons && lessons.length > 0) {
+      lessonsText = '\n\nGELERNTE LEKTIONEN (beachte diese!):\n' +
+        lessons.map(l => `- ${l.lesson_learned}`).join('\n');
+      // Mark as applied
+      for (const l of lessons) {
+        await supabase.from('bot_errors').update({ applied: true }).eq('lesson_learned', l.lesson_learned);
+      }
+    }
+  } catch (e) { /* errors table might not exist yet */ }
+
   const contextPrompt = `${SYSTEM_PROMPT}
+${memoriesText}
+${lessonsText}
 
 FAN-PROFIL:
 - Name: ${fan.name || 'Unbekannt'}
@@ -688,4 +727,107 @@ function escapeXml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;');
+}
+
+// ============================================================
+// LEARNING — After every conversation, extract and store knowledge
+// ============================================================
+async function learnFromInteraction(fan, convoId, message, analysis, reply, strategy) {
+  try {
+    // 1. Learn fan's name if mentioned
+    if (analysis.entities?.name && !fan.name) {
+      await supabase.from('fans').update({ name: analysis.entities.name }).eq('id', fan.id);
+      await upsertMemory('fact', fan.phone, 'name', { name: analysis.entities.name }, 0.9);
+    }
+
+    // 2. Learn fan preferences
+    if (analysis.topics && analysis.topics.length > 0) {
+      await upsertMemory('preference', fan.phone, 'interests', {
+        topics: analysis.topics,
+        last_intent: analysis.intent
+      }, 0.6);
+    }
+
+    // 3. Learn communication patterns
+    await upsertMemory('pattern', fan.phone, 'comm_style', {
+      avg_length: message.length,
+      sentiment: analysis.sentiment,
+      language: analysis.language || 'de',
+      time: new Date().getHours()
+    }, 0.5);
+
+    // 4. If this was a special owner command, process it
+    const ownerPhone = (await getCredentials()).owner_phone;
+    if (fan.phone === ownerPhone) {
+      await handleOwnerCommand(message, analysis);
+    }
+  } catch (e) {
+    // Learning should never block the response
+    console.error('Learning error (non-critical):', e.message);
+  }
+}
+
+async function handleOwnerCommand(message, analysis) {
+  const lower = message.toLowerCase();
+
+  // Owner can teach the bot directly
+  if (lower.startsWith('lerne:') || lower.startsWith('learn:')) {
+    const lesson = message.substring(message.indexOf(':') + 1).trim();
+    await upsertMemory('insight', 'owner', `teaching_${Date.now()}`, { lesson }, 1.0);
+  }
+
+  // Owner can add knowledge
+  if (lower.startsWith('wissen:') || lower.startsWith('knowledge:')) {
+    const knowledge = message.substring(message.indexOf(':') + 1).trim();
+    await supabase.from('bot_knowledge').insert({
+      domain: 'owner_taught',
+      topic: `fact_${Date.now()}`,
+      content: knowledge,
+      source: 'owner',
+      verified: true,
+      relevance_score: 1.0
+    });
+  }
+
+  // Owner can track life data
+  if (lower.startsWith('track:')) {
+    // Format: track: health/sleep 8
+    const parts = message.substring(6).trim().split(' ');
+    if (parts.length >= 2) {
+      const [catMetric, ...valueParts] = parts;
+      const [category, metric] = catMetric.split('/');
+      const value = valueParts.join(' ');
+      await supabase.from('life_data').insert({
+        category: category || 'general',
+        metric: metric || 'score',
+        value: { score: parseFloat(value) || value },
+        trend: 'stable'
+      });
+    }
+  }
+}
+
+async function upsertMemory(category, subject, key, value, confidence) {
+  try {
+    const { data: existing } = await supabase
+      .from('bot_memory')
+      .select('id, times_reinforced, confidence')
+      .eq('category', category)
+      .eq('subject', subject)
+      .eq('key', key)
+      .single();
+
+    if (existing) {
+      await supabase.from('bot_memory').update({
+        value,
+        confidence: Math.min(1, (existing.confidence + confidence) / 2 + 0.05),
+        times_reinforced: existing.times_reinforced + 1,
+        last_accessed: new Date().toISOString()
+      }).eq('id', existing.id);
+    } else {
+      await supabase.from('bot_memory').insert({
+        category, subject, key, value, confidence, source: 'conversation'
+      });
+    }
+  } catch (e) { /* memory table might not exist yet */ }
 }
