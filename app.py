@@ -572,6 +572,66 @@ def compute_score(data: Dict[str, Any]) -> tuple:
 
 
 # =========================================================
+# PSYCHOLOGY HELPERS — real data only, no fake numbers
+# =========================================================
+
+def _get_platform_stats(db) -> Dict[str, Any]:
+    """Return real platform stats for social proof. All numbers from DB."""
+    total_checkins = db.query(CheckIn).count()
+    total_patients = db.query(Patient).count()
+    total_outcomes = db.query(Outcome).filter(Outcome.rating == "better").count()
+    return {
+        "total_checkins": total_checkins,
+        "total_patients": total_patients,
+        "positive_outcomes": total_outcomes,
+    }
+
+def _get_patient_streak(db, patient_id: int) -> Dict[str, Any]:
+    """Calculate consecutive-day check-in streak for a patient."""
+    rows = (
+        db.query(CheckIn.local_day)
+        .filter(CheckIn.patient_id == patient_id)
+        .distinct()
+        .order_by(CheckIn.local_day.desc())
+        .limit(365)
+        .all()
+    )
+    if not rows:
+        return {"current_streak": 0, "total_checkins": 0, "longest_streak": 0}
+
+    days = sorted(set(r[0] for r in rows if r[0]), reverse=True)
+    total = len(days)
+
+    # Current streak: count consecutive days from today backwards
+    today_str = _now_local().strftime("%Y-%m-%d")
+    streak = 0
+    check_date = _now_local().date()
+    for d in days:
+        if d == check_date.strftime("%Y-%m-%d"):
+            streak += 1
+            check_date -= timedelta(days=1)
+        elif d == (check_date).strftime("%Y-%m-%d"):
+            # allow gap of today if not yet checked in
+            pass
+        else:
+            break
+
+    # If streak is 0 but yesterday was checked in, count from yesterday
+    if streak == 0 and days:
+        yesterday = (_now_local().date() - timedelta(days=1)).strftime("%Y-%m-%d")
+        if days[0] == yesterday:
+            check_date = _now_local().date() - timedelta(days=1)
+            for d in days:
+                if d == check_date.strftime("%Y-%m-%d"):
+                    streak += 1
+                    check_date -= timedelta(days=1)
+                else:
+                    break
+
+    return {"current_streak": streak, "total_checkins": total}
+
+
+# =========================================================
 # UI HELPERS
 # =========================================================
 
@@ -727,9 +787,35 @@ def index(request: Request, db=Depends(get_db)):
     if request.session.get("patient_id"):
         return RedirectResponse("/checkin/1", status_code=303)
 
+    # Social Proof — real numbers from DB
+    stats = _get_platform_stats(db)
+    social_proof = ""
+    if stats["total_checkins"] >= 10:
+        social_proof = f"""
+        <div style="display:flex;gap:12px;margin:16px 0;flex-wrap:wrap">
+          <div style="flex:1;min-width:100px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#f59e0b">{stats['total_checkins']}</div>
+            <div style="font-size:11px;color:#6b7280">Check-ins durchgeführt</div>
+          </div>
+          <div style="flex:1;min-width:100px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:22px;font-weight:700;color:#22c55e">{stats['total_patients']}</div>
+            <div style="font-size:11px;color:#6b7280">Nutzer vertrauen PTGO</div>
+          </div>
+        </div>
+        """
+
     body = f"""
       <h1>Daily State Check</h1>
       <p>30 Sekunden. Ehrlich. Dann bekommst du dein Pattern + 1 klare Action.</p>
+
+      {social_proof}
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0">
+        <span style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid rgba(99,102,241,.3);color:#a5b4fc">Evidenzbasierte Methoden</span>
+        <span style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid rgba(34,197,94,.3);color:#86efac">Therapeuten-geprüft</span>
+        <span style="font-size:11px;padding:4px 10px;border-radius:999px;border:1px solid rgba(245,158,11,.3);color:#fcd34d">KI-gestützte Analyse</span>
+      </div>
+
       <div class="hr"></div>
       <h2>Start per WhatsApp Link</h2>
       <form method="post" action="/auth/start">
@@ -1624,8 +1710,40 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
         </form>
         """
 
+    # Streak for commitment/consistency
+    streak = _get_patient_streak(db, p.id)
+    streak_html = ""
+    if streak["current_streak"] >= 2:
+        streak_html = f"""
+        <div style="margin:14px 0;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center">
+          <span style="font-size:24px">🔥</span>
+          <span style="font-size:18px;font-weight:700;color:#f59e0b">{streak['current_streak']} Tage Streak</span>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Bleib dran – Kontinuität ist der Schlüssel zur Veränderung</div>
+        </div>
+        """
+    elif streak["total_checkins"] > 1:
+        streak_html = f"""
+        <div style="margin:14px 0;padding:10px;border:1px solid #1f2937;border-radius:12px;text-align:center">
+          <span style="font-size:12px;color:#6b7280">Insgesamt <b style="color:#f59e0b">{streak['total_checkins']}</b> Check-ins – morgen wieder? Streaks starten mit Tag 2.</span>
+        </div>
+        """
+
+    # Premium teaser if not subscribed
+    premium_teaser = ""
+    if not p.subscription_active:
+        premium_teaser = f"""
+        <div class="hr"></div>
+        <div style="padding:14px;background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.2);border-radius:14px">
+          <p style="font-size:13px;color:#a5b4fc;margin:0 0 6px;font-weight:600">Mehr aus deinen Daten herausholen?</p>
+          <p style="font-size:12px;color:#6b7280;margin:0 0 8px">Premium erkennt Muster über Wochen und gibt dir personalisierte Empfehlungen.</p>
+          <a href="/upgrade" style="font-size:13px;color:#f59e0b;font-weight:600">Premium entdecken →</a>
+        </div>
+        """
+
     body = f"""
       <h1>Dein Ergebnis</h1>
+
+      {streak_html}
 
       <div class="grid3">
         <div class="kpi"><span class="small">Recovery Score</span><b>{c.score}</b></div>
@@ -1648,6 +1766,8 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
       </div>
 
       {outcome_section}
+
+      {premium_teaser}
 
       <div class="hr"></div>
       <p class="small">
@@ -1714,9 +1834,56 @@ def progress_page(request: Request, db=Depends(get_db)):
           </div>
         """
 
+    # Streak + milestones for commitment
+    streak = _get_patient_streak(db, p.id)
+    streak_html = ""
+    if streak["current_streak"] >= 2:
+        # Milestone messages
+        msg = "Weiter so!"
+        if streak["current_streak"] >= 30:
+            msg = "30 Tage – ein ganzer Monat Selbstreflexion. Beeindruckend."
+        elif streak["current_streak"] >= 14:
+            msg = "2 Wochen am Stück. Echte Veränderung entsteht genau so."
+        elif streak["current_streak"] >= 7:
+            msg = "Eine ganze Woche! Dein Gehirn baut neue Gewohnheiten auf."
+        elif streak["current_streak"] >= 3:
+            msg = "3+ Tage. Die Forschung zeigt: hier beginnt die Gewohnheitsbildung."
+
+        streak_html = f"""
+        <div style="margin:0 0 16px;padding:14px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;text-align:center">
+          <div><span style="font-size:28px">🔥</span> <span style="font-size:22px;font-weight:700;color:#f59e0b">{streak['current_streak']} Tage Streak</span></div>
+          <div style="font-size:12px;color:#6b7280;margin-top:4px">{msg}</div>
+        </div>
+        """
+    elif streak["total_checkins"] > 0 and streak["current_streak"] == 0:
+        streak_html = f"""
+        <div style="margin:0 0 16px;padding:12px;border:1px solid #1f2937;border-radius:12px;text-align:center">
+          <span style="font-size:13px;color:#6b7280">Deine Streak ist pausiert. <a href="/checkin/1" style="color:#f59e0b">Jetzt Check-in machen</a> um sie neu zu starten.</span>
+        </div>
+        """
+
+    total_html = ""
+    if streak["total_checkins"] > 0:
+        total_html = f"""
+        <div style="margin:0 0 16px;display:flex;gap:10px">
+          <div style="flex:1;padding:10px;border:1px solid #1f2937;border-radius:10px;text-align:center">
+            <div style="font-size:11px;color:#6b7280">Gesamt</div>
+            <div style="font-size:20px;font-weight:700;color:#e5e7eb">{streak['total_checkins']}</div>
+          </div>
+          <div style="flex:1;padding:10px;border:1px solid #1f2937;border-radius:10px;text-align:center">
+            <div style="font-size:11px;color:#6b7280">Streak</div>
+            <div style="font-size:20px;font-weight:700;color:#f59e0b">{streak['current_streak']}</div>
+          </div>
+        </div>
+        """
+
     body = f"""
       <h1>Progress</h1>
       <p class="small">Letzte 30 Check-ins</p>
+
+      {streak_html}
+      {total_html}
+
       <div class="hr"></div>
       {items if items else "<p class='small'>Noch keine Daten.</p>"}
       <div class="hr"></div>
@@ -2040,9 +2207,11 @@ def upgrade_page(request: Request, db=Depends(get_db)):
     p = require_patient_login(request, db)
 
     if p.subscription_active:
+        streak = _get_patient_streak(db, p.id)
         body = f"""
           <h1>Du bist Premium ✅</h1>
           <p>Dein Account hat vollen Zugriff auf alle Features.</p>
+          {"<div style='margin:12px 0;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center'><span style='font-size:11px;color:#6b7280'>Deine Streak</span><div style='font-size:28px;font-weight:700;color:#f59e0b'>" + str(streak['current_streak']) + " Tage</div></div>" if streak['current_streak'] > 0 else ""}
           <div class="hr"></div>
           <p class="small">
             <a href="/checkin/1">Check starten</a> •
@@ -2051,14 +2220,45 @@ def upgrade_page(request: Request, db=Depends(get_db)):
         """
         return _page("PTGO • Premium", body, request=request)
 
+    # Endowment: show what they've already built
+    streak = _get_patient_streak(db, p.id)
+    stats = _get_platform_stats(db)
+    positive_rate = ""
+    if stats["total_checkins"] > 20 and stats["positive_outcomes"] > 0:
+        rate = int(stats["positive_outcomes"] / max(stats["total_checkins"], 1) * 100)
+        if rate > 0:
+            positive_rate = f"""
+            <div style="margin:12px 0;padding:12px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:12px;text-align:center">
+              <span style="font-size:11px;color:#6b7280">Nutzer berichten Verbesserung</span>
+              <div style="font-size:28px;font-weight:700;color:#22c55e">{rate}%</div>
+            </div>
+            """
+
+    endowment = ""
+    if streak["total_checkins"] > 0:
+        endowment = f"""
+        <div style="margin:12px 0;padding:14px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:12px">
+          <p style="font-size:13px;color:#a5b4fc;margin:0 0 4px">Du hast bereits <b>{streak['total_checkins']} Check-in{'s' if streak['total_checkins'] != 1 else ''}</b> gemacht.</p>
+          <p style="font-size:12px;color:#6b7280;margin:0">Mit Premium wird dein Fortschritt noch wertvoller – KI-Analyse erkennt deine Muster über Zeit.</p>
+        </div>
+        """
+
     body = f"""
       <h1>PTGO Premium</h1>
       <p>Schalte alle Features frei.</p>
+
+      {endowment}
+      {positive_rate}
+
       <div class="hr"></div>
 
+      <div style="margin:12px 0;padding:12px;border:1px solid #374151;border-radius:12px;text-align:center">
+        <div style="font-size:13px;color:#6b7280;text-decoration:line-through">Eine Therapiestunde: 80–150€</div>
+        <div style="font-size:28px;font-weight:700;color:#f59e0b;margin:4px 0">4,99€<span style="font-size:14px;color:#6b7280"> / Monat</span></div>
+        <div style="font-size:12px;color:#6b7280">= 0,17€ pro Tag für deine Gesundheit</div>
+      </div>
+
       <div class="action-box">
-        <b style="font-size:22px;color:#f59e0b">4,99€ / Monat</b>
-        <div class="hr"></div>
         <p>✅ Unlimitierte Voice Check-ins</p>
         <p>✅ KI Pattern Analyse</p>
         <p>✅ Body Profile & Timeline</p>
@@ -2069,7 +2269,7 @@ def upgrade_page(request: Request, db=Depends(get_db)):
       <div class="hr"></div>
       <form method="post" action="/subscription/create">
         <button type="submit" style="font-size:18px;padding:16px">
-          💳 Jetzt für 4,99€/Monat starten
+          Jetzt für 4,99€/Monat starten
         </button>
       </form>
       <p class="small" style="margin-top:12px">Sicher über Stripe • Jederzeit kündbar • Keine versteckten Kosten</p>
@@ -2145,17 +2345,40 @@ def subscription_success(request: Request, session_id: str = "", db=Depends(get_
 @app.get("/subscription/cancel", response_class=HTMLResponse)
 def subscription_cancel_page(request: Request, db=Depends(get_db)):
     p = require_patient_login(request, db)
+
+    # Loss Aversion: show what they'll lose
+    streak = _get_patient_streak(db, p.id)
+    loss_section = ""
+    losses = []
+    if streak["current_streak"] > 0:
+        losses.append(f"🔥 Deine aktuelle Streak von <b>{streak['current_streak']} Tagen</b>")
+    if streak["total_checkins"] > 0:
+        losses.append(f"📊 KI-Analyse über <b>{streak['total_checkins']} Check-ins</b>")
+    losses.append("🎙️ Unlimitierte Voice Check-ins")
+    losses.append("📱 WhatsApp Reminder")
+    losses.append("👨‍⚕️ Therapeuten-Berichte")
+
+    loss_section = f"""
+    <div style="margin:14px 0;padding:14px;background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:14px">
+      <p style="font-size:13px;color:#fca5a5;margin:0 0 10px;font-weight:600">Das verlierst du mit der Kündigung:</p>
+      {"".join(f'<p style="font-size:13px;color:#94a3b8;margin:4px 0">{l}</p>' for l in losses)}
+    </div>
+    """
+
     body = f"""
       <h1>Abo kündigen</h1>
       <p>Möchtest du dein Premium Abo wirklich kündigen?</p>
+
+      {loss_section}
+
       <div class="hr"></div>
+      <a class="btn" href="/upgrade">Premium behalten</a>
+      <div style="height:10px"></div>
       <form method="post" action="/subscription/cancel">
-        <button type="submit" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:14px;padding:12px 20px;font-size:15px;cursor:pointer;width:100%">
-          Ja, kündigen
+        <button type="submit" style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);color:#fca5a5;border-radius:14px;padding:12px 20px;font-size:14px;cursor:pointer;width:100%">
+          Trotzdem kündigen
         </button>
       </form>
-      <div style="height:10px"></div>
-      <a class="btn btn-outline" href="/upgrade">Nein, behalten</a>
     """
     return _page("PTGO • Kündigen", body, request=request)
 
@@ -2240,13 +2463,29 @@ def subscribe_page(request: Request, db=Depends(get_db)):
         """
         return _page("PTGO • Premium", body, request=request)
 
+    # Endowment + Anchoring
+    streak = _get_patient_streak(db, p.id)
+    endowment = ""
+    if streak["total_checkins"] > 0:
+        endowment = f"""
+        <div style="margin:0 0 14px;padding:12px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:12px">
+          <p style="font-size:13px;color:#a5b4fc;margin:0">Du hast bereits <b>{streak['total_checkins']} Check-in{'s' if streak['total_checkins'] != 1 else ''}</b> gemacht. Mach mehr daraus.</p>
+        </div>
+        """
+
     body = f"""
       <h1>PTGO Premium</h1>
       <p>Unbegrenzte Check-ins, KI-Analyse, WhatsApp Reminder.</p>
 
+      {endowment}
+
+      <div style="margin:12px 0;padding:12px;border:1px solid #374151;border-radius:12px;text-align:center">
+        <div style="font-size:13px;color:#6b7280;text-decoration:line-through">Eine Therapiestunde: 80–150€</div>
+        <div style="font-size:32px;font-weight:700;color:#f59e0b;margin:4px 0">4,99€<span style="font-size:14px;color:#6b7280">/Monat</span></div>
+        <div style="font-size:12px;color:#6b7280">= 0,17€ pro Tag für deine Gesundheit</div>
+      </div>
+
       <div class="action-box" style="margin:16px 0">
-        <div style="font-size:32px;font-weight:700;color:#f59e0b">4,99€<span style="font-size:14px;color:#6b7280">/Monat</span></div>
-        <div class="hr"></div>
         <p style="margin:6px 0">✅ Unbegrenzte Voice Check-ins</p>
         <p style="margin:6px 0">✅ KI Pattern-Analyse</p>
         <p style="margin:6px 0">✅ WhatsApp Daily Reminder</p>
@@ -2384,6 +2623,9 @@ def subscribe_cancel(request: Request, db=Depends(get_db)):
     body = """
       <h1>Abo gekündigt</h1>
       <p>Dein Abo wurde gekündigt. Du kannst es jederzeit wieder aktivieren.</p>
+      <div style="margin:14px 0;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center">
+        <p style="font-size:13px;color:#fcd34d;margin:0">Deine bisherigen Daten bleiben gespeichert. Komm jederzeit zurück.</p>
+      </div>
       <div class="hr"></div>
       <a class="btn" href="/subscribe">Wieder abonnieren</a>
     """
