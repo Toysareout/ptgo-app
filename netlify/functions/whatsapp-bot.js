@@ -6,18 +6,49 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// --- CONFIG ---
+// --- CONFIG (env vars + Supabase bot_config fallback) ---
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID || '';
-const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
-const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || '';
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
-const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY || '';
-const OWNER_PHONE = process.env.OWNER_WHATSAPP || '';
 const BASE_URL = process.env.URL || 'https://thetoysareout.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Credentials loaded at runtime from env or Supabase bot_config
+let _configCache = null;
+let _configLoadedAt = 0;
+
+async function getCredentials() {
+  // Cache config for 5 minutes
+  if (_configCache && Date.now() - _configLoadedAt < 300000) return _configCache;
+
+  // Start with env vars
+  const creds = {
+    twilio_sid: process.env.TWILIO_ACCOUNT_SID || '',
+    twilio_token: process.env.TWILIO_AUTH_TOKEN || '',
+    twilio_from: process.env.TWILIO_WHATSAPP_FROM || '',
+    anthropic_key: process.env.ANTHROPIC_API_KEY || '',
+    stripe_secret: process.env.STRIPE_SECRET_KEY || '',
+    owner_phone: process.env.OWNER_WHATSAPP || '',
+  };
+
+  // Fill missing values from Supabase bot_config
+  try {
+    const { data } = await supabase.from('bot_config').select('key, value');
+    const cfg = {};
+    (data || []).forEach(r => { cfg[r.key] = r.value; });
+
+    if (!creds.twilio_sid && cfg.twilio_account_sid) creds.twilio_sid = cfg.twilio_account_sid;
+    if (!creds.twilio_token && cfg.twilio_auth_token) creds.twilio_token = cfg.twilio_auth_token;
+    if (!creds.twilio_from && cfg.twilio_whatsapp_from) creds.twilio_from = cfg.twilio_whatsapp_from;
+    if (!creds.anthropic_key && cfg.anthropic_api_key) creds.anthropic_key = cfg.anthropic_api_key;
+    if (!creds.stripe_secret && cfg.stripe_secret_key) creds.stripe_secret = cfg.stripe_secret_key;
+    if (!creds.owner_phone && cfg.owner_whatsapp) creds.owner_phone = cfg.owner_whatsapp;
+  } catch (e) { /* bot_config table might not exist yet */ }
+
+  _configCache = creds;
+  _configLoadedAt = Date.now();
+  return creds;
+}
 
 // --- PRODUCT CATALOG ---
 const PRODUCTS = {
@@ -107,6 +138,7 @@ exports.handler = async (event) => {
   }
 
   const startTime = Date.now();
+  const creds = await getCredentials();
 
   try {
     // Parse Twilio webhook payload
@@ -147,7 +179,7 @@ exports.handler = async (event) => {
     }
 
     // --- STEP 4: Detect intent & sentiment with AI ---
-    const analysis = await analyzeMessage(body, fan);
+    const analysis = await analyzeMessage(body, fan, creds);
 
     // Update fan mood
     if (analysis.sentiment !== undefined) {
@@ -172,13 +204,13 @@ exports.handler = async (event) => {
 
     // Handle purchase intent
     if (analysis.intent === 'purchase') {
-      const result = await handlePurchaseIntent(fan, body, analysis);
+      const result = await handlePurchaseIntent(fan, body, analysis, creds);
       reply = result.reply;
       strategy = 'sales_flow';
     }
     // Handle booking intent
     else if (analysis.intent === 'booking') {
-      const result = await handleBookingIntent(fan, body, analysis);
+      const result = await handleBookingIntent(fan, body, analysis, creds);
       reply = result.reply;
       strategy = 'booking_flow';
     }
@@ -187,13 +219,13 @@ exports.handler = async (event) => {
       reply = await handleComplaint(fan, body);
       strategy = 'support_escalation';
       // Notify owner
-      if (OWNER_PHONE) {
-        await sendWhatsApp(OWNER_PHONE, `⚠️ Fan-Beschwerde von ${fan.name || phone}:\n"${body}"`);
+      if (creds.owner_phone) {
+        await sendWhatsApp(creds.owner_phone, `⚠️ Fan-Beschwerde von ${fan.name || phone}:\n"${body}"`, creds);
       }
     }
     // General AI conversation
     else {
-      reply = await generateResponse(fan, body, analysis);
+      reply = await generateResponse(fan, body, analysis, creds);
     }
 
     // --- STEP 6: Update fan stats ---
@@ -297,8 +329,8 @@ async function updateFanStats(fan, analysis) {
 // ============================================================
 // AI — MESSAGE ANALYSIS
 // ============================================================
-async function analyzeMessage(body, fan) {
-  if (!ANTHROPIC_KEY) {
+async function analyzeMessage(body, fan, creds) {
+  if (!creds.anthropic_key) {
     return { intent: 'other', sentiment: 0, topics: [], entities: {} };
   }
 
@@ -323,7 +355,7 @@ Antworte NUR mit JSON:
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
+        'x-api-key': creds.anthropic_key,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -347,8 +379,8 @@ Antworte NUR mit JSON:
 // ============================================================
 // AI — RESPONSE GENERATION
 // ============================================================
-async function generateResponse(fan, body, analysis) {
-  if (!ANTHROPIC_KEY) {
+async function generateResponse(fan, body, analysis, creds) {
+  if (!creds.anthropic_key) {
     return 'Hey! Danke für deine Nachricht. Wir melden uns bald! 🔥';
   }
 
@@ -397,7 +429,7 @@ ${analysis.sentiment < -0.3 ? 'Die Person klingt negativ — sei extra einfühls
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
+        'x-api-key': creds.anthropic_key,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -418,7 +450,7 @@ ${analysis.sentiment < -0.3 ? 'Die Person klingt negativ — sei extra einfühls
 // ============================================================
 // SALES ENGINE
 // ============================================================
-async function handlePurchaseIntent(fan, body, analysis) {
+async function handlePurchaseIntent(fan, body, analysis, creds) {
   const lowerBody = body.toLowerCase();
 
   // Detect which product they want
@@ -437,7 +469,7 @@ async function handlePurchaseIntent(fan, body, analysis) {
 
   if (product) {
     // Create Stripe checkout
-    const checkoutUrl = await createCheckoutLink(fan, product);
+    const checkoutUrl = await createCheckoutLink(fan, product, creds);
 
     // Log sale attempt
     await supabase.from('bot_sales').insert({
@@ -463,11 +495,11 @@ async function handlePurchaseIntent(fan, body, analysis) {
   return { reply, product: null };
 }
 
-async function createCheckoutLink(fan, product) {
-  if (!STRIPE_SECRET) return null;
+async function createCheckoutLink(fan, product, creds) {
+  if (!creds.stripe_secret) return null;
 
   try {
-    const stripe = require('stripe')(STRIPE_SECRET);
+    const stripe = require('stripe')(creds.stripe_secret);
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -501,7 +533,7 @@ async function createCheckoutLink(fan, product) {
 // ============================================================
 // BOOKING ENGINE
 // ============================================================
-async function handleBookingIntent(fan, body, analysis) {
+async function handleBookingIntent(fan, body, analysis, creds) {
   const entities = analysis.entities || {};
 
   // Create booking record
@@ -524,9 +556,10 @@ async function handleBookingIntent(fan, body, analysis) {
   await supabase.from('fans').update({ conversation_state: 'booking' }).eq('id', fan.id);
 
   // Notify owner
-  if (OWNER_PHONE) {
-    await sendWhatsApp(OWNER_PHONE,
-      `📅 Neue Booking-Anfrage!\n\nVon: ${fan.name || fan.phone}\nTyp: ${bookingType}\nNachricht: "${body}"\nTier: ${fan.tier} (VIP: ${fan.vip_score})`
+  if (creds.owner_phone) {
+    await sendWhatsApp(creds.owner_phone,
+      `📅 Neue Booking-Anfrage!\n\nVon: ${fan.name || fan.phone}\nTyp: ${bookingType}\nNachricht: "${body}"\nTier: ${fan.tier} (VIP: ${fan.vip_score})`,
+      creds
     );
   }
 
@@ -564,21 +597,24 @@ async function logMessage(fanId, phone, direction, body, type, mediaUrl, related
 // ============================================================
 // SEND WHATSAPP (Twilio)
 // ============================================================
-async function sendWhatsApp(to, body) {
-  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM) return false;
+async function sendWhatsApp(to, body, creds) {
+  const sid = creds?.twilio_sid || '';
+  const token = creds?.twilio_token || '';
+  const from = creds?.twilio_from || '';
+  if (!sid || !token || !from) return false;
 
   const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
 
   try {
-    const auth = Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString('base64');
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`, {
+    const auth = Buffer.from(`${sid}:${token}`).toString('base64');
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        From: TWILIO_FROM.startsWith('whatsapp:') ? TWILIO_FROM : `whatsapp:${TWILIO_FROM}`,
+        From: from.startsWith('whatsapp:') ? from : `whatsapp:${from}`,
         To: toFormatted,
         Body: body
       })

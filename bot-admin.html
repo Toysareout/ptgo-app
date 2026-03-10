@@ -87,6 +87,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* CONFIG INPUT */
+.cfg-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:14px;font-family:monospace}
+.cfg-input:focus{outline:none;border-color:var(--accent)}
+
 /* SETUP STEPS */
 .setup-step{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
 .step-header{display:flex;align-items:center;gap:12px;padding:14px 16px}
@@ -297,54 +301,81 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <!-- ==================== SETTINGS ==================== -->
 <div class="panel" id="settings">
-  <div class="card">
-    <h3>Supabase Verbindung</h3>
-    <input type="url" id="setSupaUrl" placeholder="Supabase URL" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;margin-bottom:8px;font-size:14px">
-    <input type="text" id="setSupaKey" placeholder="Supabase Anon Key (für Dashboard)" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;margin-bottom:8px;font-size:14px">
-    <button class="btn btn-primary" onclick="saveSettings()">Verbindung speichern</button>
-    <p style="font-size:12px;color:var(--dim);margin-top:8px">Die Keys werden lokal im Browser gespeichert (localStorage).</p>
-  </div>
+  <div class="card" style="border-color:var(--accent);border-width:2px">
+    <h3 style="font-size:18px;margin-bottom:4px">API Keys eingeben</h3>
+    <p style="color:var(--dim);margin-bottom:16px">Alle Keys werden in Supabase gespeichert. Kein Netlify-Dashboard nötig (nur SUPABASE_URL + KEY als Netlify Env Vars).</p>
 
-  <div class="card">
-    <h3>Twilio Webhook URL</h3>
-    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;color:var(--accent)">
-      https://thetoysareout.com/.netlify/functions/whatsapp-bot
+    <div style="display:grid;gap:12px">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Supabase URL *</label>
+        <input type="url" id="setSupaUrl" placeholder="https://xxx.supabase.co" class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Supabase Service Role Key *</label>
+        <input type="password" id="setSupaKey" placeholder="eyJhbGciOi..." class="cfg-input">
+      </div>
+      <hr style="border-color:var(--border)">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio Account SID</label>
+        <input type="text" id="cfgTwilioSid" placeholder="AC..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio Auth Token</label>
+        <input type="password" id="cfgTwilioToken" placeholder="Twilio Auth Token" class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio WhatsApp From</label>
+        <input type="text" id="cfgTwilioFrom" placeholder="whatsapp:+14155238886" class="cfg-input">
+      </div>
+      <hr style="border-color:var(--border)">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Anthropic API Key (Claude AI)</label>
+        <input type="password" id="cfgAnthropicKey" placeholder="sk-ant-..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Stripe Secret Key (optional)</label>
+        <input type="password" id="cfgStripeKey" placeholder="sk_live_..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Deine WhatsApp Nummer (für Alerts)</label>
+        <input type="text" id="cfgOwnerPhone" placeholder="+491234567890" class="cfg-input">
+      </div>
     </div>
-    <p style="font-size:12px;color:var(--dim);margin-top:8px">Diese URL in Twilio → WhatsApp Sandbox → "When a message comes in" eintragen.</p>
-  </div>
 
-  <div class="card">
-    <h3>Stripe Webhook URL</h3>
-    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;color:var(--accent)">
-      https://thetoysareout.com/.netlify/functions/bot-stripe-webhook
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveAllKeys()" id="saveKeysBtn">Alles speichern & verbinden</button>
+      <button class="btn btn-ghost" onclick="loadExistingKeys()">Gespeicherte Keys laden</button>
     </div>
-    <p style="font-size:12px;color:var(--dim);margin-top:8px">Diese URL in Stripe → Developers → Webhooks eintragen. Event: checkout.session.completed</p>
+    <div id="saveKeysResult" style="margin-top:12px;font-size:13px"></div>
   </div>
 
   <div class="card">
-    <h3>Benötigte Netlify Environment Variables</h3>
+    <h3>Webhook URLs</h3>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Diese URLs in Twilio und Stripe eintragen:</p>
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--dim)">Twilio WhatsApp Webhook:</label>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">
+        https://thetoysareout.com/.netlify/functions/whatsapp-bot
+      </div>
+    </div>
+    <div>
+      <label style="font-size:11px;color:var(--dim)">Stripe Webhook (Event: checkout.session.completed):</label>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">
+        https://thetoysareout.com/.netlify/functions/bot-stripe-webhook
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin-top:8px">Klick zum Kopieren.</p>
+  </div>
+
+  <div class="card">
+    <h3>Minimale Netlify Env Vars</h3>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:8px">Nur diese 2 werden in Netlify gebraucht — alles andere speichert der Bot in Supabase:</p>
     <table class="tbl">
-      <thead><tr><th>Variable</th><th>Beschreibung</th></tr></thead>
       <tbody>
         <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_URL</td><td>Supabase Project URL</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_SERVICE_ROLE_KEY</td><td>Supabase Service Role Key (Backend)</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_ACCOUNT_SID</td><td>Twilio Account SID</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_AUTH_TOKEN</td><td>Twilio Auth Token</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_WHATSAPP_FROM</td><td>WhatsApp Nummer (whatsapp:+49...)</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">OWNER_WHATSAPP</td><td>Deine WhatsApp Nummer für Alerts</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">ANTHROPIC_API_KEY</td><td>Claude API Key für Bot-Brain</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">STRIPE_SECRET_KEY</td><td>Stripe Secret Key</td></tr>
-        <tr><td style="font-family:monospace;color:var(--accent)">STRIPE_WEBHOOK_SECRET</td><td>Stripe Webhook Signing Secret</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_SERVICE_ROLE_KEY</td><td>Supabase Service Role Key</td></tr>
       </tbody>
     </table>
-  </div>
-
-  <div class="card">
-    <h3>Datenbank Setup</h3>
-    <p style="font-size:13px;color:var(--dim);margin-bottom:12px">SQL-Migration in Supabase SQL Editor ausführen:</p>
-    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent)">
-      supabase/migrations/002_bot_brain.sql
-    </div>
   </div>
 </div>
 
@@ -668,8 +699,131 @@ function saveSettings() {
   const key = document.getElementById('setSupaKey').value.trim();
   if (url) localStorage.setItem('ttao_supa_url', url);
   if (key) localStorage.setItem('ttao_supa_key', key);
-  alert('Verbindung gespeichert! Dashboard wird geladen...');
   loadOverview();
+}
+
+async function saveAllKeys() {
+  const btn = document.getElementById('saveKeysBtn');
+  const result = document.getElementById('saveKeysResult');
+  btn.disabled = true;
+  btn.textContent = 'Speichere...';
+  result.innerHTML = '';
+
+  const supaUrl = document.getElementById('setSupaUrl').value.trim();
+  const supaKey = document.getElementById('setSupaKey').value.trim();
+
+  if (!supaUrl || !supaKey) {
+    result.innerHTML = '<span style="color:var(--warn)">Supabase URL und Key sind Pflichtfelder!</span>';
+    btn.disabled = false;
+    btn.textContent = 'Alles speichern & verbinden';
+    return;
+  }
+
+  // Save Supabase creds to localStorage (for dashboard)
+  localStorage.setItem('ttao_supa_url', supaUrl);
+  localStorage.setItem('ttao_supa_key', supaKey);
+
+  // Collect all other keys
+  const configs = {};
+  const fields = {
+    cfgTwilioSid: 'twilio_account_sid',
+    cfgTwilioToken: 'twilio_auth_token',
+    cfgTwilioFrom: 'twilio_whatsapp_from',
+    cfgAnthropicKey: 'anthropic_api_key',
+    cfgStripeKey: 'stripe_secret_key',
+    cfgOwnerPhone: 'owner_whatsapp'
+  };
+
+  for (const [inputId, configKey] of Object.entries(fields)) {
+    const val = document.getElementById(inputId).value.trim();
+    if (val) configs[configKey] = val;
+  }
+
+  if (Object.keys(configs).length === 0) {
+    result.innerHTML = '<span style="color:var(--accent)">Supabase gespeichert! Keine weiteren Keys eingegeben.</span>';
+    btn.disabled = false;
+    btn.textContent = 'Alles speichern & verbinden';
+    return;
+  }
+
+  // Save to Supabase bot_config via function or direct API
+  try {
+    // Try via Netlify function first
+    let res = await fetch('/.netlify/functions/bot-config-store', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-supabase-url': supaUrl,
+        'x-supabase-key': supaKey
+      },
+      body: JSON.stringify({ action: 'save', configs })
+    });
+
+    if (!res.ok) {
+      // Fallback: save directly via Supabase REST API
+      for (const [key, value] of Object.entries(configs)) {
+        await fetch(`${supaUrl}/rest/v1/bot_config`, {
+          method: 'POST',
+          headers: {
+            'apikey': supaKey,
+            'Authorization': `Bearer ${supaKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+        });
+      }
+    }
+
+    const saved = Object.keys(configs).length;
+    result.innerHTML = `<span style="color:var(--accent)">Gespeichert! ${saved} Keys in Supabase hinterlegt. Der Bot ist bereit.</span>`;
+
+    // Clear password fields after save
+    document.querySelectorAll('.cfg-input[type=password]').forEach(i => i.value = '');
+
+    loadOverview();
+  } catch (err) {
+    result.innerHTML = `<span style="color:var(--warn)">Fehler: ${err.message}</span>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Alles speichern & verbinden';
+}
+
+async function loadExistingKeys() {
+  const supaUrl = localStorage.getItem('ttao_supa_url');
+  const supaKey = localStorage.getItem('ttao_supa_key');
+  const result = document.getElementById('saveKeysResult');
+
+  if (!supaUrl || !supaKey) {
+    result.innerHTML = '<span style="color:var(--warn)">Erst Supabase URL und Key eingeben!</span>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/.netlify/functions/bot-config-store', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-supabase-url': supaUrl,
+        'x-supabase-key': supaKey
+      },
+      body: JSON.stringify({ action: 'load' })
+    });
+
+    const data = await res.json();
+
+    if (data.config) {
+      const items = Object.entries(data.config).map(([k, v]) =>
+        `<span style="color:var(--accent)">${k}</span>: ${v}`
+      );
+      result.innerHTML = '<strong>Gespeicherte Keys:</strong><br>' + items.join('<br>');
+    } else {
+      result.innerHTML = '<span style="color:var(--dim)">Keine Keys gefunden. Erst speichern!</span>';
+    }
+  } catch (err) {
+    result.innerHTML = `<span style="color:var(--warn)">Fehler: ${err.message}</span>`;
+  }
 }
 
 // ============================================================
