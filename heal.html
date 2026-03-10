@@ -528,6 +528,7 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 </div>
 
 <footer>
+  <div class="f-glow"></div>
   <div class="f-brand">P<span class="acc">TGO</span> METHOD</div>
   <div class="f-copy">THETOYSAREOUT © 2026</div>
   <div class="f-contact">contact@thetoysareout.com</div>
@@ -640,67 +641,124 @@ document.querySelectorAll('a,button,.pillar,.form-input,.h-btn,.trust-item,.faq-
 });
 
 // ═══════════════════════════════════════════════════════════
-// THREE.JS — ORGANIC ENTITY (evolves with hour)
+// THREE.JS — HOLOGRAPHIC ORGAN-GLOBE WITH ORBITAL ENERGY RINGS
+// Central organic globe + concentric energy rings + orbiting particles
 // ═══════════════════════════════════════════════════════════
 const canvas = document.getElementById('h-organ');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-const w = Math.min(500, window.innerWidth * 0.6);
+const w = Math.min(600, window.innerWidth * 0.7);
 renderer.setSize(w, w);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 canvas.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none';
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.z = 3.5;
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+camera.position.z = 4.5;
 
-// Higher detail icosahedron
-const geo = new THREE.IcosahedronGeometry(1.2, 7);
+// ── CORE ORGAN-GLOBE ──
+const geo = new THREE.IcosahedronGeometry(1.0, 7);
 const posAttr = geo.attributes.position;
 const basePos = new Float32Array(posAttr.array.length);
 basePos.set(posAttr.array);
 
 const mat = new THREE.MeshStandardMaterial({
-  color: 0x2dffa8, roughness: 0.7, metalness: 0.08,
-  transparent: true, opacity: 0.08, wireframe: false
+  color: 0x2dffa8, roughness: 0.5, metalness: 0.15,
+  transparent: true, opacity: 0.1, wireframe: false
 });
 const mesh = new THREE.Mesh(geo, mat);
 scene.add(mesh);
 
-const wireMat = new THREE.MeshBasicMaterial({ color: 0x2dffa8, wireframe: true, transparent: true, opacity: 0.025 });
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0x2dffa8, wireframe: true, transparent: true, opacity: 0.04
+});
 const wireMesh = new THREE.Mesh(geo, wireMat);
 scene.add(wireMesh);
 
-// Inner glow sphere
-const innerGeo = new THREE.SphereGeometry(0.4, 32, 32);
-const innerMat = new THREE.MeshBasicMaterial({ color: 0x2dffa8, transparent: true, opacity: 0.02 });
-const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-scene.add(innerMesh);
+// ── INNER GLOW CORE ──
+const coreGeo = new THREE.SphereGeometry(0.35, 24, 24);
+const coreMat = new THREE.MeshBasicMaterial({ color: 0x2dffa8, transparent: true, opacity: 0.03 });
+const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+scene.add(coreMesh);
 
-const pl1 = new THREE.PointLight(0x2dffa8, 0.5, 10); pl1.position.set(2, 1, 3); scene.add(pl1);
-const pl2 = new THREE.PointLight(0x2dffa8, 0.3, 10); pl2.position.set(-2, -1, 2); scene.add(pl2);
-const pl3 = new THREE.PointLight(0x1a8fff, 0.15, 10); pl3.position.set(0, 2, -2); scene.add(pl3);
-scene.add(new THREE.AmbientLight(0xffffff, 0.06));
+// ── ORBITAL ENERGY RINGS ──
+const rings = [];
+const ringConfigs = [
+  { radius: 1.3, tube: 0.005, color: 0x2dffa8, tiltX: 0.25, tiltZ: 0.1, speed: 0.35, opacity: 0.14 },
+  { radius: 1.55, tube: 0.004, color: 0x44ddff, tiltX: -0.2, tiltZ: 0.3, speed: -0.25, opacity: 0.10 },
+  { radius: 1.8, tube: 0.003, color: 0x2dffa8, tiltX: 0.45, tiltZ: -0.15, speed: 0.18, opacity: 0.06 },
+  { radius: 2.05, tube: 0.002, color: 0x88eeff, tiltX: -0.3, tiltZ: 0.4, speed: -0.12, opacity: 0.04 },
+  { radius: 2.35, tube: 0.002, color: 0x2dffa8, tiltX: 0.12, tiltZ: -0.08, speed: 0.08, opacity: 0.02 },
+];
+
+ringConfigs.forEach(cfg => {
+  const rGeo = new THREE.TorusGeometry(cfg.radius, cfg.tube, 6, 128);
+  const rMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: cfg.opacity });
+  const rMesh = new THREE.Mesh(rGeo, rMat);
+  rMesh.rotation.x = Math.PI / 2 + cfg.tiltX;
+  rMesh.rotation.z = cfg.tiltZ;
+  scene.add(rMesh);
+  rings.push({ mesh: rMesh, mat: rMat, cfg });
+});
+
+// ── ORBITAL PARTICLES ──
+const orbParticles = [];
+for (let i = 0; i < 40; i++) {
+  const pGeo = new THREE.SphereGeometry(0.01 + Math.random() * 0.012, 4, 4);
+  const ringIdx = Math.floor(Math.random() * ringConfigs.length);
+  const cfg = ringConfigs[ringIdx];
+  const pMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.2 + Math.random() * 0.4 });
+  const pMesh = new THREE.Mesh(pGeo, pMat);
+  scene.add(pMesh);
+  orbParticles.push({
+    mesh: pMesh, mat: pMat,
+    radius: cfg.radius + (Math.random() - 0.5) * 0.06,
+    angle: Math.random() * Math.PI * 2,
+    speed: cfg.speed * (0.7 + Math.random() * 0.6),
+    tiltX: cfg.tiltX, tiltZ: cfg.tiltZ,
+    baseOpacity: 0.12 + Math.random() * 0.3
+  });
+}
+
+// ── CONCENTRIC GROUND RINGS ──
+for (let i = 0; i < 6; i++) {
+  const gGeo = new THREE.RingGeometry(1.2 + i * 0.35, 1.22 + i * 0.35, 64);
+  const gMat = new THREE.MeshBasicMaterial({
+    color: 0x2dffa8, transparent: true, opacity: 0.02 - i * 0.003, side: THREE.DoubleSide
+  });
+  const gMesh = new THREE.Mesh(gGeo, gMat);
+  gMesh.rotation.x = -Math.PI / 2;
+  gMesh.position.y = -1.8;
+  scene.add(gMesh);
+}
+
+// ── LIGHTS ──
+const pl1 = new THREE.PointLight(0x2dffa8, 0.6, 10); pl1.position.set(2, 1.5, 3); scene.add(pl1);
+const pl2 = new THREE.PointLight(0x2dffa8, 0.4, 10); pl2.position.set(-2, -0.5, 2); scene.add(pl2);
+const pl3 = new THREE.PointLight(0x4488ff, 0.2, 10); pl3.position.set(0, 2, -2); scene.add(pl3);
+scene.add(new THREE.AmbientLight(0x112222, 0.15));
 
 function noise3D(x,y,z){
   const p = x*1.1+y*2.3+z*3.7;
   return Math.sin(p)*Math.cos(y*1.7+z)*Math.sin(z*2.1+x);
 }
 
-// Hour-based organism behavior
 function getOrganicParams() {
   const h = getHourSeed();
-  // Night: slow, deep breathing. Day: more active. Evening: calm
-  if (h >= 0 && h < 6) return { speed: 0.08, intensity: 0.1, pulse: 0.3 };
-  if (h >= 6 && h < 10) return { speed: 0.15, intensity: 0.14, pulse: 0.6 };
-  if (h >= 10 && h < 14) return { speed: 0.2, intensity: 0.18, pulse: 0.8 };
-  if (h >= 14 && h < 18) return { speed: 0.15, intensity: 0.15, pulse: 0.5 };
-  if (h >= 18 && h < 22) return { speed: 0.1, intensity: 0.12, pulse: 0.4 };
-  return { speed: 0.08, intensity: 0.1, pulse: 0.3 };
+  if (h >= 0 && h < 6) return { speed: 0.06, intensity: 0.08, pulse: 0.25 };
+  if (h >= 6 && h < 10) return { speed: 0.12, intensity: 0.13, pulse: 0.5 };
+  if (h >= 10 && h < 14) return { speed: 0.18, intensity: 0.18, pulse: 0.7 };
+  if (h >= 14 && h < 18) return { speed: 0.14, intensity: 0.14, pulse: 0.5 };
+  if (h >= 18 && h < 22) return { speed: 0.09, intensity: 0.1, pulse: 0.35 };
+  return { speed: 0.06, intensity: 0.08, pulse: 0.25 };
 }
 
 let scrollProgress = 0;
+let scrollVelocity = 0;
+let lastScrollY = 0;
 window.addEventListener('scroll', () => {
   scrollProgress = Math.min(1, window.scrollY / (document.body.scrollHeight - window.innerHeight));
+  scrollVelocity = Math.abs(window.scrollY - lastScrollY);
+  lastScrollY = window.scrollY;
 });
 
 function animate(time) {
@@ -708,39 +766,78 @@ function animate(time) {
   const t = time * 0.001;
   const params = getOrganicParams();
 
+  // Scroll velocity decays organically
+  scrollVelocity *= 0.95;
+  const velocityBoost = Math.min(scrollVelocity * 0.002, 0.15);
+
+  // Displace globe organically + scroll velocity agitates
   for (let i = 0; i < posAttr.count; i++) {
     const bx = basePos[i*3], by = basePos[i*3+1], bz = basePos[i*3+2];
-    const n = noise3D(bx + t*params.speed, by + t*params.speed*0.75, bz + t*params.speed*0.5);
-    const scrollBoost = scrollProgress * 0.08;
-    const d = 1 + n * (params.intensity + scrollBoost);
+    const n = noise3D(
+      bx + t * params.speed + (mxNorm - 0.5) * 0.3,
+      by + t * params.speed * 0.75 + (myNorm - 0.5) * 0.3,
+      bz + t * params.speed * 0.5
+    );
+    const d = 1 + n * (params.intensity + velocityBoost);
     posAttr.setXYZ(i, bx*d, by*d, bz*d);
   }
   posAttr.needsUpdate = true;
   geo.computeVertexNormals();
 
-  mesh.rotation.y = t * params.speed * 0.5;
-  mesh.rotation.x = Math.sin(t * params.speed * 0.3) * 0.15;
+  mesh.rotation.y = t * params.speed * 0.4 + (mxNorm - 0.5) * 0.3;
+  mesh.rotation.x = Math.sin(t * params.speed * 0.3) * 0.12 + (myNorm - 0.5) * 0.15;
   wireMesh.rotation.copy(mesh.rotation);
 
-  // Inner glow pulses with hour rhythm
-  innerMesh.scale.setScalar(0.9 + Math.sin(t * params.pulse) * 0.15);
-  innerMat.opacity = 0.015 + Math.sin(t * params.pulse) * 0.01;
+  // Core pulses
+  const pulse = Math.sin(t * params.pulse) * 0.5 + 0.5;
+  coreMesh.scale.setScalar(0.8 + pulse * 0.3);
+  coreMat.opacity = 0.02 + pulse * 0.025;
 
+  // Rings rotate + breathe + speed up with scroll velocity
+  rings.forEach((r, i) => {
+    r.mesh.rotation.y = t * (r.cfg.speed + velocityBoost * (i % 2 === 0 ? 1 : -1));
+    const rPulse = Math.sin(t * 0.35 + i * 1.1) * 0.5 + 0.5;
+    r.mat.opacity = r.cfg.opacity * (0.5 + rPulse * 0.5 + velocityBoost * 2);
+  });
+
+  // Orbital particles
+  orbParticles.forEach(op => {
+    op.angle += (op.speed + velocityBoost * op.speed * 3) * 0.01;
+    const x = Math.cos(op.angle) * op.radius;
+    const z = Math.sin(op.angle) * op.radius;
+    op.mesh.position.set(
+      x * Math.cos(op.tiltZ) - z * Math.sin(op.tiltX) * Math.sin(op.tiltZ) * 0.5,
+      z * Math.sin(op.tiltX),
+      z * Math.cos(op.tiltX)
+    );
+    op.mat.opacity = op.baseOpacity * (0.4 + Math.sin(t * 1.5 + op.angle) * 0.6);
+  });
+
+  // Fade on scroll
   const heroOpacity = Math.max(0, 1 - scrollProgress * 3);
   canvas.style.opacity = heroOpacity;
 
-  mat.opacity = 0.06 + Math.sin(t * 0.5) * 0.03;
+  mat.opacity = 0.08 + Math.sin(t * 0.5) * 0.03;
+  wireMat.opacity = 0.03 + Math.sin(t * 0.8) * 0.015;
 
-  // Subtle light color shift based on hour
-  const hueShift = (getHourSeed() / 24) * Math.PI * 2;
-  pl3.color.setHSL(0.45 + Math.sin(hueShift) * 0.05, 0.8, 0.5);
+  // Time-of-day color temperature
+  const h = getHourSeed();
+  let tempColor;
+  if (h >= 6 && h < 10) tempColor = new THREE.Color(0x3dffc0); // warm morning
+  else if (h >= 10 && h < 14) tempColor = new THREE.Color(0x2dffa8); // peak green
+  else if (h >= 18 && h < 22) tempColor = new THREE.Color(0x2de0ff); // cool evening
+  else if (h >= 22 || h < 6) tempColor = new THREE.Color(0x2288cc); // deep night blue
+  else tempColor = new THREE.Color(0x2dffa8);
+  mat.color.lerp(tempColor, 0.005);
+  wireMat.color.lerp(tempColor, 0.005);
+  coreMat.color.lerp(tempColor, 0.005);
 
   renderer.render(scene, camera);
 }
 animate(0);
 
 window.addEventListener('resize', () => {
-  const s = Math.min(500, window.innerWidth * 0.6);
+  const s = Math.min(600, window.innerWidth * 0.7);
   renderer.setSize(s, s);
 });
 
@@ -1009,6 +1106,17 @@ async function submitLeadMagnet(e) {
     btn.textContent = 'PDF herunterladen →';
     btn.disabled = false;
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRESS BAR ORGANIC ENTRANCE
+// ═══════════════════════════════════════════════════════════
+const pressBar = document.querySelector('.press-bar');
+if (pressBar) {
+  const pressObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); pressObs.unobserve(e.target); } });
+  }, { threshold: 0.3 });
+  pressObs.observe(pressBar);
 }
 
 // ═══════════════════════════════════════════════════════════

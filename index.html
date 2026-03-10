@@ -95,7 +95,7 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 #w-heal .w-btn:hover::before{opacity:1}
 
 /* CENTER ORGAN */
-#organ-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:clamp(200px,25vw,360px);height:clamp(200px,25vw,360px);pointer-events:none}
+#organ-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:clamp(240px,30vw,420px);height:clamp(240px,30vw,420px);pointer-events:none}
 #organ-canvas{width:100%;height:100%}
 #organ-pulse{position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%);animation:organPulse 4s ease-in-out infinite}
 @keyframes organPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:1}}
@@ -461,78 +461,128 @@ function animateParticle(p, delay) {
 createParticles();
 
 // ═══════════════════════════════════════════════════════════
-// THREE.JS ORGAN — Mouse-reactive, hour-evolving organism
+// THREE.JS — HOLOGRAPHIC ORGAN-GLOBE WITH ORBITAL RINGS
+// Like a living planet. An organ AND a world. Energy rings orbit.
 // ═══════════════════════════════════════════════════════════
 const canvas = document.getElementById('organ-canvas');
 const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-const size = Math.min(360, window.innerWidth * 0.25);
+const size = Math.min(420, window.innerWidth * 0.3);
 renderer.setSize(size, size);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-camera.position.z = 3.2;
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+camera.position.z = 4.0;
 
-// Higher-detail organic shape
-const geo = new THREE.IcosahedronGeometry(1, 6);
+// ── CORE ORGAN-GLOBE ──
+const geo = new THREE.IcosahedronGeometry(0.9, 6);
 const posAttr = geo.attributes.position;
 const basePos = new Float32Array(posAttr.array.length);
 basePos.set(posAttr.array);
 
 const mat = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
-  roughness: 0.7,
-  metalness: 0.1,
-  wireframe: false,
-  transparent: true,
-  opacity: 0.15,
+  color: 0x88ccff, roughness: 0.5, metalness: 0.2,
+  transparent: true, opacity: 0.12, wireframe: false
 });
 const mesh = new THREE.Mesh(geo, mat);
 scene.add(mesh);
 
-// Wireframe overlay
+// Wireframe globe overlay
 const wireMat = new THREE.MeshBasicMaterial({
-  color: 0xffffff,
-  wireframe: true,
-  transparent: true,
-  opacity: 0.06,
+  color: 0x66bbff, wireframe: true, transparent: true, opacity: 0.05
 });
 const wire = new THREE.Mesh(geo, wireMat);
 scene.add(wire);
 
-// Inner glow core
-const innerGeo = new THREE.SphereGeometry(0.25, 16, 16);
-const innerMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.03 });
-const innerMesh = new THREE.Mesh(innerGeo, innerMat);
-scene.add(innerMesh);
+// ── INNER GLOW CORE ──
+const coreGeo = new THREE.SphereGeometry(0.3, 24, 24);
+const coreMat = new THREE.MeshBasicMaterial({ color: 0x44ddff, transparent: true, opacity: 0.04 });
+const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+scene.add(coreMesh);
 
-// Lights
+// ── ORBITAL ENERGY RINGS ──
+const rings = [];
+const ringConfigs = [
+  { radius: 1.25, tube: 0.004, color: 0xff2d8e, tiltX: 0.3, tiltZ: 0.1, speed: 0.4, opacity: 0.12 },
+  { radius: 1.45, tube: 0.003, color: 0x2dffa8, tiltX: -0.15, tiltZ: 0.25, speed: -0.3, opacity: 0.10 },
+  { radius: 1.65, tube: 0.002, color: 0x66bbff, tiltX: 0.5, tiltZ: -0.2, speed: 0.2, opacity: 0.06 },
+  { radius: 1.85, tube: 0.002, color: 0xffffff, tiltX: -0.35, tiltZ: 0.35, speed: -0.15, opacity: 0.03 },
+  { radius: 2.1, tube: 0.001, color: 0x2dffa8, tiltX: 0.1, tiltZ: -0.1, speed: 0.1, opacity: 0.02 },
+];
+
+ringConfigs.forEach(cfg => {
+  const ringGeo = new THREE.TorusGeometry(cfg.radius, cfg.tube, 6, 128);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: cfg.color, transparent: true, opacity: cfg.opacity
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.rotation.x = Math.PI / 2 + cfg.tiltX;
+  ringMesh.rotation.z = cfg.tiltZ;
+  scene.add(ringMesh);
+  rings.push({ mesh: ringMesh, mat: ringMat, cfg });
+});
+
+// ── ORBITAL PARTICLES (energy dots on rings) ──
+const orbParticles = [];
+for (let i = 0; i < 30; i++) {
+  const pGeo = new THREE.SphereGeometry(0.012 + Math.random() * 0.01, 4, 4);
+  const ringIdx = Math.floor(Math.random() * ringConfigs.length);
+  const cfg = ringConfigs[ringIdx];
+  const pMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.2 + Math.random() * 0.3 });
+  const pMesh = new THREE.Mesh(pGeo, pMat);
+  scene.add(pMesh);
+  orbParticles.push({
+    mesh: pMesh, mat: pMat,
+    radius: cfg.radius + (Math.random() - 0.5) * 0.08,
+    angle: Math.random() * Math.PI * 2,
+    speed: cfg.speed * (0.8 + Math.random() * 0.4),
+    tiltX: cfg.tiltX, tiltZ: cfg.tiltZ,
+    baseOpacity: 0.15 + Math.random() * 0.25
+  });
+}
+
+// ── CONCENTRIC GROUND RINGS (reflection effect) ──
+const groundRings = [];
+for (let i = 0; i < 5; i++) {
+  const gGeo = new THREE.RingGeometry(1.0 + i * 0.4, 1.02 + i * 0.4, 64);
+  const gMat = new THREE.MeshBasicMaterial({
+    color: 0x66bbff, transparent: true, opacity: 0.02 - i * 0.003, side: THREE.DoubleSide
+  });
+  const gMesh = new THREE.Mesh(gGeo, gMat);
+  gMesh.rotation.x = -Math.PI / 2;
+  gMesh.position.y = -1.6;
+  scene.add(gMesh);
+  groundRings.push({ mesh: gMesh, mat: gMat });
+}
+
+// ── LIGHTS ──
 const light1 = new THREE.PointLight(0xff2d8e, 0.6, 10);
-light1.position.set(2, 1, 3);
+light1.position.set(2, 1.5, 3);
 scene.add(light1);
-const light2 = new THREE.PointLight(0x2dffa8, 0.4, 10);
-light2.position.set(-2, -1, 3);
+const light2 = new THREE.PointLight(0x2dffa8, 0.5, 10);
+light2.position.set(-2, -0.5, 3);
 scene.add(light2);
-scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+const light3 = new THREE.PointLight(0x4488ff, 0.3, 10);
+light3.position.set(0, 2, -2);
+scene.add(light3);
+scene.add(new THREE.AmbientLight(0x223344, 0.2));
 
-// Organic noise
+// ── NOISE ──
 function noise3D(x, y, z) {
   const p = x * 1.1 + y * 2.3 + z * 3.7;
   return Math.sin(p) * Math.cos(y * 1.7 + z) * Math.sin(z * 2.1 + x);
 }
 
-// Hour-based organism behavior
 function getOrganicParams() {
   const h = getHourSeed();
-  if (h >= 0 && h < 6) return { speed: 0.6, intensity: 0.12, rotSpeed: 0.08 };
-  if (h >= 6 && h < 10) return { speed: 0.9, intensity: 0.16, rotSpeed: 0.12 };
-  if (h >= 10 && h < 14) return { speed: 1.2, intensity: 0.22, rotSpeed: 0.18 };
-  if (h >= 14 && h < 18) return { speed: 1.0, intensity: 0.18, rotSpeed: 0.15 };
-  if (h >= 18 && h < 22) return { speed: 0.7, intensity: 0.14, rotSpeed: 0.10 };
-  return { speed: 0.5, intensity: 0.10, rotSpeed: 0.07 };
+  if (h >= 0 && h < 6) return { speed: 0.5, intensity: 0.1, rotSpeed: 0.06 };
+  if (h >= 6 && h < 10) return { speed: 0.8, intensity: 0.14, rotSpeed: 0.1 };
+  if (h >= 10 && h < 14) return { speed: 1.1, intensity: 0.2, rotSpeed: 0.15 };
+  if (h >= 14 && h < 18) return { speed: 0.9, intensity: 0.16, rotSpeed: 0.12 };
+  if (h >= 18 && h < 22) return { speed: 0.6, intensity: 0.12, rotSpeed: 0.08 };
+  return { speed: 0.4, intensity: 0.08, rotSpeed: 0.05 };
 }
 
-// Mouse influence on organ — subtle attraction
 let organMouseX = 0, organMouseY = 0;
 
 function animate(time) {
@@ -540,58 +590,90 @@ function animate(time) {
   const t = time * 0.001;
   const params = getOrganicParams();
 
-  // Smooth mouse tracking for organ
   organMouseX += ((mxNorm - 0.5) * 0.3 - organMouseX) * 0.02;
   organMouseY += ((myNorm - 0.5) * 0.3 - organMouseY) * 0.02;
 
-  // Displace vertices organically — mouse adds subtle distortion
+  // Displace globe vertices organically
   for (let i = 0; i < posAttr.count; i++) {
-    const bx = basePos[i * 3];
-    const by = basePos[i * 3 + 1];
-    const bz = basePos[i * 3 + 2];
+    const bx = basePos[i * 3], by = basePos[i * 3 + 1], bz = basePos[i * 3 + 2];
     const n = noise3D(
-      bx + t * 0.3 * params.speed + organMouseX * 0.5,
-      by + t * 0.2 * params.speed + organMouseY * 0.5,
-      bz + t * 0.15 * params.speed
+      bx + t * 0.25 * params.speed + organMouseX * 0.4,
+      by + t * 0.18 * params.speed + organMouseY * 0.4,
+      bz + t * 0.12 * params.speed
     );
-    const displacement = 1 + n * params.intensity;
-    posAttr.setXYZ(i, bx * displacement, by * displacement, bz * displacement);
+    const d = 1 + n * params.intensity;
+    posAttr.setXYZ(i, bx * d, by * d, bz * d);
   }
   posAttr.needsUpdate = true;
   geo.computeVertexNormals();
 
-  // Rotation influenced by mouse
-  mesh.rotation.y = t * params.rotSpeed + organMouseX * 0.5;
-  mesh.rotation.x = Math.sin(t * params.rotSpeed * 0.67) * 0.2 + organMouseY * 0.3;
+  // Globe rotation
+  mesh.rotation.y = t * params.rotSpeed + organMouseX * 0.4;
+  mesh.rotation.x = Math.sin(t * params.rotSpeed * 0.5) * 0.15 + organMouseY * 0.2;
   wire.rotation.copy(mesh.rotation);
 
-  // Inner glow pulses organically
-  const pulse = Math.sin(t * 0.8) * 0.5 + 0.5;
-  innerMesh.scale.setScalar(0.8 + pulse * 0.3);
-  innerMat.opacity = 0.015 + pulse * 0.015;
+  // Core pulses
+  const pulse = Math.sin(t * 0.6) * 0.5 + 0.5;
+  coreMesh.scale.setScalar(0.85 + pulse * 0.25);
+  coreMat.opacity = 0.02 + pulse * 0.03;
 
-  // Color shift based on hover
-  const targetPink = organHue === 0.92 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
-  const targetHeal = organHue === 0.45 ? 1.0 : organHue === 0.0 ? 0.3 : 0.1;
+  // Orbital rings rotate and breathe
+  rings.forEach((r, i) => {
+    r.mesh.rotation.y = t * r.cfg.speed;
+    const ringPulse = Math.sin(t * 0.4 + i * 1.2) * 0.5 + 0.5;
+    r.mat.opacity = r.cfg.opacity * (0.6 + ringPulse * 0.4);
+  });
+
+  // Orbital particles move along ring paths
+  orbParticles.forEach(op => {
+    op.angle += op.speed * 0.01;
+    const x = Math.cos(op.angle) * op.radius;
+    const z = Math.sin(op.angle) * op.radius;
+    // Apply ring tilt
+    const y = z * Math.sin(op.tiltX) + x * Math.sin(op.tiltZ) * 0.3;
+    op.mesh.position.set(
+      x * Math.cos(op.tiltZ) - y * Math.sin(op.tiltZ) * 0.5,
+      z * Math.sin(op.tiltX),
+      z * Math.cos(op.tiltX)
+    );
+    op.mat.opacity = op.baseOpacity * (0.5 + Math.sin(t * 2 + op.angle) * 0.5);
+  });
+
+  // Ground rings breathe
+  groundRings.forEach((gr, i) => {
+    const gPulse = Math.sin(t * 0.3 + i * 0.5) * 0.5 + 0.5;
+    gr.mat.opacity = (0.015 - i * 0.003) * (0.5 + gPulse * 0.5);
+    gr.mesh.scale.setScalar(1 + gPulse * 0.03);
+  });
+
+  // Light colors shift with hovered world
+  const targetPink = organHue === 0.92 ? 1.0 : organHue === 0.0 ? 0.4 : 0.15;
+  const targetHeal = organHue === 0.45 ? 1.0 : organHue === 0.0 ? 0.35 : 0.1;
   light1.intensity += (targetPink * 0.8 - light1.intensity) * 0.03;
   light2.intensity += (targetHeal * 0.6 - light2.intensity) * 0.03;
 
-  // Opacity breathes
-  mat.opacity = 0.12 + Math.sin(t * 0.8) * 0.04;
-  wireMat.opacity = 0.04 + Math.sin(t * 1.2) * 0.02;
+  // Globe material shifts color with world
+  if (activeWorld === 'music') {
+    mat.color.lerp(new THREE.Color(0xff6699), 0.02);
+    wireMat.color.lerp(new THREE.Color(0xff2d8e), 0.02);
+  } else if (activeWorld === 'heal') {
+    mat.color.lerp(new THREE.Color(0x44ffbb), 0.02);
+    wireMat.color.lerp(new THREE.Color(0x2dffa8), 0.02);
+  } else {
+    mat.color.lerp(new THREE.Color(0x88ccff), 0.01);
+    wireMat.color.lerp(new THREE.Color(0x66bbff), 0.01);
+  }
 
-  // Inner core color shifts with world
-  if (activeWorld === 'music') innerMat.color.lerp(new THREE.Color(0xff2d8e), 0.02);
-  else if (activeWorld === 'heal') innerMat.color.lerp(new THREE.Color(0x2dffa8), 0.02);
-  else innerMat.color.lerp(new THREE.Color(0xffffff), 0.01);
+  mat.opacity = 0.1 + Math.sin(t * 0.6) * 0.04;
+  wireMat.opacity = 0.04 + Math.sin(t * 1.0) * 0.02;
+  coreMat.color.copy(mat.color);
 
   renderer.render(scene, camera);
 }
 animate(0);
 
-// Resize
 window.addEventListener('resize', () => {
-  const s = Math.min(360, window.innerWidth * 0.25);
+  const s = Math.min(420, window.innerWidth * 0.3);
   renderer.setSize(s, s);
 });
 
