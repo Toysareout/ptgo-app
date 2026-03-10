@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TTAO Bot — Mission Control</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#050505;--card:#0a0a0a;--border:#1a1a1a;--accent:#2dffa8;--accent2:#00d4ff;--warn:#ff4444;--text:#e0e0e0;--dim:#666}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
+.nav h1{font-size:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav .live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--accent)}
+.nav .live .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:12px 20px;font-size:13px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.2s}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.tab:hover{color:var(--text)}
+
+/* PANELS */
+.panel{display:none;padding:20px}
+.panel.active{display:block}
+
+/* STATS GRID */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat .num{font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .label{font-size:11px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;color:var(--dim);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:rgba(45,255,168,.03)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.new{background:rgba(45,255,168,.15);color:var(--accent)}
+.badge.casual{background:rgba(0,212,255,.15);color:var(--accent2)}
+.badge.engaged{background:rgba(255,200,0,.15);color:#ffc800}
+.badge.superfan{background:rgba(255,100,0,.15);color:#ff6400}
+.badge.vip{background:rgba(200,0,255,.15);color:#c800ff}
+.badge.whale{background:rgba(255,0,100,.15);color:#ff0064}
+.badge.positive{background:rgba(45,255,168,.15);color:var(--accent)}
+.badge.negative{background:rgba(255,68,68,.15);color:var(--warn)}
+.badge.neutral{background:rgba(255,255,255,.08);color:var(--dim)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-size:15px;margin-bottom:12px;color:var(--accent)}
+
+/* BROADCAST */
+.broadcast-form textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:14px;resize:vertical;min-height:100px;font-family:inherit}
+.broadcast-form input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:8px}
+.tier-select{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tier-select label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.tier-select input[type=checkbox]{accent-color:var(--accent)}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:.8}
+.btn-danger{background:var(--warn);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* CONVERSATION VIEW */
+.convo{max-height:400px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.4}
+.msg.inbound{align-self:flex-start;background:#1a1a2e;border-bottom-left-radius:4px}
+.msg.outbound{align-self:flex-end;background:rgba(45,255,168,.1);border-bottom-right-radius:4px}
+.msg .time{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* CHART */
+.chart-bar{display:flex;align-items:end;gap:4px;height:120px;margin:16px 0}
+.chart-bar .bar{flex:1;background:linear-gradient(to top,var(--accent),var(--accent2));border-radius:4px 4px 0 0;min-height:2px;transition:.3s;position:relative}
+.chart-bar .bar:hover{opacity:.8}
+.chart-bar .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--dim)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--dim)}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* CONFIG INPUT */
+.cfg-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:14px;font-family:monospace}
+.cfg-input:focus{outline:none;border-color:var(--accent)}
+
+/* SETUP STEPS */
+.setup-step{border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.step-header{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.step-icon{width:28px;height:28px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.step-title{flex:1;font-size:14px}
+.step-status{font-size:12px;font-weight:600;padding:2px 10px;border-radius:12px}
+.step-status.ok{background:rgba(45,255,168,.15);color:var(--accent)}
+.step-status.err{background:rgba(255,68,68,.15);color:var(--warn)}
+.step-status.warn{background:rgba(255,200,0,.15);color:#ffc800}
+.step-status.loading{background:rgba(0,212,255,.15);color:var(--accent2)}
+.step-detail{padding:0 16px 14px 56px;font-size:13px;color:var(--dim)}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .tbl{font-size:12px}
+  .tbl th,.tbl td{padding:8px 6px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <h1>TTAO BOT — Mission Control</h1>
+  <div class="live"><span class="dot"></span>Live</div>
+</nav>
+
+<div class="tabs">
+  <div class="tab" data-tab="setup">Setup</div>
+  <div class="tab active" data-tab="overview">Dashboard</div>
+  <div class="tab" data-tab="fans">Fans</div>
+  <div class="tab" data-tab="conversations">Gespräche</div>
+  <div class="tab" data-tab="sales">Sales</div>
+  <div class="tab" data-tab="bookings">Bookings</div>
+  <div class="tab" data-tab="broadcast">Broadcast</div>
+  <div class="tab" data-tab="evolution">Evolution</div>
+  <div class="tab" data-tab="settings">Settings</div>
+</div>
+
+<!-- ==================== SETUP WIZARD ==================== -->
+<div class="panel" id="setup">
+  <div class="card" style="border-color:var(--accent);border-width:2px">
+    <h3 style="font-size:20px;margin-bottom:8px">Bot Setup Wizard</h3>
+    <p style="color:var(--dim);margin-bottom:20px">Ein Klick — alles wird gecheckt und konfiguriert.</p>
+    <button class="btn btn-primary" onclick="runFullSetup()" id="setupBtn" style="font-size:16px;padding:14px 32px">
+      Setup starten
+    </button>
+    <div id="setupResults" style="margin-top:20px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Schritt-für-Schritt</h3>
+    <div id="setupSteps">
+      <div class="setup-step" id="step-env">
+        <div class="step-header">
+          <span class="step-icon">1</span>
+          <span class="step-title">Environment Variables prüfen</span>
+          <span class="step-status" id="step-env-status">—</span>
+        </div>
+        <div class="step-detail" id="step-env-detail"></div>
+      </div>
+      <div class="setup-step" id="step-db">
+        <div class="step-header">
+          <span class="step-icon">2</span>
+          <span class="step-title">Datenbank-Tabellen erstellen</span>
+          <span class="step-status" id="step-db-status">—</span>
+        </div>
+        <div class="step-detail" id="step-db-detail"></div>
+      </div>
+      <div class="setup-step" id="step-ai">
+        <div class="step-header">
+          <span class="step-icon">3</span>
+          <span class="step-title">Claude AI testen</span>
+          <span class="step-status" id="step-ai-status">—</span>
+        </div>
+        <div class="step-detail" id="step-ai-detail"></div>
+      </div>
+      <div class="setup-step" id="step-wa">
+        <div class="step-header">
+          <span class="step-icon">4</span>
+          <span class="step-title">WhatsApp Test-Nachricht senden</span>
+          <span class="step-status" id="step-wa-status">—</span>
+        </div>
+        <div class="step-detail" id="step-wa-detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="sqlCard" style="display:none">
+    <h3>SQL-Migration (manuell kopieren)</h3>
+    <p style="color:var(--dim);margin-bottom:12px">Kopiere diesen SQL-Code in deinen Supabase SQL Editor und klicke "Run":</p>
+    <pre id="sqlOutput" style="background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:8px;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:var(--accent)"></pre>
+    <button class="btn btn-primary" onclick="copySql()" style="margin-top:12px">SQL kopieren</button>
+  </div>
+</div>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div class="panel active" id="overview">
+  <div class="stats" id="overviewStats">
+    <div class="stat"><div class="num" id="statFans">—</div><div class="label">Fans Gesamt</div></div>
+    <div class="stat"><div class="num" id="statNew">—</div><div class="label">Neue (7 Tage)</div></div>
+    <div class="stat"><div class="num" id="statVIP">—</div><div class="label">VIPs</div></div>
+    <div class="stat"><div class="num" id="statMsgs">—</div><div class="label">Nachrichten Heute</div></div>
+    <div class="stat"><div class="num" id="statRevenue">—</div><div class="label">Umsatz (30d)</div></div>
+    <div class="stat"><div class="num" id="statBookings">—</div><div class="label">Offene Bookings</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Nachrichten-Verlauf (7 Tage)</h3>
+    <div class="chart-bar" id="msgChart"></div>
+  </div>
+
+  <div class="card">
+    <h3>Letzte Aktivität</h3>
+    <table class="tbl" id="recentActivity">
+      <thead><tr><th>Zeit</th><th>Fan</th><th>Nachricht</th><th>Intent</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== FANS ==================== -->
+<div class="panel" id="fans">
+  <div class="stats" id="fanStats"></div>
+  <div class="card">
+    <h3>Fan-Datenbank</h3>
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost fan-filter active" data-filter="all">Alle</button>
+      <button class="btn btn-ghost fan-filter" data-filter="whale">Whale</button>
+      <button class="btn btn-ghost fan-filter" data-filter="vip">VIP</button>
+      <button class="btn btn-ghost fan-filter" data-filter="superfan">Superfan</button>
+      <button class="btn btn-ghost fan-filter" data-filter="engaged">Engaged</button>
+      <button class="btn btn-ghost fan-filter" data-filter="new">New</button>
+    </div>
+    <table class="tbl" id="fansTable">
+      <thead><tr><th>Fan</th><th>Tier</th><th>VIP Score</th><th>Mood</th><th>Messages</th><th>Umsatz</th><th>Letzter Kontakt</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== CONVERSATIONS ==================== -->
+<div class="panel" id="conversations">
+  <div class="card">
+    <h3>Live-Gespräche</h3>
+    <table class="tbl" id="convosTable">
+      <thead><tr><th>Fan</th><th>Letzte Nachricht</th><th>Intent</th><th>Sentiment</th><th>Zeit</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="card" id="convoDetail" style="display:none">
+    <h3 id="convoFanName">Gespräch</h3>
+    <div class="convo" id="convoMessages"></div>
+  </div>
+</div>
+
+<!-- ==================== SALES ==================== -->
+<div class="panel" id="sales">
+  <div class="stats" id="salesStats"></div>
+  <div class="card">
+    <h3>Verkäufe</h3>
+    <table class="tbl" id="salesTable">
+      <thead><tr><th>Datum</th><th>Fan</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== BOOKINGS ==================== -->
+<div class="panel" id="bookings">
+  <div class="card">
+    <h3>Booking-Anfragen</h3>
+    <table class="tbl" id="bookingsTable">
+      <thead><tr><th>Datum</th><th>Fan</th><th>Typ</th><th>Beschreibung</th><th>Status</th><th>Aktion</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== BROADCAST ==================== -->
+<div class="panel" id="broadcast">
+  <div class="card">
+    <h3>Neue Broadcast-Nachricht</h3>
+    <div class="broadcast-form">
+      <input type="text" id="bcTitle" placeholder="Titel (intern)">
+      <textarea id="bcBody" placeholder="Nachricht an deine Fans...&#10;&#10;Variablen: {name} = Fanname, {tier} = Fan-Tier"></textarea>
+      <div class="tier-select">
+        <strong style="width:100%;font-size:13px;margin-bottom:4px">Zielgruppe:</strong>
+        <label><input type="checkbox" value="whale" checked> Whale</label>
+        <label><input type="checkbox" value="vip" checked> VIP</label>
+        <label><input type="checkbox" value="superfan" checked> Superfan</label>
+        <label><input type="checkbox" value="engaged" checked> Engaged</label>
+        <label><input type="checkbox" value="casual"> Casual</label>
+        <label><input type="checkbox" value="new"> New</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" onclick="createBroadcast()">Broadcast erstellen</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Vergangene Broadcasts</h3>
+    <table class="tbl" id="broadcastTable">
+      <thead><tr><th>Datum</th><th>Titel</th><th>Empfänger</th><th>Zugestellt</th><th>Status</th><th>Aktion</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== EVOLUTION ==================== -->
+<div class="panel" id="evolution">
+  <div class="stats" id="evoStats">
+    <div class="stat"><div class="num" id="evoIQ">—</div><div class="label">Intelligence Score</div></div>
+    <div class="stat"><div class="num" id="evoMemories">—</div><div class="label">Memories</div></div>
+    <div class="stat"><div class="num" id="evoStrategies">—</div><div class="label">Strategien</div></div>
+    <div class="stat"><div class="num" id="evoKnowledge">—</div><div class="label">Wissen</div></div>
+    <div class="stat"><div class="num" id="evoErrors">—</div><div class="label">Fehler analysiert</div></div>
+    <div class="stat"><div class="num" id="evoEvolutions">—</div><div class="label">Evolutionen</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Intelligence-Verlauf</h3>
+    <div class="chart-bar" id="iqChart" style="height:140px"></div>
+    <div id="iqDates" style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Tages-Reflexion</h3>
+    <div id="evoReflection" style="color:var(--dim);font-size:14px;line-height:1.6">Noch keine Reflexion vorhanden.</div>
+    <div style="margin-top:12px;display:flex;gap:16px">
+      <div style="flex:1">
+        <strong style="font-size:12px;color:var(--accent)">Stärken</strong>
+        <div id="evoStrengths" style="font-size:13px;color:var(--dim);margin-top:4px">—</div>
+      </div>
+      <div style="flex:1">
+        <strong style="font-size:12px;color:var(--warn)">Schwächen</strong>
+        <div id="evoWeaknesses" style="font-size:13px;color:var(--dim);margin-top:4px">—</div>
+      </div>
+      <div style="flex:1">
+        <strong style="font-size:12px;color:var(--accent2)">Fokus</strong>
+        <div id="evoFocus" style="font-size:13px;color:var(--dim);margin-top:4px">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="card">
+      <h3>Top Strategien</h3>
+      <table class="tbl" id="evoStrategiesTable">
+        <thead><tr><th>Name</th><th>Kategorie</th><th>Erfolgsrate</th><th>Einsätze</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Letzte Fehler-Analysen</h3>
+      <table class="tbl" id="evoErrorsTable">
+        <thead><tr><th>Typ</th><th>Was ging schief</th><th>Lektion</th><th>Angewandt</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Wissens-Datenbank</h3>
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost knowledge-filter active" data-domain="all">Alle</button>
+      <button class="btn btn-ghost knowledge-filter" data-domain="longevity">Longevity</button>
+      <button class="btn btn-ghost knowledge-filter" data-domain="health">Health</button>
+      <button class="btn btn-ghost knowledge-filter" data-domain="science">Science</button>
+      <button class="btn btn-ghost knowledge-filter" data-domain="music">Music</button>
+      <button class="btn btn-ghost knowledge-filter" data-domain="business">Business</button>
+    </div>
+    <table class="tbl" id="evoKnowledgeTable">
+      <thead><tr><th>Domain</th><th>Thema</th><th>Inhalt</th><th>Verifiziert</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Letzte Memories</h3>
+    <table class="tbl" id="evoMemoriesTable">
+      <thead><tr><th>Kategorie</th><th>Subjekt</th><th>Key</th><th>Vertrauen</th><th>Bestätigt</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Evolutions-Log</h3>
+    <table class="tbl" id="evoLogTable">
+      <thead><tr><th>Datum</th><th>Typ</th><th>Komponente</th><th>Grund</th><th>Impact</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SETTINGS ==================== -->
+<div class="panel" id="settings">
+  <div class="card" style="border-color:var(--accent);border-width:2px">
+    <h3 style="font-size:18px;margin-bottom:4px">API Keys eingeben</h3>
+    <p style="color:var(--dim);margin-bottom:16px">Alle Keys werden in Supabase gespeichert. Kein Netlify-Dashboard nötig (nur SUPABASE_URL + KEY als Netlify Env Vars).</p>
+
+    <div style="display:grid;gap:12px">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Supabase URL *</label>
+        <input type="url" id="setSupaUrl" placeholder="https://xxx.supabase.co" class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Supabase Service Role Key *</label>
+        <input type="password" id="setSupaKey" placeholder="eyJhbGciOi..." class="cfg-input">
+      </div>
+      <hr style="border-color:var(--border)">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio Account SID</label>
+        <input type="text" id="cfgTwilioSid" placeholder="AC..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio Auth Token</label>
+        <input type="password" id="cfgTwilioToken" placeholder="Twilio Auth Token" class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Twilio WhatsApp From</label>
+        <input type="text" id="cfgTwilioFrom" placeholder="whatsapp:+14155238886" class="cfg-input">
+      </div>
+      <hr style="border-color:var(--border)">
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Anthropic API Key (Claude AI)</label>
+        <input type="password" id="cfgAnthropicKey" placeholder="sk-ant-..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Stripe Secret Key (optional)</label>
+        <input type="password" id="cfgStripeKey" placeholder="sk_live_..." class="cfg-input">
+      </div>
+      <div>
+        <label style="font-size:12px;color:var(--dim);display:block;margin-bottom:4px">Deine WhatsApp Nummer (für Alerts)</label>
+        <input type="text" id="cfgOwnerPhone" placeholder="+491234567890" class="cfg-input">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="saveAllKeys()" id="saveKeysBtn">Alles speichern & verbinden</button>
+      <button class="btn btn-ghost" onclick="loadExistingKeys()">Gespeicherte Keys laden</button>
+    </div>
+    <div id="saveKeysResult" style="margin-top:12px;font-size:13px"></div>
+  </div>
+
+  <div class="card">
+    <h3>Webhook URLs</h3>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:12px">Diese URLs in Twilio und Stripe eintragen:</p>
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;color:var(--dim)">Twilio WhatsApp Webhook:</label>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">
+        https://thetoysareout.com/.netlify/functions/whatsapp-bot
+      </div>
+    </div>
+    <div>
+      <label style="font-size:11px;color:var(--dim)">Stripe Webhook (Event: checkout.session.completed):</label>
+      <div style="background:var(--bg);border:1px solid var(--border);padding:10px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer" onclick="navigator.clipboard.writeText(this.textContent.trim())">
+        https://thetoysareout.com/.netlify/functions/bot-stripe-webhook
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin-top:8px">Klick zum Kopieren.</p>
+  </div>
+
+  <div class="card">
+    <h3>Minimale Netlify Env Vars</h3>
+    <p style="color:var(--dim);font-size:13px;margin-bottom:8px">Nur diese 2 werden in Netlify gebraucht — alles andere speichert der Bot in Supabase:</p>
+    <table class="tbl">
+      <tbody>
+        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_URL</td><td>Supabase Project URL</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_SERVICE_ROLE_KEY</td><td>Supabase Service Role Key</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// BOT ADMIN — Frontend Logic
+// ============================================================
+
+// Auto-detect Supabase credentials (hardcoded URL + anon key from existing site)
+const DEFAULT_SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+const DEFAULT_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
+const SUPA_URL = () => localStorage.getItem('ttao_supa_url') || DEFAULT_SUPA_URL;
+const SUPA_KEY = () => localStorage.getItem('ttao_supa_key') || DEFAULT_SUPA_KEY;
+
+function supa() {
+  const url = SUPA_URL();
+  const key = SUPA_KEY();
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+async function supaFetch(table, { select = '*', filters = {}, order, limit, eq } = {}) {
+  const s = supa();
+  if (!s) return [];
+
+  let url = `${s.url}/rest/v1/${table}?select=${encodeURIComponent(select)}`;
+
+  if (eq) {
+    Object.entries(eq).forEach(([k, v]) => { url += `&${k}=eq.${encodeURIComponent(v)}`; });
+  }
+  if (filters.gte) {
+    Object.entries(filters.gte).forEach(([k, v]) => { url += `&${k}=gte.${encodeURIComponent(v)}`; });
+  }
+  if (filters.in_) {
+    Object.entries(filters.in_).forEach(([k, v]) => { url += `&${k}=in.(${v.join(',')})`; });
+  }
+  if (order) url += `&order=${order}`;
+  if (limit) url += `&limit=${limit}`;
+
+  const res = await fetch(url, {
+    headers: { 'apikey': s.key, 'Authorization': `Bearer ${s.key}` }
+  });
+  return res.ok ? await res.json() : [];
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    loadPanel(tab.dataset.tab);
+  });
+});
+
+function loadPanel(name) {
+  const loaders = { overview: loadOverview, fans: loadFans, conversations: loadConversations, sales: loadSales, bookings: loadBookings, broadcast: loadBroadcasts, evolution: loadEvolution, setup: () => {} };
+  if (loaders[name]) loaders[name]();
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+async function loadOverview() {
+  if (!supa()) return;
+
+  const [fans, recentFans, vips, todayMsgs, sales, bookings, weekData] = await Promise.all([
+    supaFetch('fans', { select: 'id' }),
+    supaFetch('fans', { select: 'id', filters: { gte: { created_at: daysAgo(7) } } }),
+    supaFetch('fans', { select: 'id', filters: { gte: { vip_score: '80' } } }),
+    supaFetch('conversations', { select: 'id', filters: { gte: { created_at: todayStr() } } }),
+    supaFetch('bot_sales', { select: 'price_cents', eq: { stripe_payment_status: 'paid' }, filters: { gte: { created_at: daysAgo(30) } } }),
+    supaFetch('bot_bookings', { select: 'id', eq: { status: 'new' } }),
+    supaFetch('bot_analytics', { select: '*', order: 'date.desc', limit: 7 })
+  ]);
+
+  document.getElementById('statFans').textContent = fans.length;
+  document.getElementById('statNew').textContent = recentFans.length;
+  document.getElementById('statVIP').textContent = vips.length;
+  document.getElementById('statMsgs').textContent = todayMsgs.length;
+  document.getElementById('statRevenue').textContent = '€' + (sales.reduce((s, x) => s + (x.price_cents || 0), 0) / 100).toFixed(0);
+  document.getElementById('statBookings').textContent = bookings.length;
+
+  // Chart
+  const chart = document.getElementById('msgChart');
+  chart.innerHTML = '';
+  const maxVal = Math.max(1, ...weekData.map(d => d.total_messages_in || 0));
+  weekData.reverse().forEach(d => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = `${((d.total_messages_in || 0) / maxVal) * 100}%`;
+    bar.innerHTML = `<div class="val">${d.total_messages_in || 0}</div>`;
+    bar.title = d.date;
+    chart.appendChild(bar);
+  });
+
+  // Recent activity
+  const recent = await supaFetch('conversations', { select: '*', order: 'created_at.desc', limit: 15, eq: { direction: 'inbound' } });
+  const tbody = document.querySelector('#recentActivity tbody');
+  tbody.innerHTML = recent.map(c => `
+    <tr>
+      <td>${timeAgo(c.created_at)}</td>
+      <td>${c.phone}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.body || '')}</td>
+      <td><span class="badge ${c.intent === 'purchase' ? 'engaged' : c.intent === 'booking' ? 'vip' : 'neutral'}">${c.intent || '—'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// FANS
+// ============================================================
+async function loadFans(filter) {
+  if (!supa()) return;
+
+  let opts = { select: '*', order: 'vip_score.desc', limit: 100 };
+  if (filter && filter !== 'all') opts.eq = { tier: filter };
+
+  const fans = await supaFetch('fans', opts);
+  const tbody = document.querySelector('#fansTable tbody');
+  tbody.innerHTML = fans.map(f => `
+    <tr>
+      <td><strong>${esc(f.name || 'Unbekannt')}</strong><br><span style="color:var(--dim);font-size:11px">${f.phone}</span></td>
+      <td><span class="badge ${f.tier}">${f.tier}</span></td>
+      <td>${f.vip_score}</td>
+      <td><span class="badge ${f.mood}">${f.mood}</span></td>
+      <td>${f.total_messages || 0}</td>
+      <td>€${((f.total_spent_cents || 0) / 100).toFixed(2)}</td>
+      <td>${f.last_message_at ? timeAgo(f.last_message_at) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('.fan-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fan-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadFans(btn.dataset.filter);
+  });
+});
+
+// ============================================================
+// CONVERSATIONS
+// ============================================================
+async function loadConversations() {
+  if (!supa()) return;
+
+  // Get latest message per fan
+  const convos = await supaFetch('conversations', { select: '*', order: 'created_at.desc', limit: 50, eq: { direction: 'inbound' } });
+
+  const seen = new Set();
+  const unique = convos.filter(c => {
+    if (seen.has(c.phone)) return false;
+    seen.add(c.phone);
+    return true;
+  });
+
+  const tbody = document.querySelector('#convosTable tbody');
+  tbody.innerHTML = unique.map(c => `
+    <tr style="cursor:pointer" onclick="loadConvo('${c.fan_id}','${esc(c.phone)}')">
+      <td>${esc(c.phone)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.body || '')}</td>
+      <td><span class="badge neutral">${c.intent || '—'}</span></td>
+      <td>${c.sentiment != null ? (c.sentiment > 0 ? '😊' : c.sentiment < 0 ? '😔' : '😐') : '—'}</td>
+      <td>${timeAgo(c.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadConvo(fanId, phone) {
+  const detail = document.getElementById('convoDetail');
+  detail.style.display = 'block';
+  document.getElementById('convoFanName').textContent = phone;
+
+  const msgs = await supaFetch('conversations', { select: '*', eq: { fan_id: fanId }, order: 'created_at.asc', limit: 50 });
+
+  const el = document.getElementById('convoMessages');
+  el.innerHTML = msgs.map(m => `
+    <div class="msg ${m.direction}">
+      ${esc(m.body || '')}
+      <div class="time">${new Date(m.created_at).toLocaleString('de-DE')}</div>
+    </div>
+  `).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ============================================================
+// SALES
+// ============================================================
+async function loadSales() {
+  if (!supa()) return;
+
+  const sales = await supaFetch('bot_sales', { select: '*', order: 'created_at.desc', limit: 50 });
+
+  const total = sales.filter(s => s.stripe_payment_status === 'paid').reduce((sum, s) => sum + (s.price_cents || 0), 0);
+  const paid = sales.filter(s => s.stripe_payment_status === 'paid').length;
+
+  const statsEl = document.getElementById('salesStats');
+  statsEl.innerHTML = `
+    <div class="stat"><div class="num">${sales.length}</div><div class="label">Checkout-Links</div></div>
+    <div class="stat"><div class="num">${paid}</div><div class="label">Bezahlt</div></div>
+    <div class="stat"><div class="num">€${(total / 100).toFixed(0)}</div><div class="label">Umsatz</div></div>
+    <div class="stat"><div class="num">${sales.length > 0 ? Math.round(paid / sales.length * 100) : 0}%</div><div class="label">Conversion</div></div>
+  `;
+
+  const tbody = document.querySelector('#salesTable tbody');
+  tbody.innerHTML = sales.map(s => `
+    <tr>
+      <td>${new Date(s.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${s.phone}</td>
+      <td>${esc(s.item_name)}</td>
+      <td>€${((s.price_cents || 0) / 100).toFixed(2)}</td>
+      <td><span class="badge ${s.stripe_payment_status === 'paid' ? 'positive' : 'neutral'}">${s.stripe_payment_status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// BOOKINGS
+// ============================================================
+async function loadBookings() {
+  if (!supa()) return;
+
+  const bookings = await supaFetch('bot_bookings', { select: '*', order: 'created_at.desc', limit: 50 });
+
+  const tbody = document.querySelector('#bookingsTable tbody');
+  tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td>${new Date(b.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${b.phone}</td>
+      <td><span class="badge casual">${b.booking_type}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.description || '')}</td>
+      <td><span class="badge ${b.status === 'confirmed' ? 'positive' : b.status === 'new' ? 'new' : 'neutral'}">${b.status}</span></td>
+      <td>
+        ${b.status === 'new' ? `<button class="btn btn-ghost" onclick="updateBooking('${b.id}','reviewing')" style="padding:4px 10px;font-size:12px">Review</button>` : ''}
+        ${b.status === 'reviewing' ? `<button class="btn btn-primary" onclick="updateBooking('${b.id}','confirmed')" style="padding:4px 10px;font-size:12px">Confirm</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateBooking(id, status) {
+  const s = supa();
+  if (!s) return;
+
+  await fetch(`${s.url}/rest/v1/bot_bookings?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': s.key,
+      'Authorization': `Bearer ${s.key}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ status })
+  });
+  loadBookings();
+}
+
+// ============================================================
+// BROADCAST
+// ============================================================
+async function loadBroadcasts() {
+  if (!supa()) return;
+
+  const broadcasts = await supaFetch('broadcasts', { select: '*', order: 'created_at.desc', limit: 20 });
+
+  const tbody = document.querySelector('#broadcastTable tbody');
+  tbody.innerHTML = broadcasts.map(b => `
+    <tr>
+      <td>${new Date(b.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${esc(b.title)}</td>
+      <td>${b.total_recipients || 0}</td>
+      <td>${b.total_delivered || 0}</td>
+      <td><span class="badge ${b.status === 'sent' ? 'positive' : b.status === 'draft' ? 'neutral' : 'new'}">${b.status}</span></td>
+      <td>
+        ${b.status === 'draft' ? `<button class="btn btn-primary" onclick="sendBroadcast('${b.id}')" style="padding:4px 10px;font-size:12px">Senden</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function createBroadcast() {
+  const title = document.getElementById('bcTitle').value;
+  const body = document.getElementById('bcBody').value;
+  if (!body) return alert('Nachricht eingeben!');
+
+  const tiers = [...document.querySelectorAll('.tier-select input:checked')].map(i => i.value);
+
+  const res = await fetch('/.netlify/functions/bot-broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'create', title, body, target_tiers: tiers })
+  });
+
+  if (res.ok) {
+    document.getElementById('bcTitle').value = '';
+    document.getElementById('bcBody').value = '';
+    loadBroadcasts();
+  }
+}
+
+async function sendBroadcast(id) {
+  if (!confirm('Broadcast jetzt an alle ausgewählten Fans senden?')) return;
+
+  const res = await fetch('/.netlify/functions/bot-broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'send', broadcast_id: id })
+  });
+
+  const data = await res.json();
+  alert(`Gesendet: ${data.delivered || 0} / ${data.total || 0}`);
+  loadBroadcasts();
+}
+
+// ============================================================
+// EVOLUTION
+// ============================================================
+async function loadEvolution(domain) {
+  if (!supa()) return;
+
+  const [memories, strategies, knowledge, errors, evolutions, intelligence] = await Promise.all([
+    supaFetch('bot_memory', { select: '*', order: 'updated_at.desc', limit: 20 }),
+    supaFetch('bot_strategies', { select: '*', order: 'success_rate.desc', limit: 10 }),
+    domain && domain !== 'all'
+      ? supaFetch('bot_knowledge', { select: '*', eq: { domain }, order: 'relevance_score.desc', limit: 30 })
+      : supaFetch('bot_knowledge', { select: '*', order: 'relevance_score.desc', limit: 30 }),
+    supaFetch('bot_errors', { select: '*', order: 'created_at.desc', limit: 10 }),
+    supaFetch('bot_evolution', { select: '*', order: 'created_at.desc', limit: 10 }),
+    supaFetch('bot_intelligence', { select: '*', order: 'date.desc', limit: 14 })
+  ]);
+
+  // Stats
+  document.getElementById('evoMemories').textContent = memories.length > 0 ? memories.length + '+' : '0';
+  document.getElementById('evoStrategies').textContent = strategies.length;
+  document.getElementById('evoKnowledge').textContent = knowledge.length;
+  document.getElementById('evoErrors').textContent = errors.length;
+  document.getElementById('evoEvolutions').textContent = evolutions.length;
+
+  // Intelligence score
+  const latest = intelligence[0];
+  if (latest) {
+    document.getElementById('evoIQ').textContent = Math.round(latest.intelligence_score || 50);
+    document.getElementById('evoReflection').textContent = latest.daily_reflection || 'Noch keine Reflexion.';
+    document.getElementById('evoStrengths').innerHTML = (latest.strengths || []).map(s => `<div>• ${esc(s)}</div>`).join('') || '—';
+    document.getElementById('evoWeaknesses').innerHTML = (latest.weaknesses || []).map(s => `<div>• ${esc(s)}</div>`).join('') || '—';
+    document.getElementById('evoFocus').innerHTML = (latest.focus_areas || []).map(s => `<div>• ${esc(s)}</div>`).join('') || '—';
+  } else {
+    document.getElementById('evoIQ').textContent = '50';
+  }
+
+  // IQ Chart
+  const chart = document.getElementById('iqChart');
+  const dates = document.getElementById('iqDates');
+  chart.innerHTML = '';
+  dates.innerHTML = '';
+  if (intelligence.length > 0) {
+    const sorted = [...intelligence].reverse();
+    const maxIQ = Math.max(100, ...sorted.map(d => d.intelligence_score || 50));
+    sorted.forEach(d => {
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      const score = d.intelligence_score || 50;
+      bar.style.height = `${(score / maxIQ) * 100}%`;
+      bar.innerHTML = `<div class="val">${Math.round(score)}</div>`;
+      bar.title = d.date + ': IQ ' + Math.round(score);
+      chart.appendChild(bar);
+    });
+    dates.innerHTML = sorted.map(d => `<span>${d.date?.slice(5) || ''}</span>`).join('');
+  }
+
+  // Strategies table
+  const stBody = document.querySelector('#evoStrategiesTable tbody');
+  stBody.innerHTML = strategies.map(s => `
+    <tr>
+      <td>${esc(s.name)}</td>
+      <td><span class="badge casual">${s.category}</span></td>
+      <td style="color:${s.success_rate >= 0.6 ? 'var(--accent)' : s.success_rate >= 0.3 ? '#ffc800' : 'var(--warn)'}">${Math.round((s.success_rate || 0) * 100)}%</td>
+      <td>${s.times_used || 0}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="color:var(--dim)">Noch keine Strategien gelernt.</td></tr>';
+
+  // Errors table
+  const erBody = document.querySelector('#evoErrorsTable tbody');
+  erBody.innerHTML = errors.map(e => `
+    <tr>
+      <td><span class="badge ${e.applied ? 'positive' : 'negative'}">${e.error_type}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.what_went_wrong)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.lesson_learned)}</td>
+      <td>${e.applied ? '✅' : '⏳'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="color:var(--dim)">Noch keine Fehler analysiert.</td></tr>';
+
+  // Knowledge table
+  const kBody = document.querySelector('#evoKnowledgeTable tbody');
+  kBody.innerHTML = knowledge.map(k => `
+    <tr>
+      <td><span class="badge casual">${k.domain}</span></td>
+      <td>${esc(k.topic)}</td>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k.content)}</td>
+      <td>${k.verified ? '✅' : '—'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" style="color:var(--dim)">Noch kein Wissen gespeichert.</td></tr>';
+
+  // Memories table
+  const mBody = document.querySelector('#evoMemoriesTable tbody');
+  mBody.innerHTML = memories.map(m => `
+    <tr>
+      <td><span class="badge neutral">${m.category}</span></td>
+      <td>${esc(m.subject)}</td>
+      <td>${esc(m.key)}</td>
+      <td style="color:${m.confidence >= 0.7 ? 'var(--accent)' : m.confidence >= 0.4 ? '#ffc800' : 'var(--warn)'}">${Math.round((m.confidence || 0) * 100)}%</td>
+      <td>${m.times_reinforced || 1}x</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="color:var(--dim)">Noch keine Memories.</td></tr>';
+
+  // Evolution log
+  const eBody = document.querySelector('#evoLogTable tbody');
+  eBody.innerHTML = evolutions.map(e => `
+    <tr>
+      <td>${new Date(e.created_at).toLocaleDateString('de-DE')}</td>
+      <td><span class="badge new">${e.evolution_type}</span></td>
+      <td>${esc(e.component)}</td>
+      <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.reason)}</td>
+      <td style="color:${e.impact_score > 0 ? 'var(--accent)' : e.impact_score < 0 ? 'var(--warn)' : 'var(--dim)'}">${e.impact_score > 0 ? '+' : ''}${(e.impact_score || 0).toFixed(1)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="5" style="color:var(--dim)">Noch keine Evolutionen.</td></tr>';
+}
+
+// Knowledge domain filter
+document.querySelectorAll('.knowledge-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.knowledge-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadEvolution(btn.dataset.domain);
+  });
+});
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveSettings() {
+  const url = document.getElementById('setSupaUrl').value.trim();
+  const key = document.getElementById('setSupaKey').value.trim();
+  if (url) localStorage.setItem('ttao_supa_url', url);
+  if (key) localStorage.setItem('ttao_supa_key', key);
+  loadOverview();
+}
+
+async function saveAllKeys() {
+  const btn = document.getElementById('saveKeysBtn');
+  const result = document.getElementById('saveKeysResult');
+  btn.disabled = true;
+  btn.textContent = 'Speichere...';
+  result.innerHTML = '';
+
+  const supaUrl = document.getElementById('setSupaUrl').value.trim();
+  const supaKey = document.getElementById('setSupaKey').value.trim();
+
+  if (!supaUrl || !supaKey) {
+    result.innerHTML = '<span style="color:var(--warn)">Supabase URL und Key sind Pflichtfelder!</span>';
+    btn.disabled = false;
+    btn.textContent = 'Alles speichern & verbinden';
+    return;
+  }
+
+  // Save Supabase creds to localStorage (for dashboard)
+  localStorage.setItem('ttao_supa_url', supaUrl);
+  localStorage.setItem('ttao_supa_key', supaKey);
+
+  // Collect all other keys
+  const configs = {};
+  const fields = {
+    cfgTwilioSid: 'twilio_account_sid',
+    cfgTwilioToken: 'twilio_auth_token',
+    cfgTwilioFrom: 'twilio_whatsapp_from',
+    cfgAnthropicKey: 'anthropic_api_key',
+    cfgStripeKey: 'stripe_secret_key',
+    cfgOwnerPhone: 'owner_whatsapp'
+  };
+
+  for (const [inputId, configKey] of Object.entries(fields)) {
+    const val = document.getElementById(inputId).value.trim();
+    if (val) configs[configKey] = val;
+  }
+
+  if (Object.keys(configs).length === 0) {
+    result.innerHTML = '<span style="color:var(--accent)">Supabase gespeichert! Keine weiteren Keys eingegeben.</span>';
+    btn.disabled = false;
+    btn.textContent = 'Alles speichern & verbinden';
+    return;
+  }
+
+  // Save to Supabase bot_config via function or direct API
+  try {
+    // Try via Netlify function first
+    let res = await fetch('/.netlify/functions/bot-config-store', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-supabase-url': supaUrl,
+        'x-supabase-key': supaKey
+      },
+      body: JSON.stringify({ action: 'save', configs })
+    });
+
+    if (!res.ok) {
+      // Fallback: save directly via Supabase REST API
+      for (const [key, value] of Object.entries(configs)) {
+        await fetch(`${supaUrl}/rest/v1/bot_config`, {
+          method: 'POST',
+          headers: {
+            'apikey': supaKey,
+            'Authorization': `Bearer ${supaKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+        });
+      }
+    }
+
+    const saved = Object.keys(configs).length;
+    result.innerHTML = `<span style="color:var(--accent)">Gespeichert! ${saved} Keys in Supabase hinterlegt. Der Bot ist bereit.</span>`;
+
+    // Clear password fields after save
+    document.querySelectorAll('.cfg-input[type=password]').forEach(i => i.value = '');
+
+    loadOverview();
+  } catch (err) {
+    result.innerHTML = `<span style="color:var(--warn)">Fehler: ${err.message}</span>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Alles speichern & verbinden';
+}
+
+async function loadExistingKeys() {
+  const supaUrl = localStorage.getItem('ttao_supa_url');
+  const supaKey = localStorage.getItem('ttao_supa_key');
+  const result = document.getElementById('saveKeysResult');
+
+  if (!supaUrl || !supaKey) {
+    result.innerHTML = '<span style="color:var(--warn)">Erst Supabase URL und Key eingeben!</span>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/.netlify/functions/bot-config-store', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-supabase-url': supaUrl,
+        'x-supabase-key': supaKey
+      },
+      body: JSON.stringify({ action: 'load' })
+    });
+
+    const data = await res.json();
+
+    if (data.config) {
+      const items = Object.entries(data.config).map(([k, v]) =>
+        `<span style="color:var(--accent)">${k}</span>: ${v}`
+      );
+      result.innerHTML = '<strong>Gespeicherte Keys:</strong><br>' + items.join('<br>');
+    } else {
+      result.innerHTML = '<span style="color:var(--dim)">Keine Keys gefunden. Erst speichern!</span>';
+    }
+  } catch (err) {
+    result.innerHTML = `<span style="color:var(--warn)">Fehler: ${err.message}</span>`;
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString(); }
+function timeAgo(ts) {
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60) return 'gerade eben';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+  return Math.floor(diff / 86400) + 'd';
+}
+
+// ============================================================
+// SETUP WIZARD
+// ============================================================
+async function runFullSetup() {
+  const btn = document.getElementById('setupBtn');
+  btn.disabled = true;
+  btn.textContent = 'Setup läuft...';
+
+  // Step 1: Check env vars
+  setStepStatus('env', 'loading', 'Prüfe...');
+  try {
+    const statusRes = await fetch('/.netlify/functions/bot-setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'status' })
+    });
+    const status = await statusRes.json();
+
+    const envItems = [];
+    envItems.push(status.supabase?.configured ? '✅ Supabase' : '❌ Supabase (SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY fehlen)');
+    envItems.push(status.twilio?.configured ? '✅ Twilio' : '❌ Twilio (TWILIO_ACCOUNT_SID + AUTH_TOKEN + WHATSAPP_FROM fehlen)');
+    envItems.push(status.anthropic?.configured ? '✅ Anthropic (Claude AI)' : '❌ Anthropic (ANTHROPIC_API_KEY fehlt)');
+    envItems.push(status.stripe?.configured ? '✅ Stripe' : '⚠️ Stripe (optional — STRIPE_SECRET_KEY)');
+    envItems.push(status.owner?.configured ? '✅ Owner WhatsApp' : '⚠️ Owner WhatsApp (optional — OWNER_WHATSAPP)');
+
+    const allGood = status.supabase?.configured && status.twilio?.configured && status.anthropic?.configured;
+    setStepStatus('env', allGood ? 'ok' : 'err', allGood ? 'Alles da!' : 'Keys fehlen');
+    document.getElementById('step-env-detail').innerHTML = envItems.join('<br>');
+
+    if (!allGood) {
+      document.getElementById('step-env-detail').innerHTML += '<br><br><strong style="color:var(--accent)">→ Geh zu Netlify Dashboard → Site Settings → Environment Variables und trage die fehlenden Keys ein. Dann redeploy.</strong>';
+    }
+
+    // Step 2: Check/Create DB
+    if (status.supabase?.configured) {
+      setStepStatus('db', 'loading', 'Prüfe...');
+      if (status.tables?.created) {
+        setStepStatus('db', 'ok', 'Tabellen existieren!');
+        document.getElementById('step-db-detail').textContent = 'Alle Bot-Tabellen (inkl. Evolution Engine) sind in Supabase vorhanden.';
+      } else {
+        // Try auto-setup
+        const dbRes = await fetch('/.netlify/functions/bot-setup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'setup-db' })
+        });
+        const dbData = await dbRes.json();
+
+        if (dbData.status === 'ok') {
+          setStepStatus('db', 'ok', 'Erstellt!');
+          document.getElementById('step-db-detail').textContent = 'Tabellen wurden automatisch erstellt!';
+        } else if (dbData.status === 'manual_required') {
+          setStepStatus('db', 'warn', 'Manuell nötig');
+          document.getElementById('step-db-detail').innerHTML = 'Supabase erlaubt kein Remote-SQL. <strong>Kopiere das SQL unten und füge es im Supabase SQL Editor ein.</strong>';
+          document.getElementById('sqlCard').style.display = 'block';
+          document.getElementById('sqlOutput').textContent = dbData.sql;
+        } else {
+          setStepStatus('db', 'err', 'Fehler');
+          document.getElementById('step-db-detail').textContent = dbData.error || 'Unbekannter Fehler';
+        }
+      }
+    } else {
+      setStepStatus('db', 'err', 'Übersprungen');
+      document.getElementById('step-db-detail').textContent = 'Supabase nicht konfiguriert.';
+    }
+
+    // Step 3: Test AI
+    if (status.anthropic?.configured) {
+      setStepStatus('ai', 'loading', 'Teste...');
+      const aiRes = await fetch('/.netlify/functions/bot-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test-anthropic' })
+      });
+      const aiData = await aiRes.json();
+      if (aiData.status === 'ok') {
+        setStepStatus('ai', 'ok', 'Funktioniert!');
+        document.getElementById('step-ai-detail').textContent = 'Claude sagt: ' + (aiData.response || 'OK');
+      } else {
+        setStepStatus('ai', 'err', 'Fehler');
+        document.getElementById('step-ai-detail').textContent = aiData.error;
+      }
+    } else {
+      setStepStatus('ai', 'err', 'Übersprungen');
+      document.getElementById('step-ai-detail').textContent = 'ANTHROPIC_API_KEY nicht gesetzt.';
+    }
+
+    // Step 4: Test WhatsApp
+    if (status.twilio?.configured && status.owner?.configured) {
+      setStepStatus('wa', 'loading', 'Sende...');
+      const waRes = await fetch('/.netlify/functions/bot-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test-whatsapp' })
+      });
+      const waData = await waRes.json();
+      if (waData.status === 'ok') {
+        setStepStatus('wa', 'ok', 'Gesendet!');
+        document.getElementById('step-wa-detail').textContent = 'Test-Nachricht wurde an dein WhatsApp gesendet!';
+      } else {
+        setStepStatus('wa', 'err', 'Fehler');
+        document.getElementById('step-wa-detail').textContent = waData.error + (waData.details ? '\n' + waData.details : '');
+      }
+    } else {
+      setStepStatus('wa', 'warn', 'Übersprungen');
+      document.getElementById('step-wa-detail').textContent = status.twilio?.configured
+        ? 'OWNER_WHATSAPP nicht gesetzt — kann keine Test-Nachricht senden.'
+        : 'Twilio nicht konfiguriert.';
+    }
+
+    // Store supabase URL for dashboard if we got one from the status
+    if (status.supabase?.configured && status.supabase?.url) {
+      const cleanUrl = status.supabase.url.replace('✅ ', '');
+      if (cleanUrl.startsWith('http')) {
+        localStorage.setItem('ttao_supa_url', cleanUrl);
+      }
+    }
+
+  } catch (err) {
+    setStepStatus('env', 'err', 'Fehler');
+    document.getElementById('step-env-detail').textContent = 'Konnte nicht mit dem Server verbinden: ' + err.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Nochmal prüfen';
+}
+
+function setStepStatus(step, type, text) {
+  const el = document.getElementById(`step-${step}-status`);
+  el.className = `step-status ${type}`;
+  el.textContent = text;
+}
+
+function copySql() {
+  const sql = document.getElementById('sqlOutput').textContent;
+  navigator.clipboard.writeText(sql).then(() => alert('SQL kopiert!')).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = sql;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('SQL kopiert!');
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', async () => {
+  // Load saved settings
+  const savedUrl = localStorage.getItem('ttao_supa_url');
+  const savedKey = localStorage.getItem('ttao_supa_key');
+  if (savedUrl) document.getElementById('setSupaUrl').value = savedUrl;
+  if (savedKey) document.getElementById('setSupaKey').value = savedKey;
+
+  if (savedUrl && savedKey) {
+    loadOverview();
+  } else {
+    // Try to auto-detect Supabase URL from bot-setup function
+    try {
+      const res = await fetch('/.netlify/functions/bot-setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'status' })
+      });
+      if (res.ok) {
+        const status = await res.json();
+        if (status.supabase?.configured) {
+          const url = status.supabase.url.replace('✅ ', '');
+          if (url.startsWith('http')) {
+            localStorage.setItem('ttao_supa_url', url);
+            document.getElementById('setSupaUrl').value = url;
+            // We need the anon key for dashboard reads — prompt for it
+          }
+        }
+        // If not fully configured, show setup wizard
+        if (!status.supabase?.configured || !status.twilio?.configured || !status.anthropic?.configured) {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          document.querySelector('[data-tab="setup"]').classList.add('active');
+          document.getElementById('setup').classList.add('active');
+          return;
+        }
+      }
+    } catch(e) { /* offline or function not deployed yet */ }
+
+    // Fallback: show settings
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="settings"]').classList.add('active');
+    document.getElementById('settings').classList.add('active');
+  }
+
+  // Auto-refresh every 30 seconds
+  setInterval(() => {
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) loadPanel(activeTab.dataset.tab);
+  }, 30000);
+});
+</script>
+</body>
+</html>

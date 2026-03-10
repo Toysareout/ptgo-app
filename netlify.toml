@@ -57,6 +57,11 @@
   to = "/setup-supabase.html"
   status = 200
 
+[[redirects]]
+  from = "/bot-admin"
+  to = "/bot-admin.html"
+  status = 200
+
 # Security headers
 [[headers]]
   for = "/*"
