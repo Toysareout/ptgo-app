@@ -7,8 +7,8 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || ''
 );
 
 // Scheduled: every day at 03:00 UTC (deep reflection)
@@ -698,7 +698,7 @@ async function getCredentials() {
     twilio_sid: process.env.TWILIO_ACCOUNT_SID || '',
     twilio_token: process.env.TWILIO_AUTH_TOKEN || '',
     twilio_from: process.env.TWILIO_WHATSAPP_FROM || '',
-    owner_phone: process.env.OWNER_WHATSAPP || '',
+    owner_phone: process.env.OWNER_WHATSAPP || process.env.TWILIO_WHATSAPP_TO || '',
   };
 
   try {

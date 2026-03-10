@@ -7,11 +7,24 @@
 const { createClient } = require('@supabase/supabase-js');
 
 // --- CONFIG (env vars + Supabase bot_config fallback) ---
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const BASE_URL = process.env.URL || 'https://thetoysareout.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// --- AUTO-BOOTSTRAP: Check if tables exist, guide to setup if not ---
+let _tablesChecked = false;
+async function ensureTables() {
+  if (_tablesChecked) return true;
+  try {
+    const { error } = await supabase.from('fans').select('id').limit(1);
+    if (!error) { _tablesChecked = true; return true; }
+    // Tables don't exist — try bot_config at least
+    console.log('Bot tables not found, need setup. Visit /bot-admin to run setup wizard.');
+    return false;
+  } catch (e) { return false; }
+}
 
 // Credentials loaded at runtime from env or Supabase bot_config
 let _configCache = null;
@@ -28,7 +41,7 @@ async function getCredentials() {
     twilio_from: process.env.TWILIO_WHATSAPP_FROM || '',
     anthropic_key: process.env.ANTHROPIC_API_KEY || '',
     stripe_secret: process.env.STRIPE_SECRET_KEY || '',
-    owner_phone: process.env.OWNER_WHATSAPP || '',
+    owner_phone: process.env.OWNER_WHATSAPP || process.env.TWILIO_WHATSAPP_TO || '',
   };
 
   // Fill missing values from Supabase bot_config

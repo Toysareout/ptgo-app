@@ -6,14 +6,14 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || ''
 );
 
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID || '';
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
 const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || '';
-const OWNER_PHONE = process.env.OWNER_WHATSAPP || '';
+const OWNER_PHONE = process.env.OWNER_WHATSAPP || process.env.TWILIO_WHATSAPP_TO || '';
 
 // Netlify scheduled function config
 exports.config = {

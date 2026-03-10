@@ -472,8 +472,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 // BOT ADMIN — Frontend Logic
 // ============================================================
 
-const SUPA_URL = () => localStorage.getItem('ttao_supa_url') || '';
-const SUPA_KEY = () => localStorage.getItem('ttao_supa_key') || '';
+// Auto-detect Supabase credentials (hardcoded URL + anon key from existing site)
+const DEFAULT_SUPA_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+const DEFAULT_SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3ZGh4YXJ2ZW1jZ2toaG52Ym5nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4OTg1NTUsImV4cCI6MjA4ODQ3NDU1NX0.VCm4YKBai-z_2gwhCjsYlfUuj14wL9MhgHuovw7lFpQ';
+const SUPA_URL = () => localStorage.getItem('ttao_supa_url') || DEFAULT_SUPA_URL;
+const SUPA_KEY = () => localStorage.getItem('ttao_supa_key') || DEFAULT_SUPA_KEY;
 
 function supa() {
   const url = SUPA_URL();

@@ -8,8 +8,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 // These two MUST be set — either as env vars or passed via headers
 function getSupabase(event) {
-  const url = process.env.SUPABASE_URL || event.headers['x-supabase-url'] || '';
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || event.headers['x-supabase-key'] || '';
+  const url = process.env.SUPABASE_URL || event.headers['x-supabase-url'] || 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || event.headers['x-supabase-key'] || '';
   if (!url || !key) return null;
   return { client: createClient(url, key), url, key };
 }

@@ -6,14 +6,14 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || '';
 const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID || '';
 const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
 const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || '';
 const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || '';
 const STRIPE_SECRET = process.env.STRIPE_SECRET_KEY || '';
-const OWNER_PHONE = process.env.OWNER_WHATSAPP || '';
+const OWNER_PHONE = process.env.OWNER_WHATSAPP || process.env.TWILIO_WHATSAPP_TO || '';
 const SITE_URL = process.env.URL || 'https://thetoysareout.com';
 
 const ALLOWED_ORIGINS = [
