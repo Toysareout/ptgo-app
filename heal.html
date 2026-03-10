@@ -293,6 +293,57 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 .cd-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--heal);opacity:.5}
 .cd-l{font-size:7px;letter-spacing:.2em;text-transform:uppercase;opacity:.12}
 
+/* ═══ HACKER-LEVEL PERSUASION ═══ */
+
+/* ENGAGEMENT PROGRESS BAR — Zeigarnik Effect */
+#engage-bar{position:fixed;top:0;left:0;right:0;z-index:9000;height:2px;background:transparent;pointer-events:none}
+#engage-fill{height:100%;width:0%;background:linear-gradient(90deg,transparent,var(--heal));transition:width .3s;box-shadow:0 0 8px rgba(45,255,168,.3)}
+#engage-label{position:fixed;top:6px;right:60px;z-index:9000;font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:0;transition:opacity .4s;pointer-events:none;color:var(--heal)}
+
+/* SUNK COST TIME TRACKER */
+#time-invest{position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:9000;font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:0;transition:opacity .6s;pointer-events:none;color:var(--white)}
+#time-invest.show{opacity:.12}
+#time-invest .ti-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:11px}
+
+/* RESERVATION TIMER */
+#reservation{position:fixed;top:40px;left:50%;transform:translateX(-50%);z-index:800;background:rgba(5,5,5,.92);backdrop-filter:blur(12px);border:1px solid rgba(45,255,168,.15);padding:8px 18px;display:flex;align-items:center;gap:10px;opacity:0;transform:translateX(-50%) translateY(-10px);transition:all .6s cubic-bezier(.16,1,.3,1);pointer-events:none}
+#reservation.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#reservation .res-icon{width:6px;height:6px;border-radius:50%;background:#ff6b6b;animation:resPulse 1.5s ease-in-out infinite}
+@keyframes resPulse{0%,100%{opacity:.4}50%{opacity:1}}
+#reservation .res-text{font-size:8px;letter-spacing:.2em;opacity:.4}
+#reservation .res-time{font-family:'Bebas Neue',sans-serif;font-size:14px;color:var(--heal)}
+
+/* RETURN VISITOR BANNER */
+#return-banner{position:fixed;top:0;left:0;right:0;z-index:8000;background:linear-gradient(90deg,rgba(45,255,168,.06),rgba(45,255,168,.02));border-bottom:1px solid rgba(45,255,168,.08);padding:10px 24px;text-align:center;font-size:9px;letter-spacing:.15em;opacity:0;transform:translateY(-100%);transition:all .6s cubic-bezier(.16,1,.3,1)}
+#return-banner.show{opacity:1;transform:translateY(0)}
+#return-banner .rb-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--white);opacity:.15;cursor:pointer;font-size:14px}
+#return-banner .rb-acc{color:var(--heal)}
+#return-banner .rb-cta{color:var(--heal);text-decoration:underline;cursor:pointer;opacity:.6}
+
+/* TYPING INDICATOR on form */
+.typing-indicator{display:flex;align-items:center;gap:6px;padding:8px 0;opacity:0;transition:opacity .4s}
+.typing-indicator.show{opacity:1}
+.typing-indicator .ti-dots{display:flex;gap:3px}
+.typing-indicator .ti-dot{width:4px;height:4px;border-radius:50%;background:var(--heal);animation:typeDot 1.4s ease-in-out infinite}
+.typing-indicator .ti-dot:nth-child(2){animation-delay:.2s}
+.typing-indicator .ti-dot:nth-child(3){animation-delay:.4s}
+@keyframes typeDot{0%,100%{opacity:.15;transform:translateY(0)}50%{opacity:.6;transform:translateY(-3px)}}
+.typing-indicator .ti-label{font-size:8px;letter-spacing:.2em;opacity:.2}
+
+/* SPOTS REDUCING — dynamic scarcity near form */
+#spots-warning{text-align:center;padding:12px;border:1px solid rgba(255,107,107,.15);margin-bottom:20px;opacity:0;transform:translateY(8px);transition:all .5s}
+#spots-warning.show{opacity:1;transform:translateY(0)}
+#spots-warning .sw-n{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#ff6b6b}
+#spots-warning .sw-text{font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.3}
+
+/* CONFIRMSHAMING — exit overlay variation */
+.exit-shame{font-size:9px;letter-spacing:.1em;opacity:.12;margin-top:16px;cursor:pointer;transition:opacity .3s}
+.exit-shame:hover{opacity:.3}
+
+/* APPLICATION COUNTER near form */
+#app-counter{font-size:8px;letter-spacing:.25em;text-transform:uppercase;opacity:.15;text-align:center;margin-bottom:16px}
+#app-counter .ac-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:13px}
+
 @media(max-width:680px){
   .pillars{grid-template-columns:1fr 1fr}
   .sect{padding:60px 20px}
@@ -320,6 +371,28 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
 </head>
 <body>
+
+<!-- ENGAGEMENT PROGRESS BAR -->
+<div id="engage-bar"><div id="engage-fill"></div></div>
+<div id="engage-label"></div>
+
+<!-- SUNK COST TIME TRACKER -->
+<div id="time-invest"><span class="ti-n" id="ti-min">0</span> Min. auf dieser Seite investiert</div>
+
+<!-- RESERVATION TIMER -->
+<div id="reservation">
+  <span class="res-icon"></span>
+  <span class="res-text">Dein Platz ist reserviert für</span>
+  <span class="res-time" id="res-countdown">15:00</span>
+</div>
+
+<!-- RETURN VISITOR BANNER -->
+<div id="return-banner">
+  <span>Du warst schon <span class="rb-acc" id="rb-visits">2</span>× hier. </span>
+  <span>Die Plätze werden weniger. </span>
+  <a class="rb-cta" href="#apply">Jetzt bewerben →</a>
+  <button class="rb-close" onclick="document.getElementById('return-banner').classList.remove('show')">&times;</button>
+</div>
 
 <!-- PRELOADER — organic bloom -->
 <div id="preloader">
@@ -574,7 +647,12 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
       <div class="cr-text" id="cr-text"></div>
     </div>
   </div>
+  <div id="app-counter"><span class="ac-n" id="ac-n">47</span> Bewerbungen diesen Monat · <span class="ac-n">4</span> Plätze</div>
   <form id="apply-form" onsubmit="submitApplication(event)">
+    <div id="spots-warning">
+      <div class="sw-n" id="sw-spots">2</div>
+      <div class="sw-text">Plätze noch frei für dieses Quartal</div>
+    </div>
     <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" name="name" placeholder="Dein Name" required /></div>
     <div class="form-group"><label class="form-label">E-Mail</label><input class="form-input" type="email" name="email" placeholder="name@beispiel.de" required /></div>
     <div class="form-group"><label class="form-label">Telefon</label><input class="form-input" type="tel" name="phone" placeholder="+49 ..." /></div>
@@ -582,6 +660,10 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="form-group"><label class="form-label">Wie lange besteht das Problem?</label><input class="form-input" type="text" name="duration" placeholder="z.B. 3 Jahre, seit einem Unfall, ..." /></div>
     <div class="form-group"><label class="form-label">Was hast du bereits versucht?</label><textarea class="form-input" name="tried" placeholder="Physiotherapie, Medikamente, Osteopathie, ..." style="min-height:80px"></textarea></div>
     <button type="submit" class="h-btn" style="width:100%">Bewerbung absenden →</button>
+    <div class="typing-indicator" id="form-typing">
+      <div class="ti-dots"><span class="ti-dot"></span><span class="ti-dot"></span><span class="ti-dot"></span></div>
+      <span class="ti-label">Alex überprüft Bewerbungen gerade live...</span>
+    </div>
     <div class="form-note">Antwort innerhalb von 48 Stunden · Vorgespräch kostenlos</div>
     <div id="form-status"></div>
     <div style="margin-top:32px;padding-top:32px;border-top:1px solid var(--border);text-align:center">
@@ -609,11 +691,12 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   <div class="exit-card">
     <button class="exit-close" onclick="closeExitOverlay()">&times;</button>
     <div class="exit-title">Warte<span class="acc">.</span></div>
-    <div class="exit-sub">Bevor du gehst — wusstest du, dass die meisten unserer Klienten vorher jahrelang ohne Ergebnis behandelt wurden?</div>
+    <div class="exit-sub">Bevor du gehst — wusstest du, dass die meisten unserer Klienten vorher jahrelang ohne Ergebnis behandelt wurden?<br><br>Du hast bereits <span id="exit-time-spent">0</span> Minuten auf dieser Seite verbracht. Das zeigt, dass dich etwas hierher geführt hat.</div>
     <div class="exit-stat">94%</div>
     <div class="exit-stat-label">Spüren Veränderung in einer Session</div>
-    <a href="#apply" class="h-btn" onclick="closeExitOverlay()" style="display:inline-block">Kostenloses Vorgespräch sichern →</a>
+    <a href="#apply" class="h-btn" onclick="closeExitOverlay()" style="display:inline-block">Ja, ich will mein kostenloses Vorgespräch →</a>
     <div class="cta-proof" style="margin-top:16px">Kein Risiko · 30 Min · Kostenlos</div>
+    <div class="exit-shame" onclick="closeExitOverlay()">Nein danke, ich lebe lieber weiter mit dem Schmerz.</div>
   </div>
 </div>
 
@@ -1415,6 +1498,256 @@ function updateCountdown() {
 }
 updateCountdown();
 setInterval(updateCountdown, 60000);
+
+// ═══════════════════════════════════════════════════════════
+// HACKER-LEVEL PERSUASION SYSTEMS
+// ═══════════════════════════════════════════════════════════
+
+// ── 1. ENGAGEMENT PROGRESS BAR (Zeigarnik Effect) ──
+// Humans feel compelled to complete things. Show them their progress.
+const engFill = document.getElementById('engage-fill');
+const engLabel = document.getElementById('engage-label');
+const engMilestones = ['Methode verstehen', 'Ergebnisse sehen', 'Entscheidung treffen', 'Fast da...', 'Bewerbung'];
+let lastMilestone = -1;
+
+function updateEngagementBar() {
+  const scrollPct = Math.min(100, Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100));
+  engFill.style.width = scrollPct + '%';
+
+  const milestoneIdx = Math.min(4, Math.floor(scrollPct / 20));
+  if (milestoneIdx !== lastMilestone && milestoneIdx > 0) {
+    lastMilestone = milestoneIdx;
+    engLabel.textContent = engMilestones[milestoneIdx];
+    engLabel.style.opacity = '.15';
+    setTimeout(() => { engLabel.style.opacity = '0'; }, 2500);
+  }
+}
+window.addEventListener('scroll', updateEngagementBar, { passive: true });
+
+// ── 2. SUNK COST TIME TRACKER ──
+// Show the user how much time they've already invested. Makes leaving feel wasteful.
+const tiEl = document.getElementById('time-invest');
+const tiMin = document.getElementById('ti-min');
+let timeInvestSeconds = 0;
+
+setInterval(() => {
+  timeInvestSeconds++;
+  const mins = Math.floor(timeInvestSeconds / 60);
+  if (mins >= 1) {
+    tiMin.textContent = mins;
+    tiEl.classList.add('show');
+  }
+}, 1000);
+
+// ── 3. RESERVATION TIMER (Artificial Scarcity + Urgency) ──
+// "Your spot is reserved for 15 minutes" — creates panic
+let resSeconds = 15 * 60;
+const resCountdown = document.getElementById('res-countdown');
+const resContainer = document.getElementById('reservation');
+
+// Show after 10 seconds on page
+setTimeout(() => resContainer.classList.add('show'), 10000);
+
+setInterval(() => {
+  if (resSeconds <= 0) return;
+  resSeconds--;
+  const m = Math.floor(resSeconds / 60);
+  const s = resSeconds % 60;
+  resCountdown.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+
+  // Color shifts to red as time runs out
+  if (resSeconds < 180) {
+    resCountdown.style.color = '#ff6b6b';
+    resContainer.style.borderColor = 'rgba(255,107,107,.2)';
+  }
+  if (resSeconds <= 0) {
+    resCountdown.textContent = 'Abgelaufen';
+    resContainer.querySelector('.res-text').textContent = 'Dein reservierter Platz ist';
+  }
+}, 1000);
+
+// ── 4. TAB TITLE HIJACK ──
+// When user leaves the tab, title screams for attention
+const originalTitle = document.title;
+let titleFlashing = false;
+let titleInterval;
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    let flash = false;
+    titleInterval = setInterval(() => {
+      flash = !flash;
+      document.title = flash ? '⚠ Dein Platz läuft ab...' : '(2) PTGO METHOD — Neue Nachricht';
+    }, 1500);
+  } else {
+    clearInterval(titleInterval);
+    document.title = originalTitle;
+  }
+});
+
+// ── 5. RETURN VISITOR DETECTION ──
+// Track visits. Returning visitors get personalized pressure.
+let visitCount = parseInt(localStorage.getItem('ttao_visits') || '0') + 1;
+localStorage.setItem('ttao_visits', visitCount);
+localStorage.setItem('ttao_last_visit', Date.now());
+
+if (visitCount > 1) {
+  const rbEl = document.getElementById('return-banner');
+  document.getElementById('rb-visits').textContent = visitCount;
+  setTimeout(() => rbEl.classList.add('show'), 3000);
+
+  // Also modify hero subtitle for returning visitors
+  const heroSub = document.getElementById('hero-sub');
+  if (visitCount >= 3) {
+    heroSub.innerHTML = 'Du bist wieder da.<br>Das zeigt mir: Du weißt, dass sich etwas ändern muss.<br><span style="color:var(--heal);opacity:.4">Hör auf zu warten.</span>';
+  }
+}
+
+// ── 6. BACK-BUTTON TRAP ──
+// Push history states. When user hits back, show exit overlay instead of leaving.
+history.pushState(null, '', location.href);
+history.pushState(null, '', location.href);
+
+window.addEventListener('popstate', () => {
+  if (!exitShown && !sessionStorage.getItem('ttao_heal_applied')) {
+    exitOverlay.classList.add('show');
+    exitShown = true;
+    history.pushState(null, '', location.href);
+  }
+});
+
+// ── 7. SPOT REDUCTION ON SCROLL (Dynamic Scarcity) ──
+// Available spots decrease as user scrolls deeper. Creates urgency.
+const swSpots = document.getElementById('sw-spots');
+const urgBadge = document.querySelector('.urgency-badge');
+let displayedSpots = 2;
+
+function updateDynamicScarcity() {
+  const scrollPct = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  // When they reach the form area, one spot "disappears"
+  if (scrollPct > 0.7 && displayedSpots > 1) {
+    displayedSpots = 1;
+    swSpots.textContent = '1';
+    if (urgBadge) urgBadge.textContent = 'Letzter Platz in Q2 2026';
+
+    // Flash the spots warning
+    const swEl = document.getElementById('spots-warning');
+    swEl.style.borderColor = 'rgba(255,107,107,.3)';
+    swEl.style.background = 'rgba(255,107,107,.03)';
+  }
+}
+window.addEventListener('scroll', updateDynamicScarcity, { passive: true });
+
+// Show spots warning when form section visible
+const spotsObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      document.getElementById('spots-warning').classList.add('show');
+      spotsObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+const applyFormEl = document.getElementById('apply-form');
+if (applyFormEl) spotsObserver.observe(applyFormEl);
+
+// ── 8. GEO PERSONALIZATION ──
+// Use timezone to estimate region. Personalize FOMO toasts.
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+let userRegion = '';
+if (tz.includes('Vienna') || tz.includes('Europe/Vienna')) userRegion = 'Österreich';
+else if (tz.includes('Berlin') || tz.includes('Europe/Berlin')) userRegion = 'Deutschland';
+else if (tz.includes('Zurich') || tz.includes('Europe/Zurich')) userRegion = 'Schweiz';
+
+// Inject geo-relevant FOMO data
+if (userRegion) {
+  fomoData.unshift(
+    { city: 'Deiner Region', text: 'hat sich gerade beworben', time: 'vor 2 Minuten' },
+    { city: 'Deiner Nähe', text: 'hat ein Vorgespräch gebucht', time: 'vor 6 Minuten' }
+  );
+}
+
+// ── 9. TYPING INDICATOR ON FORM ──
+// Shows "Alex is reviewing applications live" — creates feeling of real-time interaction
+const formTyping = document.getElementById('form-typing');
+const applyFormSection = document.getElementById('apply');
+
+if (applyFormSection) {
+  const typingObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        // Show typing after 2s delay — feels organic
+        setTimeout(() => formTyping.classList.add('show'), 2000);
+        // Remove after 8s — feels like Alex moved on
+        setTimeout(() => formTyping.classList.remove('show'), 10000);
+        // Show again periodically
+        setInterval(() => {
+          formTyping.classList.add('show');
+          setTimeout(() => formTyping.classList.remove('show'), 6000);
+        }, 25000);
+        typingObserver.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  typingObserver.observe(applyFormSection);
+}
+
+// ── 10. EXIT INTENT — inject time spent ──
+// Update exit overlay with actual time spent for sunk cost amplification
+const origMouseOut = document.onmouseout;
+const exitTimeSpent = document.getElementById('exit-time-spent');
+setInterval(() => {
+  if (exitTimeSpent) {
+    exitTimeSpent.textContent = Math.floor(timeInvestSeconds / 60);
+  }
+}, 5000);
+
+// ── 11. FORM FIELD COMMITMENT ESCALATION ──
+// As user fills each field, show encouraging micro-feedback
+document.querySelectorAll('#apply-form .form-input').forEach((input, idx) => {
+  const messages = ['Guter Anfang.', 'Fast da...', 'Nur noch 3 Felder.', 'Du bist bereit.', 'Noch eins.', 'Absenden und Platz sichern.'];
+  input.addEventListener('focus', () => {
+    const note = input.closest('.form-group').querySelector('.form-label');
+    if (note && idx > 0) {
+      const orig = note.textContent;
+      const msg = messages[Math.min(idx, messages.length - 1)];
+      note.style.color = 'var(--heal)';
+      note.style.opacity = '.6';
+      setTimeout(() => {
+        note.style.color = '';
+        note.style.opacity = '';
+      }, 2000);
+    }
+  });
+});
+
+// ── 12. SMART APPLICATION COUNTER ──
+// Monthly counter that looks real — based on day of month
+const dayOfMonth = new Date().getDate();
+const monthApps = 12 + dayOfMonth * 2 + Math.floor(Math.random() * 5);
+const acN = document.getElementById('ac-n');
+if (acN) acN.textContent = monthApps;
+
+// ── 13. SCROLL-DEPTH TRIGGERED MESSAGES ──
+// Strategic messages at specific scroll depths
+const scrollMessages = [
+  { pct: 25, msg: '↓ Die Ergebnisse sprechen für sich' },
+  { pct: 50, msg: '↓ Investition & Garantie' },
+  { pct: 75, msg: '↓ Bewirb dich jetzt — letzte Plätze' },
+];
+let shownScrollMsgs = new Set();
+
+function checkScrollMessages() {
+  const scrollPct = Math.round((window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100);
+  scrollMessages.forEach(sm => {
+    if (scrollPct >= sm.pct && !shownScrollMsgs.has(sm.pct)) {
+      shownScrollMsgs.add(sm.pct);
+      engLabel.textContent = sm.msg;
+      engLabel.style.opacity = '.2';
+      setTimeout(() => { engLabel.style.opacity = '0'; }, 3000);
+    }
+  });
+}
+window.addEventListener('scroll', checkScrollMessages, { passive: true });
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 </body>
