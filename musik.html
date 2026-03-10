@@ -265,7 +265,15 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
 .f-top{flex-direction:column}
 }
 </style>
-<!--ORGANIC-CSS-START--><style></style><!--ORGANIC-CSS-END-->
+<!--ORGANIC-CSS-START--><style>
+@keyframes fadeInDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes globeRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes gridMove{from{transform:translateX(0)}to{transform:translateX(18px)}}
+@keyframes particleFloat{0%,100%{transform:translateY(0) scale(1);opacity:.6}50%{transform:translateY(-20px) scale(1.5);opacity:1}}
+@keyframes dustDrift{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.4}90%{opacity:.4}100%{transform:translateY(-100vh) translateX(40px);opacity:0}}
+.g-particle{position:absolute;width:3px;height:3px;background:#4af;border-radius:50%;animation:particleFloat 6s ease-in-out infinite;box-shadow:0 0 8px rgba(74,170,255,.6)}
+#feat-short{border-top:none}
+</style><!--ORGANIC-CSS-END-->
 <!-- Analytics: Replace G-XXXXXXXXXX with your GA4 ID -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
@@ -298,6 +306,78 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
   <div id="scroll-hint"><span>Scroll</span></div>
 </section>
 
+<!-- FEATURED SHORT — TOP -->
+<section id="feat-short" style="display:flex;flex-direction:column;align-items:center;padding:0;position:relative;overflow:hidden;background:#000">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(255,45,142,.12) 0%,transparent 60%);pointer-events:none;z-index:1"></div>
+  <div style="position:relative;z-index:2;text-align:center;padding:48px 20px 0">
+    <div id="live-pulse" style="display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:1px solid rgba(255,45,142,.3);margin-bottom:20px;animation:fadeInDown .8s ease">
+      <div style="width:6px;height:6px;background:#ff2d8e;border-radius:50%;animation:pulse 1.5s ease-in-out infinite"></div>
+      <span style="font-size:8px;letter-spacing:.4em;text-transform:uppercase;color:var(--pink);opacity:.8" id="watching-now">0 schauen gerade zu</span>
+    </div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,7vw,64px);line-height:.92;letter-spacing:.02em">Call me when<br><span style="color:var(--pink)">you realize.</span></div>
+    <div style="font-size:9px;letter-spacing:.4em;text-transform:uppercase;opacity:.2;margin-top:10px">Neue Musik · Jetzt</div>
+  </div>
+  <div style="position:relative;z-index:2;width:min(380px,92vw);aspect-ratio:9/16;margin:28px auto 0">
+    <iframe src="https://www.youtube.com/embed/llvfo67QA1U?rel=0&modestbranding=1&color=white&autoplay=1&mute=1" style="width:100%;height:100%;border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  </div>
+  <div style="position:relative;z-index:2;padding:28px 20px 48px;text-align:center">
+    <div style="display:flex;gap:24px;justify-content:center;align-items:center;margin-bottom:16px">
+      <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--pink)" id="view-counter">0</div><div style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.2">Views</div></div>
+      <div style="width:1px;height:28px;background:var(--border)"></div>
+      <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--white);opacity:.3" id="time-left">23:59:59</div><div style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.2">Verbleibend</div></div>
+    </div>
+    <button class="ch ch-a" onclick="openPanel('cam-panel')" style="font-size:clamp(11px,1.4vw,15px)">Ich will Teil davon sein →</button>
+  </div>
+</section>
+
+<!-- DIGITAL WORLD — GLOBE -->
+<section class="sect" style="text-align:center;position:relative;overflow:hidden;padding-top:80px;padding-bottom:80px">
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(0,120,255,.06) 0%,transparent 70%);pointer-events:none"></div>
+  <div style="font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:#4af;opacity:.5;margin-bottom:20px">Digital · Twin · THETOYSAREOUT</div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,72px);line-height:.92;margin-bottom:8px">Die Welt wird<br><span style="color:transparent;-webkit-text-stroke:1px rgba(74,170,255,.3)">digital.</span></div>
+  <div style="font-size:10px;letter-spacing:.25em;text-transform:uppercase;opacity:.15;margin-bottom:40px;max-width:500px;margin-left:auto;margin-right:auto;line-height:2">Musik ist kein Produkt. Es ist ein Ort. Ein Raum, den du betrittst.</div>
+  <!-- CSS Globe -->
+  <div id="globe-wrap" style="position:relative;width:min(320px,80vw);height:min(320px,80vw);margin:0 auto">
+    <div id="globe" style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(74,170,255,.15) 0%,rgba(0,60,180,.08) 40%,rgba(0,0,0,.9) 70%);box-shadow:0 0 80px rgba(74,170,255,.15),inset 0 0 60px rgba(74,170,255,.05);animation:globeRotate 20s linear infinite;overflow:hidden">
+      <div style="position:absolute;inset:-20%;width:140%;height:140%;background:repeating-linear-gradient(0deg,transparent,transparent 18px,rgba(74,170,255,.04) 18px,rgba(74,170,255,.04) 19px),repeating-linear-gradient(90deg,transparent,transparent 18px,rgba(74,170,255,.04) 18px,rgba(74,170,255,.04) 19px);border-radius:50%;animation:gridMove 8s linear infinite"></div>
+      <div style="position:absolute;inset:10%;border-radius:50%;border:1px solid rgba(74,170,255,.08)"></div>
+      <div style="position:absolute;inset:25%;border-radius:50%;border:1px solid rgba(74,170,255,.06)"></div>
+      <div style="position:absolute;inset:40%;border-radius:50%;border:1px solid rgba(74,170,255,.04)"></div>
+      <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,rgba(74,170,255,.12),transparent)"></div>
+      <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent,rgba(74,170,255,.12),transparent)"></div>
+    </div>
+    <!-- Orbit ring -->
+    <div style="position:absolute;inset:-15%;border:1px solid rgba(74,170,255,.06);border-radius:50%;animation:globeRotate 15s linear infinite reverse"></div>
+    <!-- Particles -->
+    <div class="g-particle" style="top:10%;left:20%"></div>
+    <div class="g-particle" style="top:70%;left:80%;animation-delay:-2s"></div>
+    <div class="g-particle" style="top:30%;left:75%;animation-delay:-4s"></div>
+    <div class="g-particle" style="top:85%;left:35%;animation-delay:-1s"></div>
+    <div class="g-particle" style="top:15%;left:60%;animation-delay:-3s"></div>
+    <div class="g-particle" style="top:50%;left:10%;animation-delay:-5s"></div>
+  </div>
+  <div style="margin-top:40px;display:flex;gap:40px;justify-content:center;flex-wrap:wrap">
+    <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:#4af" id="globe-faces">0</div><div style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.2">Gesichter weltweit</div></div>
+    <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--white);opacity:.3">∞</div><div style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.2">Möglichkeiten</div></div>
+    <div style="text-align:center"><div style="font-family:'Bebas Neue',sans-serif;font-size:36px;color:var(--pink)">1</div><div style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.2">Chance</div></div>
+  </div>
+</section>
+
+<!-- SMART DUST — MYSTERY TEASER -->
+<section class="sect" style="text-align:center;position:relative;overflow:hidden">
+  <div id="dust-field" style="position:absolute;inset:0;pointer-events:none"></div>
+  <div style="position:relative;z-index:2">
+    <div style="font-size:8px;letter-spacing:.5em;text-transform:uppercase;color:var(--pink);opacity:.4;margin-bottom:20px">Geheim · Projekt · 2026</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,56px);line-height:.95;margin-bottom:16px">Etwas kommt.<br><span style="color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.15)">Niemand ist bereit.</span></div>
+    <div style="max-width:440px;margin:0 auto 32px;font-size:10px;letter-spacing:.15em;opacity:.15;line-height:2.2">Die Grenze zwischen Musik und Realität verschwindet. Was du hörst, wirst du fühlen. Was du fühlst, verändert alles.</div>
+    <div style="display:inline-flex;align-items:center;gap:12px;padding:12px 24px;border:1px solid var(--border)">
+      <div style="width:5px;height:5px;background:var(--pink);border-radius:50%;animation:pulse 2s ease-in-out infinite"></div>
+      <span style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.15em" id="mystery-countdown">??:??:??:??</span>
+      <span style="font-size:7px;letter-spacing:.3em;text-transform:uppercase;opacity:.3">Bis zur Enthüllung</span>
+    </div>
+  </div>
+</section>
+
 <!-- FIRST ELECTRO -->
 <section class="sect">
   <div class="s-label">Electronic · Produktion · THETOYSAREOUT</div>
@@ -314,15 +394,6 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
   <div class="s-title" style="text-align:center">Roh.<br><span class="ol">Echt.</span></div>
   <div style="width:min(340px,90vw);aspect-ratio:9/16;margin-top:32px">
     <iframe src="https://www.youtube.com/embed/_vtULaBoEFU?rel=0&modestbranding=1&color=white" style="width:100%;height:100%;border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  </div>
-</section>
-
-<!-- SHORT 2 -->
-<section class="sect" style="display:flex;flex-direction:column;align-items:center">
-  <div class="s-label" style="text-align:center">Short · Musik · THETOYSAREOUT</div>
-  <div class="s-title" style="text-align:center">Neue<br><span class="ol">Energie.</span></div>
-  <div style="width:min(340px,90vw);aspect-ratio:9/16;margin-top:32px">
-    <iframe src="https://www.youtube.com/embed/llvfo67QA1U?rel=0&modestbranding=1&color=white" style="width:100%;height:100%;border:none" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
   </div>
 </section>
 
@@ -806,6 +877,82 @@ async function sendMsg() {
 }
 document.getElementById('chat-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } });
 
+
+// ── HACKER PSYCHOLOGY: Fake live viewers + counters ──
+(function psychOps(){
+  // Watching now — random between 3-18, fluctuates
+  const wn = document.getElementById('watching-now');
+  let viewers = Math.floor(Math.random()*8)+5;
+  function updateViewers(){
+    viewers += Math.floor(Math.random()*5)-2;
+    if(viewers<2)viewers=3; if(viewers>24)viewers=18;
+    wn.textContent = viewers+' schauen gerade zu';
+  }
+  updateViewers();
+  setInterval(updateViewers, 4000+Math.random()*3000);
+
+  // View counter — animate up
+  const vc = document.getElementById('view-counter');
+  const targetViews = 12847;
+  let cv = 0;
+  function animCount(){
+    cv += Math.ceil((targetViews-cv)*0.03);
+    if(cv>=targetViews)cv=targetViews;
+    vc.textContent = cv.toLocaleString('de-DE');
+    if(cv<targetViews) requestAnimationFrame(animCount);
+  }
+  const vcObs = new IntersectionObserver(([e])=>{if(e.isIntersecting){animCount();vcObs.disconnect();}});
+  vcObs.observe(vc);
+
+  // Globe faces counter
+  const gf = document.getElementById('globe-faces');
+  (async function(){
+    try{
+      const{count}=await sb.from('photos').select('*',{count:'exact',head:true}).eq('status','approved');
+      const target=count||0;
+      let c=0;
+      (function a(){c+=Math.ceil((target-c)*.05);if(c>=target)c=target;gf.textContent=c;if(c<target)requestAnimationFrame(a);})();
+    }catch(e){gf.textContent='—';}
+  })();
+
+  // Countdown timer — midnight reset
+  function updateTimer(){
+    const now=new Date();
+    const end=new Date(now);
+    end.setHours(23,59,59,999);
+    const d=end-now;
+    const h=String(Math.floor(d/36e5)).padStart(2,'0');
+    const m=String(Math.floor((d%36e5)/6e4)).padStart(2,'0');
+    const s=String(Math.floor((d%6e4)/1e3)).padStart(2,'0');
+    document.getElementById('time-left').textContent=h+':'+m+':'+s;
+  }
+  updateTimer();
+  setInterval(updateTimer,1000);
+
+  // Mystery countdown — 30 days from now
+  function updateMystery(){
+    const reveal=new Date('2026-04-15T00:00:00');
+    const now=new Date();
+    const d=Math.max(0,reveal-now);
+    const dd=Math.floor(d/864e5);
+    const hh=String(Math.floor((d%864e5)/36e5)).padStart(2,'0');
+    const mm=String(Math.floor((d%36e5)/6e4)).padStart(2,'0');
+    const ss=String(Math.floor((d%6e4)/1e3)).padStart(2,'0');
+    document.getElementById('mystery-countdown').textContent=dd+'d:'+hh+':'+mm+':'+ss;
+  }
+  updateMystery();
+  setInterval(updateMystery,1000);
+
+  // Smart dust particles
+  const df=document.getElementById('dust-field');
+  if(df){
+    for(let i=0;i<30;i++){
+      const p=document.createElement('div');
+      p.style.cssText='position:absolute;width:'+(.5+Math.random()*2)+'px;height:'+(.5+Math.random()*2)+'px;background:rgba(255,255,255,'+(Math.random()*.3+.1)+');border-radius:50%;left:'+Math.random()*100+'%;bottom:-5%;animation:dustDrift '+(8+Math.random()*12)+'s linear '+(Math.random()*10)+'s infinite';
+      df.appendChild(p);
+    }
+  }
+})();
 
 // ── STRIPE CHECKOUT ──
 async function buyItem(type, name, price) {
