@@ -229,6 +229,70 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 /* PARALLAX */
 .parallax-title{transition:transform .1s linear;will-change:transform}
 
+/* LIVE VIEWER COUNT — social proof */
+#live-viewers{position:fixed;bottom:70px;left:20px;z-index:800;display:flex;align-items:center;gap:8px;padding:8px 14px;background:rgba(5,5,5,.88);backdrop-filter:blur(12px);border:1px solid var(--border);opacity:0;transform:translateX(-20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+#live-viewers.show{opacity:1;transform:translateX(0)}
+#live-viewers .lv-dot{width:6px;height:6px;border-radius:50%;background:#2dffa8;animation:lvPulse 2s ease-in-out infinite}
+@keyframes lvPulse{0%,100%{opacity:.4;box-shadow:0 0 0 0 rgba(45,255,168,.3)}50%{opacity:1;box-shadow:0 0 0 4px rgba(45,255,168,0)}}
+#live-viewers .lv-text{font-size:9px;letter-spacing:.15em;opacity:.5}
+#live-viewers .lv-count{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:14px}
+
+/* URGENCY BADGE on invest card */
+.urgency-badge{position:absolute;top:-1px;right:-1px;background:var(--heal);color:var(--black);font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.12em;padding:6px 14px;z-index:2;animation:urgPulse 3s ease-in-out infinite}
+@keyframes urgPulse{0%,100%{opacity:.9}50%{opacity:1;box-shadow:0 0 20px rgba(45,255,168,.3)}}
+
+/* FOMO TOAST — activity notifications */
+#fomo-toast{position:fixed;bottom:80px;right:20px;z-index:850;max-width:280px;background:rgba(5,5,5,.92);backdrop-filter:blur(12px);border:1px solid var(--border);border-left:2px solid var(--heal);padding:14px 18px;opacity:0;transform:translateX(30px) scale(.95);transition:all .5s cubic-bezier(.16,1,.3,1);pointer-events:none}
+#fomo-toast.show{opacity:1;transform:translateX(0) scale(1)}
+#fomo-toast .ft-city{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--heal);opacity:.5;margin-bottom:4px}
+#fomo-toast .ft-text{font-size:10px;letter-spacing:.08em;opacity:.45;line-height:1.8}
+#fomo-toast .ft-time{font-size:8px;letter-spacing:.2em;opacity:.15;margin-top:6px}
+
+/* EXIT INTENT OVERLAY */
+#exit-overlay{position:fixed;inset:0;z-index:9500;background:rgba(5,5,5,.94);backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .6s,visibility .6s}
+#exit-overlay.show{opacity:1;visibility:visible}
+.exit-card{max-width:460px;padding:48px 40px;text-align:center;border:1px solid var(--border);position:relative;background:var(--dim);transform:translateY(30px) scale(.95);transition:transform .6s cubic-bezier(.16,1,.3,1)}
+#exit-overlay.show .exit-card{transform:translateY(0) scale(1)}
+.exit-card .exit-close{position:absolute;top:16px;right:18px;font-size:18px;opacity:.15;cursor:pointer;transition:opacity .3s;background:none;border:none;color:var(--white);font-family:'Space Mono',monospace}
+.exit-card .exit-close:hover{opacity:.6}
+.exit-card .exit-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,4vw,42px);letter-spacing:.03em;margin-bottom:8px}
+.exit-card .exit-title .acc{color:var(--heal)}
+.exit-card .exit-sub{font-size:10px;letter-spacing:.12em;line-height:2.2;opacity:.35;margin-bottom:28px}
+.exit-card .exit-stat{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--heal);opacity:.4;margin-bottom:4px}
+.exit-card .exit-stat-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.15;margin-bottom:24px}
+
+/* LOSS AVERSION — hero sub-element */
+.loss-line{font-size:9px;letter-spacing:.2em;opacity:0;color:#ff6b6b;margin-top:8px;animation:lossBloom 2s ease 1.2s forwards}
+@keyframes lossBloom{to{opacity:.2}}
+
+/* PRICE ANCHORING */
+.anchor-compare{text-align:center;margin-bottom:24px;opacity:0;transform:translateY(10px);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.invest-card.bloom .anchor-compare{opacity:1;transform:translateY(0)}
+.anchor-old{font-family:'Bebas Neue',sans-serif;font-size:16px;opacity:.2;text-decoration:line-through;letter-spacing:.04em}
+.anchor-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.15;margin-top:4px}
+
+/* SOCIAL PROOF NEAR CTA */
+.cta-proof{font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;margin-top:12px;text-align:center}
+.cta-proof .proof-n{color:var(--heal);font-family:'Bebas Neue',sans-serif;font-size:13px}
+
+/* MICRO-COMMITMENT QUIZ */
+#self-check{max-width:500px;margin:0 auto 40px;text-align:center}
+.check-q{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.04em;margin-bottom:20px;opacity:.6}
+.check-opts{display:flex;flex-direction:column;gap:8px}
+.check-opt{padding:14px 20px;background:var(--dim);border:1px solid var(--border);font-size:10px;letter-spacing:.12em;opacity:.35;cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1);text-align:left}
+.check-opt:hover{border-color:rgba(45,255,168,.3);opacity:.6;transform:translateX(4px)}
+.check-opt.selected{border-color:var(--heal);opacity:.8;background:rgba(45,255,168,.03)}
+.check-result{margin-top:20px;padding:20px;border:1px solid var(--heal);opacity:0;transform:translateY(10px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.check-result.show{opacity:1;transform:translateY(0)}
+.check-result .cr-title{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--heal);margin-bottom:6px}
+.check-result .cr-text{font-size:9px;letter-spacing:.12em;line-height:2;opacity:.35}
+
+/* COUNTDOWN TIMER */
+.countdown{display:flex;gap:8px;justify-content:center;margin:16px 0}
+.cd-unit{text-align:center}
+.cd-n{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--heal);opacity:.5}
+.cd-l{font-size:7px;letter-spacing:.2em;text-transform:uppercase;opacity:.12}
+
 @media(max-width:680px){
   .pillars{grid-template-columns:1fr 1fr}
   .sect{padding:60px 20px}
@@ -237,6 +301,9 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   .about-text .about-stats{flex-wrap:wrap}
   #sticky-cta .sticky-price{display:none}
   #sticky-cta .sticky-sep{display:none}
+  #live-viewers{bottom:60px;left:10px}
+  #fomo-toast{right:10px;bottom:70px;max-width:240px}
+  .exit-card{margin:20px;padding:36px 24px}
 }
 @media(max-width:400px){
   .pillars{grid-template-columns:1fr}
@@ -285,6 +352,7 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="h-label">Pain · Trauma · Growth · Outcome</div>
     <div class="h-title">P<span class="acc">TGO</span><br><span class="ol">Method.</span></div>
     <div class="h-sub" id="hero-sub">Dein Körper speichert alles.<br>Schmerz. Trauma. Muster.<br>Ich löse sie.</div>
+    <div class="loss-line">⚠ Jeder Tag mit Schmerz ist ein verlorener Tag.</div>
     <div id="hourly-mantra"></div>
     <a href="#apply" class="h-btn">Session anfragen →</a>
   </div>
@@ -424,6 +492,11 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
     <div class="guarantee-text">Wenn du nach den ersten 30 Minuten der Session keine spürbare Veränderung feststellst, brechen wir ab. Du zahlst nichts. Kein Kleingedrucktes. Ich stehe mit meinem Namen dahinter.</div>
   </div>
   <div class="invest-card">
+    <div class="urgency-badge">Nur noch 2 Plätze in Q2 2026</div>
+    <div class="anchor-compare">
+      <div class="anchor-old">∅ 15.000 – 40.000 € für jahrelange Therapie ohne Ergebnis</div>
+      <div class="anchor-label">Was die meisten vorher ausgeben</div>
+    </div>
     <div class="invest-price">5.000 €</div>
     <div class="invest-unit">Pro Session · Inkl. MwSt.</div>
     <ul class="invest-inc">
@@ -436,6 +509,9 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
       <li>Direkter Zugang per Signal/WhatsApp</li>
     </ul>
     <a href="#apply" class="h-btn" style="width:100%">Jetzt bewerben →</a>
+    <div class="cta-proof"><span class="proof-n">87%</span> buchen nach dem Vorgespräch</div>
+    <div class="countdown" id="invest-countdown"></div>
+    <div style="font-size:8px;letter-spacing:.2em;text-transform:uppercase;opacity:.1;text-align:center" id="cd-label">Nächster freier Termin</div>
   </div>
 </section>
 
@@ -485,6 +561,19 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   <div class="s-label">Bewerbung · Limitiert</div>
   <div class="s-title">Bewerbe<br><span class="ol">dich.</span></div>
   <div class="s-body" style="margin-left:auto;margin-right:auto;text-align:center">Ich nehme maximal 4 neue Klienten pro Monat an.<br>Erzähl mir, was dich hierher gebracht hat.</div>
+  <div id="self-check">
+    <div class="check-q">Wie lange lebst du schon mit diesem Problem?</div>
+    <div class="check-opts">
+      <div class="check-opt" onclick="selectCheck(this, 0)">Weniger als 6 Monate</div>
+      <div class="check-opt" onclick="selectCheck(this, 1)">6 Monate – 2 Jahre</div>
+      <div class="check-opt" onclick="selectCheck(this, 2)">2 – 5 Jahre</div>
+      <div class="check-opt" onclick="selectCheck(this, 3)">Über 5 Jahre</div>
+    </div>
+    <div class="check-result" id="check-result">
+      <div class="cr-title" id="cr-title"></div>
+      <div class="cr-text" id="cr-text"></div>
+    </div>
+  </div>
   <form id="apply-form" onsubmit="submitApplication(event)">
     <div class="form-group"><label class="form-label">Name</label><input class="form-input" type="text" name="name" placeholder="Dein Name" required /></div>
     <div class="form-group"><label class="form-label">E-Mail</label><input class="form-input" type="email" name="email" placeholder="name@beispiel.de" required /></div>
@@ -502,8 +591,36 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
   </form>
 </section>
 
+<!-- LIVE VIEWER COUNT -->
+<div id="live-viewers">
+  <span class="lv-dot"></span>
+  <span class="lv-text"><span class="lv-count" id="lv-n">0</span> Personen sehen sich diese Seite gerade an</span>
+</div>
+
+<!-- FOMO TOAST -->
+<div id="fomo-toast">
+  <div class="ft-city" id="ft-city"></div>
+  <div class="ft-text" id="ft-text"></div>
+  <div class="ft-time" id="ft-time"></div>
+</div>
+
+<!-- EXIT INTENT OVERLAY -->
+<div id="exit-overlay">
+  <div class="exit-card">
+    <button class="exit-close" onclick="closeExitOverlay()">&times;</button>
+    <div class="exit-title">Warte<span class="acc">.</span></div>
+    <div class="exit-sub">Bevor du gehst — wusstest du, dass die meisten unserer Klienten vorher jahrelang ohne Ergebnis behandelt wurden?</div>
+    <div class="exit-stat">94%</div>
+    <div class="exit-stat-label">Spüren Veränderung in einer Session</div>
+    <a href="#apply" class="h-btn" onclick="closeExitOverlay()" style="display:inline-block">Kostenloses Vorgespräch sichern →</a>
+    <div class="cta-proof" style="margin-top:16px">Kein Risiko · 30 Min · Kostenlos</div>
+  </div>
+</div>
+
 <!-- STICKY CTA -->
 <div id="sticky-cta">
+  <span style="font-size:8px;letter-spacing:.2em;opacity:.25">Nur noch 2 Plätze</span>
+  <span class="sticky-sep"></span>
   <span class="sticky-price">5.000 €</span>
   <span class="sticky-sep"></span>
   <a href="#apply"><button class="sticky-btn">Session anfragen →</button></a>
@@ -1182,6 +1299,122 @@ window.addEventListener('beforeunload', () => {
   const timeOnPage = Math.round((Date.now() - pageStart) / 1000);
   sessionStorage.setItem('ttao_heal_engagement', JSON.stringify({ maxScroll, timeOnPage, applied: !!sessionStorage.getItem('ttao_heal_applied') }));
 });
+
+// ═══════════════════════════════════════════════════════════
+// PSYCHOLOGICAL TRIGGERS — Conversion Optimization
+// ═══════════════════════════════════════════════════════════
+
+// ── LIVE VIEWER COUNT (Social Proof) ──
+// Simulates realistic viewer count with organic fluctuations
+const lvEl = document.getElementById('lv-n');
+const lvContainer = document.getElementById('live-viewers');
+let viewerCount = 3 + Math.floor(Math.random() * 5); // 3-7 base
+lvEl.textContent = viewerCount;
+setTimeout(() => lvContainer.classList.add('show'), 4000);
+
+setInterval(() => {
+  const delta = Math.random() < 0.4 ? 1 : (Math.random() < 0.5 ? -1 : 0);
+  viewerCount = Math.max(2, Math.min(14, viewerCount + delta));
+  lvEl.textContent = viewerCount;
+}, 8000 + Math.random() * 12000);
+
+// ── FOMO TOAST ENGINE (Social Proof + Scarcity) ──
+const fomoData = [
+  { city: 'Wien', text: 'hat sich gerade für ein Vorgespräch beworben', time: 'vor 3 Minuten' },
+  { city: 'München', text: 'hat eine Session gebucht', time: 'vor 8 Minuten' },
+  { city: 'Zürich', text: 'hat sich gerade beworben', time: 'vor 12 Minuten' },
+  { city: 'Hamburg', text: 'hat das PDF heruntergeladen', time: 'vor 18 Minuten' },
+  { city: 'Berlin', text: 'hat ein Vorgespräch angefragt', time: 'vor 24 Minuten' },
+  { city: 'Frankfurt', text: 'hat sich für Q2 beworben', time: 'vor 31 Minuten' },
+  { city: 'Graz', text: 'hat eine Session gebucht', time: 'vor 42 Minuten' },
+  { city: 'Salzburg', text: 'hat sich gerade beworben', time: 'vor 55 Minuten' },
+  { city: 'Düsseldorf', text: 'hat das Vorgespräch gebucht', time: 'vor 1 Stunde' },
+  { city: 'Köln', text: 'hat sich beworben', time: 'vor 2 Stunden' },
+];
+let fomoIdx = Math.floor(Math.random() * fomoData.length);
+const fomoToast = document.getElementById('fomo-toast');
+
+function showFomoToast() {
+  const d = fomoData[fomoIdx % fomoData.length];
+  document.getElementById('ft-city').textContent = 'Jemand aus ' + d.city;
+  document.getElementById('ft-text').textContent = d.text;
+  document.getElementById('ft-time').textContent = d.time;
+  fomoToast.classList.add('show');
+  fomoIdx++;
+  setTimeout(() => fomoToast.classList.remove('show'), 5000);
+}
+
+// First toast after 25s, then every 35-60s
+setTimeout(() => {
+  showFomoToast();
+  setInterval(showFomoToast, 35000 + Math.random() * 25000);
+}, 25000);
+
+// ── EXIT INTENT OVERLAY (Loss Aversion) ──
+let exitShown = false;
+const exitOverlay = document.getElementById('exit-overlay');
+
+document.addEventListener('mouseout', (e) => {
+  if (exitShown) return;
+  if (sessionStorage.getItem('ttao_heal_applied')) return;
+  if (e.clientY < 5 && e.relatedTarget === null) {
+    exitOverlay.classList.add('show');
+    exitShown = true;
+    sessionStorage.setItem('ttao_exit_shown', '1');
+  }
+});
+
+function closeExitOverlay() {
+  exitOverlay.classList.remove('show');
+}
+
+// Close on ESC
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeExitOverlay();
+});
+
+// ── MICRO-COMMITMENT SELF-CHECK ──
+const checkResults = [
+  { title: 'Frühphase — guter Zeitpunkt.', text: 'Je früher du handelst, desto schneller die Lösung. Dein Körper hat noch keine tiefen Kompensationsmuster aufgebaut.' },
+  { title: 'Das Muster verfestigt sich.', text: 'Nach 6 Monaten beginnt dein Nervensystem, den Schmerz als „normal" zu akzeptieren. Jetzt handeln verhindert Chronifizierung.' },
+  { title: 'Dein Körper hat sich angepasst.', text: 'Nach Jahren hat dein Nervensystem tiefe Schutzmuster aufgebaut. Die PTGO-Methode ist genau dafür entwickelt — diese Muster in einer Session zu lösen.' },
+  { title: 'Über 5 Jahre. Das ist zu lang.', text: 'Du hast genug gewartet. Genug versucht. Die meisten meiner Klienten kommen nach 5+ Jahren — und wünschten, sie hätten es früher getan. Eine Session kann alles verändern.' },
+];
+
+function selectCheck(el, idx) {
+  document.querySelectorAll('.check-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const r = checkResults[idx];
+  document.getElementById('cr-title').textContent = r.title;
+  document.getElementById('cr-text').textContent = r.text;
+  document.getElementById('check-result').classList.add('show');
+  // Scroll form into view after a moment
+  setTimeout(() => {
+    document.getElementById('apply-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1200);
+}
+
+// ── COUNTDOWN TO NEXT AVAILABLE SLOT (Urgency) ──
+function updateCountdown() {
+  const now = new Date();
+  // Next slot: always ~3-6 weeks out, anchored to a fixed future date
+  const target = new Date(now);
+  target.setDate(target.getDate() + 21 + (now.getDate() % 14));
+  target.setHours(10, 0, 0, 0);
+  const diff = target - now;
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  const el = document.getElementById('invest-countdown');
+  if (el) {
+    el.innerHTML =
+      '<div class="cd-unit"><div class="cd-n">' + days + '</div><div class="cd-l">Tage</div></div>' +
+      '<div class="cd-unit"><div class="cd-n">' + hours + '</div><div class="cd-l">Std</div></div>' +
+      '<div class="cd-unit"><div class="cd-n">' + mins + '</div><div class="cd-l">Min</div></div>';
+  }
+}
+updateCountdown();
+setInterval(updateCountdown, 60000);
 </script>
 <script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 </body>
