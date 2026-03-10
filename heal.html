@@ -6,8 +6,8 @@
 <title>PTGO METHOD — Pain · Trauma · Growth · Outcome</title>
 <meta name="description" content="PTGO Method. Dein Körper speichert alles. Schmerz. Trauma. Muster. Ich löse sie. Premium 1:1 Sessions.">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -22,11 +22,6 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 /* ORGANIC AMBIENT — living background canvas */
 #organic-bg{position:fixed;inset:0;z-index:-1;pointer-events:none}
 
-/* ORGANIC SECTION TRANSITIONS — SVG wave dividers */
-.sect-wave{position:relative;height:60px;overflow:hidden;margin-top:-1px}
-.sect-wave svg{position:absolute;bottom:0;width:100%;height:100%}
-.sect-wave path{fill:var(--dim);opacity:.3}
-
 #cur{position:fixed;width:9px;height:9px;background:var(--heal);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .35s cubic-bezier(.16,1,.3,1),height .35s cubic-bezier(.16,1,.3,1),border-radius .4s}
 #cur.h{width:36px;height:36px;background:transparent;border:1px solid var(--heal)}
 /* Cursor trail — organic ghost */
@@ -34,10 +29,6 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 
 #grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
 @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
-
-/* LIVING GRID - subtle background grid that breathes */
-#living-grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.015}
-#living-grid canvas{width:100%;height:100%}
 
 /* TIME INDICATOR */
 #time-phase{position:fixed;top:20px;right:28px;z-index:20;text-align:right}
@@ -80,12 +71,6 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .sect.revealed .s-body{opacity:.3;transform:translateY(0)}
 @keyframes titleBreathe{0%,100%{letter-spacing:.03em;opacity:1}50%{letter-spacing:.04em;opacity:.92}}
 
-/* ORGANIC WAVE SEPARATOR */
-.organic-sep{height:80px;position:relative;overflow:hidden;margin:-1px 0}
-.organic-sep svg{position:absolute;width:100%;height:100%;left:0;bottom:0}
-.organic-sep .wave-path{fill:none;stroke:var(--heal);stroke-width:.3;opacity:.06;animation:waveDrift 12s ease-in-out infinite alternate}
-.organic-sep .wave-path:nth-child(2){opacity:.03;animation-duration:16s;animation-direction:alternate-reverse}
-@keyframes waveDrift{0%{d:path('M0,40 C200,20 400,60 600,35 C800,10 1000,50 1200,40');opacity:.06}100%{d:path('M0,35 C200,55 400,25 600,45 C800,60 1000,20 1200,35');opacity:.04}}
 
 /* PILLARS - now with hover glow */
 .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:900px;margin:40px auto 0}
@@ -240,9 +225,6 @@ footer .f-glow{position:absolute;bottom:-40px;left:50%;transform:translateX(-50%
 .faq-a p{font-size:10px;letter-spacing:.1em;line-height:2.2;opacity:0;transform:translateY(8px);transition:all .5s cubic-bezier(.16,1,.3,1) .15s}
 .faq-item.open .faq-a{max-height:300px;padding-bottom:20px}
 .faq-item.open .faq-a p{opacity:.3;transform:translateY(0)}
-
-/* MAGNETIC BUTTON */
-.mag-wrap{display:inline-block;position:relative}
 
 /* PARALLAX */
 .parallax-title{transition:transform .1s linear;will-change:transform}
