@@ -274,14 +274,6 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
 </head>
 <body>
 
-<!-- PASSWORD -->
-<div id="pw-screen" style="position:fixed;inset:0;z-index:9000;background:#050505;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,10vw,100px);letter-spacing:.05em;line-height:.9;text-align:center">THE<span style="color:#ff2d8e">TOYS</span><br><span style="color:transparent;-webkit-text-stroke:1px rgba(240,236,228,.2)">ARE</span>OUT</div>
-  <div style="width:9px;height:9px;background:#ff2d8e;border-radius:50%;animation:pulse 3.5s ease-in-out infinite"></div>
-  <input id="pw-in" type="password" placeholder="·····" autocomplete="off" style="background:none;border:none;border-bottom:1px solid rgba(255,255,255,.15);color:#f0ece4;font-family:'Space Mono',monospace;font-size:18px;letter-spacing:.4em;text-align:center;width:160px;padding:10px 0;outline:none;caret-color:#ff2d8e" />
-  <div id="pw-err" style="font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:#ff2d8e;opacity:0;transition:opacity .3s">Falsch.</div>
-</div>
-
 <div id="cur"></div>
 <svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".055"/></svg>
 
@@ -814,31 +806,6 @@ async function sendMsg() {
 }
 document.getElementById('chat-in').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendMsg(); } });
 
-// ── PASSWORD ──
-const PW = 'Toy.';
-const pwScreen = document.getElementById('pw-screen');
-const pwIn = document.getElementById('pw-in');
-const pwErr = document.getElementById('pw-err');
-if (sessionStorage.getItem('ttao_auth') === '1') {
-  pwScreen.style.display = 'none';
-} else {
-  document.body.style.overflow = 'hidden';
-  pwIn.focus();
-}
-pwIn.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    if (pwIn.value === PW) {
-      sessionStorage.setItem('ttao_auth', '1');
-      pwScreen.style.opacity = '0';
-      pwScreen.style.transition = 'opacity .6s';
-      setTimeout(() => { pwScreen.style.display = 'none'; document.body.style.overflow = ''; }, 600);
-    } else {
-      pwErr.style.opacity = '1';
-      pwIn.value = '';
-      setTimeout(() => pwErr.style.opacity = '0', 1800);
-    }
-  }
-});
 
 // ── STRIPE CHECKOUT ──
 async function buyItem(type, name, price) {
