@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TTAO Bot — Mission Control</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#050505;--card:#0a0a0a;--border:#1a1a1a;--accent:#2dffa8;--accent2:#00d4ff;--warn:#ff4444;--text:#e0e0e0;--dim:#666}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
+.nav h1{font-size:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav .live{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--accent)}
+.nav .live .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{padding:12px 20px;font-size:13px;color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.2s}
+.tab.active{color:var(--accent);border-color:var(--accent)}
+.tab:hover{color:var(--text)}
+
+/* PANELS */
+.panel{display:none;padding:20px}
+.panel.active{display:block}
+
+/* STATS GRID */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat .num{font-size:28px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat .label{font-size:11px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 12px;color:var(--dim);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:rgba(45,255,168,.03)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.new{background:rgba(45,255,168,.15);color:var(--accent)}
+.badge.casual{background:rgba(0,212,255,.15);color:var(--accent2)}
+.badge.engaged{background:rgba(255,200,0,.15);color:#ffc800}
+.badge.superfan{background:rgba(255,100,0,.15);color:#ff6400}
+.badge.vip{background:rgba(200,0,255,.15);color:#c800ff}
+.badge.whale{background:rgba(255,0,100,.15);color:#ff0064}
+.badge.positive{background:rgba(45,255,168,.15);color:var(--accent)}
+.badge.negative{background:rgba(255,68,68,.15);color:var(--warn)}
+.badge.neutral{background:rgba(255,255,255,.08);color:var(--dim)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h3{font-size:15px;margin-bottom:12px;color:var(--accent)}
+
+/* BROADCAST */
+.broadcast-form textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-size:14px;resize:vertical;min-height:100px;font-family:inherit}
+.broadcast-form input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:8px}
+.tier-select{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.tier-select label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.tier-select input[type=checkbox]{accent-color:var(--accent)}
+
+/* BUTTONS */
+.btn{padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:.8}
+.btn-danger{background:var(--warn);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent)}
+
+/* CONVERSATION VIEW */
+.convo{max-height:400px;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.4}
+.msg.inbound{align-self:flex-start;background:#1a1a2e;border-bottom-left-radius:4px}
+.msg.outbound{align-self:flex-end;background:rgba(45,255,168,.1);border-bottom-right-radius:4px}
+.msg .time{font-size:10px;color:var(--dim);margin-top:4px}
+
+/* CHART */
+.chart-bar{display:flex;align-items:end;gap:4px;height:120px;margin:16px 0}
+.chart-bar .bar{flex:1;background:linear-gradient(to top,var(--accent),var(--accent2));border-radius:4px 4px 0 0;min-height:2px;transition:.3s;position:relative}
+.chart-bar .bar:hover{opacity:.8}
+.chart-bar .bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--dim)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--dim)}
+.spinner{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .tbl{font-size:12px}
+  .tbl th,.tbl td{padding:8px 6px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <h1>TTAO BOT — Mission Control</h1>
+  <div class="live"><span class="dot"></span>Live</div>
+</nav>
+
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Dashboard</div>
+  <div class="tab" data-tab="fans">Fans</div>
+  <div class="tab" data-tab="conversations">Gespräche</div>
+  <div class="tab" data-tab="sales">Sales</div>
+  <div class="tab" data-tab="bookings">Bookings</div>
+  <div class="tab" data-tab="broadcast">Broadcast</div>
+  <div class="tab" data-tab="settings">Settings</div>
+</div>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div class="panel active" id="overview">
+  <div class="stats" id="overviewStats">
+    <div class="stat"><div class="num" id="statFans">—</div><div class="label">Fans Gesamt</div></div>
+    <div class="stat"><div class="num" id="statNew">—</div><div class="label">Neue (7 Tage)</div></div>
+    <div class="stat"><div class="num" id="statVIP">—</div><div class="label">VIPs</div></div>
+    <div class="stat"><div class="num" id="statMsgs">—</div><div class="label">Nachrichten Heute</div></div>
+    <div class="stat"><div class="num" id="statRevenue">—</div><div class="label">Umsatz (30d)</div></div>
+    <div class="stat"><div class="num" id="statBookings">—</div><div class="label">Offene Bookings</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Nachrichten-Verlauf (7 Tage)</h3>
+    <div class="chart-bar" id="msgChart"></div>
+  </div>
+
+  <div class="card">
+    <h3>Letzte Aktivität</h3>
+    <table class="tbl" id="recentActivity">
+      <thead><tr><th>Zeit</th><th>Fan</th><th>Nachricht</th><th>Intent</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== FANS ==================== -->
+<div class="panel" id="fans">
+  <div class="stats" id="fanStats"></div>
+  <div class="card">
+    <h3>Fan-Datenbank</h3>
+    <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost fan-filter active" data-filter="all">Alle</button>
+      <button class="btn btn-ghost fan-filter" data-filter="whale">Whale</button>
+      <button class="btn btn-ghost fan-filter" data-filter="vip">VIP</button>
+      <button class="btn btn-ghost fan-filter" data-filter="superfan">Superfan</button>
+      <button class="btn btn-ghost fan-filter" data-filter="engaged">Engaged</button>
+      <button class="btn btn-ghost fan-filter" data-filter="new">New</button>
+    </div>
+    <table class="tbl" id="fansTable">
+      <thead><tr><th>Fan</th><th>Tier</th><th>VIP Score</th><th>Mood</th><th>Messages</th><th>Umsatz</th><th>Letzter Kontakt</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== CONVERSATIONS ==================== -->
+<div class="panel" id="conversations">
+  <div class="card">
+    <h3>Live-Gespräche</h3>
+    <table class="tbl" id="convosTable">
+      <thead><tr><th>Fan</th><th>Letzte Nachricht</th><th>Intent</th><th>Sentiment</th><th>Zeit</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="card" id="convoDetail" style="display:none">
+    <h3 id="convoFanName">Gespräch</h3>
+    <div class="convo" id="convoMessages"></div>
+  </div>
+</div>
+
+<!-- ==================== SALES ==================== -->
+<div class="panel" id="sales">
+  <div class="stats" id="salesStats"></div>
+  <div class="card">
+    <h3>Verkäufe</h3>
+    <table class="tbl" id="salesTable">
+      <thead><tr><th>Datum</th><th>Fan</th><th>Produkt</th><th>Betrag</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== BOOKINGS ==================== -->
+<div class="panel" id="bookings">
+  <div class="card">
+    <h3>Booking-Anfragen</h3>
+    <table class="tbl" id="bookingsTable">
+      <thead><tr><th>Datum</th><th>Fan</th><th>Typ</th><th>Beschreibung</th><th>Status</th><th>Aktion</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== BROADCAST ==================== -->
+<div class="panel" id="broadcast">
+  <div class="card">
+    <h3>Neue Broadcast-Nachricht</h3>
+    <div class="broadcast-form">
+      <input type="text" id="bcTitle" placeholder="Titel (intern)">
+      <textarea id="bcBody" placeholder="Nachricht an deine Fans...&#10;&#10;Variablen: {name} = Fanname, {tier} = Fan-Tier"></textarea>
+      <div class="tier-select">
+        <strong style="width:100%;font-size:13px;margin-bottom:4px">Zielgruppe:</strong>
+        <label><input type="checkbox" value="whale" checked> Whale</label>
+        <label><input type="checkbox" value="vip" checked> VIP</label>
+        <label><input type="checkbox" value="superfan" checked> Superfan</label>
+        <label><input type="checkbox" value="engaged" checked> Engaged</label>
+        <label><input type="checkbox" value="casual"> Casual</label>
+        <label><input type="checkbox" value="new"> New</label>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" onclick="createBroadcast()">Broadcast erstellen</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Vergangene Broadcasts</h3>
+    <table class="tbl" id="broadcastTable">
+      <thead><tr><th>Datum</th><th>Titel</th><th>Empfänger</th><th>Zugestellt</th><th>Status</th><th>Aktion</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== SETTINGS ==================== -->
+<div class="panel" id="settings">
+  <div class="card">
+    <h3>Supabase Verbindung</h3>
+    <input type="url" id="setSupaUrl" placeholder="Supabase URL" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;margin-bottom:8px;font-size:14px">
+    <input type="text" id="setSupaKey" placeholder="Supabase Anon Key (für Dashboard)" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;margin-bottom:8px;font-size:14px">
+    <button class="btn btn-primary" onclick="saveSettings()">Verbindung speichern</button>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px">Die Keys werden lokal im Browser gespeichert (localStorage).</p>
+  </div>
+
+  <div class="card">
+    <h3>Twilio Webhook URL</h3>
+    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;color:var(--accent)">
+      https://thetoysareout.com/.netlify/functions/whatsapp-bot
+    </div>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px">Diese URL in Twilio → WhatsApp Sandbox → "When a message comes in" eintragen.</p>
+  </div>
+
+  <div class="card">
+    <h3>Stripe Webhook URL</h3>
+    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;word-break:break-all;color:var(--accent)">
+      https://thetoysareout.com/.netlify/functions/bot-stripe-webhook
+    </div>
+    <p style="font-size:12px;color:var(--dim);margin-top:8px">Diese URL in Stripe → Developers → Webhooks eintragen. Event: checkout.session.completed</p>
+  </div>
+
+  <div class="card">
+    <h3>Benötigte Netlify Environment Variables</h3>
+    <table class="tbl">
+      <thead><tr><th>Variable</th><th>Beschreibung</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_URL</td><td>Supabase Project URL</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">SUPABASE_SERVICE_ROLE_KEY</td><td>Supabase Service Role Key (Backend)</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_ACCOUNT_SID</td><td>Twilio Account SID</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_AUTH_TOKEN</td><td>Twilio Auth Token</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">TWILIO_WHATSAPP_FROM</td><td>WhatsApp Nummer (whatsapp:+49...)</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">OWNER_WHATSAPP</td><td>Deine WhatsApp Nummer für Alerts</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">ANTHROPIC_API_KEY</td><td>Claude API Key für Bot-Brain</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">STRIPE_SECRET_KEY</td><td>Stripe Secret Key</td></tr>
+        <tr><td style="font-family:monospace;color:var(--accent)">STRIPE_WEBHOOK_SECRET</td><td>Stripe Webhook Signing Secret</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Datenbank Setup</h3>
+    <p style="font-size:13px;color:var(--dim);margin-bottom:12px">SQL-Migration in Supabase SQL Editor ausführen:</p>
+    <div style="background:var(--bg);border:1px solid var(--border);padding:12px;border-radius:8px;font-family:monospace;font-size:12px;color:var(--accent)">
+      supabase/migrations/002_bot_brain.sql
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// BOT ADMIN — Frontend Logic
+// ============================================================
+
+const SUPA_URL = () => localStorage.getItem('ttao_supa_url') || '';
+const SUPA_KEY = () => localStorage.getItem('ttao_supa_key') || '';
+
+function supa() {
+  const url = SUPA_URL();
+  const key = SUPA_KEY();
+  if (!url || !key) return null;
+  return { url, key };
+}
+
+async function supaFetch(table, { select = '*', filters = {}, order, limit, eq } = {}) {
+  const s = supa();
+  if (!s) return [];
+
+  let url = `${s.url}/rest/v1/${table}?select=${encodeURIComponent(select)}`;
+
+  if (eq) {
+    Object.entries(eq).forEach(([k, v]) => { url += `&${k}=eq.${encodeURIComponent(v)}`; });
+  }
+  if (filters.gte) {
+    Object.entries(filters.gte).forEach(([k, v]) => { url += `&${k}=gte.${encodeURIComponent(v)}`; });
+  }
+  if (filters.in_) {
+    Object.entries(filters.in_).forEach(([k, v]) => { url += `&${k}=in.(${v.join(',')})`; });
+  }
+  if (order) url += `&order=${order}`;
+  if (limit) url += `&limit=${limit}`;
+
+  const res = await fetch(url, {
+    headers: { 'apikey': s.key, 'Authorization': `Bearer ${s.key}` }
+  });
+  return res.ok ? await res.json() : [];
+}
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.tab).classList.add('active');
+    loadPanel(tab.dataset.tab);
+  });
+});
+
+function loadPanel(name) {
+  const loaders = { overview: loadOverview, fans: loadFans, conversations: loadConversations, sales: loadSales, bookings: loadBookings, broadcast: loadBroadcasts };
+  if (loaders[name]) loaders[name]();
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+async function loadOverview() {
+  if (!supa()) return;
+
+  const [fans, recentFans, vips, todayMsgs, sales, bookings, weekData] = await Promise.all([
+    supaFetch('fans', { select: 'id' }),
+    supaFetch('fans', { select: 'id', filters: { gte: { created_at: daysAgo(7) } } }),
+    supaFetch('fans', { select: 'id', filters: { gte: { vip_score: '80' } } }),
+    supaFetch('conversations', { select: 'id', filters: { gte: { created_at: todayStr() } } }),
+    supaFetch('bot_sales', { select: 'price_cents', eq: { stripe_payment_status: 'paid' }, filters: { gte: { created_at: daysAgo(30) } } }),
+    supaFetch('bot_bookings', { select: 'id', eq: { status: 'new' } }),
+    supaFetch('bot_analytics', { select: '*', order: 'date.desc', limit: 7 })
+  ]);
+
+  document.getElementById('statFans').textContent = fans.length;
+  document.getElementById('statNew').textContent = recentFans.length;
+  document.getElementById('statVIP').textContent = vips.length;
+  document.getElementById('statMsgs').textContent = todayMsgs.length;
+  document.getElementById('statRevenue').textContent = '€' + (sales.reduce((s, x) => s + (x.price_cents || 0), 0) / 100).toFixed(0);
+  document.getElementById('statBookings').textContent = bookings.length;
+
+  // Chart
+  const chart = document.getElementById('msgChart');
+  chart.innerHTML = '';
+  const maxVal = Math.max(1, ...weekData.map(d => d.total_messages_in || 0));
+  weekData.reverse().forEach(d => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.height = `${((d.total_messages_in || 0) / maxVal) * 100}%`;
+    bar.innerHTML = `<div class="val">${d.total_messages_in || 0}</div>`;
+    bar.title = d.date;
+    chart.appendChild(bar);
+  });
+
+  // Recent activity
+  const recent = await supaFetch('conversations', { select: '*', order: 'created_at.desc', limit: 15, eq: { direction: 'inbound' } });
+  const tbody = document.querySelector('#recentActivity tbody');
+  tbody.innerHTML = recent.map(c => `
+    <tr>
+      <td>${timeAgo(c.created_at)}</td>
+      <td>${c.phone}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.body || '')}</td>
+      <td><span class="badge ${c.intent === 'purchase' ? 'engaged' : c.intent === 'booking' ? 'vip' : 'neutral'}">${c.intent || '—'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// FANS
+// ============================================================
+async function loadFans(filter) {
+  if (!supa()) return;
+
+  let opts = { select: '*', order: 'vip_score.desc', limit: 100 };
+  if (filter && filter !== 'all') opts.eq = { tier: filter };
+
+  const fans = await supaFetch('fans', opts);
+  const tbody = document.querySelector('#fansTable tbody');
+  tbody.innerHTML = fans.map(f => `
+    <tr>
+      <td><strong>${esc(f.name || 'Unbekannt')}</strong><br><span style="color:var(--dim);font-size:11px">${f.phone}</span></td>
+      <td><span class="badge ${f.tier}">${f.tier}</span></td>
+      <td>${f.vip_score}</td>
+      <td><span class="badge ${f.mood}">${f.mood}</span></td>
+      <td>${f.total_messages || 0}</td>
+      <td>€${((f.total_spent_cents || 0) / 100).toFixed(2)}</td>
+      <td>${f.last_message_at ? timeAgo(f.last_message_at) : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+document.querySelectorAll('.fan-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.fan-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadFans(btn.dataset.filter);
+  });
+});
+
+// ============================================================
+// CONVERSATIONS
+// ============================================================
+async function loadConversations() {
+  if (!supa()) return;
+
+  // Get latest message per fan
+  const convos = await supaFetch('conversations', { select: '*', order: 'created_at.desc', limit: 50, eq: { direction: 'inbound' } });
+
+  const seen = new Set();
+  const unique = convos.filter(c => {
+    if (seen.has(c.phone)) return false;
+    seen.add(c.phone);
+    return true;
+  });
+
+  const tbody = document.querySelector('#convosTable tbody');
+  tbody.innerHTML = unique.map(c => `
+    <tr style="cursor:pointer" onclick="loadConvo('${c.fan_id}','${esc(c.phone)}')">
+      <td>${esc(c.phone)}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.body || '')}</td>
+      <td><span class="badge neutral">${c.intent || '—'}</span></td>
+      <td>${c.sentiment != null ? (c.sentiment > 0 ? '😊' : c.sentiment < 0 ? '😔' : '😐') : '—'}</td>
+      <td>${timeAgo(c.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+async function loadConvo(fanId, phone) {
+  const detail = document.getElementById('convoDetail');
+  detail.style.display = 'block';
+  document.getElementById('convoFanName').textContent = phone;
+
+  const msgs = await supaFetch('conversations', { select: '*', eq: { fan_id: fanId }, order: 'created_at.asc', limit: 50 });
+
+  const el = document.getElementById('convoMessages');
+  el.innerHTML = msgs.map(m => `
+    <div class="msg ${m.direction}">
+      ${esc(m.body || '')}
+      <div class="time">${new Date(m.created_at).toLocaleString('de-DE')}</div>
+    </div>
+  `).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ============================================================
+// SALES
+// ============================================================
+async function loadSales() {
+  if (!supa()) return;
+
+  const sales = await supaFetch('bot_sales', { select: '*', order: 'created_at.desc', limit: 50 });
+
+  const total = sales.filter(s => s.stripe_payment_status === 'paid').reduce((sum, s) => sum + (s.price_cents || 0), 0);
+  const paid = sales.filter(s => s.stripe_payment_status === 'paid').length;
+
+  const statsEl = document.getElementById('salesStats');
+  statsEl.innerHTML = `
+    <div class="stat"><div class="num">${sales.length}</div><div class="label">Checkout-Links</div></div>
+    <div class="stat"><div class="num">${paid}</div><div class="label">Bezahlt</div></div>
+    <div class="stat"><div class="num">€${(total / 100).toFixed(0)}</div><div class="label">Umsatz</div></div>
+    <div class="stat"><div class="num">${sales.length > 0 ? Math.round(paid / sales.length * 100) : 0}%</div><div class="label">Conversion</div></div>
+  `;
+
+  const tbody = document.querySelector('#salesTable tbody');
+  tbody.innerHTML = sales.map(s => `
+    <tr>
+      <td>${new Date(s.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${s.phone}</td>
+      <td>${esc(s.item_name)}</td>
+      <td>€${((s.price_cents || 0) / 100).toFixed(2)}</td>
+      <td><span class="badge ${s.stripe_payment_status === 'paid' ? 'positive' : 'neutral'}">${s.stripe_payment_status}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ============================================================
+// BOOKINGS
+// ============================================================
+async function loadBookings() {
+  if (!supa()) return;
+
+  const bookings = await supaFetch('bot_bookings', { select: '*', order: 'created_at.desc', limit: 50 });
+
+  const tbody = document.querySelector('#bookingsTable tbody');
+  tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td>${new Date(b.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${b.phone}</td>
+      <td><span class="badge casual">${b.booking_type}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(b.description || '')}</td>
+      <td><span class="badge ${b.status === 'confirmed' ? 'positive' : b.status === 'new' ? 'new' : 'neutral'}">${b.status}</span></td>
+      <td>
+        ${b.status === 'new' ? `<button class="btn btn-ghost" onclick="updateBooking('${b.id}','reviewing')" style="padding:4px 10px;font-size:12px">Review</button>` : ''}
+        ${b.status === 'reviewing' ? `<button class="btn btn-primary" onclick="updateBooking('${b.id}','confirmed')" style="padding:4px 10px;font-size:12px">Confirm</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function updateBooking(id, status) {
+  const s = supa();
+  if (!s) return;
+
+  await fetch(`${s.url}/rest/v1/bot_bookings?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: {
+      'apikey': s.key,
+      'Authorization': `Bearer ${s.key}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ status })
+  });
+  loadBookings();
+}
+
+// ============================================================
+// BROADCAST
+// ============================================================
+async function loadBroadcasts() {
+  if (!supa()) return;
+
+  const broadcasts = await supaFetch('broadcasts', { select: '*', order: 'created_at.desc', limit: 20 });
+
+  const tbody = document.querySelector('#broadcastTable tbody');
+  tbody.innerHTML = broadcasts.map(b => `
+    <tr>
+      <td>${new Date(b.created_at).toLocaleDateString('de-DE')}</td>
+      <td>${esc(b.title)}</td>
+      <td>${b.total_recipients || 0}</td>
+      <td>${b.total_delivered || 0}</td>
+      <td><span class="badge ${b.status === 'sent' ? 'positive' : b.status === 'draft' ? 'neutral' : 'new'}">${b.status}</span></td>
+      <td>
+        ${b.status === 'draft' ? `<button class="btn btn-primary" onclick="sendBroadcast('${b.id}')" style="padding:4px 10px;font-size:12px">Senden</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function createBroadcast() {
+  const title = document.getElementById('bcTitle').value;
+  const body = document.getElementById('bcBody').value;
+  if (!body) return alert('Nachricht eingeben!');
+
+  const tiers = [...document.querySelectorAll('.tier-select input:checked')].map(i => i.value);
+
+  const res = await fetch('/.netlify/functions/bot-broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'create', title, body, target_tiers: tiers })
+  });
+
+  if (res.ok) {
+    document.getElementById('bcTitle').value = '';
+    document.getElementById('bcBody').value = '';
+    loadBroadcasts();
+  }
+}
+
+async function sendBroadcast(id) {
+  if (!confirm('Broadcast jetzt an alle ausgewählten Fans senden?')) return;
+
+  const res = await fetch('/.netlify/functions/bot-broadcast', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'send', broadcast_id: id })
+  });
+
+  const data = await res.json();
+  alert(`Gesendet: ${data.delivered || 0} / ${data.total || 0}`);
+  loadBroadcasts();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveSettings() {
+  const url = document.getElementById('setSupaUrl').value.trim();
+  const key = document.getElementById('setSupaKey').value.trim();
+  if (url) localStorage.setItem('ttao_supa_url', url);
+  if (key) localStorage.setItem('ttao_supa_key', key);
+  alert('Verbindung gespeichert! Dashboard wird geladen...');
+  loadOverview();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function daysAgo(n) { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString(); }
+function timeAgo(ts) {
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60) return 'gerade eben';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+  return Math.floor(diff / 86400) + 'd';
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', () => {
+  // Load saved settings
+  const savedUrl = localStorage.getItem('ttao_supa_url');
+  const savedKey = localStorage.getItem('ttao_supa_key');
+  if (savedUrl) document.getElementById('setSupaUrl').value = savedUrl;
+  if (savedKey) document.getElementById('setSupaKey').value = savedKey;
+
+  if (savedUrl && savedKey) {
+    loadOverview();
+  } else {
+    // Show settings tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-tab="settings"]').classList.add('active');
+    document.getElementById('settings').classList.add('active');
+  }
+
+  // Auto-refresh every 30 seconds
+  setInterval(() => {
+    const activeTab = document.querySelector('.tab.active');
+    if (activeTab) loadPanel(activeTab.dataset.tab);
+  }, 30000);
+});
+</script>
+</body>
+</html>
