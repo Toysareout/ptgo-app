@@ -127,6 +127,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   <div class="tab" data-tab="bookings">Bookings</div>
   <div class="tab" data-tab="broadcast">Broadcast</div>
   <div class="tab" data-tab="evolution">Evolution</div>
+  <div class="tab" data-tab="venues">Live Piano</div>
   <div class="tab" data-tab="settings">Settings</div>
 </div>
 
@@ -404,6 +405,116 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
   </div>
 </div>
 
+<!-- ==================== VENUE OUTREACH (Live Piano) ==================== -->
+<div class="panel" id="venues">
+  <div class="stats" id="venue-stats">
+    <div class="stat"><div class="num" id="vs-total">0</div><div class="label">Venues gesamt</div></div>
+    <div class="stat"><div class="num" id="vs-contacted">0</div><div class="label">Kontaktiert</div></div>
+    <div class="stat"><div class="num" id="vs-interested">0</div><div class="label">Interessiert</div></div>
+    <div class="stat"><div class="num" id="vs-booked">0</div><div class="label">Gebucht</div></div>
+  </div>
+
+  <!-- DB SETUP HINT -->
+  <div class="card" id="venue-setup-card" style="border-color:var(--warn);display:none">
+    <h3 style="color:var(--warn)">Tabelle noch nicht angelegt</h3>
+    <p style="color:var(--dim);margin-bottom:12px;font-size:13px">Kopiere dieses SQL und führe es im <a href="https://supabase.com/dashboard/project/pwdhxarvemcgkhhnvbng/sql/new" target="_blank" style="color:var(--accent)">Supabase SQL Editor</a> aus:</p>
+    <button class="btn btn-primary" onclick="copyVenueSql()">SQL kopieren</button>
+    <span id="venue-sql-feedback" style="margin-left:12px;font-size:12px;color:var(--accent);opacity:0;transition:opacity .3s">Kopiert!</span>
+  </div>
+
+  <!-- AI RESEARCH -->
+  <div class="card">
+    <h3>AI Venue Research</h3>
+    <p style="color:var(--dim);margin-bottom:16px;font-size:13px">Claude recherchiert reale Locations in deiner Region, die einen Pianisten buchen könnten.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <select id="research-region" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px">
+        <option value="munich">München</option>
+        <option value="kitzbuehel">Kitzbühel</option>
+        <option value="rosenheim">Rosenheim & Umgebung</option>
+        <option value="innsbruck">Innsbruck</option>
+        <option value="salzburg">Salzburg</option>
+      </select>
+      <select id="research-category" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px">
+        <option value="hotel_luxury">Luxushotels</option>
+        <option value="restaurant_fine">Fine Dining</option>
+        <option value="event_location">Event Locations</option>
+        <option value="bar_lounge">Piano Bars & Lounges</option>
+        <option value="gallery">Galerien & Museen</option>
+        <option value="corporate">Firmen & Agenturen</option>
+        <option value="wedding">Hochzeitslocations</option>
+      </select>
+      <button class="btn btn-primary" onclick="runResearch()" id="research-btn">Recherche starten</button>
+    </div>
+    <div id="research-results" style="display:none">
+      <h4 style="margin-bottom:8px;font-size:14px;color:var(--accent2)">Gefundene Locations</h4>
+      <div id="research-list"></div>
+      <button class="btn btn-primary" onclick="addResearchResults()" id="add-results-btn" style="margin-top:12px">Alle zur Liste hinzufügen</button>
+    </div>
+  </div>
+
+  <!-- VENUE LIST -->
+  <div class="card">
+    <h3>Venue Pipeline</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-filter active" onclick="filterVenues('all',this)">Alle</button>
+      <button class="btn btn-ghost btn-filter" onclick="filterVenues('new',this)">Neu</button>
+      <button class="btn btn-ghost btn-filter" onclick="filterVenues('contacted',this)">Kontaktiert</button>
+      <button class="btn btn-ghost btn-filter" onclick="filterVenues('interested',this)">Interessiert</button>
+      <button class="btn btn-ghost btn-filter" onclick="filterVenues('booked',this)">Gebucht</button>
+    </div>
+    <table class="tbl">
+      <thead>
+        <tr><th>Name</th><th>Typ</th><th>Region</th><th>Status</th><th>Outreach</th><th>Aktionen</th></tr>
+      </thead>
+      <tbody id="venue-tbody"></tbody>
+    </table>
+    <p id="venue-empty" style="color:var(--dim);padding:20px;text-align:center;font-size:13px">Keine Venues. Starte eine AI-Recherche oder füge manuell hinzu.</p>
+  </div>
+
+  <!-- MANUAL ADD -->
+  <div class="card">
+    <h3>Venue manuell hinzufügen</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <input id="v-name" placeholder="Name" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+      <select id="v-type" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+        <option value="hotel_luxury">Hotel</option>
+        <option value="restaurant_fine">Restaurant</option>
+        <option value="event_location">Event Location</option>
+        <option value="bar_lounge">Bar / Lounge</option>
+        <option value="gallery">Galerie</option>
+        <option value="corporate">Corporate</option>
+        <option value="wedding">Hochzeit</option>
+        <option value="other">Sonstiges</option>
+      </select>
+      <select id="v-region" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+        <option value="munich">München</option>
+        <option value="kitzbuehel">Kitzbühel</option>
+        <option value="rosenheim">Rosenheim</option>
+        <option value="innsbruck">Innsbruck</option>
+        <option value="salzburg">Salzburg</option>
+      </select>
+      <input id="v-email" placeholder="E-Mail" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+      <input id="v-phone" placeholder="Telefon" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+      <input id="v-website" placeholder="Website" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px">
+    </div>
+    <textarea id="v-notes" placeholder="Notizen..." style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:8px;font-size:13px;margin-top:12px;min-height:60px;resize:vertical;font-family:inherit"></textarea>
+    <button class="btn btn-primary" onclick="addVenueManual()" style="margin-top:12px">Hinzufügen</button>
+  </div>
+
+  <!-- OUTREACH PREVIEW MODAL -->
+  <div id="outreach-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.8);align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:600px;width:100%;max-height:80vh;overflow-y:auto">
+      <h3 style="color:var(--accent);margin-bottom:4px" id="modal-venue-name"></h3>
+      <p style="color:var(--dim);font-size:12px;margin-bottom:16px" id="modal-venue-info"></p>
+      <textarea id="modal-message" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:12px;border-radius:8px;font-size:13px;min-height:200px;resize:vertical;font-family:inherit;line-height:1.6"></textarea>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button class="btn btn-primary" onclick="requestApproval()">Genehmigung anfragen (WhatsApp)</button>
+        <button class="btn btn-ghost" onclick="closeOutreachModal()">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== SETTINGS ==================== -->
 <div class="panel" id="settings">
   <div class="card" style="border-color:var(--accent);border-width:2px">
@@ -540,7 +651,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 function loadPanel(name) {
-  const loaders = { overview: loadOverview, fans: loadFans, conversations: loadConversations, sales: loadSales, bookings: loadBookings, broadcast: loadBroadcasts, evolution: loadEvolution, setup: () => {} };
+  const loaders = { overview: loadOverview, fans: loadFans, conversations: loadConversations, sales: loadSales, bookings: loadBookings, broadcast: loadBroadcasts, evolution: loadEvolution, venues: loadVenues, setup: () => {} };
   if (loaders[name]) loaders[name]();
 }
 
@@ -1351,9 +1462,10 @@ CREATE TABLE IF NOT EXISTS bot_intelligence (
 CREATE TABLE IF NOT EXISTS life_data (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY, created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
   category TEXT NOT NULL, metric TEXT NOT NULL, value JSONB NOT NULL,
-  trend TEXT DEFAULT 'stable', insight TEXT
+  trend TEXT DEFAULT 'stable', insight TEXT,
+  date DATE DEFAULT CURRENT_DATE NOT NULL,
+  UNIQUE(category, metric, date)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_life_data_unique ON life_data(category, metric, (created_at::date));
 
 CREATE TABLE IF NOT EXISTS bot_strategies (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -1584,6 +1696,220 @@ window.addEventListener('load', async () => {
     if (activeTab) loadPanel(activeTab.dataset.tab);
   }, 30000);
 });
+
+// ============================================================
+// VENUE OUTREACH
+// ============================================================
+let _venueCache = [];
+let _currentFilter = 'all';
+let _modalVenueId = null;
+
+async function venueApi(body) {
+  const res = await fetch('/.netlify/functions/venue-outreach', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+const VENUE_SQL = `CREATE TABLE IF NOT EXISTS venue_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  name TEXT NOT NULL, venue_type TEXT DEFAULT 'other', region TEXT DEFAULT 'munich',
+  email TEXT, phone TEXT, website TEXT, notes TEXT,
+  status TEXT DEFAULT 'new', outreach_status TEXT DEFAULT 'pending',
+  outreach_message TEXT, outreach_sent_at TIMESTAMPTZ,
+  approval_requested_at TIMESTAMPTZ, response TEXT, response_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_venue_region ON venue_leads(region);
+CREATE INDEX IF NOT EXISTS idx_venue_status ON venue_leads(status);
+CREATE INDEX IF NOT EXISTS idx_venue_outreach ON venue_leads(outreach_status);
+ALTER TABLE venue_leads ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN DROP POLICY IF EXISTS "srv_venues" ON venue_leads; DROP POLICY IF EXISTS "anon_venues" ON venue_leads; END $$;
+CREATE POLICY "srv_venues" ON venue_leads FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "anon_venues" ON venue_leads FOR ALL TO anon USING (true) WITH CHECK (true);`;
+
+function copyVenueSql() {
+  navigator.clipboard.writeText(VENUE_SQL).then(() => {
+    const fb = document.getElementById('venue-sql-feedback');
+    fb.style.opacity = '1';
+    setTimeout(() => { fb.style.opacity = '0'; }, 2000);
+  });
+}
+
+async function loadVenues() {
+  try {
+    const [listRes, statsRes] = await Promise.all([
+      venueApi({ action: 'list' }),
+      venueApi({ action: 'stats' })
+    ]);
+    _venueCache = listRes.venues || [];
+    // Hide setup card if table works
+    document.getElementById('venue-setup-card').style.display = 'none';
+    // Stats
+    document.getElementById('vs-total').textContent = statsRes.total || 0;
+    document.getElementById('vs-contacted').textContent = statsRes.by_status?.contacted || 0;
+    document.getElementById('vs-interested').textContent = statsRes.by_status?.interested || 0;
+    document.getElementById('vs-booked').textContent = statsRes.by_status?.booked || 0;
+    renderVenueTable();
+  } catch (e) {
+    // Table probably doesn't exist yet
+    document.getElementById('venue-setup-card').style.display = 'block';
+    console.error('Load venues error:', e);
+  }
+}
+
+function renderVenueTable() {
+  const tbody = document.getElementById('venue-tbody');
+  const empty = document.getElementById('venue-empty');
+  const filtered = _currentFilter === 'all' ? _venueCache : _venueCache.filter(v => v.status === _currentFilter);
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  const typeLabels = { hotel_luxury: 'Hotel', restaurant_fine: 'Restaurant', event_location: 'Event', bar_lounge: 'Bar/Lounge', gallery: 'Galerie', corporate: 'Corporate', wedding: 'Hochzeit', other: 'Sonstig' };
+  const regionLabels = { munich: 'München', kitzbuehel: 'Kitzbühel', rosenheim: 'Rosenheim', innsbruck: 'Innsbruck', salzburg: 'Salzburg' };
+  const statusColors = { new: 'new', contacted: 'casual', interested: 'engaged', booked: 'superfan', declined: 'negative', inactive: 'neutral' };
+  const outreachLabels = { pending: 'Ausstehend', awaiting_approval: 'Wartet auf OK', sent: 'Gesendet', replied: 'Geantwortet', no_response: 'Keine Antwort', approved_no_email: 'Keine E-Mail' };
+
+  tbody.innerHTML = filtered.map(v => `<tr data-status="${v.status}">
+    <td><strong>${v.name}</strong>${v.website ? '<br><a href="' + v.website + '" target="_blank" style="color:var(--accent2);font-size:11px">' + v.website.replace(/https?:\/\//, '').substring(0, 30) + '</a>' : ''}</td>
+    <td>${typeLabels[v.venue_type] || v.venue_type}</td>
+    <td>${regionLabels[v.region] || v.region}</td>
+    <td><span class="badge ${statusColors[v.status] || 'neutral'}">${v.status}</span></td>
+    <td style="font-size:11px">${outreachLabels[v.outreach_status] || v.outreach_status}</td>
+    <td style="white-space:nowrap">
+      ${v.outreach_status === 'pending' ? '<button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="prepareOutreach(\'' + v.id + '\')">Nachricht</button>' : ''}
+      <select onchange="updateVenueStatus(\'${v.id}\',this.value)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px;border-radius:4px;font-size:11px">
+        <option value="">Status...</option>
+        <option value="new">Neu</option>
+        <option value="contacted">Kontaktiert</option>
+        <option value="interested">Interessiert</option>
+        <option value="booked">Gebucht</option>
+        <option value="declined">Abgelehnt</option>
+      </select>
+    </td>
+  </tr>`).join('');
+}
+
+function filterVenues(status, btn) {
+  _currentFilter = status;
+  document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderVenueTable();
+}
+
+async function runResearch() {
+  const btn = document.getElementById('research-btn');
+  btn.disabled = true;
+  btn.textContent = 'Claude recherchiert...';
+
+  const region = document.getElementById('research-region').value;
+  const category = document.getElementById('research-category').value;
+
+  try {
+    const result = await venueApi({ action: 'research', region, category });
+    const list = document.getElementById('research-list');
+    window._researchResults = result.venues || [];
+
+    list.innerHTML = (result.venues || []).map((v, i) => `<div style="padding:10px;border-bottom:1px solid var(--border);font-size:13px">
+      <strong>${v.name}</strong> <span style="color:var(--dim);font-size:11px">${v.region || region}</span>
+      ${v.website ? '<br><span style="color:var(--accent2);font-size:11px">' + v.website + '</span>' : ''}
+      ${v.reason ? '<br><span style="color:var(--dim);font-size:11px">' + v.reason + '</span>' : ''}
+    </div>`).join('');
+
+    document.getElementById('research-results').style.display = 'block';
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Recherche starten';
+}
+
+async function addResearchResults() {
+  if (!window._researchResults || window._researchResults.length === 0) return;
+  const btn = document.getElementById('add-results-btn');
+  btn.disabled = true;
+
+  try {
+    await venueApi({ action: 'add_batch', venues: window._researchResults });
+    document.getElementById('research-results').style.display = 'none';
+    loadVenues();
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+  btn.disabled = false;
+}
+
+async function addVenueManual() {
+  const name = document.getElementById('v-name').value.trim();
+  if (!name) return alert('Name erforderlich');
+
+  await venueApi({
+    action: 'add',
+    name,
+    type: document.getElementById('v-type').value,
+    region: document.getElementById('v-region').value,
+    email: document.getElementById('v-email').value.trim() || null,
+    phone: document.getElementById('v-phone').value.trim() || null,
+    website: document.getElementById('v-website').value.trim() || null,
+    notes: document.getElementById('v-notes').value.trim() || null
+  });
+
+  // Clear form
+  ['v-name', 'v-email', 'v-phone', 'v-website', 'v-notes'].forEach(id => document.getElementById(id).value = '');
+  loadVenues();
+}
+
+async function prepareOutreach(venueId) {
+  _modalVenueId = venueId;
+  const modal = document.getElementById('outreach-modal');
+  modal.style.display = 'flex';
+
+  document.getElementById('modal-message').value = 'Nachricht wird generiert...';
+  const venue = _venueCache.find(v => v.id === venueId);
+  document.getElementById('modal-venue-name').textContent = venue?.name || '';
+  document.getElementById('modal-venue-info').textContent = `${venue?.venue_type || ''} · ${venue?.region || ''} · ${venue?.email || 'keine E-Mail'}`;
+
+  try {
+    const result = await venueApi({ action: 'generate_message', venue_id: venueId });
+    document.getElementById('modal-message').value = result.message || '';
+  } catch (e) {
+    document.getElementById('modal-message').value = 'Fehler beim Generieren der Nachricht.';
+  }
+}
+
+function closeOutreachModal() {
+  document.getElementById('outreach-modal').style.display = 'none';
+  _modalVenueId = null;
+}
+
+async function requestApproval() {
+  if (!_modalVenueId) return;
+  const message = document.getElementById('modal-message').value;
+
+  try {
+    await venueApi({ action: 'request_approval', venue_id: _modalVenueId, message });
+    alert('Genehmigungsanfrage per WhatsApp gesendet! Antworte dort mit "ja ' + _modalVenueId.substring(0, 8) + '..." um zu senden.');
+    closeOutreachModal();
+    loadVenues();
+  } catch (e) {
+    alert('Fehler: ' + e.message);
+  }
+}
+
+async function updateVenueStatus(venueId, status) {
+  if (!status) return;
+  await venueApi({ action: 'update', venue_id: venueId, updates: { status } });
+  loadVenues();
+}
 </script>
 </body>
 </html>

@@ -92,9 +92,10 @@ CREATE TABLE IF NOT EXISTS life_data (
   metric TEXT NOT NULL,             -- specific thing being tracked
   value JSONB NOT NULL,             -- the data point
   trend TEXT DEFAULT 'stable',      -- improving, stable, declining
-  insight TEXT                      -- AI-generated insight about this data
+  insight TEXT,                     -- AI-generated insight about this data
+  date DATE DEFAULT CURRENT_DATE NOT NULL,
+  UNIQUE(category, metric, date)
 );
-CREATE UNIQUE INDEX IF NOT EXISTS idx_life_data_unique ON life_data(category, metric, (created_at::date));
 
 -- 6. STRATEGIES — Learned response strategies that work
 CREATE TABLE IF NOT EXISTS bot_strategies (
