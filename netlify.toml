@@ -67,6 +67,12 @@
   to = "/bot-admin.html"
   status = 200
 
+# Live booking API
+[[redirects]]
+  from = "/api/live-booking"
+  to = "/.netlify/functions/live-booking"
+  status = 200
+
 # Security headers
 [[headers]]
   for = "/*"
