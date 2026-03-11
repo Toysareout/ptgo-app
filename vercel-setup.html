@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vercel Setup — TTAO</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, sans-serif; background: #0a0a0a; color: #fff; padding: 20px; max-width: 500px; margin: 0 auto; }
+h1 { font-size: 20px; margin-bottom: 8px; }
+p.sub { color: #888; font-size: 13px; margin-bottom: 24px; }
+.step { background: #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.step h2 { font-size: 15px; margin-bottom: 12px; color: #0cf; }
+label { display: block; font-size: 12px; color: #888; margin-bottom: 4px; margin-top: 10px; }
+input { width: 100%; background: #111; border: 1px solid #333; border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 14px; }
+input:focus { outline: none; border-color: #0cf; }
+button { width: 100%; background: #0cf; color: #000; border: none; border-radius: 8px; padding: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; }
+button:disabled { opacity: 0.4; }
+button.danger { background: #f43; color: #fff; }
+.log { background: #111; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; margin-top: 12px; white-space: pre-wrap; }
+.ok { color: #0f0; } .err { color: #f43; } .info { color: #0cf; }
+.hidden { display: none; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge.ok { background: #0f02; border: 1px solid #0f0; }
+.badge.miss { background: #f432; border: 1px solid #f43; }
+</style>
+</head>
+<body>
+
+<h1>Vercel Setup</h1>
+<p class="sub">Setzt Environment Variables automatisch und redeployed.</p>
+
+<!-- STEP 1: Token -->
+<div class="step" id="step1">
+<h2>1. Vercel Token</h2>
+<label>VERCEL TOKEN</label>
+<input type="password" id="token" placeholder="vcp_..." />
+<button onclick="connectVercel()">Verbinden</button>
+</div>
+
+<!-- STEP 2: Env vars -->
+<div class="step hidden" id="step2">
+<h2>2. Environment Variables</h2>
+<p style="color:#888;font-size:12px;margin-bottom:12px;">Kopiere die Werte aus deinem Netlify Dashboard (Site Settings → Environment Variables)</p>
+<div id="envFields"></div>
+<button onclick="saveEnvVars()">Alle speichern & Deploy</button>
+</div>
+
+<!-- Log -->
+<div class="step hidden" id="logBox">
+<h2>Log</h2>
+<div class="log" id="log"></div>
+</div>
+
+<script>
+const ENV_KEYS = [
+  { key: 'SUPABASE_URL', required: true, hint: 'https://xxx.supabase.co' },
+  { key: 'SUPABASE_SERVICE_ROLE_KEY', required: true, hint: 'eyJ...' },
+  { key: 'SUPABASE_SERVICE_KEY', required: false, hint: 'same as SERVICE_ROLE_KEY' },
+  { key: 'TWILIO_ACCOUNT_SID', required: false, hint: 'AC...' },
+  { key: 'TWILIO_AUTH_TOKEN', required: false, hint: '' },
+  { key: 'TWILIO_WHATSAPP_FROM', required: false, hint: '+14155...' },
+  { key: 'OWNER_WHATSAPP', required: false, hint: '+49...' },
+  { key: 'ANTHROPIC_API_KEY', required: false, hint: 'sk-ant-...' },
+  { key: 'STRIPE_SECRET_KEY', required: false, hint: 'sk_live_...' },
+  { key: 'STRIPE_WEBHOOK_SECRET', required: false, hint: 'whsec_...' },
+  { key: 'SMTP_HOST', required: false, hint: 'mail.gmx.net' },
+  { key: 'SMTP_PORT', required: false, hint: '587' },
+  { key: 'SMTP_USER', required: false, hint: '' },
+  { key: 'SMTP_PASS', required: false, hint: '' },
+  { key: 'SMTP_FROM', required: false, hint: '' },
+  { key: 'ADMIN_PASSWORD', required: false, hint: '' },
+];
+
+let projectId = null;
+let teamId = null;
+let token = null;
+
+function log(msg, cls = '') {
+  const el = document.getElementById('log');
+  document.getElementById('logBox').classList.remove('hidden');
+  el.innerHTML += `<span class="${cls}">${msg}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function api(path, method = 'GET', body = null) {
+  const url = `https://api.vercel.com${path}${teamId ? (path.includes('?') ? '&' : '?') + 'teamId=' + teamId : ''}`;
+  const opts = {
+    method,
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
+  return data;
+}
+
+async function connectVercel() {
+  token = document.getElementById('token').value.trim();
+  if (!token) return alert('Token eingeben!');
+
+  log('Verbinde mit Vercel...', 'info');
+
+  try {
+    // Find project
+    const projects = await api('/v9/projects');
+    const proj = projects.projects.find(p => p.name === 'ptgo-app');
+    if (!proj) {
+      log('Projekt "ptgo-app" nicht gefunden! Gefundene Projekte: ' + projects.projects.map(p => p.name).join(', '), 'err');
+      return;
+    }
+    projectId = proj.id;
+    teamId = proj.teamId || null;
+    log('Projekt gefunden: ' + proj.name + ' (' + projectId + ')', 'ok');
+
+    // Load existing env vars
+    let existing = {};
+    try {
+      const envs = await api(`/v9/projects/${projectId}/env`);
+      (envs.envs || []).forEach(e => { existing[e.key] = e; });
+      log('Vorhandene Env Vars: ' + Object.keys(existing).length, 'info');
+    } catch (e) {
+      log('Env Vars laden: ' + e.message, 'err');
+    }
+
+    // Build form
+    const container = document.getElementById('envFields');
+    container.innerHTML = '';
+    ENV_KEYS.forEach(({ key, required, hint }) => {
+      const has = existing[key];
+      const lbl = document.createElement('label');
+      lbl.innerHTML = `${key} ${required ? '<span style="color:#f43">*</span>' : ''} ${has ? '<span class="badge ok">gesetzt</span>' : '<span class="badge miss">fehlt</span>'}`;
+      const inp = document.createElement('input');
+      inp.type = 'password';
+      inp.id = 'env_' + key;
+      inp.placeholder = has ? '(bereits gesetzt — leer lassen um zu behalten)' : hint;
+      inp.dataset.key = key;
+      inp.dataset.existing = has ? 'true' : 'false';
+      inp.dataset.existingId = has ? has.id : '';
+      container.appendChild(lbl);
+      container.appendChild(inp);
+    });
+
+    document.getElementById('step2').classList.remove('hidden');
+    log('Bereit! Env Vars eingeben und speichern.', 'ok');
+
+  } catch (e) {
+    log('Fehler: ' + e.message, 'err');
+  }
+}
+
+async function saveEnvVars() {
+  log('\nSpeichere Environment Variables...', 'info');
+  let saved = 0;
+  let skipped = 0;
+
+  for (const { key } of ENV_KEYS) {
+    const inp = document.getElementById('env_' + key);
+    const value = inp.value.trim();
+    const isExisting = inp.dataset.existing === 'true';
+    const existingId = inp.dataset.existingId;
+
+    if (!value) {
+      if (!isExisting) skipped++;
+      continue;
+    }
+
+    try {
+      if (isExisting && existingId) {
+        // Update existing
+        await api(`/v9/projects/${projectId}/env/${existingId}`, 'PATCH', {
+          value,
+          target: ['production', 'preview', 'development'],
+          type: 'encrypted'
+        });
+      } else {
+        // Create new
+        await api(`/v10/projects/${projectId}/env`, 'POST', {
+          key,
+          value,
+          target: ['production', 'preview', 'development'],
+          type: 'encrypted'
+        });
+      }
+      log(`  ${key} ✓`, 'ok');
+      saved++;
+    } catch (e) {
+      log(`  ${key} ✗ ${e.message}`, 'err');
+    }
+  }
+
+  log(`\n${saved} gespeichert, ${skipped} übersprungen`, saved > 0 ? 'ok' : 'info');
+
+  if (saved > 0) {
+    log('\nStarte Redeploy...', 'info');
+    try {
+      // Get latest deployment
+      const deploys = await api(`/v6/deployments?projectId=${projectId}&limit=1&target=production`);
+      if (deploys.deployments && deploys.deployments.length > 0) {
+        const lastDeploy = deploys.deployments[0];
+        // Redeploy
+        await api('/v13/deployments', 'POST', {
+          name: 'ptgo-app',
+          target: 'production',
+          gitSource: {
+            type: 'github',
+            repoId: lastDeploy.gitSource?.repoId,
+            ref: 'main',
+          },
+        });
+        log('Redeploy gestartet! 🚀', 'ok');
+        log('\nDeine Seite wird in ~60 Sekunden live sein auf:', 'info');
+        log('https://ptgo-app.vercel.app', 'ok');
+      } else {
+        log('Kein Deployment gefunden. Bitte manuell redeployen.', 'err');
+      }
+    } catch (e) {
+      log('Redeploy Fehler: ' + e.message + '\nBitte manuell redeployen in Vercel Dashboard.', 'err');
+    }
+  }
+}
+</script>
+</body>
+</html>

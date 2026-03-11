@@ -210,11 +210,18 @@ app.add_middleware(SessionMiddleware, secret_key=APP_SECRET)
 # =========================================================
 
 _TTAO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "thetoysareout.html")
+_LIVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "live.html")
 
 @app.get("/thetoysareout", response_class=HTMLResponse)
 async def thetoysareout():
     if os.path.exists(_TTAO_PATH):
         return FileResponse(_TTAO_PATH, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Not found")
+
+@app.get("/live", response_class=HTMLResponse)
+async def live_page():
+    if os.path.exists(_LIVE_PATH):
+        return FileResponse(_LIVE_PATH, media_type="text/html")
     raise HTTPException(status_code=404, detail="Not found")
 
 
