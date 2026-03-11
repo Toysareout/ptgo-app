@@ -179,11 +179,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </div>
   </div>
 
-  <div class="card" id="sqlCard" style="display:none">
-    <h3>SQL-Migration (manuell kopieren)</h3>
-    <p style="color:var(--dim);margin-bottom:12px">Kopiere diesen SQL-Code in deinen Supabase SQL Editor und klicke "Run":</p>
-    <pre id="sqlOutput" style="background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:8px;font-size:12px;max-height:300px;overflow-y:auto;white-space:pre-wrap;color:var(--accent)"></pre>
-    <button class="btn btn-primary" onclick="copySql()" style="margin-top:12px">SQL kopieren</button>
+  <div class="card" id="sqlCard" style="border-color:#ffc800">
+    <h3 style="color:#ffc800">Datenbank-Setup (1x manuell)</h3>
+    <p style="color:var(--dim);margin-bottom:16px">
+      Die Tabellen müssen einmalig im Supabase SQL Editor erstellt werden.<br>
+      <strong style="color:var(--text)">2 Klicks: SQL kopieren → im Editor einfügen → Run.</strong>
+    </p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="btn btn-primary" onclick="copySql()" style="font-size:15px;padding:12px 28px">
+        SQL kopieren
+      </button>
+      <a href="https://supabase.com/dashboard/project/pwdhxarvemcgkhhnvbng/sql/new" target="_blank" rel="noopener"
+         class="btn btn-ghost" style="font-size:15px;padding:12px 28px;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+        Supabase SQL Editor öffnen →
+      </a>
+    </div>
+    <details>
+      <summary style="cursor:pointer;color:var(--dim);font-size:12px;margin-bottom:8px">SQL anzeigen (15 Tabellen, ~350 Zeilen)</summary>
+      <pre id="sqlOutput" style="background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:8px;font-size:11px;max-height:400px;overflow-y:auto;white-space:pre-wrap;color:var(--accent);opacity:.7"></pre>
+    </details>
+    <div id="sqlCopied" style="display:none;color:var(--accent);font-size:13px;margin-top:8px;font-weight:600">
+      SQL kopiert! Jetzt im Supabase SQL Editor einfügen und "Run" klicken.
+    </div>
   </div>
 </div>
 
@@ -1093,6 +1110,7 @@ async function runFullSetup() {
       if (status.tables?.created) {
         setStepStatus('db', 'ok', 'Tabellen existieren!');
         document.getElementById('step-db-detail').textContent = 'Alle Bot-Tabellen (inkl. Evolution Engine) sind in Supabase vorhanden.';
+        document.getElementById('sqlCard').style.display = 'none';
       } else {
         // Try auto-setup
         const dbRes = await fetch('/.netlify/functions/bot-setup', {
@@ -1105,11 +1123,11 @@ async function runFullSetup() {
         if (dbData.status === 'ok') {
           setStepStatus('db', 'ok', 'Erstellt!');
           document.getElementById('step-db-detail').textContent = 'Tabellen wurden automatisch erstellt!';
+          document.getElementById('sqlCard').style.display = 'none';
         } else if (dbData.status === 'manual_required') {
           setStepStatus('db', 'warn', 'Manuell nötig');
           document.getElementById('step-db-detail').innerHTML = 'Supabase erlaubt kein Remote-SQL. <strong>Kopiere das SQL unten und füge es im Supabase SQL Editor ein.</strong>';
-          document.getElementById('sqlCard').style.display = 'block';
-          document.getElementById('sqlOutput').textContent = dbData.sql;
+          if (dbData.sql) document.getElementById('sqlOutput').textContent = dbData.sql;
         } else {
           setStepStatus('db', 'err', 'Fehler');
           document.getElementById('step-db-detail').textContent = dbData.error || 'Unbekannter Fehler';
@@ -1189,15 +1207,16 @@ function setStepStatus(step, type, text) {
 
 function copySql() {
   const sql = document.getElementById('sqlOutput').textContent;
-  navigator.clipboard.writeText(sql).then(() => alert('SQL kopiert!')).catch(() => {
-    // Fallback
+  navigator.clipboard.writeText(sql).then(() => {
+    document.getElementById('sqlCopied').style.display = 'block';
+  }).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = sql;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
     document.body.removeChild(ta);
-    alert('SQL kopiert!');
+    document.getElementById('sqlCopied').style.display = 'block';
   });
 }
 
@@ -1205,6 +1224,22 @@ function copySql() {
 // INIT
 // ============================================================
 window.addEventListener('load', async () => {
+  // Pre-load SQL into the setup card by fetching from bot-setup function
+  try {
+    const sqlRes = await fetch('/.netlify/functions/bot-setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get-sql' })
+    });
+    if (sqlRes.ok) {
+      const sqlData = await sqlRes.json();
+      if (sqlData.sql) document.getElementById('sqlOutput').textContent = sqlData.sql;
+    }
+  } catch(e) {
+    // Function not deployed yet — show placeholder
+    document.getElementById('sqlOutput').textContent = '-- SQL wird geladen sobald die Netlify Functions deployed sind.\n-- Alternativ: supabase/migrations/000_complete_setup.sql verwenden.';
+  }
+
   // Load saved settings
   const savedUrl = localStorage.getItem('ttao_supa_url');
   const savedKey = localStorage.getItem('ttao_supa_key');

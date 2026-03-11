@@ -448,6 +448,11 @@ exports.handler = async (event) => {
     const { action } = JSON.parse(event.body || '{}');
     const results = {};
 
+    // ---- GET SQL (for setup card in bot-admin) ----
+    if (action === 'get-sql') {
+      return { statusCode: 200, headers, body: JSON.stringify({ sql: MIGRATION_SQL }) };
+    }
+
     // ---- CHECK STATUS ----
     if (action === 'status') {
       results.supabase = { configured: !!SUPABASE_URL && !!SUPABASE_KEY, url: SUPABASE_URL ? '✅ ' + SUPABASE_URL : '❌ Missing' };
