@@ -1,0 +1,37 @@
+{
+  "rewrites": [
+    { "source": "/heal", "destination": "/heal.html" },
+    { "source": "/heal-en", "destination": "/heal-en.html" },
+    { "source": "/heal-ultra", "destination": "/heal-ultra.html" },
+    { "source": "/portal", "destination": "/index.html" },
+    { "source": "/musik", "destination": "/musik.html" },
+    { "source": "/ostern", "destination": "/ostern.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/impressum", "destination": "/impressum.html" },
+    { "source": "/datenschutz", "destination": "/impressum.html" },
+    { "source": "/setup-supabase", "destination": "/setup-supabase.html" },
+    { "source": "/live", "destination": "/live.html" },
+    { "source": "/bot-admin", "destination": "/bot-admin.html" },
+    { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    },
+    {
+      "source": "/(.*)\\.html",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ],
+  "crons": [
+    { "path": "/api/bot-daily-report", "schedule": "0 9 * * *" },
+    { "path": "/api/bot-evolve", "schedule": "0 3 * * *" }
+  ]
+}
