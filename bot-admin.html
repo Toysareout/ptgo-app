@@ -414,6 +414,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     <div class="stat"><div class="num" id="vs-booked">0</div><div class="label">Gebucht</div></div>
   </div>
 
+  <!-- DB SETUP HINT -->
+  <div class="card" id="venue-setup-card" style="border-color:var(--warn);display:none">
+    <h3 style="color:var(--warn)">Tabelle noch nicht angelegt</h3>
+    <p style="color:var(--dim);margin-bottom:12px;font-size:13px">Kopiere dieses SQL und führe es im <a href="https://supabase.com/dashboard/project/pwdhxarvemcgkhhnvbng/sql/new" target="_blank" style="color:var(--accent)">Supabase SQL Editor</a> aus:</p>
+    <button class="btn btn-primary" onclick="copyVenueSql()">SQL kopieren</button>
+    <span id="venue-sql-feedback" style="margin-left:12px;font-size:12px;color:var(--accent);opacity:0;transition:opacity .3s">Kopiert!</span>
+  </div>
+
   <!-- AI RESEARCH -->
   <div class="card">
     <h3>AI Venue Research</h3>
@@ -1705,6 +1713,32 @@ async function venueApi(body) {
   return res.json();
 }
 
+const VENUE_SQL = `CREATE TABLE IF NOT EXISTS venue_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  name TEXT NOT NULL, venue_type TEXT DEFAULT 'other', region TEXT DEFAULT 'munich',
+  email TEXT, phone TEXT, website TEXT, notes TEXT,
+  status TEXT DEFAULT 'new', outreach_status TEXT DEFAULT 'pending',
+  outreach_message TEXT, outreach_sent_at TIMESTAMPTZ,
+  approval_requested_at TIMESTAMPTZ, response TEXT, response_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_venue_region ON venue_leads(region);
+CREATE INDEX IF NOT EXISTS idx_venue_status ON venue_leads(status);
+CREATE INDEX IF NOT EXISTS idx_venue_outreach ON venue_leads(outreach_status);
+ALTER TABLE venue_leads ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN DROP POLICY IF EXISTS "srv_venues" ON venue_leads; DROP POLICY IF EXISTS "anon_venues" ON venue_leads; END $$;
+CREATE POLICY "srv_venues" ON venue_leads FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "anon_venues" ON venue_leads FOR ALL TO anon USING (true) WITH CHECK (true);`;
+
+function copyVenueSql() {
+  navigator.clipboard.writeText(VENUE_SQL).then(() => {
+    const fb = document.getElementById('venue-sql-feedback');
+    fb.style.opacity = '1';
+    setTimeout(() => { fb.style.opacity = '0'; }, 2000);
+  });
+}
+
 async function loadVenues() {
   try {
     const [listRes, statsRes] = await Promise.all([
@@ -1712,6 +1746,8 @@ async function loadVenues() {
       venueApi({ action: 'stats' })
     ]);
     _venueCache = listRes.venues || [];
+    // Hide setup card if table works
+    document.getElementById('venue-setup-card').style.display = 'none';
     // Stats
     document.getElementById('vs-total').textContent = statsRes.total || 0;
     document.getElementById('vs-contacted').textContent = statsRes.by_status?.contacted || 0;
@@ -1719,6 +1755,8 @@ async function loadVenues() {
     document.getElementById('vs-booked').textContent = statsRes.by_status?.booked || 0;
     renderVenueTable();
   } catch (e) {
+    // Table probably doesn't exist yet
+    document.getElementById('venue-setup-card').style.display = 'block';
     console.error('Load venues error:', e);
   }
 }
