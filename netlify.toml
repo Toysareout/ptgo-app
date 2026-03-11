@@ -58,6 +58,11 @@
   status = 200
 
 [[redirects]]
+  from = "/live"
+  to = "/live.html"
+  status = 200
+
+[[redirects]]
   from = "/bot-admin"
   to = "/bot-admin.html"
   status = 200

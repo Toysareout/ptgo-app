@@ -359,6 +359,30 @@ CREATE INDEX IF NOT EXISTS idx_strategies_category ON bot_strategies(category);
 CREATE INDEX IF NOT EXISTS idx_strategies_success ON bot_strategies(success_rate DESC);
 CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON bot_knowledge(domain);
 
+-- VENUE LEADS (Live Piano Outreach)
+CREATE TABLE IF NOT EXISTS venue_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  name TEXT NOT NULL,
+  venue_type TEXT DEFAULT 'other',
+  region TEXT DEFAULT 'munich',
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+  notes TEXT,
+  status TEXT DEFAULT 'new',
+  outreach_status TEXT DEFAULT 'pending',
+  outreach_message TEXT,
+  outreach_sent_at TIMESTAMPTZ,
+  approval_requested_at TIMESTAMPTZ,
+  response TEXT,
+  response_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_venue_region ON venue_leads(region);
+CREATE INDEX IF NOT EXISTS idx_venue_status ON venue_leads(status);
+CREATE INDEX IF NOT EXISTS idx_venue_outreach ON venue_leads(outreach_status);
+
 -- EVOLUTION RLS
 ALTER TABLE bot_memory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_evolution ENABLE ROW LEVEL SECURITY;
@@ -367,8 +391,11 @@ ALTER TABLE bot_intelligence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE life_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_strategies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_knowledge ENABLE ROW LEVEL SECURITY;
+ALTER TABLE venue_leads ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
+  DROP POLICY IF EXISTS "srv_venues" ON venue_leads;
+  DROP POLICY IF EXISTS "anon_venues" ON venue_leads;
   DROP POLICY IF EXISTS "srv_memory" ON bot_memory;
   DROP POLICY IF EXISTS "srv_evolution" ON bot_evolution;
   DROP POLICY IF EXISTS "srv_errors" ON bot_errors;
@@ -392,6 +419,7 @@ CREATE POLICY "srv_intelligence" ON bot_intelligence FOR ALL TO service_role USI
 CREATE POLICY "srv_life" ON life_data FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "srv_strategies" ON bot_strategies FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "srv_knowledge" ON bot_knowledge FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_venues" ON venue_leads FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 CREATE POLICY "anon_memory" ON bot_memory FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_evolution" ON bot_evolution FOR SELECT TO anon USING (true);
@@ -400,6 +428,7 @@ CREATE POLICY "anon_intelligence" ON bot_intelligence FOR SELECT TO anon USING (
 CREATE POLICY "anon_life" ON life_data FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_strategies" ON bot_strategies FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_knowledge" ON bot_knowledge FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_venues" ON venue_leads FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- EVOLUTION TRIGGERS
 CREATE OR REPLACE FUNCTION update_memory_timestamp()

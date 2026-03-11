@@ -345,6 +345,35 @@ CREATE INDEX IF NOT EXISTS idx_strategies_success ON bot_strategies(success_rate
 CREATE INDEX IF NOT EXISTS idx_knowledge_domain ON bot_knowledge(domain);
 
 -- ============================================================
+-- 16. VENUE LEADS (live piano outreach)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS venue_leads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  name TEXT NOT NULL,
+  venue_type TEXT DEFAULT 'other',
+  region TEXT DEFAULT 'munich',
+  email TEXT,
+  phone TEXT,
+  website TEXT,
+  notes TEXT,
+  status TEXT DEFAULT 'new',
+  outreach_status TEXT DEFAULT 'pending',
+  outreach_message TEXT,
+  outreach_sent_at TIMESTAMPTZ,
+  approval_requested_at TIMESTAMPTZ,
+  response TEXT,
+  response_at TIMESTAMPTZ,
+  CONSTRAINT valid_venue_status CHECK (status IN ('new','contacted','interested','booked','declined','inactive')),
+  CONSTRAINT valid_outreach_status CHECK (outreach_status IN ('pending','awaiting_approval','approved_no_email','sent','replied','no_response'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_venue_region ON venue_leads(region);
+CREATE INDEX IF NOT EXISTS idx_venue_status ON venue_leads(status);
+CREATE INDEX IF NOT EXISTS idx_venue_outreach ON venue_leads(outreach_status);
+
+-- ============================================================
 -- ROW LEVEL SECURITY
 -- ============================================================
 ALTER TABLE fans ENABLE ROW LEVEL SECURITY;
@@ -361,6 +390,7 @@ ALTER TABLE bot_intelligence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE life_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_strategies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bot_knowledge ENABLE ROW LEVEL SECURITY;
+ALTER TABLE venue_leads ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies to avoid conflicts
 DO $$ BEGIN
@@ -392,6 +422,8 @@ DO $$ BEGIN
   DROP POLICY IF EXISTS "anon_life" ON life_data;
   DROP POLICY IF EXISTS "anon_strategies" ON bot_strategies;
   DROP POLICY IF EXISTS "anon_knowledge" ON bot_knowledge;
+  DROP POLICY IF EXISTS "srv_venues" ON venue_leads;
+  DROP POLICY IF EXISTS "anon_venues" ON venue_leads;
 END $$;
 
 -- Service role: full access on ALL tables
@@ -409,6 +441,7 @@ CREATE POLICY "srv_intelligence" ON bot_intelligence FOR ALL TO service_role USI
 CREATE POLICY "srv_life" ON life_data FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "srv_strategies" ON bot_strategies FOR ALL TO service_role USING (true) WITH CHECK (true);
 CREATE POLICY "srv_knowledge" ON bot_knowledge FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "srv_venues" ON venue_leads FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Anon: read access for dashboard
 CREATE POLICY "Anon read fans" ON fans FOR SELECT TO anon USING (true);
@@ -425,6 +458,7 @@ CREATE POLICY "anon_intelligence" ON bot_intelligence FOR SELECT TO anon USING (
 CREATE POLICY "anon_life" ON life_data FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_strategies" ON bot_strategies FOR SELECT TO anon USING (true);
 CREATE POLICY "anon_knowledge" ON bot_knowledge FOR SELECT TO anon USING (true);
+CREATE POLICY "anon_venues" ON venue_leads FOR ALL TO anon USING (true) WITH CHECK (true);
 
 -- ============================================================
 -- TRIGGERS

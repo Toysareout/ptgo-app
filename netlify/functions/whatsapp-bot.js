@@ -119,6 +119,8 @@ WISSEN:
 - Musik: thetoysareout.com/musik
 - Healing Sessions: thetoysareout.com/heal
 - Es gibt Merch, Beat Packs, einen Inner Circle und Premium Sessions
+- NEU: Live Piano Abende buchbar! TTAO ist ehemaliger Regensburger Domspatze und spielt Klaviermusik live
+- Live Piano Infos & Buchung: thetoysareout.com/live
 - Neue Drops kommen regelmäßig — halte die Spannung hoch
 
 REGELN:
@@ -189,6 +191,51 @@ exports.handler = async (event) => {
       const reply = 'Willkommen zurück! 🔥 Du bist wieder dabei.';
       await logMessage(fan.id, phone, 'outbound', reply, 'text', null, convoId);
       return twimlResponse(reply);
+    }
+
+    // --- VENUE OUTREACH APPROVAL (owner commands: ja/nein <venue_id>) ---
+    if (phone === creds.owner_phone?.replace('whatsapp:', '')) {
+      const jaMatch = lowerBody.match(/^ja\s+([a-f0-9-]+)/);
+      const neinMatch = lowerBody.match(/^nein\s+([a-f0-9-]+)/);
+
+      if (jaMatch) {
+        const venueId = jaMatch[1];
+        // Find venue by partial ID match
+        const { data: venues } = await supabase.from('venue_leads')
+          .select('id, name')
+          .eq('outreach_status', 'awaiting_approval')
+          .ilike('id', venueId + '%');
+
+        if (venues && venues.length > 0) {
+          const venue = venues[0];
+          // Trigger send via venue-outreach function
+          try {
+            await fetch(BASE_URL + '/.netlify/functions/venue-outreach', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'approve_send', venue_id: venue.id })
+            });
+          } catch (e) { /* handled in function */ }
+          const reply = `✅ Outreach an "${venue.name}" genehmigt und wird gesendet!`;
+          await logMessage(fan.id, phone, 'outbound', reply, 'text', null, convoId);
+          return twimlResponse(reply);
+        }
+      }
+
+      if (neinMatch) {
+        const venueId = neinMatch[1];
+        const { data: venues } = await supabase.from('venue_leads')
+          .select('id, name')
+          .eq('outreach_status', 'awaiting_approval')
+          .ilike('id', venueId + '%');
+
+        if (venues && venues.length > 0) {
+          await supabase.from('venue_leads').update({ outreach_status: 'pending' }).eq('id', venues[0].id);
+          const reply = `❌ Outreach an "${venues[0].name}" abgelehnt. Kannst es im Dashboard bearbeiten.`;
+          await logMessage(fan.id, phone, 'outbound', reply, 'text', null, convoId);
+          return twimlResponse(reply);
+        }
+      }
     }
 
     // --- STEP 4: Detect intent & sentiment with AI ---
