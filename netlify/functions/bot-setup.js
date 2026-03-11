@@ -311,9 +311,9 @@ CREATE TABLE IF NOT EXISTS life_data (
   metric TEXT NOT NULL,
   value JSONB NOT NULL,
   trend TEXT DEFAULT 'stable',
-  insight TEXT,
-  UNIQUE(category, metric, created_at::date)
+  insight TEXT
 );
+CREATE UNIQUE INDEX IF NOT EXISTS idx_life_data_unique ON life_data(category, metric, (created_at::date));
 
 -- 13. STRATEGIES
 CREATE TABLE IF NOT EXISTS bot_strategies (
