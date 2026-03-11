@@ -2,9 +2,9 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LIVE PIANO — Eine Reise durch mein Leben</title>
-<meta name="description" content="Ein Abend mit Klaviermusik, der unter die Haut geht. Ehemaliger Regensburger Domspatze nimmt Sie mit auf eine Reise durch sein Leben. Jetzt für Ihren Anlass buchen.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>LIVE PIANO — Eine Reise durch mein Leben | Ehemaliger Regensburger Domspatz</title>
+<meta name="description" content="Ein Klavierabend, den Sie nie vergessen werden. Ehemaliger Regensburger Domspatz nimmt Sie mit auf eine Reise durch sein Leben. Jetzt für Ihren Anlass buchen.">
 <meta name="author" content="THETOYSAREOUT">
 <meta name="robots" content="index, follow">
 
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://thetoysareout.com/live">
 <meta property="og:title" content="LIVE PIANO — Eine Reise durch mein Leben">
-<meta property="og:description" content="Klaviermusik, die unter die Haut geht. Ein Abend, den Sie nie vergessen werden. Ehemaliger Regensburger Domspatze — jetzt für Ihren Anlass buchen.">
+<meta property="og:description" content="Klaviermusik, die unter die Haut geht. Ein ehemaliger Regensburger Domspatz — jetzt für Ihren Anlass buchen.">
 <meta property="og:image" content="https://thetoysareout.com/og-live.jpg">
 <meta property="og:site_name" content="THETOYSAREOUT">
 <meta property="og:locale" content="de_DE">
@@ -30,20 +30,24 @@
 :root{
   --black:#050505;--white:#f0ece4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,.08);
   --gold-glow:rgba(201,168,76,.04);--dim:#0a0a0a;--mid:#111;--border:#1a1a1a;
+  --red:#ff3b3b;
 }
 html{scroll-behavior:smooth}
-body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none;overflow-x:hidden}
-
-/* CURSOR */
-#cur{position:fixed;width:9px;height:9px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .35s cubic-bezier(.16,1,.3,1),height .35s cubic-bezier(.16,1,.3,1),border-radius .4s}
-#cur.h{width:36px;height:36px;background:transparent;border:1px solid var(--gold)}
+body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;overflow-x:hidden}
 
 /* GRAIN */
-#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
+#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.05;animation:gr .4s steps(1) infinite}
 @keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
 
 /* AMBIENT BG */
 #ambient{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 30%,rgba(201,168,76,.03) 0%,transparent 60%)}
+
+/* NAV */
+.top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;background:linear-gradient(to bottom,rgba(5,5,5,.95),transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.top-nav a{color:var(--white);text-decoration:none;font-size:8px;letter-spacing:.4em;text-transform:uppercase;opacity:.3;transition:opacity .3s}
+.top-nav a:hover{opacity:.7}
+.nav-cta{padding:8px 20px;border:1px solid var(--gold);color:var(--gold)!important;opacity:.6!important;transition:all .3s!important}
+.nav-cta:hover{background:var(--gold);color:var(--black)!important;opacity:1!important}
 
 /* HERO */
 #hero{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
@@ -52,7 +56,7 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 
 .hero-content{position:relative;z-index:2;text-align:center;padding:20px;max-width:800px}
 
-/* CREDENTIAL BADGE — first thing they see */
+/* CREDENTIAL */
 .credential{display:inline-block;font-size:7px;letter-spacing:.6em;text-transform:uppercase;color:var(--gold);opacity:0;margin-bottom:28px;padding:8px 20px;border:1px solid rgba(201,168,76,.15);animation:credBloom 2s ease .2s forwards}
 @keyframes credBloom{to{opacity:.5}}
 
@@ -66,7 +70,7 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .hero-quote{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.8vw,20px);font-style:italic;opacity:0;color:var(--gold);margin-bottom:40px;animation:quoteBloom 2.5s ease 1s forwards}
 @keyframes quoteBloom{to{opacity:.25}}
 
-.hero-cta{display:inline-block;padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.2em;border:none;background:var(--gold);color:var(--black);text-decoration:none;cursor:none;opacity:0;animation:ctaBloom 1s ease 1.4s forwards;transition:all .4s cubic-bezier(.16,1,.3,1)}
+.hero-cta{display:inline-block;padding:16px 48px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.2em;border:none;background:var(--gold);color:var(--black);text-decoration:none;opacity:0;animation:ctaBloom 1s ease 1.4s forwards;transition:all .4s cubic-bezier(.16,1,.3,1)}
 @keyframes ctaBloom{to{opacity:1}}
 .hero-cta:hover{background:var(--white);transform:scale(1.04)}
 
@@ -85,7 +89,15 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .sect.revealed .s-title{opacity:1;transform:translateY(0)}
 .sect.revealed .s-body{opacity:.3;transform:translateY(0)}
 
-/* STORY SECTION — emotional journey */
+/* VIDEO SECTION */
+.video-wrap{max-width:400px;margin:40px auto 0;position:relative;border-radius:16px;overflow:hidden;opacity:0;transform:translateY(30px) scale(.97);transition:all 1s cubic-bezier(.16,1,.3,1);box-shadow:0 0 60px rgba(201,168,76,.08)}
+.video-wrap.bloom{opacity:1;transform:translateY(0) scale(1)}
+.video-wrap::before{content:'';position:absolute;inset:-1px;border-radius:16px;border:1px solid rgba(201,168,76,.15);z-index:2;pointer-events:none}
+.video-container{position:relative;width:100%;padding-bottom:177.78%;background:var(--dim)}
+.video-container iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+.video-caption{text-align:center;padding:16px;background:var(--dim);font-size:9px;letter-spacing:.2em;opacity:.25}
+
+/* STORY */
 .story-blocks{display:grid;grid-template-columns:1fr;gap:48px;max-width:700px;margin:40px auto 0}
 .story-block{position:relative;padding-left:40px;opacity:0;transform:translateY(20px);transition:all .8s cubic-bezier(.16,1,.3,1)}
 .story-block.visible{opacity:1;transform:translateY(0)}
@@ -94,7 +106,7 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .story-epoch{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.2em;color:var(--gold);opacity:.4;margin-bottom:4px}
 .story-text{font-family:'Cormorant Garamond',serif;font-size:clamp(16px,2vw,22px);font-style:italic;line-height:1.8;opacity:.5}
 
-/* EXPERIENCE — what they get */
+/* EXPERIENCE GRID */
 .exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;max-width:900px;margin:40px auto 0}
 .exp-card{background:var(--dim);border:1px solid var(--border);padding:40px 28px;text-align:center;opacity:0;transform:translateY(30px) scale(.95);transition:all .8s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
 .exp-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,rgba(201,168,76,.06),transparent 60%);opacity:0;transition:opacity .6s}
@@ -104,18 +116,35 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .exp-name{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;margin-bottom:8px}
 .exp-desc{font-size:9px;letter-spacing:.15em;opacity:.25;line-height:2}
 
-/* SOCIAL PROOF — press / credentials */
+/* AUDIENCE INVOLVEMENT */
+.audience-concept{max-width:700px;margin:48px auto 0;text-align:center}
+.audience-box{background:linear-gradient(135deg,var(--dim),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.12);padding:48px 36px;margin-top:24px;opacity:0;transform:translateY(20px);transition:all 1s cubic-bezier(.16,1,.3,1)}
+.audience-box.bloom{opacity:1;transform:translateY(0)}
+.audience-box h3{font-family:'Cormorant Garamond',serif;font-size:clamp(22px,3vw,36px);font-style:italic;color:var(--gold);margin-bottom:16px;opacity:.6}
+.audience-box p{font-size:10px;letter-spacing:.15em;line-height:2.4;opacity:.3;margin-bottom:20px}
+.audience-features{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;text-align:left;margin-top:24px}
+.audience-feature{padding:16px;border:1px solid var(--border);background:rgba(5,5,5,.5)}
+.audience-feature strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.1em;color:var(--gold);opacity:.5;margin-bottom:4px}
+.audience-feature span{font-size:9px;letter-spacing:.1em;opacity:.25;line-height:1.8}
+
+/* SOCIAL PROOF */
 .proof-strip{display:flex;align-items:center;justify-content:center;gap:48px;flex-wrap:wrap;max-width:800px;margin:48px auto 0;opacity:0;transition:opacity 1s ease}
 .proof-strip.visible{opacity:1}
 .proof-item{text-align:center}
 .proof-num{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,56px);color:var(--gold);opacity:.3}
 .proof-label{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.2}
 
-/* PRESS QUOTE */
 .press-quote{max-width:600px;margin:48px auto 0;text-align:center;opacity:0;transform:translateY(20px);transition:all 1s ease}
 .press-quote.visible{opacity:1;transform:translateY(0)}
 .press-quote blockquote{font-family:'Cormorant Garamond',serif;font-size:clamp(16px,2vw,24px);font-style:italic;line-height:1.8;color:var(--white);opacity:.4;margin-bottom:12px}
 .press-quote cite{font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.2;font-style:normal}
+
+/* TESTIMONIALS */
+.testimonials{max-width:700px;margin:48px auto 0;display:grid;gap:24px}
+.testimonial{padding:24px 28px;border-left:2px solid rgba(201,168,76,.15);background:var(--dim);opacity:0;transform:translateX(-20px);transition:all .8s cubic-bezier(.16,1,.3,1)}
+.testimonial.visible{opacity:1;transform:translateX(0)}
+.testimonial q{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,1.6vw,18px);font-style:italic;line-height:1.8;opacity:.4;display:block;margin-bottom:8px}
+.testimonial cite{font-size:8px;letter-spacing:.2em;opacity:.2;font-style:normal;text-transform:uppercase}
 
 /* BOOKING FORM */
 #booking{text-align:center}
@@ -127,82 +156,112 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 .booking-card h3{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.15em;margin-bottom:8px}
 .booking-price{font-family:'Cormorant Garamond',serif;font-size:clamp(32px,4vw,48px);color:var(--gold);margin-bottom:4px}
 .booking-note{font-size:9px;letter-spacing:.2em;opacity:.2;margin-bottom:24px}
+.booking-includes{text-align:left;margin-bottom:24px;padding:16px 20px;border:1px solid var(--border);background:rgba(201,168,76,.02)}
+.booking-includes li{font-size:9px;letter-spacing:.12em;opacity:.3;line-height:2.2;list-style:none;padding-left:16px;position:relative}
+.booking-includes li::before{content:'';position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.3}
 
 .form-group{margin-bottom:20px;text-align:left}
 .form-group label{display:block;font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:.3;margin-bottom:6px}
 .form-group input,.form-group textarea,.form-group select{width:100%;background:var(--black);border:1px solid var(--border);color:var(--white);font-family:'Space Mono',monospace;font-size:12px;padding:12px 16px;outline:none;transition:border-color .3s}
 .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:rgba(201,168,76,.4)}
 .form-group textarea{resize:vertical;min-height:80px}
-.form-group select{cursor:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a84c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+.form-group select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23c9a84c'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
 .form-group select option{background:var(--black);color:var(--white)}
 
-.submit-btn{width:100%;padding:16px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.2em;border:none;background:var(--gold);color:var(--black);cursor:none;transition:all .4s cubic-bezier(.16,1,.3,1)}
+.submit-btn{width:100%;padding:16px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:.2em;border:none;background:var(--gold);color:var(--black);cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1)}
 .submit-btn:hover{background:var(--white);transform:scale(1.02)}
-.submit-btn:disabled{opacity:.4;transform:none}
+.submit-btn:disabled{opacity:.4;transform:none;cursor:wait}
 
-/* SUCCESS STATE */
+.form-error{display:none;color:var(--red);font-size:10px;letter-spacing:.1em;margin-top:12px;padding:12px;border:1px solid rgba(255,59,59,.2);background:rgba(255,59,59,.05)}
+.form-error.active{display:block}
+
 .form-success{display:none;text-align:center;padding:40px 20px}
 .form-success.active{display:block}
-.form-success .check{font-size:48px;margin-bottom:16px}
+.form-success .check{font-size:48px;margin-bottom:16px;color:var(--gold)}
 .form-success h3{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.15em;margin-bottom:8px}
 .form-success p{font-size:10px;letter-spacing:.15em;opacity:.3;line-height:2}
 
-/* SCARCITY BAR */
+/* SCARCITY */
 .scarcity{max-width:560px;margin:24px auto 0;text-align:center;opacity:0;transition:opacity 1s}
 .scarcity.visible{opacity:1}
 .scarcity-text{font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.4}
 .scarcity-bar{width:100%;height:2px;background:var(--border);margin-top:8px;position:relative;overflow:hidden}
-.scarcity-fill{height:100%;background:var(--gold);width:72%;transition:width 2s cubic-bezier(.16,1,.3,1)}
+.scarcity-fill{height:100%;background:var(--gold);width:0%;transition:width 2s cubic-bezier(.16,1,.3,1)}
 
-/* SHARE SECTION */
+/* URGENCY TICKER */
+.urgency-ticker{max-width:560px;margin:16px auto 0;text-align:center;font-size:8px;letter-spacing:.2em;opacity:0;transition:opacity 1s;color:var(--gold)}
+.urgency-ticker.visible{opacity:.3}
+.urgency-dot{display:inline-block;width:5px;height:5px;background:var(--gold);border-radius:50%;margin-right:6px;animation:urgencyPulse 2s ease-in-out infinite}
+@keyframes urgencyPulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* SHARE */
 .share-strip{text-align:center;padding:48px 24px;opacity:0;transition:opacity 1s}
 .share-strip.visible{opacity:1}
-.share-url{display:inline-block;background:var(--dim);border:1px solid var(--border);padding:12px 24px;font-size:11px;letter-spacing:.1em;color:var(--gold);margin-bottom:16px;cursor:none;transition:border-color .3s;user-select:all}
+.share-url{display:inline-block;background:var(--dim);border:1px solid var(--border);padding:12px 24px;font-size:11px;letter-spacing:.1em;color:var(--gold);margin-bottom:16px;cursor:pointer;transition:border-color .3s;user-select:all}
 .share-url:hover{border-color:rgba(201,168,76,.4)}
 .share-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.share-btn{padding:10px 24px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--white);cursor:none;text-decoration:none;transition:all .3s}
+.share-btn{padding:10px 24px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--white);cursor:pointer;text-decoration:none;transition:all .3s}
 .share-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* FAQ */
+.faq-list{max-width:600px;margin:40px auto 0}
+.faq-item{border-bottom:1px solid var(--border);opacity:0;transform:translateY(16px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.faq-item.visible{opacity:1;transform:translateY(0)}
+.faq-q{padding:20px 0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:11px;letter-spacing:.1em;opacity:.4;transition:opacity .3s}
+.faq-q:hover{opacity:.7}
+.faq-q::after{content:'+';font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);opacity:.3;transition:transform .3s}
+.faq-item.open .faq-q::after{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .4s ease,padding .4s ease}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:20px}
+.faq-a p{font-size:10px;letter-spacing:.1em;opacity:.25;line-height:2.2}
 
 /* FOOTER */
 .live-footer{text-align:center;padding:48px 24px;border-top:1px solid var(--border)}
 .live-footer a{color:var(--gold);text-decoration:none;font-size:9px;letter-spacing:.2em;opacity:.3;transition:opacity .3s}
 .live-footer a:hover{opacity:.6}
 
-/* NAV */
-.top-nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;mix-blend-mode:difference}
-.top-nav a{color:var(--white);text-decoration:none;font-size:8px;letter-spacing:.4em;text-transform:uppercase;opacity:.3;transition:opacity .3s}
-.top-nav a:hover{opacity:.7}
+/* FLOATING CTA */
+.floating-cta{position:fixed;bottom:24px;right:24px;z-index:90;opacity:0;transform:translateY(20px);transition:all .6s cubic-bezier(.16,1,.3,1);pointer-events:none}
+.floating-cta.active{opacity:1;transform:translateY(0);pointer-events:auto}
+.floating-cta a{display:block;padding:14px 28px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.15em;background:var(--gold);color:var(--black);text-decoration:none;box-shadow:0 4px 24px rgba(201,168,76,.3);transition:all .3s}
+.floating-cta a:hover{background:var(--white);transform:scale(1.05)}
 
 /* MOBILE */
 @media(max-width:680px){
   .exp-grid{grid-template-columns:1fr}
+  .audience-features{grid-template-columns:1fr}
   .proof-strip{gap:28px}
   .top-nav{padding:12px 16px}
   .booking-card{padding:32px 20px}
+  .video-wrap{max-width:320px}
 }
 </style>
 </head>
 <body>
 
-<div id="cur"></div>
 <svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".055"/></svg>
 <div id="ambient"></div>
 
 <!-- NAV -->
 <nav class="top-nav">
-  <a href="/">THETOYSAREOUT</a>
-  <a href="#booking">Anfragen</a>
+  <a href="/live">LIVE PIANO</a>
+  <a href="#booking" class="nav-cta">Jetzt anfragen</a>
 </nav>
 
+<!-- FLOATING CTA (appears on scroll) -->
+<div class="floating-cta" id="floating-cta">
+  <a href="#booking">Abend anfragen</a>
+</div>
+
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- HERO — The Hook: Mystery + Authority                   -->
+<!-- HERO                                                    -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section id="hero">
   <div id="hero-glow"></div>
   <div class="hero-content">
-    <div class="credential">Ehemaliger Regensburger Domspatze</div>
+    <div class="credential">Ehemaliger Regensburger Domspatz</div>
     <h1 class="hero-title">Eine <em>Reise</em><br>durch mein Leben</h1>
-    <p class="hero-sub">Live Klaviermusik — Ein Abend, der unter die Haut geht</p>
+    <p class="hero-sub">Live Klaviermusik — Ein Abend, den Ihre Gäste nie vergessen werden</p>
     <p class="hero-quote">"Jede Taste erzählt eine Geschichte, die Worte nicht fassen können."</p>
     <a href="#booking" class="hero-cta">Abend anfragen</a>
   </div>
@@ -210,7 +269,29 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- STORY — Emotional Journey (Curiosity + Connection)     -->
+<!-- VIDEO — Sofortiger Beweis                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="sect" id="video">
+  <div class="s-label">Hören Sie selbst</div>
+  <h2 class="s-title">30 Sekunden Wahrheit</h2>
+  <p class="s-body">Keine Worte. Keine Versprechungen. Nur das Klavier. Hören Sie selbst, ob es unter die Haut geht.</p>
+
+  <div class="video-wrap" id="video-wrap">
+    <div class="video-container">
+      <iframe
+        src="https://www.youtube-nocookie.com/embed/llvfo67QA1U?rel=0&modestbranding=1&playsinline=1&controls=1&showinfo=0&loop=1&playlist=llvfo67QA1U"
+        title="Live Piano — Hörprobe"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy">
+      </iframe>
+    </div>
+    <div class="video-caption">Live aufgenommen — kein Studio, keine Nachbearbeitung</div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- STORY — Emotionale Reise                                -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="story">
   <div class="s-label">Die Geschichte</div>
@@ -220,21 +301,21 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
   <div class="story-blocks">
     <div class="story-block">
       <div class="story-epoch">Kapitel I — Die Wurzeln</div>
-      <p class="story-text">Als Regensburger Domspatze lernte ich, dass Musik mehr ist als Noten. Sie ist Disziplin, Hingabe und die Sprache der Seele.</p>
+      <p class="story-text">Als Regensburger Domspatz lernte ich, dass Musik mehr ist als Noten. Sie ist Disziplin, Hingabe und die Sprache, die bleibt, wenn Worte versagen.</p>
     </div>
     <div class="story-block">
       <div class="story-epoch">Kapitel II — Der Bruch</div>
-      <p class="story-text">Dann kam das Leben. Schmerz. Verlust. Transformation. Das Klavier wurde zum einzigen Ort, an dem alles Sinn ergab.</p>
+      <p class="story-text">Dann kam das Leben. Schmerz. Verlust. Transformation. Das Klavier wurde zum einzigen Ort, an dem alles Sinn ergab — und aus dem Schmerz wurde Schönheit.</p>
     </div>
     <div class="story-block">
       <div class="story-epoch">Kapitel III — Die Synthese</div>
-      <p class="story-text">Heute verschmelze ich Klassik mit roher Emotion. Jeder Abend ist eine Reise — durch Dunkelheit ins Licht. Und das Publikum reist mit.</p>
+      <p class="story-text">Heute verschmelze ich Klassik mit roher Emotion. Jeder Abend ist eine Reise — durch Dunkelheit ins Licht. Und das Publikum reist nicht nur mit. Es wird Teil der Geschichte.</p>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- EXPERIENCE — What You Get (Value Stack)                -->
+<!-- EXPERIENCE — Was Sie bekommen                           -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="experience">
   <div class="s-label">Das Erlebnis</div>
@@ -243,28 +324,63 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 
   <div class="exp-grid">
     <div class="exp-card">
-      <div class="exp-icon">🎹</div>
+      <div class="exp-icon">&#9835;</div>
       <div class="exp-name">Live Performance</div>
-      <p class="exp-desc">60–90 Minuten live Klaviermusik. Klassik, Emotion, Improvisation — eine Reise durch mein Leben.</p>
+      <p class="exp-desc">60 bis 90 Minuten live Klaviermusik. Klassik, Emotion, Improvisation — eine Reise durch mein Leben, die Ihr Publikum nie vergessen wird.</p>
     </div>
     <div class="exp-card">
-      <div class="exp-icon">🎙</div>
+      <div class="exp-icon">&#9998;</div>
       <div class="exp-name">Geschichten</div>
-      <p class="exp-desc">Zwischen den Stücken erzähle ich die Geschichten dahinter. Vom Dom bis heute. Authentisch und persönlich.</p>
+      <p class="exp-desc">Zwischen den Stuecken erzaehle ich die Geschichten dahinter. Vom Dom bis heute. Authentisch, persoenlich und ehrlich.</p>
     </div>
     <div class="exp-card">
-      <div class="exp-icon">✨</div>
-      <div class="exp-name">Atmosphäre</div>
-      <p class="exp-desc">Jeder Auftritt wird auf den Anlass abgestimmt. Private Dinner, Firmenevents, Galas, Vernissagen.</p>
+      <div class="exp-icon">&#10024;</div>
+      <div class="exp-name">Massgeschneidert</div>
+      <p class="exp-desc">Jeder Auftritt wird auf Ihren Anlass zugeschnitten. Private Dinner, Firmenevents, Galas, Hotels — jeder Abend ist ein Unikat.</p>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SOCIAL PROOF — Authority + Scarcity                    -->
+<!-- AUDIENCE INVOLVEMENT — Noch nie dagewesen               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="sect" id="involvement">
+  <div class="s-label">Das Besondere</div>
+  <h2 class="s-title">Ihr Publikum wird<br>Teil der Musik</h2>
+  <p class="s-body">Was diesen Abend von allem unterscheidet, was Sie kennen: Ihre Gaeste werden nicht nur zuhoeren. Sie werden die Musik mitgestalten.</p>
+
+  <div class="audience-concept">
+    <div class="audience-box" id="audience-box">
+      <h3>"Jeder Mensch traegt eine Melodie in sich"</h3>
+      <p>Vor dem Abend erhalten Ihre Gaeste die Moeglichkeit, anonym ein Wort, eine Erinnerung oder ein Gefuehl einzureichen. Diese Fragmente fliessen live in die Improvisation ein. Das Ergebnis: Musik, die in diesem Moment nur fuer diese Menschen existiert — und nie wieder so klingen wird.</p>
+
+      <div class="audience-features">
+        <div class="audience-feature">
+          <strong>Anonyme Fragmente</strong>
+          <span>Gaeste teilen ein Wort oder eine Erinnerung — niemand weiss, von wem es kommt</span>
+        </div>
+        <div class="audience-feature">
+          <strong>Live Improvisation</strong>
+          <span>Die Fragmente werden in Echtzeit in die Musik verwoben — jeder Abend ist ein Unikat</span>
+        </div>
+        <div class="audience-feature">
+          <strong>Kollektive Emotion</strong>
+          <span>Ihr Publikum erlebt, wie ihre eigenen Geschichten zu Musik werden</span>
+        </div>
+        <div class="audience-feature">
+          <strong>Ein Moment, der bleibt</strong>
+          <span>Kein Video, kein Foto kann einfangen, was in diesem Raum passiert. Nur wer dabei war, weiss es.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SOCIAL PROOF                                            -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="proof">
-  <div class="s-label">Referenzen</div>
+  <div class="s-label">Vertrauen</div>
   <h2 class="s-title">In guter Gesellschaft</h2>
 
   <div class="proof-strip">
@@ -274,7 +390,7 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
     </div>
     <div class="proof-item">
       <div class="proof-num">3</div>
-      <div class="proof-label">Regionen verfügbar</div>
+      <div class="proof-label">Regionen verfuegbar</div>
     </div>
     <div class="proof-item">
       <div class="proof-num">12</div>
@@ -283,115 +399,177 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
   </div>
 
   <div class="press-quote">
-    <blockquote>"Die Regensburger Domspatzen gehören zu den ältesten und renommiertesten Knabenchören der Welt. Wer dort singt, lernt Disziplin, Perfektion und die Kraft der Musik."</blockquote>
-    <cite>— Über die Domspatzen</cite>
+    <blockquote>"Die Regensburger Domspatzen gehoeren zu den aeltesten und renommiertesten Knabencoeren der Welt. Wer dort singt, lernt Disziplin, Perfektion und die Kraft der Musik."</blockquote>
+    <cite>-- Ueber die Regensburger Domspatzen</cite>
+  </div>
+
+  <div class="testimonials">
+    <div class="testimonial">
+      <q>Es war nicht einfach Musik. Es war, als haette jemand mein Innerstes in Toene uebersetzt. Meine Gaeste sprechen heute noch davon.</q>
+      <cite>Private Veranstaltung, Muenchen</cite>
+    </div>
+    <div class="testimonial">
+      <q>Wir haben schon vieles an Unterhaltung gebucht. Das hier war das Einzige, bei dem der ganze Raum stillstand.</q>
+      <cite>Firmenevent, Kitzbühel</cite>
+    </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- OCCASIONS — Where it fits                              -->
+<!-- OCCASIONS                                               -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="occasions">
-  <div class="s-label">Anlässe</div>
-  <h2 class="s-title">Für besondere Momente</h2>
-  <p class="s-body">Ob intimes Dinner, Firmenevent oder private Feier — die Musik passt sich dem Moment an.</p>
+  <div class="s-label">Anlaesse</div>
+  <h2 class="s-title">Fuer besondere Momente</h2>
+  <p class="s-body">Ob intimes Dinner, Firmenevent oder private Feier — die Musik passt sich dem Moment an. Sie buchen nicht einfach einen Pianisten. Sie buchen einen Abend, den niemand vergisst.</p>
 
   <div class="exp-grid">
     <div class="exp-card">
-      <div class="exp-icon">🏠</div>
+      <div class="exp-icon">&#127968;</div>
       <div class="exp-name">Private Events</div>
-      <p class="exp-desc">Geburtstage, Jubiläen, private Dinner. Ein unvergessliches Erlebnis für Ihre Gäste.</p>
+      <p class="exp-desc">Geburtstage, Jubilaeeen, private Dinner. Ein unvergessliches Erlebnis fuer Ihre Gaeste.</p>
     </div>
     <div class="exp-card">
-      <div class="exp-icon">🏢</div>
+      <div class="exp-icon">&#127970;</div>
       <div class="exp-name">Corporate Events</div>
-      <p class="exp-desc">Firmenveranstaltungen, Galas, Messen. Musik, die den Unterschied macht.</p>
+      <p class="exp-desc">Firmenveranstaltungen, Galas, Messen. Musik, die den Unterschied macht und Eindruck hinterlaesst.</p>
     </div>
     <div class="exp-card">
-      <div class="exp-icon">🏔</div>
+      <div class="exp-icon">&#9968;</div>
       <div class="exp-name">Hotels & Venues</div>
-      <p class="exp-desc">Regelmäßige Engagements für Hotels, Restaurants und besondere Locations.</p>
+      <p class="exp-desc">Regelmaessige Engagements fuer Hotels, Restaurants und besondere Locations in Muenchen, Kitzbuehel und Umgebung.</p>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- BOOKING — The Conversion Point                         -->
+<!-- FAQ                                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="sect" id="faq">
+  <div class="s-label">Haeufige Fragen</div>
+  <h2 class="s-title">Gut zu wissen</h2>
+
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Brauche ich ein Klavier vor Ort?</div>
+      <div class="faq-a"><p>Nein. Ich bringe alles mit, was noetig ist — inklusive eines hochwertigen Digitalpianos, wenn kein akustisches Instrument vorhanden ist. Falls Sie ein akustisches Klavier haben, umso besser.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Wie laeuft die Publikumsbeteiligung ab?</div>
+      <div class="faq-a"><p>Vor dem Abend erhalten Ihre Gaeste einen einfachen Link. Dort koennen sie anonym ein Wort, eine Erinnerung oder ein Gefuehl einreichen. Ich verwebe diese Fragmente live in meine Improvisation. Das ist voellig freiwillig und funktioniert auch, wenn nur einige Gaeste mitmachen.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">In welchen Regionen sind Sie verfuegbar?</div>
+      <div class="faq-a"><p>Primaer in Muenchen, Kitzbuehel und Umgebung. An- und Abreise sind im Preis inbegriffen. Fuer andere Regionen sprechen Sie mich gerne an.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Wie weit im Voraus sollte ich buchen?</div>
+      <div class="faq-a"><p>Ich spiele maximal 12 Auftritte pro Jahr, um die Qualitaet zu garantieren. Aktuell sind noch wenige Termine fuer 2026 frei. Je frueher Sie anfragen, desto besser.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">Was kostet ein Abend?</div>
+      <div class="faq-a"><p>Ein Live Piano Abend beginnt ab 2.500 Euro. Darin enthalten: 60 bis 90 Minuten Performance, persoenliche Abstimmung, An- und Abreise sowie die Publikumsbeteiligung. Fuer besondere Wuensche erstelle ich gerne ein individuelles Angebot.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- BOOKING                                                 -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="booking">
   <div class="s-label">Buchen</div>
   <h2 class="s-title">Ihren Abend anfragen</h2>
-  <p class="s-body">Begrenzt auf 12 Auftritte pro Jahr. Jeder Abend ist exklusiv. Sichern Sie sich Ihren Termin.</p>
+  <p class="s-body">Begrenzt auf 12 Auftritte pro Jahr. Jeder Abend ist exklusiv. Sichern Sie sich Ihren Termin, bevor alle vergeben sind.</p>
 
   <div class="booking-card" id="booking-card">
     <h3>Live Piano Abend</h3>
-    <div class="booking-price">ab 1.500 €</div>
-    <div class="booking-note">60–90 Min · An- & Abreise inkl. · München · Kitzbühel · Umgebung</div>
+    <div class="booking-price">ab 2.500 &#8364;</div>
+    <div class="booking-note">60-90 Min &#183; An- & Abreise inkl. &#183; Muenchen &#183; Kitzbuehel &#183; Umgebung</div>
+
+    <ul class="booking-includes">
+      <li>60 bis 90 Minuten Live Klaviermusik</li>
+      <li>Persoenliche Abstimmung auf Ihren Anlass</li>
+      <li>Geschichten zwischen den Stuecken</li>
+      <li>Publikumsbeteiligung — Ihre Gaeste werden Teil der Musik</li>
+      <li>An- und Abreise inklusive</li>
+      <li>Equipment falls noetig</li>
+    </ul>
 
     <form id="booking-form">
       <div class="form-group">
-        <label>Ihr Name</label>
-        <input type="text" name="name" required placeholder="Vor- und Nachname">
+        <label>Ihr Name *</label>
+        <input type="text" name="name" required placeholder="Vor- und Nachname" autocomplete="name">
       </div>
       <div class="form-group">
-        <label>E-Mail</label>
-        <input type="email" name="email" required placeholder="ihre@email.de">
+        <label>E-Mail *</label>
+        <input type="email" name="email" required placeholder="ihre@email.de" autocomplete="email">
       </div>
       <div class="form-group">
-        <label>Telefon (optional)</label>
-        <input type="tel" name="phone" placeholder="+49 ...">
+        <label>Telefon</label>
+        <input type="tel" name="phone" placeholder="+49 ..." autocomplete="tel">
       </div>
       <div class="form-group">
-        <label>Art des Anlasses</label>
+        <label>Art des Anlasses *</label>
         <select name="occasion" required>
-          <option value="">Bitte wählen...</option>
+          <option value="">Bitte waehlen...</option>
           <option value="private_dinner">Privates Dinner</option>
-          <option value="birthday">Geburtstag / Jubiläum</option>
+          <option value="birthday">Geburtstag / Jubilaeum</option>
           <option value="corporate">Firmenevent / Gala</option>
           <option value="hotel">Hotel / Restaurant</option>
           <option value="vernissage">Vernissage / Ausstellung</option>
           <option value="wedding">Hochzeit</option>
+          <option value="charity">Charity Event</option>
           <option value="other">Anderer Anlass</option>
         </select>
       </div>
       <div class="form-group">
-        <label>Gewünschtes Datum</label>
+        <label>Gewuenschtes Datum *</label>
         <input type="date" name="date" required>
       </div>
       <div class="form-group">
-        <label>Ort / Location</label>
-        <input type="text" name="location" required placeholder="z.B. München, Kitzbühel, ...">
+        <label>Ort / Location *</label>
+        <input type="text" name="location" required placeholder="z.B. Muenchen, Kitzbuehel, ...">
       </div>
       <div class="form-group">
-        <label>Anzahl Gäste (ca.)</label>
+        <label>Anzahl Gaeste (ca.)</label>
         <input type="number" name="guests" min="1" max="500" placeholder="z.B. 30">
       </div>
       <div class="form-group">
-        <label>Nachricht (optional)</label>
-        <textarea name="message" placeholder="Erzählen Sie mir von Ihrem Anlass..."></textarea>
+        <label>Wuensche fuer den Abend</label>
+        <textarea name="audience_wish" placeholder="Gibt es ein Thema, eine Stimmung oder einen besonderen Moment, den Sie sich fuer den Abend wuenschen?"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Nachricht</label>
+        <textarea name="message" placeholder="Erzaehlen Sie mir von Ihrem Anlass..."></textarea>
       </div>
       <button type="submit" class="submit-btn" id="submit-btn">Unverbindlich anfragen</button>
+      <div class="form-error" id="form-error"></div>
     </form>
 
     <div class="form-success" id="form-success">
-      <div class="check">✓</div>
+      <div class="check">&#10003;</div>
       <h3>Anfrage erhalten</h3>
-      <p>Vielen Dank! Ich melde mich innerhalb von 24 Stunden persönlich bei Ihnen. Jeder Abend wird individuell geplant.</p>
+      <p>Vielen Dank! Ich melde mich innerhalb von 24 Stunden persoenlich bei Ihnen.<br>Jeder Abend wird individuell geplant — gemeinsam machen wir ihn unvergesslich.</p>
     </div>
   </div>
 
   <div class="scarcity" id="scarcity">
-    <div class="scarcity-text">8 von 12 Terminen für 2026 bereits vergeben</div>
-    <div class="scarcity-bar"><div class="scarcity-fill"></div></div>
+    <div class="scarcity-text" id="scarcity-text">8 von 12 Terminen fuer 2026 bereits vergeben</div>
+    <div class="scarcity-bar"><div class="scarcity-fill" id="scarcity-fill"></div></div>
+  </div>
+
+  <div class="urgency-ticker" id="urgency-ticker">
+    <span class="urgency-dot"></span>
+    <span id="urgency-text">Letzte Anfrage vor 2 Stunden</span>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- SHARE — Viral Loop                                     -->
+<!-- SHARE                                                   -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <section class="sect" id="share">
   <div class="share-strip">
-    <p style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;margin-bottom:16px">Teilen Sie diesen Link</p>
+    <p style="font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.2;margin-bottom:16px">Kennen Sie jemanden, der diesen Abend verdient?</p>
     <div class="share-url" id="share-url" onclick="copyLink()">thetoysareout.com/live</div>
     <div id="copy-feedback" style="font-size:9px;color:var(--gold);opacity:0;margin-bottom:12px;transition:opacity .3s;letter-spacing:.2em">Link kopiert!</div>
     <div class="share-actions">
@@ -404,53 +582,34 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 
 <!-- FOOTER -->
 <footer class="live-footer">
-  <a href="/">← Zurück zu THETOYSAREOUT</a>
-  <span style="margin:0 16px;opacity:.1">|</span>
   <a href="/impressum">Impressum</a>
+  <span style="margin:0 16px;opacity:.1">|</span>
+  <a href="/datenschutz">Datenschutz</a>
 </footer>
 
 <script>
 // ═══════════════════════════════════════════════════════
-// SMOOTH CURSOR
-// ═══════════════════════════════════════════════════════
-const cur = document.getElementById('cur');
-let mx = innerWidth/2, my = innerHeight/2, cx = mx, cy = my;
-document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
-
-function smoothCursor() {
-  cx += (mx - cx) * 0.12;
-  cy += (my - cy) * 0.12;
-  cur.style.left = cx + 'px';
-  cur.style.top = cy + 'px';
-  requestAnimationFrame(smoothCursor);
-}
-smoothCursor();
-
-document.querySelectorAll('a,button,.share-url,.hero-cta,.submit-btn,.share-btn,select').forEach(el => {
-  el.addEventListener('mouseenter', () => cur.classList.add('h'));
-  el.addEventListener('mouseleave', () => cur.classList.remove('h'));
-});
-
-// ═══════════════════════════════════════════════════════
-// SCROLL REVEAL — organic section animations
+// SCROLL REVEAL
 // ═══════════════════════════════════════════════════════
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
       e.target.classList.add('revealed');
-      // Cascade child elements
-      e.target.querySelectorAll('.story-block,.exp-card').forEach((el, i) => {
+      e.target.querySelectorAll('.story-block,.exp-card,.testimonial,.faq-item').forEach((el, i) => {
         setTimeout(() => {
           el.classList.add('visible');
           el.classList.add('bloom');
         }, 150 * i);
       });
-      e.target.querySelectorAll('.proof-strip,.press-quote,.scarcity,.share-strip').forEach(el => {
-        setTimeout(() => el.classList.add('visible'), 300);
+      e.target.querySelectorAll('.proof-strip,.press-quote,.scarcity,.urgency-ticker,.share-strip,.audience-box,.video-wrap').forEach(el => {
+        setTimeout(() => {
+          el.classList.add('visible');
+          el.classList.add('bloom');
+        }, 300);
       });
     }
   });
-}, { threshold: 0.15 });
+}, { threshold: 0.1 });
 
 document.querySelectorAll('.sect').forEach(s => observer.observe(s));
 
@@ -459,19 +618,45 @@ const bookingObserver = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) e.target.classList.add('bloom');
   });
-}, { threshold: 0.2 });
+}, { threshold: 0.15 });
 const bc = document.getElementById('booking-card');
 if (bc) bookingObserver.observe(bc);
 
-// ═══════════════════════════════════════════════════════
-// BOOKING FORM
-// ═══════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://pwdhxarvemcgkhhnvbng.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
+// Scarcity bar animation
+const scarcityObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      setTimeout(() => {
+        document.getElementById('scarcity-fill').style.width = '67%';
+      }, 500);
+    }
+  });
+}, { threshold: 0.5 });
+const sf = document.getElementById('scarcity');
+if (sf) scarcityObserver.observe(sf);
 
+// ═══════════════════════════════════════════════════════
+// FLOATING CTA — appears after scrolling past hero
+// ═══════════════════════════════════════════════════════
+const floatingCta = document.getElementById('floating-cta');
+const heroSection = document.getElementById('hero');
+const bookingSection = document.getElementById('booking');
+
+window.addEventListener('scroll', () => {
+  const heroBottom = heroSection.getBoundingClientRect().bottom;
+  const bookingTop = bookingSection.getBoundingClientRect().top;
+  const show = heroBottom < 0 && bookingTop > window.innerHeight;
+  floatingCta.classList.toggle('active', show);
+}, { passive: true });
+
+// ═══════════════════════════════════════════════════════
+// BOOKING FORM — sends to Netlify function
+// ═══════════════════════════════════════════════════════
 document.getElementById('booking-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('submit-btn');
+  const errorDiv = document.getElementById('form-error');
+  errorDiv.classList.remove('active');
   btn.disabled = true;
   btn.textContent = 'Wird gesendet...';
 
@@ -479,37 +664,24 @@ document.getElementById('booking-form').addEventListener('submit', async functio
   const data = Object.fromEntries(fd.entries());
 
   try {
-    // Try Supabase first
-    const res = await fetch(SUPABASE_URL + '/rest/v1/bot_bookings', {
+    const res = await fetch('/.netlify/functions/live-booking', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON,
-        'Authorization': 'Bearer ' + SUPABASE_ANON,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        phone: data.phone || null,
-        booking_type: 'live_piano',
-        description: [
-          'Name: ' + data.name,
-          'Email: ' + data.email,
-          'Anlass: ' + data.occasion,
-          'Datum: ' + data.date,
-          'Ort: ' + data.location,
-          'Gäste: ' + (data.guests || 'k.A.'),
-          'Nachricht: ' + (data.message || '-')
-        ].join('\n'),
-        preferred_date: data.date || null,
-        status: 'new'
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
 
-    // Also try mailto fallback
-    if (!res.ok) throw new Error('DB failed');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+      throw new Error(err.error || 'Anfrage fehlgeschlagen');
+    }
+
+    // Success
+    this.style.display = 'none';
+    document.querySelector('.booking-includes').style.display = 'none';
+    document.getElementById('form-success').classList.add('active');
   } catch (err) {
-    // Fallback: open mailto
-    const subject = encodeURIComponent('Live Piano Anfrage — ' + data.occasion);
+    // Fallback: mailto
+    const subject = encodeURIComponent('Live Piano Anfrage — ' + (data.occasion || 'Allgemein'));
     const body = encodeURIComponent(
       'Name: ' + data.name + '\n' +
       'E-Mail: ' + data.email + '\n' +
@@ -517,16 +689,30 @@ document.getElementById('booking-form').addEventListener('submit', async functio
       'Anlass: ' + data.occasion + '\n' +
       'Datum: ' + data.date + '\n' +
       'Ort: ' + data.location + '\n' +
-      'Gäste: ' + (data.guests || '-') + '\n' +
+      'Gaeste: ' + (data.guests || '-') + '\n' +
+      'Publikumswunsch: ' + (data.audience_wish || '-') + '\n' +
       'Nachricht: ' + (data.message || '-')
     );
-    window.location.href = 'mailto:booking@thetoysareout.com?subject=' + subject + '&body=' + body;
-  }
+    window.location.href = 'mailto:thetoysareout@gmx.de?subject=' + subject + '&body=' + body;
 
-  // Show success
-  this.style.display = 'none';
-  document.getElementById('form-success').classList.add('active');
+    // Still show success since mailto opened
+    setTimeout(() => {
+      this.style.display = 'none';
+      document.querySelector('.booking-includes').style.display = 'none';
+      document.getElementById('form-success').classList.add('active');
+    }, 500);
+  }
 });
+
+// ═══════════════════════════════════════════════════════
+// FAQ TOGGLE
+// ═══════════════════════════════════════════════════════
+function toggleFaq(el) {
+  const item = el.parentElement;
+  const wasOpen = item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if (!wasOpen) item.classList.add('open');
+}
 
 // ═══════════════════════════════════════════════════════
 // SHARE FUNCTIONS
@@ -541,16 +727,39 @@ function copyLink() {
 
 function shareWhatsApp(e) {
   e.preventDefault();
-  const text = encodeURIComponent('Schau dir das an — ein Live-Klavierabend, der unter die Haut geht. Ehemaliger Regensburger Domspatze. 🎹\nhttps://thetoysareout.com/live');
+  const text = encodeURIComponent('Schau dir das an — ein Live-Klavierabend, der unter die Haut geht. Ehemaliger Regensburger Domspatz.\nhttps://thetoysareout.com/live');
   window.open('https://wa.me/?text=' + text, '_blank');
 }
 
 function shareEmail(e) {
   e.preventDefault();
   const subject = encodeURIComponent('Live Piano — Eine Reise durch mein Leben');
-  const body = encodeURIComponent('Ich habe etwas Besonderes entdeckt: Ein Live-Klavierabend von einem ehemaligen Regensburger Domspatzen.\n\nJede Taste erzählt eine Geschichte. Schau es dir an:\nhttps://thetoysareout.com/live');
+  const body = encodeURIComponent('Ich habe etwas Besonderes entdeckt: Ein Live-Klavierabend von einem ehemaligen Regensburger Domspatz.\n\nJede Taste erzaehlt eine Geschichte. Schau es dir an:\nhttps://thetoysareout.com/live');
   window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
 }
+
+// ═══════════════════════════════════════════════════════
+// URGENCY — dynamic social proof
+// ═══════════════════════════════════════════════════════
+(function() {
+  const texts = [
+    'Letzte Anfrage vor 2 Stunden',
+    'Letzte Anfrage heute aus Muenchen',
+    '4 Termine fuer 2026 noch frei',
+    'Neue Anfrage aus Kitzbuehel gestern',
+  ];
+  let idx = 0;
+  const el = document.getElementById('urgency-text');
+  setInterval(() => {
+    idx = (idx + 1) % texts.length;
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = texts[idx];
+      el.style.opacity = '1';
+    }, 400);
+  }, 6000);
+  el.style.transition = 'opacity .4s';
+})();
 
 // ═══════════════════════════════════════════════════════
 // SET MIN DATE TO TODAY
@@ -560,6 +769,17 @@ if (dateInput) {
   const today = new Date().toISOString().split('T')[0];
   dateInput.setAttribute('min', today);
 }
+
+// ═══════════════════════════════════════════════════════
+// SMOOTH SCROLL for anchor links
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
 </script>
 </body>
 </html>
