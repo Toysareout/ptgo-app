@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Psycho-Schutzschild — Erkenne Manipulation, bevor sie wirkt</title>
+<style>
+  @media print {
+    body { margin: 0; }
+    .page-break { page-break-after: always; }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    background: #0d1117;
+    color: #e6edf3;
+    line-height: 1.5;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: 16px;
+    margin-bottom: 30px;
+    border: 1px solid #30363d;
+  }
+
+  .header h1 {
+    font-size: 2.4em;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff, #f78166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+  }
+
+  .header .subtitle {
+    font-size: 1.1em;
+    color: #8b949e;
+    font-style: italic;
+  }
+
+  .section {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .section h2 {
+    font-size: 1.4em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section h2 .icon {
+    font-size: 1.4em;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.7em;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+
+  .badge-red { background: #da3633; color: #fff; }
+  .badge-yellow { background: #d29922; color: #000; }
+  .badge-green { background: #238636; color: #fff; }
+  .badge-blue { background: #1f6feb; color: #fff; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 18px;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: #58a6ff; }
+
+  .card h3 {
+    font-size: 1.05em;
+    color: #58a6ff;
+    margin-bottom: 8px;
+  }
+
+  .card .attack {
+    color: #f85149;
+    font-size: 0.9em;
+    margin-bottom: 6px;
+  }
+
+  .card .defense {
+    color: #3fb950;
+    font-size: 0.9em;
+  }
+
+  .card .attack::before { content: "Angriff: "; font-weight: 700; }
+  .card .defense::before { content: "Schutz: "; font-weight: 700; }
+
+  .warning-box {
+    background: linear-gradient(135deg, #2d1b1b, #1b1b2d);
+    border: 1px solid #f85149;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+  }
+
+  .warning-box h3 {
+    color: #f85149;
+    margin-bottom: 10px;
+  }
+
+  .warning-box ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .warning-box ul li {
+    padding: 6px 0;
+    border-bottom: 1px solid #30363d;
+    color: #e6edf3;
+  }
+
+  .warning-box ul li:last-child { border-bottom: none; }
+
+  .warning-box ul li::before {
+    content: "!! ";
+    color: #f85149;
+    font-weight: 700;
+  }
+
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid #21262d;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    border: 2px solid #58a6ff;
+    border-radius: 4px;
+    margin-top: 2px;
+  }
+
+  .rule-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    background: #1f6feb;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85em;
+    margin-top: 1px;
+  }
+
+  .quote-box {
+    background: #0d1117;
+    border-left: 4px solid #bc8cff;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #8b949e;
+  }
+
+  .scale {
+    display: flex;
+    justify-content: space-between;
+    margin: 12px 0;
+    gap: 4px;
+  }
+
+  .scale-item {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 600;
+  }
+
+  .s1 { background: #238636; color: #fff; }
+  .s2 { background: #2ea043; color: #fff; }
+  .s3 { background: #d29922; color: #000; }
+  .s4 { background: #db6d28; color: #fff; }
+  .s5 { background: #da3633; color: #fff; }
+
+  .footer {
+    text-align: center;
+    padding: 30px;
+    color: #8b949e;
+    font-size: 0.9em;
+  }
+
+  .highlight {
+    color: #f78166;
+    font-weight: 600;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+  }
+
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid #21262d;
+  }
+
+  th {
+    color: #58a6ff;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-transform: uppercase;
+  }
+
+  td { color: #c9d1d9; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h1>PSYCHO-SCHUTZSCHILD</h1>
+  <div class="subtitle">Erkenne Manipulation, bevor sie wirkt — im Alltag, in Beziehungen, online</div>
+</div>
+
+<!-- SEKTION 1: DIE 10 SCHWACHSTELLEN -->
+<div class="section">
+  <h2><span class="icon">1</span> Deine 10 menschlichen Schwachstellen <span class="badge badge-red">KENNE SIE</span></h2>
+  <p style="color:#8b949e; margin-bottom:16px;">Jeder Mensch hat diese Schwachstellen. Das ist normal. Aber wer sie kennt, kann sie schuetzen.</p>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Zugehoerigkeit</h3>
+      <div class="attack">„Alle anderen machen das schon so."</div>
+      <div class="defense">Nur weil viele es tun, ist es nicht richtig fuer dich.</div>
+    </div>
+    <div class="card">
+      <h3>Gemocht werden</h3>
+      <div class="attack">„Du willst doch nicht schwierig sein, oder?"</div>
+      <div class="defense">„Nein" sagen macht dich nicht unsympathisch, sondern stark.</div>
+    </div>
+    <div class="card">
+      <h3>Verlustangst</h3>
+      <div class="attack">„Wenn du nicht jetzt handelst, verlierst du alles!"</div>
+      <div class="defense">Echte Chancen verschwinden nicht in 5 Minuten.</div>
+    </div>
+    <div class="card">
+      <h3>Ego &amp; Anerkennung</h3>
+      <div class="attack">„Nur DU kannst das. Ich vertraue nur dir."</div>
+      <div class="defense">Wer dein Ego fuettert, will meistens etwas von dir.</div>
+    </div>
+    <div class="card">
+      <h3>Einsamkeit</h3>
+      <div class="attack">Love Bombing — uebertriebene Zuneigung am Anfang.</div>
+      <div class="defense">Echte Naehe waechst langsam. Misstraue Sofort-Intensitaet.</div>
+    </div>
+    <div class="card">
+      <h3>Gutglaeubigkeit</h3>
+      <div class="attack">Vertrauen aufbauen, dann ausnutzen.</div>
+      <div class="defense">Vertrauen ist gut — aber pruefe Taten, nicht nur Worte.</div>
+    </div>
+    <div class="card">
+      <h3>Scham &amp; Schuld</h3>
+      <div class="attack">„Nach allem was ich fuer dich getan habe..."</div>
+      <div class="defense">Schuld, die dir aufgelegt wird, gehoert dir nicht.</div>
+    </div>
+    <div class="card">
+      <h3>Helfersyndrom</h3>
+      <div class="attack">Sich hilflos stellen, Mitleid erzeugen.</div>
+      <div class="defense">Helfen ist gut — aber nicht auf Kosten deiner Grenzen.</div>
+    </div>
+    <div class="card">
+      <h3>Gewohnheit</h3>
+      <div class="attack">Kleine Grenzverletzungen normalisieren.</div>
+      <div class="defense">Frag dich: „Haette ich das am Anfang akzeptiert?"</div>
+    </div>
+    <div class="card">
+      <h3>Sinnsuche</h3>
+      <div class="attack">„Ich zeige dir die Wahrheit, die andere verstecken."</div>
+      <div class="defense">Wer einfache Antworten auf komplexe Fragen gibt, vereinfacht zu stark.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEKTION 2: MANIPULATIONS-ALARM -->
+<div class="section">
+  <h2><span class="icon">2</span> Manipulations-Alarm <span class="badge badge-yellow">ERKENNE ES</span></h2>
+  <p style="color:#8b949e; margin-bottom:16px;">Wenn du mehrere dieser Signale spuerst, wirst du wahrscheinlich manipuliert:</p>
+
+  <div class="warning-box">
+    <h3>Warnsignale im Alltag &amp; in Beziehungen</h3>
+    <ul>
+      <li>Du fuehlst dich schuldig, obwohl du nichts Falsches getan hast</li>
+      <li>Du zweifelst an deiner eigenen Wahrnehmung (Gaslighting)</li>
+      <li>Du hast das Gefuehl, nie genug zu sein</li>
+      <li>Du isolierst dich von Freunden und Familie</li>
+      <li>Du stehst unter staendigem Druck, sofort zu handeln</li>
+      <li>Jemand wechselt zwischen extremer Naehe und Kaelte</li>
+      <li>Dir wird eingeredet, du seist „zu empfindlich"</li>
+      <li>Du entschuldigst dich staendig fuer Dinge, die nicht deine Schuld sind</li>
+    </ul>
+  </div>
+
+  <h3 style="color:#58a6ff; margin: 16px 0 8px;">Gefaehrlichkeits-Skala</h3>
+  <div class="scale">
+    <div class="scale-item s1">Harmlos</div>
+    <div class="scale-item s2">Werbung &amp; Marketing</div>
+    <div class="scale-item s3">Social Media Influencer</div>
+    <div class="scale-item s4">Toxische Beziehungen</div>
+    <div class="scale-item s5">Psychische Gewalt</div>
+  </div>
+</div>
+
+<!-- SEKTION 3: DIE 8 HACKER-TECHNIKEN IM ALLTAG -->
+<div class="section">
+  <h2><span class="icon">3</span> Die 8 Hacker-Techniken im Alltag <span class="badge badge-blue">DURCHSCHAUE SIE</span></h2>
+
+  <table>
+    <tr>
+      <th>Technik</th>
+      <th>So klingt es</th>
+      <th>Dein Schutz</th>
+    </tr>
+    <tr>
+      <td><span class="highlight">Autoritaet vortaeuschen</span></td>
+      <td>„Ich bin Experte / Chef / Arzt..."</td>
+      <td>Pruefe: Hat die Person echte Kompetenz?</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Zeitdruck</span></td>
+      <td>„Nur noch heute! Letzte Chance!"</td>
+      <td>Schlaf eine Nacht drueber. Immer.</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Reziprozitaet</span></td>
+      <td>„Ich habe dir geholfen, jetzt bist du dran."</td>
+      <td>Ein Gefallen verpflichtet dich zu nichts.</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Vorwand (Pretexting)</span></td>
+      <td>Eine erfundene Geschichte als Tueroeffner.</td>
+      <td>Pruefe die Geschichte unabhaengig.</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Gruppendruck</span></td>
+      <td>„Alle machen das so."</td>
+      <td>Dein Weg muss nicht der Weg aller sein.</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Sympathie-Falle</span></td>
+      <td>Uebertriebene Freundlichkeit, Komplimente.</td>
+      <td>Achte auf das Timing — kommt danach eine Bitte?</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Ja-Leiter</span></td>
+      <td>Kleine Bitten, die immer groesser werden.</td>
+      <td>Jede neue Bitte einzeln bewerten.</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Neugier-Falle</span></td>
+      <td>„Willst du nicht wissen, was XY ueber dich gesagt hat?"</td>
+      <td>Frag dich: Wem nuetzt es, dass ich das wissen will?</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SEKTION 4: DAS INFLUENCER-MUSTER (TATE & CO.) -->
+<div class="section">
+  <h2><span class="icon">4</span> Das Influencer-Muster durchschauen <span class="badge badge-red">ACHTUNG</span></h2>
+  <p style="color:#8b949e; margin-bottom:16px;">Dieses 4-Schritte-Muster nutzen Influencer, Sekten UND Populisten — seit Jahrhunderten:</p>
+
+  <div class="grid" style="grid-template-columns: 1fr;">
+    <div class="card">
+      <h3>Schritt 1 — Problem benennen</h3>
+      <p>„Du bist unzufrieden — und das ist nicht deine Schuld."</p>
+      <p style="color:#3fb950; margin-top:6px;"><strong>Check:</strong> Stimmt das Problem wirklich, oder wird es uebertrieben?</p>
+    </div>
+    <div class="card">
+      <h3>Schritt 2 — Feind identifizieren</h3>
+      <p>„Die Gesellschaft / Matrix / das System unterdrueckt dich."</p>
+      <p style="color:#3fb950; margin-top:6px;"><strong>Check:</strong> Ist der „Feind" konkret oder ein vager Suendenbock?</p>
+    </div>
+    <div class="card">
+      <h3>Schritt 3 — Loesung anbieten</h3>
+      <p>„Folge mir, ich zeige dir den Weg."</p>
+      <p style="color:#3fb950; margin-top:6px;"><strong>Check:</strong> Gibt es nur EINEN Weg? Wer profitiert davon?</p>
+    </div>
+    <div class="card">
+      <h3>Schritt 4 — Monetarisieren</h3>
+      <p>Kostenpflichtige Kurse, Mitgliedschaften, Produkte.</p>
+      <p style="color:#3fb950; margin-top:6px;"><strong>Check:</strong> Geht es um DEIN Wachstum oder um deren Umsatz?</p>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    „Wenn jemand dir die Wahrheit verkaufen will, ist es keine Wahrheit — es ist ein Produkt."
+  </div>
+</div>
+
+<!-- SEKTION 5: DEINE 7 GOLDENEN REGELN -->
+<div class="section">
+  <h2><span class="icon">5</span> Deine 7 goldenen Regeln <span class="badge badge-green">WENDE SIE AN</span></h2>
+
+  <ul class="checklist">
+    <li>
+      <span class="rule-number">1</span>
+      <div>
+        <strong>Die 24-Stunden-Regel</strong><br>
+        Triff keine wichtige Entscheidung unter Druck. Schlaf drueber. Echte Chancen warten auf dich.
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">2</span>
+      <div>
+        <strong>Der Freundes-Test</strong><br>
+        Frag dich: „Was wuerde ich meinem besten Freund raten?" — und folge diesem Rat.
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">3</span>
+      <div>
+        <strong>Die Anfangs-Frage</strong><br>
+        „Haette ich das am Anfang der Beziehung akzeptiert?" Wenn nein, warum jetzt?
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">4</span>
+      <div>
+        <strong>Taten statt Worte</strong><br>
+        Bewerte Menschen nach dem, was sie TUN — nicht nach dem, was sie SAGEN.
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">5</span>
+      <div>
+        <strong>Die Profit-Frage</strong><br>
+        „Wer profitiert davon, dass ich das glaube/tue/kaufe?" Folge dem Geld.
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">6</span>
+      <div>
+        <strong>Grenzen sind keine Mauern</strong><br>
+        „Nein" ist ein vollstaendiger Satz. Wer dein Nein nicht respektiert, respektiert DICH nicht.
+      </div>
+    </li>
+    <li>
+      <span class="rule-number">7</span>
+      <div>
+        <strong>Bauchgefuehl ernst nehmen</strong><br>
+        Dein Koerper erkennt Gefahr oft schneller als dein Kopf. Wenn sich etwas falsch anfuehlt, IST es meistens falsch.
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- SEKTION 6: TAEGLICHER SELBST-CHECK -->
+<div class="section">
+  <h2><span class="icon">6</span> Taeglicher Selbst-Check <span class="badge badge-green">MACH IHN</span></h2>
+  <p style="color:#8b949e; margin-bottom:16px;">Stell dir jeden Abend diese 3 Fragen:</p>
+
+  <ul class="checklist">
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <strong>Habe ich heute etwas getan, was ich eigentlich nicht wollte?</strong><br>
+        <span style="color:#8b949e;">Wenn ja: Warum? Wer oder was hat mich dazu gebracht?</span>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <strong>Habe ich mich heute schuldig oder unter Druck gefuehlt?</strong><br>
+        <span style="color:#8b949e;">Wenn ja: War die Schuld berechtigt oder wurde sie mir aufgelegt?</span>
+      </div>
+    </li>
+    <li>
+      <div class="check-box"></div>
+      <div>
+        <strong>Habe ich heute eine Grenze gesetzt — oder eine uebergangen?</strong><br>
+        <span style="color:#8b949e;">Wenn uebergangen: Was brauche ich, um sie morgen zu halten?</span>
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p><strong>Wissen ist dein bester Schutzschild.</strong></p>
+  <p>Wer diese Muster kennt, laesst sich nicht mehr so leicht manipulieren.</p>
+  <p style="margin-top: 12px; font-size: 0.85em; color: #484f58;">Erstellt am 12. Maerz 2026 — Psycho-Schutzschild v1.0</p>
+</div>
+
+</body>
+</html>
