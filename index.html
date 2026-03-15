@@ -172,6 +172,8 @@ Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
       style="width:100%;padding:14px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.2em;border:none;background:#c9a84c;color:#050505;cursor:pointer;transition:all .3s">Eintreten</button>
     <div id="pw-error" style="font-size:9px;color:#ff3b3b;opacity:0;margin-top:12px;letter-spacing:.15em;transition:opacity .3s">Falsches Passwort</div>
     <a href="/live" style="display:inline-block;margin-top:24px;font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:#c9a84c;opacity:.3;text-decoration:none;transition:opacity .3s">Live Piano Seite besuchen</a>
+    <br>
+    <a href="/ai-coaching.html" style="display:inline-block;margin-top:10px;font-size:8px;letter-spacing:.3em;text-transform:uppercase;color:#c9a84c;opacity:.3;text-decoration:none;transition:opacity .3s">AI Coaching OS</a>
   </div>
 </div>
 <script>
@@ -206,6 +208,7 @@ async function checkPw(){
 <div class="corner" id="p-c1">THETOYSAREOUT</div>
 <div class="corner" id="p-c2">EST. 2026</div>
 <div class="corner" id="p-c3">Wähle deine Welt</div>
+<a href="/ai-coaching.html" id="p-c4" style="position:fixed;z-index:20;bottom:20px;right:28px;font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:0;animation:fadeOrg 3s ease 3.5s forwards;color:#c9a84c;text-decoration:none;cursor:none;transition:opacity .3s">AI Coaching OS →</a>
 
 <!-- HOURLY TAGLINE -->
 <div id="hourly-tagline"></div>
@@ -331,7 +334,7 @@ function smoothCursor() {
 }
 smoothCursor();
 
-document.querySelectorAll('a,.w-btn,.eb-btn,.eb-close').forEach(el => {
+document.querySelectorAll('a,.w-btn,.eb-btn,.eb-close,#p-c4').forEach(el => {
   el.addEventListener('mouseenter', () => cur.classList.add('h'));
   el.addEventListener('mouseleave', () => cur.classList.remove('h'));
 });
