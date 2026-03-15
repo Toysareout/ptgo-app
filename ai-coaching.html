@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>thetoysareout — AI Transformation OS</title>
+<meta name="description" content="thetoysareout kombiniert KI-gestützte Selbstführung mit strategischer Business-Klarheit – für Unternehmer und Consultants.">
+<meta name="author" content="thetoysareout">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://thetoysareout.com/ai-coaching">
+<meta property="og:title" content="thetoysareout — AI Transformation OS">
+<meta property="og:description" content="KI-gestützte Selbstführung mit strategischer Business-Klarheit für Unternehmer und Consultants.">
+<meta property="og:site_name" content="thetoysareout">
+<meta property="og:locale" content="de_DE">
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: #f5f2ec;
+  color: #2a2520;
+  overflow-x: hidden;
+}
+
+:root {
+  --accent: #c8401a;
+  --accent-light: #e8623e;
+  --accent-dim: #c8401a18;
+  --ink: #0d0d0d;
+  --paper: #f5f2ec;
+  --paper-dim: #ede9e0;
+  --sand: #d4c9b0;
+  --charcoal: #2a2520;
+  --muted: #7a7268;
+  --border: #ddd8ce;
+  --success: #2d7a4f;
+  --gold: #b8860b;
+  --white: #ffffff;
+}
+
+/* Noise texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 9999; opacity: 0.4;
+}
+
+.display { font-family: 'Playfair Display', serif; }
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Navbar */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 60px;
+  background: #f5f2ecee;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 2.5rem;
+  justify-content: space-between;
+}
+.navbar-logo {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; text-decoration: none;
+}
+.navbar-mark {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 0.7rem; font-weight: 700;
+  font-family: 'DM Mono', monospace; letter-spacing: -0.03em;
+}
+.navbar-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem; font-weight: 700;
+  letter-spacing: -0.01em; color: var(--ink);
+}
+.navbar-name span { color: var(--accent); }
+.navbar-links {
+  display: flex; gap: 0;
+  background: var(--paper-dim);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 3px;
+}
+.nav-link {
+  padding: 5px 16px; border-radius: 100px;
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; border: none;
+  background: transparent; color: var(--muted);
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+}
+.nav-link:hover { color: var(--charcoal); }
+.nav-link.active { background: var(--accent); color: white; }
+.navbar-cta {
+  padding: 7px 18px;
+  background: var(--ink);
+  color: white;
+  border-radius: 100px;
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; border: none;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+}
+.navbar-cta:hover { background: var(--charcoal); transform: translateY(-1px); }
+
+/* Hero */
+.hero {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  padding: 100px 2.5rem 60px;
+  gap: 4rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.hero-left { display: flex; flex-direction: column; gap: 1.5rem; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px;
+  background: var(--accent-dim);
+  border: 1px solid #c8401a33;
+  border-radius: 100px;
+  font-size: 0.72rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--accent);
+  width: fit-content;
+}
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.8rem, 5vw, 4.2rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.hero-title em { font-style: italic; color: var(--accent); }
+.hero-sub {
+  font-size: 1.05rem;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 480px;
+  font-weight: 400;
+}
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-primary {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white; border: none;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+  text-decoration: none;
+}
+.btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); box-shadow: 0 6px 20px #c8401a33; }
+.btn-secondary {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--charcoal);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn-secondary:hover { border-color: var(--charcoal); }
+.hero-trust {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 0.78rem; color: var(--muted);
+  padding-top: 0.5rem;
+}
+.trust-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.hero-right { position: relative; }
+.hero-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px #0d0d0d10, 0 2px 0 var(--border);
+  animation: float 5s ease-in-out infinite;
+}
+.hero-card:hover { animation: none; transform: rotate(0.5deg) translateY(-4px); }
+.hero-card-header {
+  background: var(--ink);
+  padding: 1rem 1.25rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-card-dots { display: flex; gap: 5px; }
+.hero-card-dot { width: 10px; height: 10px; border-radius: 50%; }
+.hero-card-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem; color: #ffffff66;
+  letter-spacing: 0.06em;
+}
+.hero-card-body { padding: 1.5rem; }
+.hero-card-label {
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 0.5rem;
+}
+.hero-card-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--ink); margin-bottom: 1.25rem;
+}
+.hero-card-rows { display: flex; flex-direction: column; gap: 10px; }
+.hero-card-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px; background: var(--paper-dim);
+  border-radius: 8px;
+}
+.hero-card-row-icon {
+  width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; flex-shrink: 0;
+}
+.hero-card-row-content { min-width: 0; }
+.hero-card-row-title { font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.hero-card-row-sub { font-size: 0.7rem; color: var(--muted); line-height: 1.4; }
+.hero-card-next {
+  margin-top: 1rem;
+  padding: 10px 12px;
+  background: var(--accent-dim);
+  border: 1px solid #c8401a33;
+  border-radius: 8px;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.hero-card-next-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+.hero-card-next-text { font-size: 0.78rem; font-weight: 600; color: var(--ink); }
+.hero-float {
+  position: absolute;
+  background: white; border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 14px;
+  box-shadow: 0 8px 24px #0d0d0d10;
+  font-size: 0.75rem;
+}
+.hero-float-1 { top: -20px; right: -20px; }
+.hero-float-2 { bottom: 20px; left: -24px; }
+.float-label { color: var(--muted); font-size: 0.65rem; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.float-val { font-weight: 700; color: var(--ink); }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(1.5deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+
+/* Section */
+.section {
+  padding: 5rem 2.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-divider {
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+.section-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 900; letter-spacing: -0.02em;
+  line-height: 1.1; color: var(--ink);
+  margin-bottom: 1rem;
+}
+.section-sub {
+  font-size: 1rem; color: var(--muted); line-height: 1.7;
+  max-width: 540px;
+}
+
+/* Features */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+.feature-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  transition: all 0.25s;
+  position: relative; overflow: hidden;
+}
+.feature-card::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px #0d0d0d08; border-color: var(--sand); }
+.feature-card:hover::after { transform: scaleX(1); }
+.feature-icon {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; margin-bottom: 1rem;
+}
+.feature-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--ink); }
+.feature-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.65; }
+
+/* OS Section */
+.os-section {
+  background: var(--ink);
+  color: white;
+  padding: 5rem 2.5rem;
+  position: relative; overflow: hidden;
+}
+.os-section::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(#ffffff06 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff06 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+.os-inner {
+  max-width: 1200px; margin: 0 auto;
+  position: relative; z-index: 1;
+}
+.os-header {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 4rem; align-items: center;
+  margin-bottom: 3rem;
+}
+.os-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-light);
+  margin-bottom: 0.75rem;
+}
+.os-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 900; line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.os-sub { font-size: 0.95rem; color: #ffffff88; line-height: 1.7; margin-top: 1rem; }
+
+/* OS Tabs */
+.os-tabs {
+  display: flex; gap: 0;
+  background: #ffffff0f;
+  border: 1px solid #ffffff18;
+  border-radius: 10px;
+  padding: 3px;
+  margin-bottom: 1.5rem;
+  width: fit-content;
+}
+.os-tab {
+  padding: 7px 18px;
+  border-radius: 8px;
+  font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; border: none;
+  background: transparent; color: #ffffff66;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s;
+}
+.os-tab.active { background: var(--accent); color: white; }
+.os-tab:hover:not(.active) { color: white; }
+
+/* Check-in form */
+.checkin-wrap {
+  background: #ffffff08;
+  border: 1px solid #ffffff14;
+  border-radius: 16px;
+  padding: 1.75rem;
+}
+.checkin-top { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.input-group {
+  background: #ffffff0c;
+  border: 1px solid #ffffff18;
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  transition: border-color 0.2s;
+}
+.input-group:focus-within { border-color: #c8401a66; }
+.input-group.full { grid-column: 1 / -1; }
+.input-lbl {
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: #ffffff44; margin-bottom: 0.5rem;
+  display: flex; align-items: center; gap: 6px;
+}
+textarea, .checkin-wrap input[type=text] {
+  width: 100%; background: transparent; border: none; outline: none;
+  color: white; font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem; line-height: 1.6; resize: none;
+}
+textarea::placeholder, input::placeholder { color: #ffffff33; }
+.mood-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.mood-pill {
+  padding: 4px 11px; border-radius: 100px;
+  font-size: 0.74rem; font-weight: 600;
+  cursor: pointer; border: 1px solid #ffffff18;
+  background: transparent; color: #ffffff55;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.15s;
+}
+.mood-pill:hover { color: white; border-color: #ffffff44; }
+.mood-pill.sel { background: #c8401a33; border-color: var(--accent); color: var(--accent-light); }
+.checkin-submit {
+  width: 100%; padding: 13px;
+  background: var(--accent);
+  border: none; border-radius: 8px;
+  color: white; font-family: 'Outfit', sans-serif;
+  font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 1rem;
+}
+.checkin-submit:hover:not(:disabled) { background: var(--accent-light); transform: translateY(-1px); }
+.checkin-submit:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Result */
+.result-wrap {
+  background: #ffffff08;
+  border: 1px solid #c8401a44;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-top: 1.25rem;
+  animation: fadeUp 0.4s ease;
+  position: relative; overflow: hidden;
+}
+.result-wrap::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light), transparent);
+}
+@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform:none; } }
+.result-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+.result-state-lbl { font-size: 0.62rem; color: #ffffff44; font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+.result-state-val { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: white; }
+.badge {
+  padding: 3px 9px; border-radius: 100px;
+  font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 400;
+  border: 1px solid;
+}
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
+.rg-item { background: #ffffff0a; border-radius: 8px; padding: 0.85rem; }
+.rg-item.full { grid-column: 1 / -1; }
+.rg-lbl { font-size: 0.62rem; color: #ffffff44; font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.rg-val { font-size: 0.84rem; line-height: 1.55; color: white; }
+.next-action {
+  background: #c8401a22; border: 1px solid #c8401a44;
+  border-radius: 8px; padding: 0.9rem 1.1rem;
+  display: flex; gap: 10px; align-items: flex-start;
+}
+.na-lbl { font-size: 0.62rem; color: var(--accent-light); font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px; }
+.na-val { font-size: 0.9rem; font-weight: 600; color: white; }
+
+/* History */
+.history-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.hs-card { background: #ffffff08; border: 1px solid #ffffff14; border-radius: 10px; padding: 1rem 1.25rem; }
+.hs-val { font-family: 'DM Mono', monospace; font-size: 1.8rem; font-weight: 400; margin-bottom: 3px; }
+.hs-lbl { font-size: 0.7rem; color: #ffffff44; font-weight: 600; }
+.entry-list { display: flex; flex-direction: column; gap: 0.75rem; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+.entry-list::-webkit-scrollbar { width: 3px; }
+.entry-list::-webkit-scrollbar-track { background: transparent; }
+.entry-list::-webkit-scrollbar-thumb { background: #ffffff22; border-radius: 100px; }
+.entry-row {
+  background: #ffffff08; border: 1px solid #ffffff10;
+  border-radius: 10px; padding: 1rem 1.1rem;
+  display: grid; grid-template-columns: 48px 1fr auto;
+  gap: 0.75rem; align-items: center; cursor: pointer;
+  transition: all 0.2s;
+}
+.entry-row:hover { border-color: #c8401a44; background: #ffffff0d; }
+.entry-date { display: flex; flex-direction: column; align-items: center; }
+.entry-d { font-family: 'DM Mono', monospace; font-size: 1.3rem; line-height: 1; color: white; }
+.entry-m { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: #ffffff44; text-transform: uppercase; letter-spacing: 0.08em; }
+.entry-emotional { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: white; }
+.entry-preview { font-size: 0.75rem; color: #ffffff55; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-focus { font-size: 1.2rem; opacity: 0.6; }
+.empty-hist { text-align: center; padding: 3rem; color: #ffffff33; }
+
+/* Review */
+.review-trigger {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;
+}
+.review-btn-small {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid #ffffff22;
+  border-radius: 8px; color: white;
+  font-family: 'Outfit', sans-serif; font-size: 0.8rem; font-weight: 600;
+  cursor: pointer; transition: all 0.2s;
+}
+.review-btn-small:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-light); }
+.review-btn-small:disabled { opacity: 0.4; cursor: not-allowed; }
+.review-card-dark {
+  background: #ffffff08; border: 1px solid #ffffff14;
+  border-radius: 14px; overflow: hidden; animation: fadeUp 0.4s ease;
+}
+.review-card-head {
+  background: #ffffff0c; padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #ffffff10;
+  display: flex; align-items: center; gap: 10px;
+}
+.review-card-icon {
+  width: 38px; height: 38px; border-radius: 8px;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: white;
+}
+.review-card-ttl { font-size: 1rem; font-weight: 700; color: white; }
+.review-card-sub { font-size: 0.72rem; color: #ffffff44; }
+.review-body { padding: 1.25rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.rv-item { background: #ffffff0a; border-radius: 8px; padding: 0.85rem; }
+.rv-item.full { grid-column: 1/-1; background: #c8401a1a; border: 1px solid #c8401a33; }
+.rv-lbl { font-size: 0.62rem; color: #ffffff44; font-family: 'DM Mono', monospace; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.rv-item.full .rv-lbl { color: var(--accent-light); }
+.rv-val { font-size: 0.84rem; line-height: 1.55; color: white; }
+
+/* About section */
+.about-section { padding: 5rem 2.5rem; background: var(--paper-dim); }
+.about-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+.about-numbers { display: flex; gap: 2rem; margin-top: 2rem; }
+.about-num-val { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: var(--ink); line-height: 1; }
+.about-num-lbl { font-size: 0.78rem; color: var(--muted); font-weight: 500; margin-top: 4px; }
+.about-right { display: flex; flex-direction: column; gap: 1rem; }
+.about-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+  display: flex; gap: 12px; align-items: flex-start;
+  transition: all 0.2s;
+}
+.about-card:hover { transform: translateX(4px); border-color: #c8401a44; }
+.about-card-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--accent-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem; flex-shrink: 0; color: var(--accent);
+}
+.about-card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 3px; color: var(--ink); }
+.about-card-desc { font-size: 0.8rem; color: var(--muted); line-height: 1.55; }
+
+/* Pricing */
+.pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 3rem; }
+.price-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.75rem;
+  transition: all 0.25s; position: relative;
+}
+.price-card.featured {
+  background: var(--ink); border-color: var(--ink);
+  transform: scale(1.03); color: white;
+}
+.price-card:hover:not(.featured) { transform: translateY(-4px); box-shadow: 0 16px 40px #0d0d0d08; }
+.price-badge {
+  position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  background: var(--accent); color: white;
+  padding: 3px 12px; border-radius: 100px;
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.price-plan { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.price-card.featured .price-plan { color: #ffffff55; }
+.price-amount { font-family: 'Playfair Display', serif; font-size: 2.5rem; font-weight: 900; color: var(--ink); line-height: 1; }
+.price-card.featured .price-amount { color: white; }
+.price-period { font-size: 0.8rem; color: var(--muted); }
+.price-card.featured .price-period { color: #ffffff55; }
+.price-divider { height: 1px; background: var(--border); margin: 1.25rem 0; }
+.price-card.featured .price-divider { background: #ffffff18; }
+.price-features { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+.price-feature { display: flex; gap: 8px; align-items: flex-start; font-size: 0.83rem; }
+.price-feature-icon { color: var(--success); font-size: 0.75rem; margin-top: 1px; flex-shrink: 0; }
+.price-card.featured .price-feature { color: #ffffffcc; }
+.price-btn {
+  width: 100%; padding: 11px;
+  border-radius: 8px; font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem; font-weight: 700; cursor: pointer; border: none;
+  transition: all 0.2s;
+}
+.price-btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
+.price-btn-outline:hover { border-color: var(--ink); }
+.price-btn-solid { background: var(--accent); color: white; }
+.price-btn-solid:hover { background: var(--accent-light); }
+.price-btn-white { background: white; color: var(--ink); }
+.price-btn-white:hover { background: var(--paper); }
+
+/* Footer */
+.footer {
+  background: var(--ink); color: white;
+  padding: 4rem 2.5rem 2rem;
+}
+.footer-inner { max-width: 1200px; margin: 0 auto; }
+.footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+.footer-brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem; font-weight: 900;
+  margin-bottom: 0.75rem;
+}
+.footer-brand-name span { color: var(--accent); }
+.footer-brand-desc { font-size: 0.82rem; color: #ffffff55; line-height: 1.7; max-width: 260px; }
+.footer-col-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #ffffff44; margin-bottom: 1rem; }
+.footer-links { display: flex; flex-direction: column; gap: 8px; }
+.footer-link { font-size: 0.82rem; color: #ffffff66; cursor: pointer; transition: color 0.2s; }
+.footer-link:hover { color: white; }
+.footer-bottom { border-top: 1px solid #ffffff14; padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.footer-copy { font-size: 0.75rem; color: #ffffff33; font-family: 'DM Mono', monospace; }
+.footer-accent { color: var(--accent); }
+
+/* Spinner */
+.spin { width: 16px; height: 16px; border: 2px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: rotate 0.7s linear infinite; display: inline-block; }
+@keyframes rotate { to { transform: rotate(360deg); } }
+
+/* Steps */
+.step-item { display: flex; gap: 12px; align-items: flex-start; }
+.step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #c8401a33; border: 1px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; flex-shrink: 0;
+  color: var(--accent-light); font-family: 'DM Mono', monospace;
+}
+.step-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 2px; color: white; }
+.step-desc { font-size: 0.78rem; color: #ffffff55; }
+
+/* Tab panel visibility */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Page sections visibility */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero { grid-template-columns: 1fr; padding: 100px 1.5rem 40px; gap: 2rem; }
+  .hero-right { display: none; }
+  .features-grid { grid-template-columns: 1fr; }
+  .os-header { grid-template-columns: 1fr; gap: 2rem; }
+  .about-inner { grid-template-columns: 1fr; gap: 2rem; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .price-card.featured { transform: none; }
+  .footer-top { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  .history-stats { grid-template-columns: repeat(2, 1fr); }
+  .checkin-top { grid-template-columns: 1fr; }
+  .navbar { padding: 0 1rem; }
+  .navbar-links { display: none; }
+  .section { padding: 3rem 1.5rem; }
+  .os-section { padding: 3rem 1.5rem; }
+  .result-grid { grid-template-columns: 1fr; }
+  .review-body { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a class="navbar-logo" onclick="showPage('home')">
+    <div class="navbar-mark">TO</div>
+    <div class="navbar-name display">the<span>toys</span>areout</div>
+  </a>
+  <div class="navbar-links">
+    <button class="nav-link active" data-page="home" onclick="showPage('home')">Home</button>
+    <button class="nav-link" data-page="os" onclick="scrollToOS()">AI OS</button>
+    <button class="nav-link" data-page="about" onclick="showPage('about')">About</button>
+    <button class="nav-link" data-page="pricing" onclick="showPage('pricing')">Pricing</button>
+  </div>
+  <button class="navbar-cta" onclick="scrollToOS()">Jetzt starten &rarr;</button>
+</nav>
+
+<!-- HOME page -->
+<div id="page-home" class="page-section active">
+
+  <!-- Hero -->
+  <section style="background: var(--paper);">
+    <div class="hero">
+      <div class="hero-left">
+        <div class="hero-eyebrow">&diams; Business &middot; Consulting &middot; Klarheit</div>
+        <h1 class="hero-title display">
+          F&uuml;hre dein<br>Business mit<br><em>innerer Klarheit.</em>
+        </h1>
+        <p class="hero-sub">
+          thetoysareout kombiniert KI-gest&uuml;tzte Selbstf&uuml;hrung mit strategischer Business-Klarheit &ndash;
+          f&uuml;r Unternehmer und Consultants, die wirklich vorankommen wollen.
+        </p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="scrollToOS()">AI OS starten &darr;</button>
+          <button class="btn-secondary" onclick="showPage('about')">Mehr erfahren</button>
+        </div>
+        <div class="hero-trust">
+          <div class="trust-dot"></div>
+          <span>T&auml;glich genutzt von Unternehmern &amp; High Performern</span>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="hero-card">
+          <div class="hero-card-header">
+            <div class="hero-card-dots">
+              <div class="hero-card-dot" style="background:#ff5f57"></div>
+              <div class="hero-card-dot" style="background:#febc2e"></div>
+              <div class="hero-card-dot" style="background:#28c840"></div>
+            </div>
+            <div class="hero-card-title mono">ai-transformation-os &middot; check-in</div>
+          </div>
+          <div class="hero-card-body">
+            <div class="hero-card-label">HEUTIGER ZUSTAND</div>
+            <div class="hero-card-value display">Fokussiert, aber &uuml;berfordert</div>
+            <div class="hero-card-rows">
+              <div class="hero-card-row">
+                <div class="hero-card-row-icon" style="background:var(--accent-dim);color:var(--accent)">&diams;</div>
+                <div class="hero-card-row-content">
+                  <div class="hero-card-row-title">Kern-Muster</div>
+                  <div class="hero-card-row-sub">Entscheidungsaufschub bei Unsicherheit</div>
+                </div>
+              </div>
+              <div class="hero-card-row">
+                <div class="hero-card-row-icon" style="background:#2d7a4f18;color:var(--success)">&diams;</div>
+                <div class="hero-card-row-content">
+                  <div class="hero-card-row-title">Energie</div>
+                  <div class="hero-card-row-sub">Hoch &mdash; nutze den Morgen f&uuml;r Strategie</div>
+                </div>
+              </div>
+            </div>
+            <div class="hero-card-next">
+              <div>
+                <div class="hero-card-next-label">&rarr; N&auml;chster Schritt</div>
+                <div class="hero-card-next-text">Schreibe in 10 Min. die 3 wichtigsten Entscheidungen auf, die du diese Woche treffen musst.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-float hero-float-1">
+          <div class="float-label">Streak</div>
+          <div class="float-val" id="hero-streak">12 Tage</div>
+        </div>
+        <div class="hero-float hero-float-2">
+          <div class="float-label">Top Fokus</div>
+          <div class="float-val">&diams; Strategie</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <div class="section-divider"></div>
+  <section class="section">
+    <div class="section-eyebrow mono">Was wir bieten</div>
+    <h2 class="section-title display">Das komplette System<br>f&uuml;r Business-F&uuml;hrung.</h2>
+    <div class="features-grid" id="features-grid"></div>
+  </section>
+
+  <!-- AI OS Section -->
+  <section class="os-section" id="os-section">
+    <div class="os-inner">
+      <div class="os-header">
+        <div>
+          <div class="os-eyebrow mono">Live &middot; AI Transformation OS</div>
+          <h2 class="os-title display">Starte deinen<br>ersten Check-in.</h2>
+          <p class="os-sub">Das System arbeitet in Echtzeit. Beschreibe deinen aktuellen Zustand &ndash; die KI analysiert Muster und gibt dir deinen n&auml;chsten Schritt.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.75rem">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div><div class="step-title">Schreibe frei</div><div class="step-desc">Gedanken, Gef&uuml;hle, aktuelle Situation</div></div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div><div class="step-title">KI analysiert</div><div class="step-desc">Mustererkennung in Echtzeit</div></div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div><div class="step-title">Dein n&auml;chster Schritt</div><div class="step-desc">Konkret, sofort umsetzbar</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OS Tabs -->
+      <div class="os-tabs">
+        <button class="os-tab active" data-tab="checkin" onclick="switchTab('checkin')">Check-in</button>
+        <button class="os-tab" data-tab="verlauf" onclick="switchTab('verlauf')">Verlauf</button>
+        <button class="os-tab" data-tab="review" onclick="switchTab('review')">Wochen-Review</button>
+      </div>
+
+      <!-- Check-in Tab -->
+      <div id="tab-checkin" class="tab-panel active">
+        <div class="checkin-wrap">
+          <div class="checkin-top">
+            <div class="input-group full">
+              <div class="input-lbl"><span>&#10022;</span> Gedanken &amp; Gef&uuml;hle</div>
+              <textarea id="thoughts" rows="4" placeholder="Was besch&auml;ftigt dich gerade? Schreib frei..."></textarea>
+            </div>
+            <div class="input-group">
+              <div class="input-lbl"><span>&diams;</span> Aktuelle Herausforderung</div>
+              <textarea id="challenge" rows="3" placeholder="Was blockiert dich gerade?"></textarea>
+            </div>
+            <div class="input-group">
+              <div class="input-lbl"><span>&diams;</span> Stimmung</div>
+              <div class="mood-row" id="mood-row"></div>
+            </div>
+          </div>
+          <button class="checkin-submit" id="checkin-btn" onclick="doCheckin()" disabled>
+            &#9654; Analyse starten
+          </button>
+        </div>
+        <div id="result-container"></div>
+      </div>
+
+      <!-- Verlauf Tab -->
+      <div id="tab-verlauf" class="tab-panel">
+        <div class="history-stats" id="history-stats"></div>
+        <div id="entry-list-container"></div>
+      </div>
+
+      <!-- Review Tab -->
+      <div id="tab-review" class="tab-panel">
+        <div class="review-trigger">
+          <div>
+            <div style="font-size:0.82rem;font-weight:700;margin-bottom:3px;color:white">Wochen-Review</div>
+            <div style="font-size:0.75rem;color:#ffffff44" id="review-count-label">Basierend auf deinen letzten 0 Eintr&auml;gen</div>
+          </div>
+          <button class="review-btn-small" id="review-btn" onclick="doWeeklyReview()" disabled>
+            Review generieren
+          </button>
+        </div>
+        <div id="review-info"></div>
+        <div id="review-container"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section class="about-section">
+    <div class="about-inner">
+      <div>
+        <div class="section-eyebrow mono">&Uuml;ber thetoysareout</div>
+        <h2 class="section-title display">Strategie trifft<br>innere Klarheit.</h2>
+        <p class="section-sub">Wir glauben: Die besten Business-Entscheidungen kommen aus einem klaren Kopf. thetoysareout ist das Werkzeug, das beides verbindet.</p>
+        <div class="about-numbers">
+          <div><div class="about-num-val display">5K+</div><div class="about-num-lbl">Aktive Nutzer</div></div>
+          <div><div class="about-num-val display">98%</div><div class="about-num-lbl">Retention Rate</div></div>
+          <div><div class="about-num-val display">12min</div><div class="about-num-lbl">&Oslash; Daily Session</div></div>
+        </div>
+      </div>
+      <div class="about-right" id="about-cards"></div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section">
+    <div class="section-eyebrow mono">Pricing</div>
+    <h2 class="section-title display">Investiere in deine<br>Klarheit.</h2>
+    <div class="pricing-grid" id="pricing-grid"></div>
+  </section>
+</div>
+
+<!-- ABOUT page (standalone) -->
+<div id="page-about" class="page-section">
+  <section class="about-section" style="margin-top:60px;min-height:80vh">
+    <div class="about-inner">
+      <div>
+        <div class="section-eyebrow mono">&Uuml;ber thetoysareout</div>
+        <h2 class="section-title display">Strategie trifft<br>innere Klarheit.</h2>
+        <p class="section-sub">Wir glauben: Die besten Business-Entscheidungen kommen aus einem klaren Kopf. thetoysareout ist das Werkzeug, das beides verbindet.</p>
+        <div class="about-numbers">
+          <div><div class="about-num-val display">5K+</div><div class="about-num-lbl">Aktive Nutzer</div></div>
+          <div><div class="about-num-val display">98%</div><div class="about-num-lbl">Retention Rate</div></div>
+          <div><div class="about-num-val display">12min</div><div class="about-num-lbl">&Oslash; Daily Session</div></div>
+        </div>
+      </div>
+      <div class="about-right" id="about-cards-page"></div>
+    </div>
+  </section>
+</div>
+
+<!-- PRICING page (standalone) -->
+<div id="page-pricing" class="page-section">
+  <section class="section" style="margin-top:60px;min-height:80vh">
+    <div class="section-eyebrow mono">Pricing</div>
+    <h2 class="section-title display">Investiere in deine<br>Klarheit.</h2>
+    <div class="pricing-grid" id="pricing-grid-page"></div>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="footer-brand-name display">the<span>toys</span>areout</div>
+        <div class="footer-brand-desc">Das AI-gest&uuml;tzte Betriebssystem f&uuml;r Selbstf&uuml;hrung, Business-Klarheit und pers&ouml;nliche Transformation.</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Produkt</div>
+        <div class="footer-links">
+          <div class="footer-link" onclick="scrollToOS()">AI OS</div>
+          <div class="footer-link" onclick="showPage('home')">Features</div>
+          <div class="footer-link" onclick="showPage('pricing')">Pricing</div>
+          <div class="footer-link">Roadmap</div>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Company</div>
+        <div class="footer-links">
+          <div class="footer-link" onclick="showPage('about')">About</div>
+          <div class="footer-link">Blog</div>
+          <div class="footer-link">Careers</div>
+          <div class="footer-link">Press</div>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <div class="footer-links">
+          <div class="footer-link">Datenschutz</div>
+          <div class="footer-link">AGB</div>
+          <div class="footer-link">Impressum</div>
+          <div class="footer-link">Cookie Policy</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy mono">&copy; 2025 <span class="footer-accent">thetoysareout</span> &middot; All rights reserved</div>
+      <div class="footer-copy mono">Built with AI Transformation OS</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────────
+const CHECKIN_SYSTEM = `Du bist der AI Coach des "AI Transformation OS" von thetoysareout – einem persönlichen Betriebssystem für Business-Klarheit, Entscheidungen und Selbstführung für Unternehmer und Consultants.
+
+Analysiere den Nutzer-Input und antworte NUR als JSON (kein Markdown, keine Erklärung):
+{
+"emotionalState": "kurze Beschreibung (2-4 Wörter)",
+"corePattern": "das wichtigste Muster oder Thema",
+"insight": "eine präzise Erkenntnis (1-2 Sätze)",
+"nextStep": "ein konkreter, sofort ausführbarer Business-Schritt",
+"energyLevel": "hoch|mittel|niedrig",
+"focusArea": "Strategie|Entscheidung|Leadership|Wachstum|Klarheit|Execution"
+}`;
+
+const WEEKLY_SYSTEM = `Du bist der AI Coach von thetoysareout. Analysiere die Einträge der Woche und antworte NUR als JSON: { "dominantTheme": "dominantes Thema", "emotionalJourney": "emotionale Entwicklung (kurz)", "recurringPattern": "ein wiederkehrendes Muster", "biggestWin": "größter Erfolg", "blindSpot": "blinder Fleck", "weeklyInsight": "Kern-Erkenntnis (2-3 Sätze)", "nextWeekFocus": "klarer Fokus für nächste Woche" }`;
+
+const FOCUS_ICON = { Strategie:"\u25C8", Entscheidung:"\u25C6", Leadership:"\u25C9", Wachstum:"\u25C7", Klarheit:"\u25CE", Execution:"\u25B6" };
+const ENERGY_COLOR = { hoch: "#2d7a4f", mittel: "#b8860b", niedrig: "#c8401a" };
+const MOODS = ["Fokussiert","Energievoll","Klar","Ersch\u00F6pft","Overwhelmed","Motiviert","Unsicher","Strateg. Modus","Blockiert","Im Flow"];
+const MONTHS = ["Jan","Feb","M\u00E4r","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let entries = [];
+let selectedMoods = [];
+let streak = 0;
+let currentResult = null;
+let currentReview = null;
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    const s = localStorage.getItem('ttao_entries');
+    if (s) { entries = JSON.parse(s); streak = calcStreak(entries); }
+  } catch(e) {}
+
+  renderMoods();
+  renderFeatures();
+  renderAboutCards();
+  renderPricing();
+  updateCheckinButton();
+  updateHeroStreak();
+
+  document.getElementById('thoughts').addEventListener('input', updateCheckinButton);
+});
+
+// ─── CLAUDE API ────────────────────────────────────────────────────────────────
+async function askClaude(messages, system) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: system,
+      messages: messages,
+    }),
+  });
+  const data = await res.json();
+  const text = (data.content && data.content.find(function(b) { return b.type === 'text'; }) || {}).text || '{}';
+  return JSON.parse(text.replace(/`json|`/g, '').trim());
+}
+
+// ─── HELPERS ───────────────────────────────────────────────────────────────────
+function calcStreak(list) {
+  if (!list.length) return 0;
+  var sorted = list.slice().sort(function(a, b) { return b.ts - a.ts; });
+  var s = 0;
+  var now = Date.now();
+  for (var i = 0; i < sorted.length; i++) {
+    if (Math.floor((now - sorted[i].ts) / 86400000) <= i + 1) s++;
+    else break;
+  }
+  return s;
+}
+
+function updateHeroStreak() {
+  var el = document.getElementById('hero-streak');
+  if (el) el.textContent = (streak > 0 ? streak : 12) + ' Tage';
+}
+
+function updateCheckinButton() {
+  var btn = document.getElementById('checkin-btn');
+  var thoughts = document.getElementById('thoughts').value.trim();
+  btn.disabled = !thoughts;
+}
+
+// ─── PAGE NAVIGATION ───────────────────────────────────────────────────────────
+function showPage(page) {
+  document.querySelectorAll('.page-section').forEach(function(el) { el.classList.remove('active'); });
+  var target = document.getElementById('page-' + page);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-link').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function scrollToOS() {
+  showPage('home');
+  setTimeout(function() {
+    var el = document.getElementById('os-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }, 50);
+}
+
+// ─── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.os-tab').forEach(function(el) {
+    el.classList.toggle('active', el.dataset.tab === tab);
+  });
+  document.querySelectorAll('.tab-panel').forEach(function(el) { el.classList.remove('active'); });
+  var panel = document.getElementById('tab-' + tab);
+  if (panel) panel.classList.add('active');
+
+  if (tab === 'verlauf') renderHistory();
+  if (tab === 'review') renderReviewTab();
+}
+
+// ─── MOOD PILLS ────────────────────────────────────────────────────────────────
+function renderMoods() {
+  var row = document.getElementById('mood-row');
+  row.innerHTML = MOODS.map(function(m) {
+    return '<button class="mood-pill" data-mood="' + m + '" onclick="toggleMood(\'' + m + '\')">' + m + '</button>';
+  }).join('');
+}
+
+function toggleMood(m) {
+  var idx = selectedMoods.indexOf(m);
+  if (idx >= 0) selectedMoods.splice(idx, 1);
+  else selectedMoods.push(m);
+
+  document.querySelectorAll('.mood-pill').forEach(function(el) {
+    el.classList.toggle('sel', selectedMoods.indexOf(el.dataset.mood) >= 0);
+  });
+}
+
+// ─── CHECK-IN ──────────────────────────────────────────────────────────────────
+async function doCheckin() {
+  var thoughtsEl = document.getElementById('thoughts');
+  var challengeEl = document.getElementById('challenge');
+  var thoughts = thoughtsEl.value.trim();
+  if (!thoughts) return;
+
+  var btn = document.getElementById('checkin-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin"></div> Analyse l\u00E4uft...';
+  document.getElementById('result-container').innerHTML = '';
+
+  try {
+    var content = 'Gedanken: ' + thoughts;
+    if (challengeEl.value.trim()) content += '\nHerausforderung: ' + challengeEl.value.trim();
+    if (selectedMoods.length) content += '\nStimmung: ' + selectedMoods.join(', ');
+
+    var analysis = await askClaude([{ role: 'user', content: content }], CHECKIN_SYSTEM);
+    currentResult = analysis;
+
+    var entry = {
+      id: Date.now(),
+      ts: Date.now(),
+      thoughts: thoughts,
+      challenge: challengeEl.value.trim(),
+      moods: selectedMoods.slice(),
+      analysis: analysis
+    };
+    entries.unshift(entry);
+    streak = calcStreak(entries);
+    try { localStorage.setItem('ttao_entries', JSON.stringify(entries)); } catch(e) {}
+
+    renderResult(analysis);
+    thoughtsEl.value = '';
+    challengeEl.value = '';
+    selectedMoods = [];
+    renderMoods();
+    updateHeroStreak();
+  } catch(e) {
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '\u25B6 Analyse starten';
+  updateCheckinButton();
+}
+
+function renderResult(r) {
+  var energyColor = ENERGY_COLOR[r.energyLevel] || '#b8860b';
+  var focusIcon = FOCUS_ICON[r.focusArea] || '\u25C7';
+
+  document.getElementById('result-container').innerHTML =
+    '<div class="result-wrap">' +
+      '<div class="result-top">' +
+        '<div>' +
+          '<div class="result-state-lbl">Emotionaler Zustand</div>' +
+          '<div class="result-state-val display">' + esc(r.emotionalState) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' +
+          '<div class="badge" style="color:' + energyColor + ';border-color:' + energyColor + '44;background:' + energyColor + '11">Energie: ' + esc(r.energyLevel) + '</div>' +
+          '<div class="badge" style="color:#e8623e;border-color:#c8401a44;background:#c8401a18">' + focusIcon + ' ' + esc(r.focusArea) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="result-grid">' +
+        '<div class="rg-item"><div class="rg-lbl">Kern-Muster</div><div class="rg-val">' + esc(r.corePattern) + '</div></div>' +
+        '<div class="rg-item"><div class="rg-lbl">Erkenntnis</div><div class="rg-val">' + esc(r.insight) + '</div></div>' +
+      '</div>' +
+      '<div class="next-action">' +
+        '<span style="font-size:1.2rem;margin-top:1px">&rarr;</span>' +
+        '<div>' +
+          '<div class="na-lbl">N\u00E4chster Schritt</div>' +
+          '<div class="na-val">' + esc(r.nextStep) + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+// ─── HISTORY ───────────────────────────────────────────────────────────────────
+function renderHistory() {
+  var highEnergy = entries.filter(function(e) { return e.analysis && e.analysis.energyLevel === 'hoch'; }).length;
+  var focusCounts = {};
+  entries.forEach(function(e) {
+    var f = e.analysis && e.analysis.focusArea;
+    if (f) focusCounts[f] = (focusCounts[f] || 0) + 1;
+  });
+  var topFocus = Object.keys(focusCounts).sort(function(a, b) { return focusCounts[b] - focusCounts[a]; })[0] || '\u2013';
+
+  document.getElementById('history-stats').innerHTML =
+    '<div class="hs-card"><div class="hs-val" style="color:#e8623e">' + entries.length + '</div><div class="hs-lbl">Check-ins</div></div>' +
+    '<div class="hs-card"><div class="hs-val" style="color:#b8860b">' + streak + '</div><div class="hs-lbl">Tage Streak</div></div>' +
+    '<div class="hs-card"><div class="hs-val" style="color:#2d7a4f">' + highEnergy + '</div><div class="hs-lbl">Hohe Energie</div></div>' +
+    '<div class="hs-card"><div class="hs-val" style="font-size:1.3rem;color:#60a5fa;padding-top:4px">' + esc(topFocus) + '</div><div class="hs-lbl">Top-Fokus</div></div>';
+
+  if (entries.length === 0) {
+    document.getElementById('entry-list-container').innerHTML =
+      '<div class="empty-hist">\u25C7<br><br>Noch keine Eintr\u00E4ge. Starte deinen ersten Check-in.</div>';
+    return;
+  }
+
+  var html = '<div class="entry-list">';
+  entries.forEach(function(e) {
+    var d = new Date(e.ts);
+    var focusIcon = FOCUS_ICON[(e.analysis && e.analysis.focusArea)] || '\u25C7';
+    html +=
+      '<div class="entry-row">' +
+        '<div class="entry-date">' +
+          '<div class="entry-d">' + d.getDate() + '</div>' +
+          '<div class="entry-m">' + MONTHS[d.getMonth()] + '</div>' +
+        '</div>' +
+        '<div style="min-width:0">' +
+          '<div class="entry-emotional">' + esc((e.analysis && e.analysis.emotionalState) || 'Analysiert') + '</div>' +
+          '<div class="entry-preview">' + esc(e.thoughts) + '</div>' +
+          (e.analysis && e.analysis.nextStep ? '<div style="font-size:0.72rem;color:#e8623e;margin-top:3px;font-weight:600">&rarr; ' + esc(e.analysis.nextStep) + '</div>' : '') +
+        '</div>' +
+        '<div class="entry-focus">' + focusIcon + '</div>' +
+      '</div>';
+  });
+  html += '</div>';
+  document.getElementById('entry-list-container').innerHTML = html;
+}
+
+// ─── WEEKLY REVIEW ─────────────────────────────────────────────────────────────
+function renderReviewTab() {
+  var count = Math.min(entries.length, 7);
+  document.getElementById('review-count-label').textContent = 'Basierend auf deinen letzten ' + count + ' Eintr\u00E4gen';
+
+  var btn = document.getElementById('review-btn');
+  btn.disabled = entries.length < 2;
+
+  if (entries.length < 2) {
+    document.getElementById('review-info').innerHTML =
+      '<div style="background:#ffffff08;border:1px solid #ffffff14;border-radius:10px;padding:1.25rem;font-size:0.84rem;color:#ffffff44">' +
+      'Du brauchst mindestens 2 Check-ins f\u00FCr einen Review. Bisher: ' + entries.length + ' Eintrag' + (entries.length !== 1 ? 'e' : '') + '.</div>';
+  } else {
+    document.getElementById('review-info').innerHTML = '';
+  }
+
+  if (currentReview) renderReview(currentReview);
+}
+
+async function doWeeklyReview() {
+  if (entries.length < 2) return;
+
+  var btn = document.getElementById('review-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:flex;align-items:center;gap:6px"><div class="spin" style="width:12px;height:12px"></div> Analysiere...</span>';
+  document.getElementById('review-container').innerHTML = '';
+
+  try {
+    var text = entries.slice(0, 7).map(function(e, i) {
+      return 'Eintrag ' + (i + 1) + ': ' + e.thoughts + '. Muster: ' + (e.analysis && e.analysis.corePattern) + '. Zustand: ' + (e.analysis && e.analysis.emotionalState);
+    }).join('\n\n');
+
+    var r = await askClaude([{ role: 'user', content: text }], WEEKLY_SYSTEM);
+    currentReview = r;
+    renderReview(r);
+  } catch(e) {
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Review generieren';
+}
+
+function renderReview(r) {
+  document.getElementById('review-container').innerHTML =
+    '<div class="review-card-dark">' +
+      '<div class="review-card-head">' +
+        '<div class="review-card-icon">\u25C8</div>' +
+        '<div>' +
+          '<div class="review-card-ttl">' + esc(r.dominantTheme) + '</div>' +
+          '<div class="review-card-sub">Wochen-Analyse \u00B7 thetoysareout AI OS</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="review-body">' +
+        '<div class="rv-item"><div class="rv-lbl">Emotionale Reise</div><div class="rv-val">' + esc(r.emotionalJourney) + '</div></div>' +
+        '<div class="rv-item"><div class="rv-lbl">Wiederkehrendes Muster</div><div class="rv-val">' + esc(r.recurringPattern) + '</div></div>' +
+        '<div class="rv-item"><div class="rv-lbl">Gr\u00F6\u00DFter Erfolg</div><div class="rv-val">' + esc(r.biggestWin) + '</div></div>' +
+        '<div class="rv-item"><div class="rv-lbl">Blinder Fleck</div><div class="rv-val">' + esc(r.blindSpot) + '</div></div>' +
+        '<div class="rv-item full"><div class="rv-lbl">Kern-Erkenntnis</div><div class="rv-val" style="font-weight:600;font-size:0.9rem">' + esc(r.weeklyInsight) + '</div></div>' +
+        '<div class="rv-item full" style="background:#ffffff08;border:1px solid #ffffff14"><div class="rv-lbl">&rarr; Fokus n\u00E4chste Woche</div><div class="rv-val" style="font-weight:700;color:#e8623e">' + esc(r.nextWeekFocus) + '</div></div>' +
+      '</div>' +
+    '</div>';
+}
+
+// ─── RENDER FEATURES ───────────────────────────────────────────────────────────
+function renderFeatures() {
+  var features = [
+    { icon:"\u25CE", bg:"var(--accent-dim)", color:"var(--accent)", title:"Daily Check-in", desc:"T\u00E4glich strukturierter Selbst-Scan: Emotionen, Gedanken, Herausforderungen \u2013 alles in einem Ritual verankert." },
+    { icon:"\u25C8", bg:"#2d7a4f18", color:"var(--success)", title:"KI-Analyse", desc:"Echtzeit-Mustererkennung durch Claude AI. Verstehe deine Entscheidungslogik tiefer als je zuvor." },
+    { icon:"\u25C6", bg:"#b8860b18", color:"var(--gold)", title:"Wochen-Review", desc:"Automatischer Report \u00FCber deine emotionale und strategische Entwicklung \u2013 jede Woche ein Spiegel." },
+    { icon:"\u25C7", bg:"#60a5fa18", color:"#60a5fa", title:"Muster-Tracking", desc:"Deine Fokus-Bereiche visualisiert. Sieh sofort, wo du stagnierst und wo du w\u00E4chst." },
+    { icon:"\u25B6", bg:"var(--accent-dim)", color:"var(--accent)", title:"Konkreter Schritt", desc:"Nie wieder im Nebel \u2013 jeder Check-in endet mit einer klaren, sofort ausf\u00FChrbaren Handlung." },
+    { icon:"\u25C9", bg:"#2d7a4f18", color:"var(--success)", title:"Streak-System", desc:"Kontinuit\u00E4t schl\u00E4gt Intensit\u00E4t. Baue t\u00E4glich Selbstf\u00FChrungs-Kompetenz auf, die nachhaltig tr\u00E4gt." },
+  ];
+
+  document.getElementById('features-grid').innerHTML = features.map(function(f) {
+    return '<div class="feature-card">' +
+      '<div class="feature-icon" style="background:' + f.bg + ';color:' + f.color + '">' + f.icon + '</div>' +
+      '<div class="feature-title">' + f.title + '</div>' +
+      '<div class="feature-desc">' + f.desc + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ─── RENDER ABOUT CARDS ────────────────────────────────────────────────────────
+function renderAboutCards() {
+  var cards = [
+    { icon:"\u25C8", title:"F\u00FCr Unternehmer", desc:"Designed f\u00FCr Menschen, die t\u00E4glich komplexe Entscheidungen treffen und dabei klar bleiben m\u00FCssen." },
+    { icon:"\u25C6", title:"KI-gest\u00FCtzt", desc:"Keine generischen Tipps. Dein System lernt aus jedem Eintrag und wird mit der Zeit pr\u00E4ziser." },
+    { icon:"\u25CE", title:"Privat & sicher", desc:"Deine Daten geh\u00F6ren dir. Lokale Speicherung, keine Weitergabe, keine Werbung." },
+    { icon:"\u25B6", title:"T\u00E4glich nutzbar", desc:"12 Minuten pro Tag. Mehr brauchst du nicht, um langfristige Klarheit aufzubauen." },
+  ];
+
+  var html = cards.map(function(c) {
+    return '<div class="about-card">' +
+      '<div class="about-card-icon">' + c.icon + '</div>' +
+      '<div>' +
+        '<div class="about-card-title">' + c.title + '</div>' +
+        '<div class="about-card-desc">' + c.desc + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('about-cards').innerHTML = html;
+  var aboutPage = document.getElementById('about-cards-page');
+  if (aboutPage) aboutPage.innerHTML = html;
+}
+
+// ─── RENDER PRICING ────────────────────────────────────────────────────────────
+function renderPricing() {
+  var plans = [
+    { plan:"Basic", price:"29", period:"/ Monat", featured:false, badge:null, features:["Daily Check-in","KI-Analyse","Verlaufsansicht","7-Tage Streak-Tracking","E-Mail Support"], btnClass:"price-btn-outline" },
+    { plan:"Pro", price:"79", period:"/ Monat", featured:true, badge:"Beliebteste Wahl", features:["Alles in Basic","Wochen-Review","Muster-Analyse","Entscheidungsmodelle","Voice-Input (Beta)","Priority Support"], btnClass:"price-btn-white" },
+    { plan:"Elite", price:"199", period:"/ Monat", featured:false, badge:null, features:["Alles in Pro","Pers\u00F6nliches Onboarding","Mentor-Tools","White-Label Option","B2B Lizenz m\u00F6glich","Dedicated Support"], btnClass:"price-btn-solid" },
+  ];
+
+  var html = plans.map(function(p) {
+    return '<div class="price-card' + (p.featured ? ' featured' : '') + '">' +
+      (p.badge ? '<div class="price-badge">' + p.badge + '</div>' : '') +
+      '<div class="price-plan">' + p.plan + '</div>' +
+      '<div style="display:flex;align-items:flex-end;gap:4px;margin:0.5rem 0 0.25rem">' +
+        '<div class="price-amount display">' + p.price + '\u20AC</div>' +
+        '<div class="price-period">' + p.period + '</div>' +
+      '</div>' +
+      '<div class="price-divider"></div>' +
+      '<div class="price-features">' +
+        p.features.map(function(f) {
+          return '<div class="price-feature"><span class="price-feature-icon">\u2713</span><span>' + f + '</span></div>';
+        }).join('') +
+      '</div>' +
+      '<button class="price-btn ' + p.btnClass + '" onclick="scrollToOS()">Jetzt starten</button>' +
+    '</div>';
+  }).join('');
+
+  document.getElementById('pricing-grid').innerHTML = html;
+  var pricingPage = document.getElementById('pricing-grid-page');
+  if (pricingPage) pricingPage.innerHTML = html;
+}
+
+// ─── ESCAPE HTML ───────────────────────────────────────────────────────────────
+function esc(str) {
+  if (!str) return '';
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
