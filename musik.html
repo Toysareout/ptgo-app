@@ -274,11 +274,12 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
 .g-particle{position:absolute;width:3px;height:3px;background:#4af;border-radius:50%;animation:particleFloat 6s ease-in-out infinite;box-shadow:0 0 8px rgba(74,170,255,.6)}
 #feat-short{border-top:none}
 </style><!--ORGANIC-CSS-END-->
-<!-- Analytics: Replace G-XXXXXXXXXX with your GA4 ID -->
+<!-- Analytics: Uncomment and replace G-XXXXXXXXXX with your GA4 ID
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
-<!-- Meta Pixel: Replace XXXXXXXXXXXXXXXX with your Pixel ID -->
+Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
+-->
 </head>
 <body>
 <div id="pw-gate" style="position:fixed;inset:0;z-index:10000;background:#050505;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px">
@@ -293,7 +294,8 @@ footer{padding:clamp(48px,8vh,100px) clamp(24px,6vw,100px);border-top:1px solid 
 </div>
 <script>
 (function(){var s=sessionStorage.getItem('ttao_auth');if(s==='ok')document.getElementById('pw-gate').style.display='none';document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPw()})})();
-function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa21'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
+async function _h(s){var e=new TextEncoder().encode(s);var b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
+async function checkPw(){var v=document.getElementById('pw-input').value;var h=await _h(v);if(h==='056c0bf74aaa44f92e4dd53cd72cc96a2c820912e9f998f3027d3c0b70c60a3d'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
 </script>
 
 <div id="cur"></div>
@@ -310,8 +312,8 @@ function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa2
   <div class="hero-content">
     <div id="hero-name">THE<span class="pk">TOYS</span><br><span class="ol">ARE</span>OUT</div>
     <div id="hero-dot"></div>
-    <div id="hero-sub"><!--HEADLINE-START-->Bist du dabei — oder nicht.<!--HEADLINE-END--></div>
-    <div id="hero-count"><b id="face-count"><!--WATCHERS-START-->0<!--WATCHERS-END--></b> Gesichter sind bereits Teil der Welt</div>
+    <div id="hero-sub"><!--HEADLINE-START-->Wer wartet, verliert.<!--HEADLINE-END--></div>
+    <div id="hero-count"><b id="face-count"><!--WATCHERS-START-->160<!--WATCHERS-END--></b> Gesichter sind bereits Teil der Welt</div>
     <div id="choices">
       <button class="ch ch-a" onclick="openPanel('cam-panel')">Ich bin dabei. →</button>
       <button class="ch ch-b" onclick="openPanel('gal-panel')">Die Welt ansehen.</button>
@@ -418,31 +420,34 @@ function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa2
   <div class="s-sub">Wenn es weg ist, ist es weg.</div>
   <div class="drop-grid"><!--DROPS-START-->
     <div class="drop-card sold-out">
-      <div class="drop-tag">Drop #001 · Beat Pack</div>
-      <div class="drop-name">Midnight Sessions</div>
-      <div class="drop-desc">5 unreleased Beats. Produziert zwischen 2–5 Uhr morgens. Rohe Energie.</div>
+      <div class="drop-tag">DROP 096</div>
+      <div class="drop-name">GHOST TAPE</div>
+      <div class="drop-desc">Nur solange der Vorrat reicht.</div>
       <div class="drop-bottom">
-        <div class="drop-price">29 €</div>
-        <div class="drop-stock"><b>0</b> / 50 übrig</div>
+        <div class="drop-price">25 €</div>
+        <div class="drop-stock">SOLD OUT</div>
       </div>
+      <button class="btn btn-g" style="width:100%;margin-top:12px;opacity:.3" disabled>VERGRIFFEN</button>
     </div>
     <div class="drop-card">
-      <div class="drop-tag">Drop #002 · Instrumental</div>
-      <div class="drop-name">First Light</div>
-      <div class="drop-desc">Ein einzelner Track. Piano + Elektronik. Nur 30 Kopien existieren.</div>
+      <div class="drop-tag">DROP 006</div>
+      <div class="drop-name">DARK PULSE</div>
+      <div class="drop-desc">Einmal weg, für immer weg.</div>
       <div class="drop-bottom">
-        <div class="drop-price">19 €</div>
-        <div class="drop-stock"><b>12</b> / 30 übrig</div>
+        <div class="drop-price">18 €</div>
+        <div class="drop-stock"><b>14</b> / 27 übrig</div>
       </div>
+      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 006 — DARK PULSE',18)">18 € — JETZT</button>
     </div>
     <div class="drop-card">
-      <div class="drop-tag">Bald · Drop #003</div>
-      <div class="drop-name">???</div>
-      <div class="drop-desc">Kommt bald. Trag dich ein, um benachrichtigt zu werden.</div>
+      <div class="drop-tag">DROP 072</div>
+      <div class="drop-name">SILENT RIOT</div>
+      <div class="drop-desc">Letzte Einheiten im Lager.</div>
       <div class="drop-bottom">
-        <div class="drop-price">— €</div>
-        <div class="drop-stock">Coming soon</div>
+        <div class="drop-price">18 €</div>
+        <div class="drop-stock"><b>24</b> / 21 übrig</div>
       </div>
+      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 072 — SILENT RIOT',18)">18 € — JETZT</button>
     </div>
   <!--DROPS-END--></div>
 </section>
@@ -498,10 +503,10 @@ function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa2
   <div class="s-sub">20 Plätze. Eine Stunde. Unwiederholbar.</div>
   <!--LIVE-START--><div class="live-card">
     <div class="live-dot"></div>
-    <div class="live-date">Coming Soon</div>
-    <div class="live-info">Exklusiver Livestream<br>Musik · Gespräch · Produktion<br>Nur für Ticketinhaber</div>
-    <button class="btn btn-p" onclick="buyItem('ticket','Live Session',10)">Ticket sichern · 10 € →</button>
-    <div class="live-slots">Plätze: <b>20</b> / 20 verfügbar</div>
+    <div class="live-date">25.03.2026</div>
+    <div class="live-info">Echokammer Live<br>21:00 Uhr · Exklusiver Livestream<br>Nur für Ticketinhaber</div>
+    <button class="btn btn-p" onclick="buyItem('ticket','Echokammer Live',8)">8€ · Ticket sichern →</button>
+    <div class="live-slots">Plätze: <b>15</b> / 30 verfügbar</div>
   </div><!--LIVE-END-->
 </section>
 
@@ -511,15 +516,15 @@ function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa2
   <div class="s-title">Merch.<br><span class="ol">Ein Stück.</span></div>
   <div class="s-sub">Kein Shop. Ein Produkt. Limitiert.</div>
   <!--MERCH-START--><div class="merch-item">
-    <div class="merch-img">TTAO</div>
+    <div class="merch-img">CAP</div>
     <div class="merch-info">
-      <div class="merch-name">The Black Tee</div>
-      <div class="merch-desc">Schwarz. Minimalistisch. THETOYSAREOUT auf der Brust. Sonst nichts.</div>
+      <div class="merch-name">PULSE CAP</div>
+      <div class="merch-desc">Nur 19 von 42 — Single Drop. Limitiert.</div>
       <div class="merch-bottom">
-        <div class="merch-price">39 €</div>
-        <div class="merch-ed">Edition 001 · 50 Stück</div>
+        <div class="merch-price">25 €</div>
+        <div class="merch-ed">Edition 034 · 42 Stück</div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','The Black Tee',39)">39 € — Kaufen →</button>
+      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','PULSE CAP',25)">25 € — Kaufen →</button>
     </div>
   </div><!--MERCH-END-->
 </section>

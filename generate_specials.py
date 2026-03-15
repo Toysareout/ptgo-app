@@ -351,22 +351,8 @@ def generate_specials():
         return generate_specials_local()
 
 
-def inject_into_html(specials):
-    """Replace dynamic sections in index.html with fresh content."""
-    html_path = os.path.join(os.path.dirname(__file__), "index.html")
-    with open(html_path, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    # Inject organic CSS overrides
-    organic_css = generate_organic_css()
-    html = re.sub(
-        r"(<!--ORGANIC-CSS-START-->).*?(<!--ORGANIC-CSS-END-->)",
-        rf"\1<style>\n{organic_css}\n</style>\2",
-        html,
-        flags=re.DOTALL,
-    )
-
-    # Replace drops section
+def _inject_markers(html, specials):
+    """Replace all dynamic marker sections in an HTML string."""
     drops_html = build_drops_html(specials["drops"])
     html = re.sub(
         r"(<!--DROPS-START-->).*?(<!--DROPS-END-->)",
@@ -375,7 +361,6 @@ def inject_into_html(specials):
         flags=re.DOTALL,
     )
 
-    # Replace live session section
     live_html = build_live_html(specials["live_session"])
     html = re.sub(
         r"(<!--LIVE-START-->).*?(<!--LIVE-END-->)",
@@ -384,7 +369,6 @@ def inject_into_html(specials):
         flags=re.DOTALL,
     )
 
-    # Replace merch section
     merch_html = build_merch_html(specials["merch"])
     html = re.sub(
         r"(<!--MERCH-START-->).*?(<!--MERCH-END-->)",
@@ -393,7 +377,6 @@ def inject_into_html(specials):
         flags=re.DOTALL,
     )
 
-    # Replace watcher count
     html = re.sub(
         r"(<!--WATCHERS-START-->).*?(<!--WATCHERS-END-->)",
         rf"\g<1>{specials['watchers']}\g<2>",
@@ -401,16 +384,46 @@ def inject_into_html(specials):
         flags=re.DOTALL,
     )
 
-    # Replace headline
     html = re.sub(
         r"(<!--HEADLINE-START-->).*?(<!--HEADLINE-END-->)",
         rf"\g<1>{specials['headline']}\g<2>",
         html,
         flags=re.DOTALL,
     )
+    return html
 
-    with open(html_path, "w", encoding="utf-8") as f:
+
+def inject_into_html(specials):
+    """Replace dynamic sections in index.html and musik.html."""
+    base_dir = os.path.dirname(__file__)
+
+    # ── index.html (has organic CSS + all markers) ──
+    index_path = os.path.join(base_dir, "index.html")
+    with open(index_path, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    organic_css = generate_organic_css()
+    html = re.sub(
+        r"(<!--ORGANIC-CSS-START-->).*?(<!--ORGANIC-CSS-END-->)",
+        rf"\1<style>\n{organic_css}\n</style>\2",
+        html,
+        flags=re.DOTALL,
+    )
+
+    html = _inject_markers(html, specials)
+
+    with open(index_path, "w", encoding="utf-8") as f:
         f.write(html)
+
+    # ── musik.html (drops, live, merch markers) ──
+    musik_path = os.path.join(base_dir, "musik.html")
+    if os.path.exists(musik_path):
+        with open(musik_path, "r", encoding="utf-8") as f:
+            musik = f.read()
+        musik = _inject_markers(musik, specials)
+        with open(musik_path, "w", encoding="utf-8") as f:
+            f.write(musik)
+        print(f"  musik.html: drops/live/merch updated")
 
     print(f"[{NOW.strftime('%Y-%m-%d %H:%M')}] Specials + layout updated:")
     print(f"  Drops: {', '.join(d['title'] for d in specials['drops'])}")

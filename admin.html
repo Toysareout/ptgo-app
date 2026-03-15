@@ -118,11 +118,12 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
   .dash-header{flex-direction:column;gap:12px}
 }
 </style>
-<!-- Analytics: Replace G-XXXXXXXXXX with your GA4 ID -->
+<!-- Analytics: Uncomment and replace G-XXXXXXXXXX with your GA4 ID
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
-<!-- Meta Pixel: Replace XXXXXXXXXXXXXXXX with your Pixel ID -->
+Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
+-->
 </head>
 <body>
 <div id="pw-gate" style="position:fixed;inset:0;z-index:10000;background:#050505;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px">
@@ -137,7 +138,8 @@ body{background:var(--black);color:var(--white);font-family:'Space Mono',monospa
 </div>
 <script>
 (function(){var s=sessionStorage.getItem('ttao_auth');if(s==='ok')document.getElementById('pw-gate').style.display='none';document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPw()})})();
-function checkPw(){var v=document.getElementById('pw-input').value;if(v==='rosa21'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
+async function _h(s){var e=new TextEncoder().encode(s);var b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
+async function checkPw(){var v=document.getElementById('pw-input').value;var h=await _h(v);if(h==='056c0bf74aaa44f92e4dd53cd72cc96a2c820912e9f998f3027d3c0b70c60a3d'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
 </script>
 
 <!-- GRAIN -->
