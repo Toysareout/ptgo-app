@@ -258,19 +258,97 @@ def build_merch_html(merch):
   </div>"""
 
 
+def generate_specials_local():
+    """Generate specials locally without API — used as fallback."""
+    drop_titles = [
+        "VOID SIGNAL", "NEON ASHES", "RAW NERVE", "GHOST TAPE", "STATIC BLOOM",
+        "COLD WIRE", "DARK PULSE", "BROKEN HALO", "NIGHT CODE", "SILENT RIOT",
+        "DEAD PIXEL", "SMOKE RING", "RUST CROWN", "ZERO HOUR", "BLACK MILK",
+        "LOST FREQ", "PALE FIRE", "IRON VEIL", "DEEP CUT", "BURNT EDGE",
+    ]
+    subtitles = [
+        "Wird nicht nachproduziert.", "Einmal weg, für immer weg.",
+        "Letzte Einheiten im Lager.", "Nur solange der Vorrat reicht.",
+        "Exklusiv — kein Restock.", "Limitiert auf diesen Drop.",
+        "Fast vergriffen.", "Nicht lange verfügbar.",
+    ]
+    session_titles = [
+        "Nacht der Frequenzen", "Untergrund Session", "Rohes Signal Live",
+        "Pulse & Silence", "Echokammer Live", "Schwarzlicht Session",
+    ]
+    merch_names = [
+        "SIGNAL TEE", "VOID HOODIE", "STATIC CAP", "GHOST POSTER",
+        "NOISE HOODIE", "RAW TEE", "PULSE CAP", "DARK POSTER",
+    ]
+    merch_types = ["T-Shirt", "Hoodie", "Cap", "Poster"]
+    headlines = [
+        "Nichts bleibt. Alles tropft.", "Wer wartet, verliert.",
+        "Kein Restock. Kein Comeback.", "Limitiert heißt limitiert.",
+        "Das Rauschen hört nie auf.", "Nur wer da ist, bekommt.",
+        "Alles echt. Nichts gespielt.", "Einmal und nie wieder.",
+    ]
+
+    titles = random.sample(drop_titles, 3)
+    sold_out_idx = random.randint(0, 2)
+    drops = []
+    for i, title in enumerate(titles):
+        stock_total = random.randint(*STOCK_RANGE) + 10
+        sold_out = i == sold_out_idx
+        drops.append({
+            "number": f"DROP {random.randint(4, 99):03d}",
+            "title": title,
+            "subtitle": random.choice(subtitles),
+            "price": random.choice([12, 15, 18, 22, 25, 29, 35, 42]),
+            "stock_total": stock_total,
+            "stock_left": 0 if sold_out else random.randint(*STOCK_RANGE),
+            "sold_out": sold_out,
+        })
+
+    tickets_total = random.randint(20, 50)
+    return {
+        "drops": drops,
+        "live_session": {
+            "title": random.choice(session_titles),
+            "date": (NOW + timedelta(days=random.randint(2, 14))).strftime("%d.%m.%Y"),
+            "time": random.choice(["20:00", "21:00", "22:00"]),
+            "tickets_total": tickets_total,
+            "tickets_left": random.randint(3, min(15, tickets_total)),
+            "price": random.choice([5, 8, 10]),
+        },
+        "merch": {
+            "name": random.choice(merch_names),
+            "type": random.choice(merch_types),
+            "price": random.choice([25, 35, 45, 55]),
+            "stock_total": random.randint(30, 100),
+            "stock_left": random.randint(5, 25),
+        },
+        "headline": random.choice(headlines),
+        "watchers": WATCHERS,
+    }
+
+
 def generate_specials():
-    """Call Claude API and return specials dict."""
-    client = anthropic.Anthropic()
-    msg = client.messages.create(
-        model="claude-haiku-4-5-20250514",
-        max_tokens=1024,
-        messages=[{"role": "user", "content": PROMPT}],
-    )
-    text = msg.content[0].text.strip()
-    # Strip markdown code fences if present
-    text = re.sub(r"^```json?\s*", "", text)
-    text = re.sub(r"\s*```$", "", text)
-    return json.loads(text)
+    """Call Claude API if available, otherwise fall back to local generation."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        print("  [fallback] No ANTHROPIC_API_KEY — using local generator")
+        return generate_specials_local()
+
+    try:
+        client = anthropic.Anthropic()
+        msg = client.messages.create(
+            model="claude-haiku-4-5-20250514",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": PROMPT}],
+        )
+        text = msg.content[0].text.strip()
+        # Strip markdown code fences if present
+        text = re.sub(r"^```json?\s*", "", text)
+        text = re.sub(r"\s*```$", "", text)
+        return json.loads(text)
+    except Exception as e:
+        print(f"  [fallback] API error: {e} — using local generator")
+        return generate_specials_local()
 
 
 def inject_into_html(specials):
