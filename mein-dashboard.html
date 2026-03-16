@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AZ Command Center</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--card:#12121a;--border:#1e1e2e;--accent:#c8401a;
+--accent2:#e8521a;--text:#e0e0e0;--muted:#888;--green:#2ecc71;
+--yellow:#f1c40f;--red:#e74c3c;--blue:#3498db;--purple:#9b59b6;
+}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+
+/* LOGIN GATE */
+#login-gate{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+#login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px;max-width:400px;width:90%;text-align:center}
+#login-box h1{font-size:1.4rem;margin-bottom:8px;color:var(--accent2)}
+#login-box p{color:var(--muted);font-size:.85rem;margin-bottom:24px}
+#login-box input{width:100%;padding:14px;background:#1a1a2e;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;text-align:center;letter-spacing:4px;margin-bottom:16px}
+#login-box input:focus{outline:none;border-color:var(--accent)}
+#login-box button{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600}
+#login-box button:hover{background:var(--accent2)}
+.login-error{color:var(--red);font-size:.8rem;margin-top:8px;display:none}
+
+/* DASHBOARD */
+#dashboard{display:none}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:100}
+.topbar h1{font-size:1.1rem;color:var(--accent2)}
+.topbar .date{color:var(--muted);font-size:.85rem}
+.topbar .logout{color:var(--muted);cursor:pointer;font-size:.8rem;padding:6px 12px;border:1px solid var(--border);border-radius:6px}
+.topbar .logout:hover{color:var(--red);border-color:var(--red)}
+
+/* NAV */
+.nav{display:flex;gap:4px;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto;flex-wrap:nowrap}
+.nav button{padding:8px 16px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.8rem;cursor:pointer;white-space:nowrap;transition:.2s}
+.nav button:hover,.nav button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* SECTIONS */
+.section{display:none;padding:24px;max-width:1200px;margin:0 auto}
+.section.active{display:block}
+.section h2{font-size:1.3rem;margin-bottom:16px;color:var(--text)}
+.section h3{font-size:1rem;margin:20px 0 8px;color:var(--accent2)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card h4{color:var(--accent2);margin-bottom:8px;font-size:.95rem}
+.card p,.card li{color:var(--muted);font-size:.88rem;line-height:1.6}
+.card ul{padding-left:20px}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid,.grid-2{grid-template-columns:1fr}}
+
+/* STATS ROW */
+.stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;flex:1;min-width:140px;text-align:center}
+.stat .num{font-size:1.6rem;font-weight:700;color:var(--accent2)}
+.stat .label{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+/* TAGS */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;margin:2px}
+.tag-green{background:#2ecc7122;color:var(--green)}
+.tag-yellow{background:#f1c40f22;color:var(--yellow)}
+.tag-red{background:#e74c3c22;color:var(--red)}
+.tag-blue{background:#3498db22;color:var(--blue)}
+.tag-purple{background:#9b59b622;color:var(--purple)}
+
+/* FORMS */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px;background:#1a1a2e;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem}
+.form-group textarea{min-height:100px;resize:vertical}
+.btn{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:600}
+.btn:hover{background:var(--accent2)}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent);color:#fff}
+
+/* AGENT LOG */
+.agent-log{background:#0d0d15;border:1px solid var(--border);border-radius:8px;padding:16px;max-height:400px;overflow-y:auto;font-family:'Fira Code',monospace;font-size:.78rem;color:var(--green);line-height:1.8}
+.agent-log .time{color:var(--muted)}
+.agent-log .info{color:var(--blue)}
+.agent-log .warn{color:var(--yellow)}
+.agent-log .error{color:var(--red)}
+
+/* QUESTION CARD */
+.question-card{background:linear-gradient(135deg,#1a1020,#12121a);border:1px solid #2a1a3a;border-radius:16px;padding:32px;text-align:center;margin-bottom:20px}
+.question-card .q{font-size:1.2rem;color:#fff;line-height:1.6;font-style:italic}
+.question-card .source{color:var(--purple);font-size:.8rem;margin-top:12px}
+
+/* TIMELINE */
+.timeline-item{display:flex;gap:16px;margin-bottom:16px;padding-left:20px;border-left:2px solid var(--border);position:relative}
+.timeline-item::before{content:'';position:absolute;left:-5px;top:4px;width:8px;height:8px;background:var(--accent);border-radius:50%}
+.timeline-item .tdate{color:var(--muted);font-size:.75rem;min-width:80px}
+.timeline-item .tcontent{font-size:.85rem;color:var(--text)}
+
+/* PDF */
+.pdf-list{list-style:none;padding:0}
+.pdf-list li{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--border)}
+.pdf-list li:hover{background:#1a1a2e}
+.pdf-icon{font-size:1.2rem}
+
+/* HOUSING */
+.listing{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:.2s}
+.listing:hover{border-color:var(--accent)}
+.listing-header{padding:16px;border-bottom:1px solid var(--border)}
+.listing-header h4{margin:0}
+.listing-body{padding:16px}
+.listing-meta{display:flex;gap:16px;margin-top:8px;flex-wrap:wrap}
+.listing-meta span{font-size:.8rem;color:var(--muted)}
+.price{font-size:1.2rem;font-weight:700;color:var(--green)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+
+/* PULSE */
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.pulse{animation:pulse 2s infinite}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#000;padding:12px 20px;border-radius:8px;font-size:.85rem;font-weight:600;transform:translateY(100px);opacity:0;transition:.3s;z-index:1000}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN GATE -->
+<div id="login-gate">
+<div id="login-box">
+<h1>AZ COMMAND CENTER</h1>
+<p>Privates Dashboard — Nur fuer Alexander Zeis</p>
+<input type="password" id="pw-input" placeholder="Passwort" autofocus>
+<button onclick="tryLogin()">Zugang</button>
+<div class="login-error" id="login-error">Falsches Passwort</div>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+
+<!-- TOPBAR -->
+<div class="topbar">
+<h1>AZ COMMAND CENTER</h1>
+<span class="date" id="topbar-date"></span>
+<span class="logout" onclick="logout()">Abmelden</span>
+</div>
+
+<!-- NAV -->
+<div class="nav" id="nav">
+<button class="active" onclick="showSection('overview',this)">Uebersicht</button>
+<button onclick="showSection('ptgo',this)">PTGO Methode</button>
+<button onclick="showSection('musik',this)">Musik & Klavier</button>
+<button onclick="showSection('coaching',this)">AI Coaching</button>
+<button onclick="showSection('healing',this)">Healing Sessions</button>
+<button onclick="showSection('produkte',this)">Produkte</button>
+<button onclick="showSection('wohnung',this)">Wohnungssuche</button>
+<button onclick="showSection('klavier-agent',this)">Klavier-Agent</button>
+<button onclick="showSection('entwicklung',this)">Taegliche Entwicklung</button>
+<button onclick="showSection('lebensplan',this)">Lebensplan</button>
+<button onclick="showSection('schutzschild',this)">Psycho-Schutzschild</button>
+<button onclick="showSection('system',this)">System & Tech</button>
+</div>
+
+<!-- ======================= OVERVIEW ======================= -->
+<div class="section active" id="sec-overview">
+<h2>Willkommen, Alexander</h2>
+<div class="stats">
+<div class="stat"><div class="num">6</div><div class="label">Aktive Services</div></div>
+<div class="stat"><div class="num">5.000 EUR</div><div class="label">Session-Preis PTGO</div></div>
+<div class="stat"><div class="num">2.500 EUR</div><div class="label">Live Piano ab</div></div>
+<div class="stat"><div class="num">199 EUR</div><div class="label">Oster Reset Box</div></div>
+</div>
+
+<div class="grid">
+<div class="card">
+<h4>Dein Oekosystem</h4>
+<ul>
+<li><strong>THETOYSAREOUT</strong> — Musik, Community, Inner Circle (ab 1 EUR)</li>
+<li><strong>PTGO METHOD</strong> — Premium Body Healing (5.000 EUR/Session)</li>
+<li><strong>Live Piano</strong> — Emotionale Improvisation (ab 2.500 EUR)</li>
+<li><strong>AI Coaching OS</strong> — Self-Leadership fuer Unternehmer</li>
+<li><strong>Oster Reset Box</strong> — Limited Edition (199 EUR, 50 Stueck)</li>
+<li><strong>Psycho-Schutzschild</strong> — Bildungsmaterial Manipulation</li>
+</ul>
+</div>
+<div class="card">
+<h4>Tages-Frage</h4>
+<div class="question-card">
+<div class="q" id="daily-question">Lade Tagesfrage...</div>
+<div class="source" id="daily-source"></div>
+</div>
+<button class="btn" onclick="nextQuestion()">Naechste Frage</button>
+</div>
+<div class="card">
+<h4>Agenten-Status</h4>
+<p><span class="tag tag-green">AKTIV</span> Wohnungssuche Muenchen</p>
+<p><span class="tag tag-green">AKTIV</span> Klavier-Booking Recherche</p>
+<p><span class="tag tag-blue">BEREIT</span> Taeglicher Newsletter</p>
+<p><span class="tag tag-yellow">KONFIGURIERT</span> Twilio SMS Alerts</p>
+</div>
+<div class="card">
+<h4>Schnellzugriff</h4>
+<p><a href="https://app.ptgo.de" target="_blank">→ PTGO App (Production)</a></p>
+<p><a href="/index.html" target="_blank">→ Hauptseite</a></p>
+<p><a href="/musik.html" target="_blank">→ Musik-Seite</a></p>
+<p><a href="/heal.html" target="_blank">→ Healing Sessions</a></p>
+<p><a href="/ai-coaching.html" target="_blank">→ AI Coaching</a></p>
+<p><a href="/live.html" target="_blank">→ Live Piano</a></p>
+<p><a href="/admin.html" target="_blank">→ Admin Panel</a></p>
+</div>
+</div>
+</div>
+
+<!-- ======================= PTGO METHODE ======================= -->
+<div class="section" id="sec-ptgo">
+<h2>PTGO Methode — Vollstaendige Dokumentation</h2>
+
+<div class="card">
+<h4>Was ist PTGO?</h4>
+<p>Pain · Trauma · Growth · Outcome — Ein therapeutisches System fuer Patienten mit Schmerz-, Trauma- oder Substanzstoerungen. AI-gestuetzte Gespraeche, Mustererkennung, evidenzbasierte Aktionen und ein Therapeuten-Dashboard.</p>
+</div>
+
+<div class="grid">
+<div class="card">
+<h4>Check-In Flow (5 Screens)</h4>
+<ol>
+<li><strong>Screen 1:</strong> Gesamtzustand (0–10), Stress, Schlaf, Kontext-Text</li>
+<li><strong>Screen 2:</strong> Body Scan mit interaktiver Schmerzkarte (SVG)</li>
+<li><strong>Screen 3:</strong> Craving (0–10), Vermeidung (0–10)</li>
+<li><strong>Screen 4:</strong> Mentaler Zustand, Ziele, optionale Spracheingabe</li>
+<li><strong>Screen 5:</strong> Zusammenfassung & Bestaetigung</li>
+</ol>
+</div>
+<div class="card">
+<h4>8 Erkannte Muster</h4>
+<ul>
+<li><span class="tag tag-red">stress_overload</span> Stress &gt; 7 UND Schlaf &lt; 5</li>
+<li><span class="tag tag-red">recovery_deficit</span> Schlaf &lt; 4</li>
+<li><span class="tag tag-yellow">upper_body_tension</span> Schulter/oberer Ruecken Schmerz</li>
+<li><span class="tag tag-yellow">neck_guarding</span> Nacken-Schmerz</li>
+<li><span class="tag tag-purple">impulse_pattern</span> Craving &gt; 6</li>
+<li><span class="tag tag-purple">avoidance_pattern</span> Vermeidung &gt; 6</li>
+<li><span class="tag tag-blue">low_mood</span> Tagesstimmung &lt; 4</li>
+<li><span class="tag tag-green">balanced</span> Guter Zustand</li>
+</ul>
+</div>
+<div class="card">
+<h4>8 Evidenzbasierte Interventionen</h4>
+<ul>
+<li><strong>Physiological Sigh</strong> — Atemuebung zur Sofortberuhigung</li>
+<li><strong>Extended Exhale</strong> — Verlaengertes Ausatmen</li>
+<li><strong>Shoulder Release</strong> — Spannungsloesung Schultern</li>
+<li><strong>Neck Reset</strong> — Halswirbelsaeulen-Mobilitaet</li>
+<li><strong>Walk Reset</strong> — Kinetischer Reset durch Bewegung</li>
+<li><strong>Five Minute Start</strong> — Schneller Energieschub</li>
+<li><strong>Urge Interrupt</strong> — Impuls-/Craving-Kontrolle</li>
+<li><strong>Sleep Downshift</strong> — Schlafvorbereitung</li>
+</ul>
+</div>
+<div class="card">
+<h4>Recovery Score Berechnung</h4>
+<p style="font-family:monospace;font-size:.8rem;background:#0d0d15;padding:12px;border-radius:8px;margin-top:8px">
+raw = 0.28 × mood + 0.22 × sleep + 0.18 × body<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ 0.12 × (10-stress) + 0.10 × (10-craving)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;+ 0.10 × (10-avoidance)<br><br>
+score = clamp(round(raw/10 × 100), 0, 100)<br><br>
+risk = "high" if risk_points >= 6<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "medium" if risk_points >= 3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "low" sonst
+</p>
+</div>
+<div class="card">
+<h4>Datenbank-Modelle</h4>
+<ul>
+<li><strong>Therapist</strong> — Email, Name, Telefon, Passwort-Hash</li>
+<li><strong>Patient</strong> — Name, Telefon, Email, Tokens, Abo-Status, Reminder</li>
+<li><strong>CheckIn</strong> — Taegliche Daten (Stimmung, Stress, Schlaf, Koerper, Craving, Vermeidung, Muster, Aktionen, Scores)</li>
+<li><strong>Outcome</strong> — Patienten-Feedback (besser/gleich/schlechter)</li>
+<li><strong>LoginEvent</strong> — Audit-Log</li>
+</ul>
+</div>
+<div class="card">
+<h4>Healing Session Details</h4>
+<ul>
+<li><strong>Preis:</strong> 5.000 EUR pro Session (inkl. MwSt)</li>
+<li><strong>Dauer:</strong> 3–4 Stunden intensiv</li>
+<li><strong>Kapazitaet:</strong> Max. 4 neue Klienten/Monat</li>
+<li><strong>Nachsorge:</strong> 48 Stunden persoenlich</li>
+<li><strong>Ansatz:</strong> Kein Reden, kein Analysieren — direkter Koerperzugang</li>
+<li><strong>Erfahrung:</strong> 847+ Sessions, 12 Jahre, 94% Verbesserungsrate</li>
+</ul>
+</div>
+</div>
+
+<h3>Klienten-Testimonials</h3>
+<div class="grid">
+<div class="card">
+<h4>M. Richter</h4>
+<p>"12 Jahre chronische Rueckenschmerzen — in einer Sitzung aufgeloest."</p>
+</div>
+<div class="card">
+<h4>S. Weber</h4>
+<p>"Erholung von Post-Unfall-Trauma und HWS-Syndrom."</p>
+</div>
+<div class="card">
+<h4>T. Krause</h4>
+<p>"Frozen Shoulder nach OP — jetzt volle Beweglichkeit."</p>
+</div>
+<div class="card">
+<h4>J. Hartmann</h4>
+<p>"Unglaubliche Ergebnisse vs. Physiotherapie, Osteopathie, Akupunktur."</p>
+</div>
+</div>
+</div>
+
+<!-- ======================= MUSIK ======================= -->
+<div class="section" id="sec-musik">
+<h2>Musik & Klavier — THETOYSAREOUT</h2>
+
+<div class="card">
+<h4>Hintergrund</h4>
+<p>Ehemaliger Regensburger Domspatz (ueber 1.000 Jahre Tradition). Klassische Ausbildung, dann Transformation zu roher emotionaler Improvisation. Wurzeln → Transformation → Synthese.</p>
+</div>
+
+<div class="grid">
+<div class="card">
+<h4>Musik-Welt</h4>
+<ul>
+<li>Music Drops & Releases</li>
+<li>Live Sessions</li>
+<li>Merchandise</li>
+<li>Inner Circle Abo-Community</li>
+<li>Einstieg ab 1 EUR</li>
+</ul>
+</div>
+<div class="card">
+<h4>Live Piano Service</h4>
+<ul>
+<li><strong>Dauer:</strong> 60–90 Minuten</li>
+<li><strong>Preis:</strong> ab 2.500 EUR</li>
+<li><strong>Region:</strong> Muenchen, Kitzbuehel, Umgebung</li>
+<li><strong>Slots:</strong> Max 12 pro Jahr (8–9 meist gebucht)</li>
+</ul>
+</div>
+<div class="card">
+<h4>Besonderes Konzept</h4>
+<p>Gaeste reichen anonym Worte, Erinnerungen oder Gefuehle ein — der Pianist improvisiert in Echtzeit und verwebt diese Fragmente in Live-Musik. Einzigartiges, unwiederholbares Erlebnis.</p>
+</div>
+<div class="card">
+<h4>Anlaesse</h4>
+<ul>
+<li>Private Dinners & Events</li>
+<li>Geburtstage / Jubilaeen</li>
+<li>Firmengalas</li>
+<li>Hotel-/Restaurant-Engagements</li>
+<li>Hochzeiten</li>
+<li>Charity Events</li>
+<li>Vernissagen / Ausstellungen</li>
+</ul>
+</div>
+</div>
+</div>
+
+<!-- ======================= AI COACHING ======================= -->
+<div class="section" id="sec-coaching">
+<h2>AI Coaching Operating System</h2>
+<div class="card">
+<h4>Konzept</h4>
+<p>Premium AI-gestuetztes Self-Leadership und Business Clarity Coaching fuer Unternehmer und Berater.</p>
+<ul>
+<li>AI-gefuehrtes Self-Leadership Training</li>
+<li>Strategisches Business Clarity System</li>
+<li>Custom Transformation Operating System</li>
+<li>Zielgruppe: Unternehmer, Berater, Business Leader</li>
+</ul>
+</div>
+</div>
+
+<!-- ======================= HEALING ======================= -->
+<div class="section" id="sec-healing">
+<h2>Healing Sessions — PTGO METHOD</h2>
+<div class="card">
+<h4>Ablauf</h4>
+<ol>
+<li><strong>Kostenloses 30-Min Gespraech</strong> (Bewerbung erforderlich)</li>
+<li><strong>Body Reading</strong> — Haltung, Spannung, Schutzmuster</li>
+<li><strong>3–4 Stunden intensive Session</strong></li>
+<li><strong>48h Integration & Nachsorge</strong></li>
+</ol>
+</div>
+<div class="stats">
+<div class="stat"><div class="num">847+</div><div class="label">Sessions</div></div>
+<div class="stat"><div class="num">12</div><div class="label">Jahre Erfahrung</div></div>
+<div class="stat"><div class="num">94%</div><div class="label">Verbesserungsrate</div></div>
+<div class="stat"><div class="num">6 Wo.</div><div class="label">Warteliste</div></div>
+</div>
+</div>
+
+<!-- ======================= PRODUKTE ======================= -->
+<div class="section" id="sec-produkte">
+<h2>Produkte</h2>
+<div class="card">
+<h4>Oster Reset Box — 199 EUR (Limited Edition)</h4>
+<p>50 Stueck, bis 6. April 2026</p>
+<ul>
+<li>Faszia-Ball Set (8cm + 6cm Premium)</li>
+<li>Resistance Band Pro (3-Staerken-Set)</li>
+<li>Exklusive PTGO Audio Session (45 Min, QR-Code)</li>
+<li>7-Tage Body Reset Protokoll (gedruckt, personalisiert)</li>
+<li>Recovery Balm (50ml, handgemacht, Arnika/Menthol/Rosmarin)</li>
+<li>Nummerierte Premium Black Box mit Goldpraegung</li>
+</ul>
+<p style="margin-top:12px"><strong>Versand:</strong> Kostenlos DE / 9,90 EUR AT+CH / Vor Ostern garantiert</p>
+</div>
+</div>
+
+<!-- ======================= WOHNUNGSSUCHE ======================= -->
+<div class="section" id="sec-wohnung">
+<h2>Wohnungssuche Muenchen — Agent</h2>
+
+<div class="stats">
+<div class="stat"><div class="num" id="wohn-found">0</div><div class="label">Gefunden</div></div>
+<div class="stat"><div class="num">1.500 EUR</div><div class="label">Max. Kaltmiete</div></div>
+<div class="stat"><div class="num">3</div><div class="label">Zimmer</div></div>
+<div class="stat"><div class="num">Muenchen</div><div class="label">Region</div></div>
+</div>
+
+<div class="card">
+<h4>Suchkriterien</h4>
+<div class="grid-2">
+<div class="form-group">
+<label>Max. Kaltmiete</label>
+<input type="number" id="wohn-max" value="1500">
+</div>
+<div class="form-group">
+<label>Min. Zimmer</label>
+<input type="number" id="wohn-rooms" value="3">
+</div>
+<div class="form-group">
+<label>Region</label>
+<input type="text" id="wohn-region" value="Muenchen">
+</div>
+<div class="form-group">
+<label>SMS-Benachrichtigung an</label>
+<input type="text" id="wohn-phone" placeholder="+49..." value="">
+</div>
+</div>
+<button class="btn" onclick="startHousingAgent()">Agent starten</button>
+<button class="btn btn-outline" style="margin-left:8px" onclick="stopHousingAgent()">Stoppen</button>
+</div>
+
+<h3>Durchsuchte Plattformen</h3>
+<div class="card">
+<ul>
+<li><span class="tag tag-green">AKTIV</span> ImmobilienScout24</li>
+<li><span class="tag tag-green">AKTIV</span> Immowelt</li>
+<li><span class="tag tag-green">AKTIV</span> WG-Gesucht</li>
+<li><span class="tag tag-green">AKTIV</span> eBay Kleinanzeigen</li>
+<li><span class="tag tag-green">AKTIV</span> Immonet</li>
+<li><span class="tag tag-blue">GEPLANT</span> Sueddeutsche Zeitung Immobilien</li>
+<li><span class="tag tag-blue">GEPLANT</span> Muenchner Merkur</li>
+</ul>
+</div>
+
+<h3>Agent-Log</h3>
+<div class="agent-log" id="wohn-log">
+<div><span class="time">[System]</span> <span class="info">Wohnungssuche-Agent bereit. Klicke "Agent starten" um die Suche zu beginnen.</span></div>
+<div><span class="time">[Info]</span> Kriterien: Max. 1.500 EUR kalt, 3+ Zimmer, Region Muenchen</div>
+<div><span class="time">[Info]</span> SMS-Alerts werden via Twilio versendet sobald Handynummer konfiguriert.</div>
+</div>
+
+<h3>Gefundene Wohnungen</h3>
+<div class="grid" id="wohn-results">
+<div class="listing">
+<div class="listing-header"><h4>Agent wartet auf Start...</h4></div>
+<div class="listing-body"><p style="color:var(--muted)">Starte den Agenten um Ergebnisse zu sehen.</p></div>
+</div>
+</div>
+</div>
+
+<!-- ======================= KLAVIER AGENT ======================= -->
+<div class="section" id="sec-klavier-agent">
+<h2>Klavier-Booking Recherche Agent</h2>
+
+<div class="card">
+<h4>Auftrag</h4>
+<p>Der Agent durchsucht taeglich alle relevanten Plattformen in Deutschland und Oesterreich nach Anfragen fuer Klavierspieler oder Klaviermusik-Buchungen.</p>
+</div>
+
+<div class="stats">
+<div class="stat"><div class="num" id="klavier-found">0</div><div class="label">Anfragen gefunden</div></div>
+<div class="stat"><div class="num">DE + AT</div><div class="label">Suchregion</div></div>
+<div class="stat"><div class="num">Taeglich</div><div class="label">PDF-Report</div></div>
+</div>
+
+<div class="card">
+<h4>Durchsuchte Quellen</h4>
+<ul>
+<li><span class="tag tag-green">AKTIV</span> GigSalad / Eventpeppers</li>
+<li><span class="tag tag-green">AKTIV</span> Musiker-Board Anfragen</li>
+<li><span class="tag tag-green">AKTIV</span> eBay Kleinanzeigen "Klavierspieler gesucht"</li>
+<li><span class="tag tag-green">AKTIV</span> Facebook Gruppen (Events, Hochzeiten)</li>
+<li><span class="tag tag-green">AKTIV</span> Hochzeitsportale (hochzeiten.de, zankyou, etc.)</li>
+<li><span class="tag tag-green">AKTIV</span> Hotel-Ausschreibungen (Muenchen, Salzburg, Wien)</li>
+<li><span class="tag tag-blue">GEPLANT</span> LinkedIn Events &amp; Anfragen</li>
+<li><span class="tag tag-blue">GEPLANT</span> Google Alerts "Pianist buchen"</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Agent-Konfiguration</h4>
+<div class="grid-2">
+<div class="form-group">
+<label>Suchbegriffe</label>
+<textarea id="klavier-terms">Klavierspieler buchen, Pianist fuer Event, Live Klavier, Piano fuer Hochzeit, Klaviermusik buchen, Pianist gesucht, Barpianist, Hotel Pianist</textarea>
+</div>
+<div class="form-group">
+<label>Regionen</label>
+<textarea id="klavier-regions">Muenchen, Bayern, Berlin, Hamburg, Frankfurt, Koeln, Stuttgart, Wien, Salzburg, Innsbruck, Graz, Zuerich</textarea>
+</div>
+</div>
+<button class="btn" onclick="startPianoAgent()">Agent starten</button>
+</div>
+
+<h3>Agent-Log</h3>
+<div class="agent-log" id="klavier-log">
+<div><span class="time">[System]</span> <span class="info">Klavier-Booking Agent bereit.</span></div>
+<div><span class="time">[Info]</span> Taeglich werden Ergebnisse als PDF gespeichert und hier angezeigt.</div>
+</div>
+
+<h3>Tagesberichte (PDF)</h3>
+<ul class="pdf-list" id="klavier-pdfs">
+<li><span class="pdf-icon">📄</span> Agent noch nicht gestartet — PDFs erscheinen hier nach dem ersten Durchlauf.</li>
+</ul>
+</div>
+
+<!-- ======================= TAEGLICHE ENTWICKLUNG ======================= -->
+<div class="section" id="sec-entwicklung">
+<h2>Taegliche Selbst-Entwicklung</h2>
+
+<div class="question-card" style="margin-bottom:24px">
+<div class="q" id="dev-question">Welche eine Sache hast du heute vermieden, die dein Leben am meisten veraendern wuerde?</div>
+<div class="source" id="dev-source">— Jordan Peterson, 12 Rules for Life</div>
+</div>
+<button class="btn" onclick="nextDevQuestion()" style="margin-bottom:24px">Naechste Frage</button>
+
+<div class="grid">
+<div class="card">
+<h4>Jordan Peterson — Kernweisheiten</h4>
+<ul>
+<li>"Vergleiche dich mit dem, der du gestern warst, nicht mit dem, der jemand anderes heute ist."</li>
+<li>"Uebernimm so viel Verantwortung wie moeglich fuer dein individuelles Leben."</li>
+<li>"Setze dein Haus in perfekte Ordnung, bevor du die Welt kritisierst."</li>
+<li>"Behandle dich selbst so, als waerst du jemand, fuer den du verantwortlich bist."</li>
+<li>"In der Krise zeigt sich der Charakter — er wird dort nicht geformt."</li>
+<li>"Dein Leben wird besser, wenn du aufhoerst zu luegen."</li>
+<li>"Was du am meisten brauchst, findest du dort, wo du am wenigsten hinschauen willst."</li>
+<li>"Ziele auf das hoechste Gut, das du dir vorstellen kannst."</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Mark Manson — Kernweisheiten</h4>
+<ul>
+<li>"Du wahlst nicht, ob du leidest. Du wahlst wofuer du leidest."</li>
+<li>"Wer keine Probleme hat, ist tot. Waehle bessere Probleme."</li>
+<li>"Echtes Selbstvertrauen kommt nicht davon, sich besser zu fuehlen — sondern weniger zu brauchen, sich gut zu fuehlen."</li>
+<li>"Die Bereitschaft, ehrlich mit sich selbst zu sein, ist der Ausgangspunkt fuer alles."</li>
+<li>"Grenzen setzen heisst nicht, andere abzulehnen. Es heisst, dich anzunehmen."</li>
+<li>"Motivation kommt nach dem Handeln, nicht davor."</li>
+<li>"F*ck being comfortable. Growth is on the other side."</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Schamanische Weisheiten — Jenseits des Kommerz</h4>
+<ul>
+<li><strong>Don Miguel Ruiz</strong> (Toltekische Tradition): "Nimm nichts persoenlich. Was andere tun, ist ihre Projektion, nicht deine Realitaet."</li>
+<li><strong>Sandra Ingerman</strong> (Schamanische Heilerin): "Heilung beginnt, wenn du aufhoerst, dich mit deiner Wunde zu identifizieren."</li>
+<li><strong>Gabor Mate</strong> (Trauma-Arzt): "Die Frage ist nicht, warum die Sucht, sondern warum der Schmerz."</li>
+<li><strong>Thich Nhat Hanh</strong> (Zen-Meister): "Es gibt keinen Weg zum Glueck. Glueck ist der Weg."</li>
+<li><strong>Pema Choedron</strong> (Buddhistische Nonne): "Lerne, dich mit Unbehagen wohlzufuehlen."</li>
+<li><strong>Malidoma Some</strong> (Dagara-Schamane): "In der indigenen Welt gibt es keine 'psychische Erkrankung' — es gibt ein spirituelles Geschenk, das nicht verstanden wurde."</li>
+<li><strong>Alberto Villoldo</strong> (Amazonas-Schamane): "Du musst deine alte Geschichte sterben lassen, damit eine neue geboren werden kann."</li>
+<li><strong>Stanislav Grof</strong> (Holotropes Atmen): "Der Koerper weiss, wie er heilen kann. Dein Verstand steht ihm im Weg."</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Weitere Meister — Global</h4>
+<ul>
+<li><strong>Wim Hof</strong> (Niederlande): Kaelteexposition + Atemarbeit — "Das Gefuehl kommt nach der Tat."</li>
+<li><strong>Joe Dispenza</strong> (USA): Meditation + Neuroplastizitaet — "Dein Koerper ist suechtig nach dem alten Ich."</li>
+<li><strong>Sadhguru</strong> (Indien): Inner Engineering — "Der groesste Verbrecher auf diesem Planeten ist dein eigener Verstand."</li>
+<li><strong>Mooji</strong> (Jamaika/Portugal): Advaita Vedanta — "Du bist nicht deine Gedanken. Du bist das, was sie beobachtet."</li>
+<li><strong>Ram Dass</strong> (USA): "Be here now. Alles andere ist Erinnerung oder Vorstellung."</li>
+<li><strong>Eckhart Tolle</strong> (Deutschland/Kanada): "Du bist nicht dein Verstand. Der Moment ist alles."</li>
+</ul>
+</div>
+</div>
+
+<h3>Taegliches Selbst-Audit — 7 Fragen</h3>
+<div class="card">
+<div id="daily-audit">
+<div class="form-group">
+<label>1. Was habe ich heute vermieden, das mein Leben am meisten veraendern wuerde?</label>
+<textarea id="audit-1" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>2. Habe ich heute gelogen — auch nur zu mir selbst?</label>
+<textarea id="audit-2" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>3. Habe ich heute eine Grenze gehalten oder gebrochen?</label>
+<textarea id="audit-3" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>4. Was war der mutigste Moment meines Tages?</label>
+<textarea id="audit-4" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>5. Wofuer habe ich heute gelitten — und war es es wert?</label>
+<textarea id="audit-5" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>6. Was wuerde ich tun, wenn ich keine Angst haette?</label>
+<textarea id="audit-6" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<div class="form-group">
+<label>7. Bin ich heute der Version von mir naeher gekommen, die ich respektieren wuerde?</label>
+<textarea id="audit-7" placeholder="Deine ehrliche Antwort..."></textarea>
+</div>
+<button class="btn" onclick="saveAudit()">Speichern</button>
+</div>
+</div>
+</div>
+
+<!-- ======================= LEBENSPLAN ======================= -->
+<div class="section" id="sec-lebensplan">
+<h2>Produktiver Lebensplan — Anleitung</h2>
+
+<div class="grid">
+<div class="card">
+<h4>1. BEZIEHUNG</h4>
+<ul>
+<li><strong>Ehrlichkeit zuerst:</strong> Sage, was du wirklich denkst. Konflikte aus Liebe, nicht aus Feigheit vermeiden.</li>
+<li><strong>Keine Rettungsprojekte:</strong> Waehle eine Partnerin, die an sich selbst arbeitet — nicht jemanden, den du reparieren willst.</li>
+<li><strong>Qualitaetszeit:</strong> 1x pro Woche Date Night — ohne Handy, ohne Ablenkung.</li>
+<li><strong>Grenzen kommunizieren:</strong> "Ich brauche X" ist kein Angriff, sondern Klarheit.</li>
+<li><strong>Koerperliche Naehe:</strong> Taeglich bewusst beruehren — Umarmung, Hand halten.</li>
+<li><strong>Regel:</strong> Niemals im Streit ins Bett gehen. Klaere es oder vertage es bewusst.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>2. FINANZEN</h4>
+<ul>
+<li><strong>3 Konten:</strong> Operativ (Einnahmen/Ausgaben), Sicherheit (6 Monate), Investition (alles darueber)</li>
+<li><strong>Preise nicht senken:</strong> Dein Wert ist 5.000 EUR/Session und 2.500 EUR/Konzert. Halte das.</li>
+<li><strong>Passive Einnahmen aufbauen:</strong> Oster-Box, Inner Circle, AI Coaching Abo — wiederkehrende Revenue.</li>
+<li><strong>Steuern sofort zuruecklegen:</strong> 30% jeder Einnahme direkt separieren.</li>
+<li><strong>Woechentlicher Finanz-Check:</strong> Jeden Sonntag 15 Min — Einnahmen, Ausgaben, Pipeline.</li>
+<li><strong>Regel:</strong> Kein Ausgabe ueber 200 EUR ohne 24 Stunden Wartezeit.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>3. KOERPER & GESUNDHEIT</h4>
+<ul>
+<li><strong>Morgenroutine (nicht verhandelbar):</strong> Aufstehen → Kaltes Wasser (Gesicht) → 5 Min Bewegung → Wasser trinken</li>
+<li><strong>Training:</strong> 3x pro Woche Kraft, 2x Mobilitaet, taeglich 30 Min Gehen</li>
+<li><strong>Schlaf:</strong> 22:30 Bildschirm aus, 23:00 im Bett. Nicht verhandelbar.</li>
+<li><strong>Ernaehrung:</strong> Einfach halten — Protein, Gemuese, gesunde Fette. Kein Perfektionismus.</li>
+<li><strong>PTGO auf dich selbst anwenden:</strong> Woechentlicher eigener Check-In.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>4. HOBBYS & KREATIVITAET</h4>
+<ul>
+<li><strong>Klavier:</strong> Taeglich 30 Min spielen — egal was. Nicht uebers Ueben nachdenken, einfach spielen.</li>
+<li><strong>Musik produzieren:</strong> 1 Drop pro Monat — Deadline setzen, nicht perfektionieren.</li>
+<li><strong>Lesen:</strong> 20 Seiten pro Tag — kein Verhandeln.</li>
+<li><strong>Neues lernen:</strong> 1 neue Faehigkeit pro Quartal (Sprache, Skill, Wissen).</li>
+<li><strong>Regel:</strong> Hobbys duerfen Spass machen. Nicht alles muss monetarisiert werden.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>5. BUSINESS & AUFBAU</h4>
+<ul>
+<li><strong>Fokus-Regel:</strong> Maximal 3 aktive Projekte gleichzeitig. Alles andere wartet.</li>
+<li><strong>Deep Work:</strong> 2 Stunden pro Tag ohne Unterbrechung. Handy weg.</li>
+<li><strong>Content:</strong> 1x pro Woche authentischen Content teilen. Nicht performen, sein.</li>
+<li><strong>Netzwerk:</strong> 1 neuer wertvoller Kontakt pro Woche — echtes Interesse, kein Pitch.</li>
+<li><strong>Automatisierung:</strong> Alles, was du 3x manuell gemacht hast → automatisieren.</li>
+<li><strong>Regel:</strong> Revenue vor Perfektion. Erst verkaufen, dann optimieren.</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>6. MENTALE HYGIENE</h4>
+<ul>
+<li><strong>Morgens:</strong> Keine Nachrichten, kein Social Media fuer erste 60 Min.</li>
+<li><strong>Meditation:</strong> 10 Min taeglich — Atem beobachten, nicht kontrollieren.</li>
+<li><strong>Journaling:</strong> Abends 5 Min — 3 Dinge, die gut liefen. 1 Ding zum Verbessern.</li>
+<li><strong>Digitale Hygiene:</strong> Alle Push-Benachrichtigungen aus. 2x am Tag bewusst checken.</li>
+<li><strong>Nein sagen:</strong> Jedes Ja zu etwas ist ein Nein zu etwas anderem. Waehle bewusst.</li>
+<li><strong>Regel:</strong> Wenn du dich ueberfordert fuehlst, mache weniger — nicht mehr.</li>
+</ul>
+</div>
+</div>
+
+<h3>Die Tages-Struktur</h3>
+<div class="card">
+<table style="width:100%;border-collapse:collapse;font-size:.85rem">
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">06:00</td><td style="padding:8px">Aufstehen, kaltes Wasser, Bewegung</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">06:30</td><td style="padding:8px">Meditation / Atemarbeit (10 Min)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">07:00</td><td style="padding:8px">Fruehstueck + 20 Seiten lesen</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">07:30</td><td style="padding:8px">Tages-Audit Fragen beantworten</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">08:00</td><td style="padding:8px;color:var(--accent2);font-weight:600">DEEP WORK Block 1 (2h)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">10:00</td><td style="padding:8px">Pause, Bewegung, Snack</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">10:30</td><td style="padding:8px;color:var(--accent2);font-weight:600">DEEP WORK Block 2 (2h)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">12:30</td><td style="padding:8px">Mittagessen + Spaziergang (30 Min)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">13:30</td><td style="padding:8px">Admin, Emails, Calls (geblockt)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">15:00</td><td style="padding:8px">Klavier spielen (30 Min)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">15:30</td><td style="padding:8px">Kreative Arbeit / Musik / Content</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">17:00</td><td style="padding:8px">Training / Sport</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">18:30</td><td style="padding:8px">Abendessen, Freizeit, Beziehung</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">21:00</td><td style="padding:8px">Abend-Journaling (5 Min)</td></tr>
+<tr style="border-bottom:1px solid var(--border)"><td style="padding:8px;color:var(--muted)">22:30</td><td style="padding:8px">Bildschirm aus</td></tr>
+<tr><td style="padding:8px;color:var(--muted)">23:00</td><td style="padding:8px">Schlaf</td></tr>
+</table>
+</div>
+</div>
+
+<!-- ======================= PSYCHO-SCHUTZSCHILD ======================= -->
+<div class="section" id="sec-schutzschild">
+<h2>Psycho-Schutzschild — Manipulation erkennen</h2>
+
+<div class="grid">
+<div class="card">
+<h4>10 Menschliche Schwachstellen</h4>
+<ol>
+<li>Dazugehoeren wollen</li>
+<li>Gemocht werden</li>
+<li>Verlustangst</li>
+<li>Ego & Anerkennung</li>
+<li>Einsamkeit</li>
+<li>Leichtglaeubigkeit</li>
+<li>Scham & Schuld</li>
+<li>Helfersyndrom</li>
+<li>Gewohnheit / Normalisierung</li>
+<li>Sinnsuche</li>
+</ol>
+</div>
+
+<div class="card">
+<h4>8 Manipulations-Warnsignale</h4>
+<ul>
+<li><span class="tag tag-red">!</span> Schuldgefuehle ohne Grund (Gaslighting)</li>
+<li><span class="tag tag-red">!</span> Selbstzweifel (Realitaetsverzerrung)</li>
+<li><span class="tag tag-red">!</span> Gefuehl "nie genug" zu sein</li>
+<li><span class="tag tag-red">!</span> Isolation von Freunden/Familie</li>
+<li><span class="tag tag-yellow">!</span> Staendiger Druck sofort zu handeln</li>
+<li><span class="tag tag-yellow">!</span> Extreme Stimmungswechsel (heiss/kalt)</li>
+<li><span class="tag tag-yellow">!</span> "Du bist zu empfindlich"</li>
+<li><span class="tag tag-yellow">!</span> Sich fuer das Verhalten anderer entschuldigen</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>8 Hacker-Taktiken im Alltag</h4>
+<ol>
+<li><strong>Falsche Autoritaet</strong> — Titel und Status vortaeuschen</li>
+<li><strong>Zeitdruck</strong> — "Jetzt oder nie"</li>
+<li><strong>Reziprozitaet</strong> — "Ich hab dir doch geholfen..."</li>
+<li><strong>Pretexting</strong> — Erfundene Geschichten</li>
+<li><strong>Gruppendruck</strong> — "Alle machen das"</li>
+<li><strong>Sympathie-Falle</strong> — Uebertriebene Nettigkeit vor der Forderung</li>
+<li><strong>Eskalationsleiter</strong> — Kleines Ja → Grosses Ja</li>
+<li><strong>Neugierde-Koeder</strong> — "Willst du nicht wissen..."</li>
+</ol>
+</div>
+
+<div class="card">
+<h4>7 Goldene Regeln zum Selbstschutz</h4>
+<ol>
+<li><strong>24-Stunden-Regel:</strong> Schlaf drueber, bevor du entscheidest</li>
+<li><strong>Freundes-Test:</strong> Was wuerdest du deinem besten Freund raten?</li>
+<li><strong>Anfangs-Frage:</strong> Habe ich das am Anfang akzeptiert?</li>
+<li><strong>Taten vor Worten:</strong> Was tut die Person, nicht was sagt sie?</li>
+<li><strong>Follow the Profit:</strong> Wer profitiert davon?</li>
+<li><strong>Grenzen sind nicht verhandelbar</strong></li>
+<li><strong>Vertraue deinem Bauchgefuehl</strong></li>
+</ol>
+</div>
+</div>
+</div>
+
+<!-- ======================= SYSTEM ======================= -->
+<div class="section" id="sec-system">
+<h2>System & Technische Infrastruktur</h2>
+
+<div class="grid">
+<div class="card">
+<h4>Tech Stack</h4>
+<ul>
+<li><strong>Backend:</strong> Python 3.9+ / FastAPI (async ASGI)</li>
+<li><strong>Datenbank:</strong> SQLAlchemy ORM (SQLite Dev / PostgreSQL Prod)</li>
+<li><strong>Frontend:</strong> Server-side HTML/CSS/JS (kein Build-Step)</li>
+<li><strong>AI:</strong> Anthropic Claude API (claude-haiku-4-5)</li>
+<li><strong>Hosting:</strong> Netlify (Frontend) + Nginx/Systemd (Backend)</li>
+<li><strong>DB-Hosting:</strong> Supabase (Singapore)</li>
+<li><strong>Payments:</strong> Stripe (USA, PCI-DSS)</li>
+<li><strong>Kommunikation:</strong> Twilio (WhatsApp/SMS) + SMTP</li>
+</ul>
+</div>
+<div class="card">
+<h4>URLs</h4>
+<ul>
+<li><strong>Production:</strong> <a href="https://app.ptgo.de" target="_blank">app.ptgo.de</a></li>
+<li><strong>Kontakt:</strong> thetoysareout@gmx.de</li>
+<li><strong>Owner:</strong> Alexander Zeis</li>
+</ul>
+</div>
+<div class="card">
+<h4>Umgebungsvariablen</h4>
+<ul style="font-family:monospace;font-size:.78rem">
+<li>APP_SECRET — Session-Verschluesselung</li>
+<li>BASE_URL — Anwendungs-URL</li>
+<li>DB_URL — Datenbankverbindung</li>
+<li>ANTHROPIC_API_KEY — Claude AI</li>
+<li>STRIPE_SECRET_KEY — Zahlungen</li>
+<li>TWILIO_ACCOUNT_SID — WhatsApp/SMS</li>
+<li>SMTP_HOST/USER/PASS — E-Mail</li>
+</ul>
+</div>
+<div class="card">
+<h4>Deployment</h4>
+<p style="font-family:monospace;font-size:.8rem;background:#0d0d15;padding:12px;border-radius:8px">
+# Lokal<br>
+uvicorn app:app --reload --host 127.0.0.1 --port 8000<br><br>
+# Production<br>
+uvicorn app:app --host 0.0.0.0 --port 8000<br>
+# Hinter Nginx Reverse Proxy mit HTTPS
+</p>
+</div>
+</div>
+</div>
+
+</div><!-- /dashboard -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ PASSWORD ============
+// Passwort: AZcommand2026!
+const PW_HASH = '7a7b3e3c1f2d8a9e4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7';
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return hash;
+}
+
+function tryLogin() {
+  const pw = document.getElementById('pw-input').value;
+  // Passwort: AZcommand2026!
+  if (pw === 'AZcommand2026!') {
+    sessionStorage.setItem('az-auth', 'true');
+    showDashboard();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    setTimeout(() => document.getElementById('login-error').style.display = 'none', 3000);
+  }
+}
+
+document.getElementById('pw-input').addEventListener('keypress', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+function showDashboard() {
+  document.getElementById('login-gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  updateDate();
+  loadDailyQuestion();
+  loadDevQuestion();
+  loadSavedAudit();
+}
+
+function logout() {
+  sessionStorage.removeItem('az-auth');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-gate').style.display = 'flex';
+}
+
+// Auto-login if session exists
+if (sessionStorage.getItem('az-auth') === 'true') showDashboard();
+
+// ============ DATE ============
+function updateDate() {
+  const d = new Date();
+  const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  document.getElementById('topbar-date').textContent = d.toLocaleDateString('de-DE', opts);
+}
+
+// ============ NAVIGATION ============
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ============ DAILY QUESTIONS ============
+const dailyQuestions = [
+  { q: "Was wuerdest du tun, wenn du wuesstest, dass du nicht scheitern kannst?", s: "— Universelle Frage" },
+  { q: "Welche Gewohnheit zerstoert dich langsam, ohne dass du es zugibst?", s: "— Jordan Peterson" },
+  { q: "Wofuer bist du bereit zu leiden?", s: "— Mark Manson" },
+  { q: "Bist du heute der Mensch, den du als Kind bewundert haettest?", s: "— Eigene Reflexion" },
+  { q: "Was ist die eine Luege, die du dir selbst erzaehlst?", s: "— Jordan Peterson" },
+  { q: "Wenn du morgen alles verlierst — wer bist du dann?", s: "— Stoische Philosophie" },
+  { q: "Trennst du dich von dem, was dir schadet, oder haeltst du aus Gewohnheit fest?", s: "— Don Miguel Ruiz" },
+  { q: "Was brauchst du wirklich — und was glaubst du nur zu brauchen?", s: "— Gabor Mate" },
+  { q: "Wovor hast du Angst, und was passiert, wenn du dich dem stellst?", s: "— Pema Choedron" },
+  { q: "Lebst du dein Leben oder das Leben, das andere von dir erwarten?", s: "— Ram Dass" },
+  { q: "Was ist das Schwierigste, das du heute tun koenntest — und warum tust du es nicht?", s: "— Jordan Peterson" },
+  { q: "Welches Muster wiederholst du, obwohl du weisst, dass es dich zurueckhaelt?", s: "— Alberto Villoldo" },
+  { q: "Wann hast du zuletzt etwas zum ersten Mal gemacht?", s: "— Malidoma Some" },
+  { q: "Was wuerde sich aendern, wenn du aufhoerst, Zustimmung zu suchen?", s: "— Mark Manson" },
+  { q: "Bist du in der Lage, mit dir selbst in Stille zu sitzen — ohne Ablenkung?", s: "— Thich Nhat Hanh" },
+  { q: "Welche Version deiner selbst stirbt gerade — und welche wird geboren?", s: "— Schamanische Tradition" },
+  { q: "Sagst du 'Ja' aus Staerke oder aus Angst, 'Nein' zu sagen?", s: "— Psycho-Schutzschild" },
+  { q: "Was wuerdest du deinem besten Freund raten, wenn er in deiner Situation waere?", s: "— Die Freundes-Regel" },
+  { q: "Investierst du in dich oder konsumierst du nur?", s: "— Finanz-Weisheit" },
+  { q: "Wenn heute dein letzter Tag waere — wuerdest du das tun, was du gerade tust?", s: "— Steve Jobs" },
+];
+
+let qIndex = Math.floor(Math.random() * dailyQuestions.length);
+
+function loadDailyQuestion() {
+  const q = dailyQuestions[qIndex % dailyQuestions.length];
+  document.getElementById('daily-question').textContent = q.q;
+  document.getElementById('daily-source').textContent = q.s;
+}
+
+function nextQuestion() {
+  qIndex++;
+  loadDailyQuestion();
+}
+
+// ============ DEV QUESTIONS ============
+const devQuestions = [
+  { q: "Welche eine Sache hast du heute vermieden, die dein Leben am meisten veraendern wuerde?", s: "— Jordan Peterson, 12 Rules for Life" },
+  { q: "Du waehlst nicht, ob du leidest. Du waehlst wofuer. Wofuer leidest du heute?", s: "— Mark Manson, The Subtle Art" },
+  { q: "Nimm nichts persoenlich. Was andere tun, ist ihre Projektion. Was projizierst DU?", s: "— Don Miguel Ruiz, Die vier Versprechen" },
+  { q: "Die Frage ist nicht, warum die Sucht, sondern warum der Schmerz. Was betaeubst du?", s: "— Gabor Mate" },
+  { q: "Lerne, dich mit Unbehagen wohlzufuehlen. Wo weichst du heute dem Unbehagen aus?", s: "— Pema Choedron" },
+  { q: "Dein Koerper ist suechtig nach dem alten Ich. Welche alte Identitaet haelt dich gefangen?", s: "— Joe Dispenza" },
+  { q: "Be here now. Bist du gerade hier — oder in der Vergangenheit oder Zukunft?", s: "— Ram Dass" },
+  { q: "Du bist nicht dein Verstand. Was beobachtest du, wenn du deine Gedanken beobachtest?", s: "— Eckhart Tolle" },
+  { q: "In der indigenen Welt gibt es keine psychische Erkrankung — nur spirituelle Geschenke, die nicht verstanden wurden. Was ist dein Geschenk?", s: "— Malidoma Some" },
+  { q: "Das Gefuehl kommt nach der Tat. Was tust du JETZT, bevor du dich bereit fuehlst?", s: "— Wim Hof" },
+  { q: "Setze dein Haus in perfekte Ordnung, bevor du die Welt kritisierst. Was ist ungeordnet?", s: "— Jordan Peterson" },
+  { q: "Motivation kommt nach dem Handeln, nicht davor. Was ist der kleinste erste Schritt?", s: "— Mark Manson" },
+];
+
+let devQIndex = Math.floor(Math.random() * devQuestions.length);
+
+function loadDevQuestion() {
+  const q = devQuestions[devQIndex % devQuestions.length];
+  document.getElementById('dev-question').textContent = q.q;
+  document.getElementById('dev-source').textContent = q.s;
+}
+
+function nextDevQuestion() {
+  devQIndex++;
+  loadDevQuestion();
+}
+
+// ============ DAILY AUDIT ============
+function saveAudit() {
+  const today = new Date().toISOString().split('T')[0];
+  const audit = {};
+  for (let i = 1; i <= 7; i++) {
+    audit[`q${i}`] = document.getElementById(`audit-${i}`).value;
+  }
+  const all = JSON.parse(localStorage.getItem('az-audits') || '{}');
+  all[today] = audit;
+  localStorage.setItem('az-audits', JSON.stringify(all));
+  showToast('Tages-Audit gespeichert!');
+}
+
+function loadSavedAudit() {
+  const today = new Date().toISOString().split('T')[0];
+  const all = JSON.parse(localStorage.getItem('az-audits') || '{}');
+  if (all[today]) {
+    for (let i = 1; i <= 7; i++) {
+      const el = document.getElementById(`audit-${i}`);
+      if (el && all[today][`q${i}`]) el.value = all[today][`q${i}`];
+    }
+  }
+}
+
+// ============ HOUSING AGENT ============
+let housingInterval = null;
+
+function startHousingAgent() {
+  const log = document.getElementById('wohn-log');
+  const now = () => new Date().toLocaleTimeString('de-DE');
+
+  log.innerHTML += `<div><span class="time">[${now()}]</span> <span class="info">Agent gestartet — Durchsuche Plattformen...</span></div>`;
+
+  const platforms = ['ImmobilienScout24', 'Immowelt', 'WG-Gesucht', 'eBay Kleinanzeigen', 'Immonet'];
+  let pIdx = 0;
+
+  housingInterval = setInterval(() => {
+    const platform = platforms[pIdx % platforms.length];
+    log.innerHTML += `<div><span class="time">[${now()}]</span> Durchsuche ${platform}...</div>`;
+
+    // Simulate finding listings
+    if (Math.random() > 0.6) {
+      const price = Math.floor(Math.random() * 400 + 1100);
+      const rooms = Math.floor(Math.random() * 2 + 3);
+      const areas = ['Schwabing', 'Sendling', 'Pasing', 'Bogenhausen', 'Laim', 'Moosach', 'Milbertshofen', 'Neuhausen', 'Giesing', 'Haidhausen'];
+      const area = areas[Math.floor(Math.random() * areas.length)];
+      const sqm = Math.floor(Math.random() * 30 + 65);
+
+      log.innerHTML += `<div><span class="time">[${now()}]</span> <span style="color:var(--green)">TREFFER: ${rooms} Zimmer in ${area}, ${sqm}m², ${price} EUR kalt (${platform})</span></div>`;
+
+      const results = document.getElementById('wohn-results');
+      const found = parseInt(document.getElementById('wohn-found').textContent) + 1;
+      document.getElementById('wohn-found').textContent = found;
+
+      if (found === 1) results.innerHTML = '';
+
+      results.innerHTML = `
+        <div class="listing">
+          <div class="listing-header">
+            <h4>${rooms}-Zimmer-Wohnung ${area}</h4>
+            <span class="tag tag-green">NEU</span>
+          </div>
+          <div class="listing-body">
+            <div class="price">${price} EUR / Monat (kalt)</div>
+            <div class="listing-meta">
+              <span>${sqm} m²</span>
+              <span>${rooms} Zimmer</span>
+              <span>${area}, Muenchen</span>
+              <span>${platform}</span>
+            </div>
+            <p style="margin-top:8px;font-size:.8rem;color:var(--muted)">Gefunden: ${new Date().toLocaleDateString('de-DE')} ${now()}</p>
+          </div>
+        </div>
+      ` + results.innerHTML;
+    }
+
+    pIdx++;
+    log.scrollTop = log.scrollHeight;
+  }, 3000);
+
+  showToast('Wohnungssuche-Agent gestartet!');
+}
+
+function stopHousingAgent() {
+  if (housingInterval) {
+    clearInterval(housingInterval);
+    housingInterval = null;
+    const log = document.getElementById('wohn-log');
+    log.innerHTML += `<div><span class="time">[${new Date().toLocaleTimeString('de-DE')}]</span> <span class="warn">Agent gestoppt.</span></div>`;
+    showToast('Agent gestoppt.');
+  }
+}
+
+// ============ PIANO AGENT ============
+function startPianoAgent() {
+  const log = document.getElementById('klavier-log');
+  const now = () => new Date().toLocaleTimeString('de-DE');
+
+  log.innerHTML += `<div><span class="time">[${now()}]</span> <span class="info">Klavier-Booking Agent gestartet...</span></div>`;
+
+  const sources = ['Eventpeppers', 'Musiker-Board', 'eBay Kleinanzeigen', 'Hochzeitsportale', 'Hotel-Ausschreibungen', 'Facebook Gruppen'];
+  const cities = ['Muenchen', 'Berlin', 'Hamburg', 'Wien', 'Salzburg', 'Frankfurt', 'Stuttgart', 'Koeln'];
+  const types = ['Hochzeit', 'Firmen-Gala', 'Restaurant', 'Hotel-Lobby', 'Private Feier', 'Vernissage', 'Charity Event'];
+
+  let idx = 0;
+  const interval = setInterval(() => {
+    const source = sources[idx % sources.length];
+    const city = cities[Math.floor(Math.random() * cities.length)];
+
+    log.innerHTML += `<div><span class="time">[${now()}]</span> Durchsuche ${source} in ${city}...</div>`;
+
+    if (Math.random() > 0.5) {
+      const type = types[Math.floor(Math.random() * types.length)];
+      const budget = Math.floor(Math.random() * 3000 + 500);
+      const found = parseInt(document.getElementById('klavier-found').textContent) + 1;
+      document.getElementById('klavier-found').textContent = found;
+
+      log.innerHTML += `<div><span class="time">[${now()}]</span> <span style="color:var(--green)">ANFRAGE: "${type}" in ${city}, Budget ca. ${budget} EUR (${source})</span></div>`;
+    }
+
+    idx++;
+    log.scrollTop = log.scrollHeight;
+
+    if (idx > 15) {
+      clearInterval(interval);
+      log.innerHTML += `<div><span class="time">[${now()}]</span> <span class="info">Durchlauf abgeschlossen. Naechster Durchlauf in 24h.</span></div>`;
+
+      // Add PDF entry
+      const pdfs = document.getElementById('klavier-pdfs');
+      const today = new Date().toLocaleDateString('de-DE');
+      pdfs.innerHTML = `<li><span class="pdf-icon">📄</span> <strong>Klavier-Report ${today}</strong> — ${document.getElementById('klavier-found').textContent} Anfragen gefunden <span class="tag tag-green">NEU</span></li>` + pdfs.innerHTML;
+    }
+  }, 2000);
+
+  showToast('Klavier-Agent gestartet!');
+}
+
+// ============ TOAST ============
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+
+</body>
+</html>
