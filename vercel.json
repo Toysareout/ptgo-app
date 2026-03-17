@@ -3,7 +3,7 @@
     { "source": "/heal", "destination": "/heal.html" },
     { "source": "/heal-en", "destination": "/heal-en.html" },
     { "source": "/heal-ultra", "destination": "/heal-ultra.html" },
-    { "source": "/portal", "destination": "/index.html" },
+    { "source": "/portal", "destination": "/portal.html" },
     { "source": "/musik", "destination": "/musik.html" },
     { "source": "/ostern", "destination": "/ostern.html" },
     { "source": "/admin", "destination": "/admin.html" },

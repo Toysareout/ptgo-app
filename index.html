@@ -2,707 +2,758 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>THETOYSAREOUT — Wähle deine Welt</title>
-<meta name="description" content="THETOYSAREOUT — Zwei Welten, ein Körper. Musik, Bewegung, Energie trifft Heilung, Körper, Transformation. Wähle deine Welt.">
-<meta name="author" content="THETOYSAREOUT">
-<meta name="robots" content="index, follow">
-
-<!-- Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://thetoysareout.com/">
-<meta property="og:title" content="THETOYSAREOUT — Wähle deine Welt">
-<meta property="og:description" content="Zwei Welten, ein Körper. Musik · Bewegung · Energie trifft Heilung · Körper · Transformation.">
-<meta property="og:image" content="https://thetoysareout.com/og-image.jpg">
-<meta property="og:site_name" content="THETOYSAREOUT">
-<meta property="og:locale" content="de_DE">
-
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:site" content="@thetoysareout">
-<meta name="twitter:title" content="THETOYSAREOUT — Wähle deine Welt">
-<meta name="twitter:description" content="Zwei Welten, ein Körper. Musik · Bewegung · Energie trifft Heilung · Körper · Transformation.">
-<meta name="twitter:image" content="https://thetoysareout.com/og-image.jpg">
-
-<!-- Canonical -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>THETOYSAREOUT — Nerve Center | Dein KI-Gehirn</title>
+<meta name="description" content="THETOYSAREOUT Nerve Center — KI-gestütztes Wissensmanagement, tägliche Strategiefragen, Situationsanalyse und Patienten-Intelligenz.">
+<meta name="robots" content="noindex,nofollow">
+<meta property="og:title" content="THETOYSAREOUT — Nerve Center">
+<meta property="og:description" content="Dein persoenliches KI-Gehirn — Wissen, Strategie, Evolution">
 <link rel="canonical" href="https://thetoysareout.com/">
-
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--black:#050505;--pink:#ff2d8e;--white:#f0ece4;--warm:#c9a84c;--heal:#2dffa8}
-html,body{height:100%;overflow:hidden}
-body{background:var(--black);color:var(--white);font-family:'Space Mono',monospace;cursor:none}
-
-/* CUSTOM CURSOR — organic blob */
-#cur{position:fixed;width:9px;height:9px;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen;transition:width .35s cubic-bezier(.16,1,.3,1),height .35s cubic-bezier(.16,1,.3,1),background .8s,border-radius .4s}
-#cur.music{background:var(--pink)}
-#cur.heal{background:var(--heal)}
-#cur.neutral{background:var(--white);opacity:.5}
-#cur.h{width:36px;height:36px;background:transparent;border:1px solid currentColor;border-radius:50%}
-
-/* AMBIENT GLOW — mouse-reactive environmental light */
-#ambient-glow{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity 2s}
-#ambient-glow.active{opacity:1}
-
-/* ORGANIC ENTRY — initial bloom */
-#portal{display:flex;height:100vh;position:relative;opacity:0;transform:scale(1.02);animation:portalBloom 2.5s cubic-bezier(.16,1,.3,1) .3s forwards}
-@keyframes portalBloom{
-  0%{opacity:0;transform:scale(1.02);filter:blur(8px)}
-  60%{filter:blur(0)}
-  100%{opacity:1;transform:scale(1);filter:blur(0)}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
 }
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-.world{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:flex .8s cubic-bezier(.16,1,.3,1),opacity .6s}
-.world:hover{flex:1.3}
-.world.dimmed{flex:.7;opacity:.4}
+/* ── PASSWORD GATE ── */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#gate.hidden{display:none}
+#gate canvas{position:absolute;inset:0;z-index:0}
+.gate-box{position:relative;z-index:1;text-align:center}
+.gate-title{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.gate-sub{color:var(--dim);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+.gate-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:280px;border-radius:2px;text-align:center;outline:none;transition:border-color .3s}
+.gate-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.gate-input::placeholder{color:var(--dim)}
+.gate-btn{margin-top:16px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;padding:12px 40px;cursor:pointer;transition:all .3s}
+.gate-btn:hover{background:var(--cyan);color:var(--bg)}
+.gate-error{color:var(--red);font-size:12px;margin-top:12px;min-height:16px}
 
-/* MUSIC SIDE — organic radial that follows mouse */
-#w-music{border-right:1px solid rgba(255,255,255,.03)}
-#w-music::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at var(--mx, 70%) var(--my, 50%),rgba(255,45,142,.06) 0%,transparent 60%);transition:background .3s}
+/* ── MAIN LAYOUT ── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.active{display:flex}
 
-/* HEAL SIDE */
-#w-heal::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at var(--mx, 30%) var(--my, 50%),rgba(45,255,168,.04) 0%,transparent 60%);transition:background .3s}
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;letter-spacing:3px}
+.topbar-title span{color:var(--cyan)}
+.topbar-stats{display:flex;gap:16px;font-size:11px;color:var(--dim)}
+.topbar-stats .stat{display:flex;align-items:center;gap:4px}
+.topbar-stats .stat b{color:var(--cyan);font-size:13px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--dim)}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--dim);font-size:11px;padding:6px 12px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .3s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
 
-.w-content{position:relative;z-index:2;text-align:center;padding:40px;max-width:400px}
-.w-label{font-size:8px;letter-spacing:.5em;text-transform:uppercase;opacity:0;margin-bottom:20px;animation:labelGrow 1.5s ease 1.2s forwards}
-@keyframes labelGrow{to{opacity:.3}}
+/* CONTENT */
+.content{display:flex;flex:1;overflow:hidden}
 
-/* ORGANIC TITLE — each letter breathes independently */
-.w-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,5vw,64px);line-height:.9;margin-bottom:12px;letter-spacing:.03em}
-.w-title .acc{transition:color .4s}
-.w-title .char{display:inline-block;opacity:0;transform:translateY(16px);animation:charBloom .6s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes charBloom{to{opacity:1;transform:translateY(0)}}
+/* SIDEBAR BOOKSHELF */
+.shelf{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;padding:8px 0}
+.shelf-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);padding:16px 16px 8px;text-transform:uppercase}
+.book{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .25s;position:relative}
+.book:hover{background:rgba(255,255,255,.03)}
+.book.active{background:rgba(0,240,255,.05);border-left-color:var(--cyan)}
+.book-spine{width:6px;height:40px;border-radius:1px;flex-shrink:0}
+.book-info{flex:1;min-width:0}
+.book-title{font-size:12px;font-weight:700;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-desc{font-size:10px;color:var(--dim);margin-top:2px}
+.book-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'Orbitron',sans-serif;font-size:9px;background:var(--surface2);padding:2px 6px;border-radius:2px;color:var(--cyan)}
 
-#w-music .w-title .acc{color:var(--pink)}
-#w-heal .w-title .acc{color:var(--heal)}
-.w-sub{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:0;line-height:2;margin-bottom:32px;animation:fadeOrg 2s ease 2s forwards}
-@keyframes fadeOrg{to{opacity:.2}}
-.w-price{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,20px);letter-spacing:.1em;opacity:0;margin-bottom:24px;animation:fadeOrg 2s ease 2.3s forwards}
+/* MAIN PANEL */
+.panel{flex:1;overflow-y:auto;padding:32px;position:relative}
+.panel-header{margin-bottom:24px}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:900;letter-spacing:2px}
+.panel-subtitle{color:var(--dim);font-size:12px;margin-top:4px;letter-spacing:1px}
 
-/* CTA — organic pulse */
-.w-btn{padding:14px 36px;font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.15em;border:none;cursor:none;transition:all .4s cubic-bezier(.16,1,.3,1);text-decoration:none;display:inline-block;position:relative;opacity:0;animation:btnBloom 1s ease 2.6s forwards}
-@keyframes btnBloom{to{opacity:1}}
-.w-btn::before{content:'';position:absolute;inset:-4px;border-radius:2px;opacity:0;transition:opacity .6s}
-#w-music .w-btn{background:var(--pink);color:var(--black)}
-#w-music .w-btn::before{box-shadow:0 0 30px rgba(255,45,142,.2)}
-#w-music .w-btn:hover{background:var(--white);transform:scale(1.04)}
-#w-music .w-btn:hover::before{opacity:1}
-#w-heal .w-btn{background:var(--heal);color:var(--black)}
-#w-heal .w-btn::before{box-shadow:0 0 30px rgba(45,255,168,.2)}
-#w-heal .w-btn:hover{background:var(--white);transform:scale(1.04)}
-#w-heal .w-btn:hover::before{opacity:1}
+/* MODULE: HOME */
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:24px}
+.home-card{background:var(--surface);border:1px solid var(--border);padding:24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.home-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.home-card h3{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:1px;margin-bottom:8px}
+.home-card p{font-size:12px;color:var(--dim);line-height:1.6}
+.home-card .card-stat{font-family:'Orbitron',sans-serif;font-size:24px;margin-top:12px}
 
-/* CENTER ORGAN */
-#organ-wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;width:clamp(240px,30vw,420px);height:clamp(240px,30vw,420px);pointer-events:none}
-#organ-canvas{width:100%;height:100%}
-#organ-pulse{position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.03) 0%,transparent 70%);animation:organPulse 4s ease-in-out infinite}
-@keyframes organPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.15);opacity:1}}
-#organ-label{position:absolute;bottom:-30px;left:50%;transform:translateX(-50%);font-size:7px;letter-spacing:.5em;text-transform:uppercase;opacity:0;white-space:nowrap;animation:fadeOrg 3s ease 3s forwards}
+/* MODULE SECTIONS */
+.section{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.section-title{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--dim);margin-bottom:12px;text-transform:uppercase}
 
-/* DIVIDER — living membrane */
-#divider{position:absolute;left:50%;top:0;bottom:0;width:1px;z-index:1}
-#divider canvas{position:absolute;inset:0;width:3px;height:100%;transform:translateX(-1px)}
+/* FORMS */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .3s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cyan)}
+.field textarea{min-height:100px}
 
-/* CORNERS */
-.corner{position:fixed;z-index:20;font-size:8px;letter-spacing:.3em;text-transform:uppercase;pointer-events:none;opacity:0;animation:fadeOrg 3s ease 3.5s forwards}
-#p-c1{top:20px;left:28px}
-#p-c2{top:20px;right:28px;text-align:right}
-#p-c3{bottom:20px;left:50%;transform:translateX(-50%);text-align:center}
+.btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.btn:hover{background:var(--cyan);color:var(--bg)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn.secondary{border-color:var(--border);color:var(--dim)}
+.btn.secondary:hover{border-color:var(--text);color:var(--text)}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn.danger:hover{background:var(--red);color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 
-/* HOURLY TAGLINE */
-#hourly-tagline{position:fixed;bottom:56px;left:50%;transform:translateX(-50%);z-index:20;font-size:7px;letter-spacing:.4em;text-transform:uppercase;opacity:0;white-space:nowrap;transition:opacity 2s;color:var(--white)}
-#hourly-tagline.visible{opacity:.1}
+/* LISTS */
+.item{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px;transition:border-color .3s;cursor:pointer}
+.item:hover{border-color:var(--cyan)}
+.item-title{font-size:13px;font-weight:700}
+.item-meta{font-size:10px;color:var(--dim);margin-top:4px}
+.item-content{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.6}
+.item-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:9px;padding:2px 8px;border:1px solid var(--border);color:var(--dim);letter-spacing:1px;text-transform:uppercase}
 
-/* FLOATING PARTICLES — organic motion */
-.particle{position:fixed;border-radius:50%;pointer-events:none;z-index:0;opacity:0}
-.particle.pink{background:var(--pink)}
-.particle.green{background:var(--heal)}
-.particle.white{background:var(--white)}
+/* QUESTION CARDS */
+.q-card{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px}
+.q-card.answered{border-left:3px solid var(--green)}
+.q-number{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:2px}
+.q-text{font-size:13px;margin:8px 0;line-height:1.6}
+.q-answer{background:var(--surface);padding:12px;margin-top:8px;font-size:12px;border-left:2px solid var(--green)}
+.q-insight{background:rgba(0,240,255,.05);padding:12px;margin-top:8px;font-size:11px;color:var(--cyan);border-left:2px solid var(--cyan)}
+.q-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;margin-top:8px;outline:none;resize:vertical;min-height:60px}
+.q-input:focus{border-color:var(--cyan)}
+
+/* SITUATION ANALYSIS */
+.analysis-phase{padding:16px;border:1px solid var(--border);margin-bottom:8px}
+.phase-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;margin-bottom:8px}
+.phase-content{font-size:12px;line-height:1.7;color:var(--dim)}
+.phase-content strong{color:var(--text)}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.status::before{content:'';width:6px;height:6px;border-radius:50%}
+.status.pending::before{background:var(--gold)}.status.complete::before{background:var(--green)}.status.researching::before{background:var(--cyan)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--dim);font-size:12px}
+.loading::after{content:'';display:block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:12px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-size:12px;padding:12px 20px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--dim)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.empty p{font-size:12px;line-height:1.6}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .shelf{width:60px;overflow:visible}
+  .shelf .book-info,.shelf .book-badge,.shelf .shelf-label{display:none}
+  .shelf .book{padding:12px 0;justify-content:center}
+  .panel{padding:16px}
+  .home-grid{grid-template-columns:1fr}
+  .topbar-stats{display:none}
+}
 
 /* GRAIN */
-#grain{position:fixed;inset:-50%;width:200%;height:200%;pointer-events:none;z-index:500;opacity:.06;animation:gr .4s steps(1) infinite}
-@keyframes gr{0%{transform:translate(0,0)}25%{transform:translate(-1%,2%)}50%{transform:translate(2%,-1%)}75%{transform:translate(-2%,1%)}100%{transform:translate(1%,-2%)}}
-
-/* EASTER BANNER */
-#easter-banner{position:fixed;bottom:0;left:0;right:0;z-index:100;background:linear-gradient(90deg,#050505 0%,rgba(201,168,76,.1) 50%,#050505 100%);border-top:1px solid rgba(201,168,76,.2);padding:14px 20px;display:flex;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:bannerIn .8s ease-out}
-@keyframes bannerIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
-#easter-banner .eb-text{font-size:9px;letter-spacing:.25em;text-transform:uppercase;opacity:.5}
-#easter-banner .eb-text strong{color:#c9a84c;opacity:1}
-#easter-banner .eb-btn{padding:8px 24px;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.12em;border:none;background:#c9a84c;color:#050505;cursor:none;text-decoration:none;transition:background .3s}
-#easter-banner .eb-btn:hover{background:#f0ece4}
-#easter-banner .eb-close{background:none;border:none;color:rgba(240,236,228,.2);font-size:16px;cursor:none;padding:4px 8px;transition:color .3s}
-#easter-banner .eb-close:hover{color:#c9a84c}
-.eb-hidden{display:none!important}
-
-/* MOBILE */
-@media(max-width:680px){
-  #portal{flex-direction:column}
-  .world:hover{flex:1.5}
-  #organ-wrap{width:140px;height:140px}
-  #divider{left:0;right:0;top:50%;bottom:auto;width:auto;height:3px}
-  #divider canvas{width:100%;height:3px;transform:translateY(-1px)}
-  .corner{display:none}
-  #hourly-tagline{font-size:6px;letter-spacing:.3em;bottom:50px}
-}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
 </style>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2dffa8">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<!-- Analytics: Uncomment and replace G-XXXXXXXXXX with your GA4 ID
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-XXXXXXXXXX');</script>
-Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
-<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','XXXXXXXXXXXXXXXX');fbq('track','PageView');</script>
--->
 </head>
 <body>
 
+<!-- GRAIN OVERLAY -->
+<canvas id="grain"></canvas>
 
-<!-- AMBIENT GLOW — environment responds to mouse position -->
-<canvas id="ambient-glow"></canvas>
-
-<div id="cur" class="neutral"></div>
-<svg id="grain" xmlns="http://www.w3.org/2000/svg"><filter id="fn"><feTurbulence type="fractalNoise" baseFrequency=".78" numOctaves="4" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#fn)" opacity=".055"/></svg>
-
-<div class="corner" id="p-c1">THETOYSAREOUT</div>
-<div class="corner" id="p-c2">EST. 2026</div>
-<div class="corner" id="p-c3">Wähle deine Welt</div>
-<a href="/nerve" id="p-c4" style="position:fixed;z-index:20;bottom:20px;right:28px;font-size:8px;letter-spacing:.3em;text-transform:uppercase;opacity:0;animation:fadeOrg 3s ease 3.5s forwards;color:#00f0ff;text-decoration:none;cursor:none;transition:opacity .3s">NERVE CENTER →</a>
-
-<!-- HOURLY TAGLINE -->
-<div id="hourly-tagline"></div>
-
-<!-- EASTER BANNER (auto-hides after Ostern 2026) -->
-<div id="easter-banner">
-  <span class="eb-text"><strong>OSTER RESET BOX</strong> — Limitiert auf 50 Stück. Nur bis Ostern.</span>
-  <a href="ostern.html" class="eb-btn">Jetzt sichern →</a>
-  <button class="eb-close" onclick="this.parentElement.classList.add('eb-hidden')" aria-label="Schließen">✕</button>
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <canvas id="gate-bg"></canvas>
+  <div class="gate-box">
+    <div class="gate-title">NERVE CENTER</div>
+    <div class="gate-sub">Persoenliches KI-Gehirn</div>
+    <input type="password" class="gate-input" id="gate-pw" placeholder="Zugangsformel" onkeydown="if(event.key==='Enter')tryGate()">
+    <br>
+    <button class="gate-btn" onclick="tryGate()">ZUGANG</button>
+    <div class="gate-error" id="gate-err"></div>
+  </div>
 </div>
 
-<div id="portal">
-  <!-- MUSIC WORLD -->
-  <div class="world" id="w-music"
-       onmouseenter="hoverWorld('music')" onmouseleave="leaveWorld()">
-    <div class="w-content">
-      <div class="w-label">Musik · Bewegung · Energie</div>
-      <div class="w-title" data-split>THE<span class="acc">TOYS</span><br>AREOUT</div>
-      <div class="w-sub">Drops · Live Sessions · Merch<br>Inner Circle · Community</div>
-      <div class="w-price">AB 1 €</div>
-      <a href="musik.html" class="w-btn">Musik erleben →</a>
+<!-- MAIN APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="topbar-title">NERVE <span>CENTER</span></div>
+      <div class="topbar-stats" id="topbar-stats"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbar-time"></div>
+      <button class="btn-logout" onclick="logout()">LOGOUT</button>
     </div>
   </div>
 
-  <!-- CENTER LIVING MEMBRANE -->
-  <div id="divider"><canvas id="membrane-canvas"></canvas></div>
-  <div id="organ-wrap">
-    <div id="organ-pulse"></div>
-    <canvas id="organ-canvas"></canvas>
-    <div id="organ-label">Zwei Welten · Ein Körper</div>
-  </div>
+  <div class="content">
+    <!-- BOOKSHELF SIDEBAR -->
+    <nav class="shelf" id="shelf">
+      <div class="shelf-label">Module</div>
 
-  <!-- HEAL WORLD -->
-  <div class="world" id="w-heal"
-       onmouseenter="hoverWorld('heal')" onmouseleave="leaveWorld()">
-    <div class="w-content">
-      <div class="w-label">Heilung · Körper · Transformation</div>
-      <div class="w-title" data-split>P<span class="acc">TGO</span><br>METHOD</div>
-      <div class="w-sub">Pain · Trauma · Growth · Outcome<br>1:1 Premium Sessions</div>
-      <div class="w-price">5.000 € / SESSION</div>
-      <a href="heal.html" class="w-btn">Session anfragen →</a>
-    </div>
+      <div class="book active" data-mod="home" onclick="openMod('home')">
+        <div class="book-spine" style="background:var(--cyan)"></div>
+        <div class="book-info"><div class="book-title">HOME</div><div class="book-desc">Uebersicht</div></div>
+      </div>
+
+      <div class="book" data-mod="vault" onclick="openMod('vault')">
+        <div class="book-spine" style="background:var(--green)"></div>
+        <div class="book-info"><div class="book-title">WISSENSSPEICHER</div><div class="book-desc">Know-how Tresor</div></div>
+        <div class="book-badge" id="badge-vault">0</div>
+      </div>
+
+      <div class="book" data-mod="daily" onclick="openMod('daily')">
+        <div class="book-spine" style="background:var(--gold)"></div>
+        <div class="book-info"><div class="book-title">DAILY 10</div><div class="book-desc">Tagesfragen</div></div>
+        <div class="book-badge" id="badge-daily">0</div>
+      </div>
+
+      <div class="book" data-mod="analyze" onclick="openMod('analyze')">
+        <div class="book-spine" style="background:var(--pink)"></div>
+        <div class="book-info"><div class="book-title">ANALYZER</div><div class="book-desc">Situation &rarr; Loesung</div></div>
+      </div>
+
+      <div class="book" data-mod="patients" onclick="openMod('patients')">
+        <div class="book-spine" style="background:var(--purple)"></div>
+        <div class="book-info"><div class="book-title">PATIENTEN-KI</div><div class="book-desc">Ethische Analyse</div></div>
+      </div>
+
+      <div class="shelf-label">Links</div>
+
+      <div class="book" onclick="window.open('/heal','_blank')">
+        <div class="book-spine" style="background:var(--green);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">PTGO</div><div class="book-desc">Heal Sessions</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/musik','_blank')">
+        <div class="book-spine" style="background:var(--pink);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">MUSIK</div><div class="book-desc">THETOYSAREOUT</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/bot-admin','_blank')">
+        <div class="book-spine" style="background:var(--gold);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BOT ADMIN</div><div class="book-desc">WhatsApp Bot</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/admin','_blank')">
+        <div class="book-spine" style="background:var(--dim);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BEWERBUNGEN</div><div class="book-desc">Admin Panel</div></div>
+      </div>
+    </nav>
+
+    <!-- MAIN PANEL -->
+    <main class="panel" id="panel"></main>
   </div>
 </div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// ORGANIC LETTER ANIMATION — each character blooms individually
-// ═══════════════════════════════════════════════════════════
-document.querySelectorAll('[data-split]').forEach(el => {
-  const html = el.innerHTML;
-  let charIndex = 0;
-  el.innerHTML = html.replace(/(<[^>]+>)|([^<\s])/g, (match, tag, char) => {
-    if (tag) return tag;
-    charIndex++;
-    const delay = 0.8 + charIndex * 0.06;
-    return '<span class="char" style="animation-delay:' + delay + 's">' + char + '</span>';
-  });
-});
+/* ══════════════════════════════════════════
+   NERVE CENTER — Client Logic
+   ══════════════════════════════════════════ */
 
-// ═══════════════════════════════════════════════════════════
-// HOURLY CONTENT SYSTEM — Subtle tagline changes each hour
-// ═══════════════════════════════════════════════════════════
-const HOURLY_TAGLINES = [
-  'Die Nacht gehört den Mutigen',
-  'Stille formt die stärksten Gedanken',
-  'Im Dunkeln wächst, was Licht verdient',
-  'Dein Körper regeneriert — lass ihn',
-  'Zwischen Schlaf und Wachsein liegt Wahrheit',
-  'Der erste Atemzug zählt',
-  'Morgenlicht trifft neue Entscheidungen',
-  'Der Tag beginnt mit einer Wahl',
-  'Energie folgt Intention',
-  'Bewegung ist die Antwort',
-  'Mittag — Zeit für Klarheit',
-  'Im Zentrum liegt die Kraft',
-  'Peak-Stunde — Nutze sie',
-  'Transformation braucht keinen Termin',
-  'Nachmittag — Integration läuft',
-  'Muster brechen sich jetzt',
-  'Der Körper weiß mehr als der Kopf',
-  'Abend — Reflexion beginnt',
-  'Loslassen ist eine Kunst',
-  'Das Nervensystem findet Ruhe',
-  'Nacht — Tiefenarbeit ohne Worte',
-  'Im Stillen passiert das Wesentliche',
-  'Zwei Welten atmen im gleichen Rhythmus',
-  'Die dunkelste Stunde kennt den Weg'
-];
+const API='/.netlify/functions/nerve-brain';
+const PW_HASH='a7e0d6b5f1c3e2a4b8d9f0c1e2a3b4c5'; // placeholder, real check below
 
-function getHourSeed() { return new Date().getHours(); }
-
-function updateHourlyTagline() {
-  const h = getHourSeed();
-  const el = document.getElementById('hourly-tagline');
-  el.classList.remove('visible');
-  setTimeout(() => {
-    el.textContent = '— ' + HOURLY_TAGLINES[h] + ' —';
-    el.classList.add('visible');
-  }, 500);
+// ── PASSWORD GATE ──
+function hashPw(s){
+  // Simple hash for client-side gate; not crypto-secure but prevents casual access
+  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h;
 }
-updateHourlyTagline();
-setInterval(updateHourlyTagline, 60000);
+const CORRECT_HASH=hashPw('1+1 ist eins');
 
-// ═══════════════════════════════════════════════════════════
-// SMOOTH ORGANIC CURSOR — lerp with organic easing
-// ═══════════════════════════════════════════════════════════
-const cur = document.getElementById('cur');
-let mx = innerWidth / 2, my = innerHeight / 2, cx = mx, cy = my;
-let mxNorm = 0.5, myNorm = 0.5; // 0-1 normalized mouse
-document.addEventListener('mousemove', e => {
-  mx = e.clientX; my = e.clientY;
-  mxNorm = mx / innerWidth;
-  myNorm = my / innerHeight;
-});
-
-function smoothCursor() {
-  cx += (mx - cx) * 0.12;
-  cy += (my - cy) * 0.12;
-  cur.style.left = cx + 'px';
-  cur.style.top = cy + 'px';
-  requestAnimationFrame(smoothCursor);
-}
-smoothCursor();
-
-document.querySelectorAll('a,.w-btn,.eb-btn,.eb-close,#p-c4').forEach(el => {
-  el.addEventListener('mouseenter', () => cur.classList.add('h'));
-  el.addEventListener('mouseleave', () => cur.classList.remove('h'));
-});
-
-// ═══════════════════════════════════════════════════════════
-// WORLD HOVER — with organic ambient glow propagation
-// ═══════════════════════════════════════════════════════════
-let activeWorld = null;
-let organHue = 0.0;
-
-function hoverWorld(w) {
-  activeWorld = w;
-  cur.className = w;
-  const other = w === 'music' ? 'w-heal' : 'w-music';
-  document.getElementById(other).classList.add('dimmed');
-  organHue = w === 'music' ? 0.92 : 0.45;
-}
-function leaveWorld() {
-  activeWorld = null;
-  cur.className = 'neutral';
-  document.getElementById('w-music').classList.remove('dimmed');
-  document.getElementById('w-heal').classList.remove('dimmed');
-  organHue = 0.0;
-}
-
-// Mouse-reactive radial gradients inside each world
-document.querySelectorAll('.world').forEach(world => {
-  world.addEventListener('mousemove', e => {
-    const rect = world.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-    const py = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
-    world.style.setProperty('--mx', px + '%');
-    world.style.setProperty('--my', py + '%');
-  });
-});
-
-// ═══════════════════════════════════════════════════════════
-// AMBIENT GLOW CANVAS — living environmental light
-// ═══════════════════════════════════════════════════════════
-const ambientCanvas = document.getElementById('ambient-glow');
-const actx = ambientCanvas.getContext('2d');
-ambientCanvas.width = 64; // Low-res for performance
-ambientCanvas.height = 64;
-ambientCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.6';
-
-let ambientTime = 0;
-function renderAmbient() {
-  requestAnimationFrame(renderAmbient);
-  ambientTime += 0.005;
-
-  actx.clearRect(0, 0, 64, 64);
-
-  // Base: very subtle breathing glow
-  const breathe = Math.sin(ambientTime * 0.5) * 0.5 + 0.5;
-
-  // Pink glow on left, follows mouse Y subtly
-  const pinkY = 20 + myNorm * 24;
-  const pinkAlpha = activeWorld === 'music' ? 0.04 + breathe * 0.02 : 0.015 + breathe * 0.005;
-  const pinkGrad = actx.createRadialGradient(16 + mxNorm * 8, pinkY, 0, 16, 32, 32);
-  pinkGrad.addColorStop(0, 'rgba(255,45,142,' + pinkAlpha + ')');
-  pinkGrad.addColorStop(1, 'transparent');
-  actx.fillStyle = pinkGrad;
-  actx.fillRect(0, 0, 64, 64);
-
-  // Green glow on right
-  const greenY = 20 + myNorm * 24;
-  const greenAlpha = activeWorld === 'heal' ? 0.03 + breathe * 0.015 : 0.01 + breathe * 0.005;
-  const greenGrad = actx.createRadialGradient(48 + (1 - mxNorm) * 8, greenY, 0, 48, 32, 28);
-  greenGrad.addColorStop(0, 'rgba(45,255,168,' + greenAlpha + ')');
-  greenGrad.addColorStop(1, 'transparent');
-  actx.fillStyle = greenGrad;
-  actx.fillRect(0, 0, 64, 64);
-}
-renderAmbient();
-
-// ═══════════════════════════════════════════════════════════
-// LIVING MEMBRANE — the divider is alive, reacts to mouse
-// ═══════════════════════════════════════════════════════════
-const membraneCanvas = document.getElementById('membrane-canvas');
-const mctx = membraneCanvas.getContext('2d');
-const isMobile = window.innerWidth <= 680;
-
-function resizeMembrane() {
-  if (isMobile) {
-    membraneCanvas.width = window.innerWidth;
-    membraneCanvas.height = 3;
+function tryGate(){
+  const val=document.getElementById('gate-pw').value.trim();
+  if(hashPw(val)===CORRECT_HASH){
+    sessionStorage.setItem('nerve_auth','1');
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    init();
   } else {
-    membraneCanvas.width = 3;
-    membraneCanvas.height = window.innerHeight;
+    document.getElementById('gate-err').textContent='Falsche Formel. Versuche es erneut.';
+    document.getElementById('gate-pw').value='';
+    document.getElementById('gate-pw').focus();
   }
 }
-resizeMembrane();
-window.addEventListener('resize', resizeMembrane);
 
-let membraneTime = 0;
-function renderMembrane() {
-  requestAnimationFrame(renderMembrane);
-  membraneTime += 0.02;
-
-  const w = membraneCanvas.width;
-  const h = membraneCanvas.height;
-  mctx.clearRect(0, 0, w, h);
-
-  if (isMobile) {
-    // Horizontal membrane
-    for (let x = 0; x < w; x++) {
-      const norm = x / w;
-      const distToMouse = Math.abs(norm - mxNorm);
-      const mouseInfluence = Math.max(0, 1 - distToMouse * 4);
-      const wave = Math.sin(norm * 12 + membraneTime) * 0.3;
-      const breathe = Math.sin(membraneTime * 0.3 + norm * 2) * 0.2;
-      const alpha = 0.04 + wave * 0.02 + breathe * 0.02 + mouseInfluence * 0.08;
-      const hue = activeWorld === 'music' ? '255,45,142' : activeWorld === 'heal' ? '45,255,168' : '240,236,228';
-      mctx.fillStyle = 'rgba(' + hue + ',' + Math.max(0, alpha) + ')';
-      mctx.fillRect(x, 0, 1, 3);
-    }
-  } else {
-    // Vertical membrane
-    for (let y = 0; y < h; y++) {
-      const norm = y / h;
-      const distToMouse = Math.abs(norm - myNorm);
-      const mouseInfluence = Math.max(0, 1 - distToMouse * 3);
-      const wave = Math.sin(norm * 15 + membraneTime) * 0.3;
-      const breathe = Math.sin(membraneTime * 0.3 + norm * 3) * 0.2;
-      const alpha = 0.04 + wave * 0.02 + breathe * 0.02 + mouseInfluence * 0.1;
-      const hue = activeWorld === 'music' ? '255,45,142' : activeWorld === 'heal' ? '45,255,168' : '240,236,228';
-      mctx.fillStyle = 'rgba(' + hue + ',' + Math.max(0, alpha) + ')';
-      mctx.fillRect(0, y, 3, 1);
-    }
-  }
-}
-renderMembrane();
-
-// ═══════════════════════════════════════════════════════════
-// FLOATING AMBIENT PARTICLES — organic motion with bezier
-// ═══════════════════════════════════════════════════════════
-function createParticles() {
-  const colors = ['pink', 'green', 'white', 'white', 'white'];
-  for (let i = 0; i < 22; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle ' + colors[i % colors.length];
-    p.style.left = Math.random() * 100 + 'vw';
-    p.style.top = Math.random() * 100 + 'vh';
-    const size = 1 + Math.random() * 2.5;
-    p.style.width = size + 'px';
-    p.style.height = size + 'px';
-    document.body.appendChild(p);
-    animateParticle(p, Math.random() * 6000);
-  }
-}
-function animateParticle(p, delay) {
-  setTimeout(() => {
-    const duration = 20000 + Math.random() * 25000;
-    const x1 = Math.random() * 100, y1 = Math.random() * 100;
-    p.style.transition = 'left ' + duration + 'ms cubic-bezier(.4,0,.2,1), top ' + duration + 'ms cubic-bezier(.4,0,.2,1), opacity ' + (duration * 0.3) + 'ms ease';
-    p.style.opacity = 0.03 + Math.random() * 0.07;
-    p.style.left = x1 + 'vw';
-    p.style.top = y1 + 'vh';
-    setTimeout(() => {
-      p.style.opacity = 0;
-      setTimeout(() => animateParticle(p, 0), 2000);
-    }, duration * 0.7);
-  }, delay);
-}
-createParticles();
-
-// ═══════════════════════════════════════════════════════════
-// THREE.JS — HOLOGRAPHIC ORGAN-GLOBE WITH ORBITAL RINGS
-// Like a living planet. An organ AND a world. Energy rings orbit.
-// ═══════════════════════════════════════════════════════════
-const canvas = document.getElementById('organ-canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-const size = Math.min(420, window.innerWidth * 0.3);
-renderer.setSize(size, size);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
-camera.position.z = 4.0;
-
-// ── CORE ORGAN-GLOBE ──
-const geo = new THREE.IcosahedronGeometry(0.9, 6);
-const posAttr = geo.attributes.position;
-const basePos = new Float32Array(posAttr.array.length);
-basePos.set(posAttr.array);
-
-const mat = new THREE.MeshStandardMaterial({
-  color: 0x88ccff, roughness: 0.5, metalness: 0.2,
-  transparent: true, opacity: 0.12, wireframe: false
-});
-const mesh = new THREE.Mesh(geo, mat);
-scene.add(mesh);
-
-// Wireframe globe overlay
-const wireMat = new THREE.MeshBasicMaterial({
-  color: 0x66bbff, wireframe: true, transparent: true, opacity: 0.05
-});
-const wire = new THREE.Mesh(geo, wireMat);
-scene.add(wire);
-
-// ── INNER GLOW CORE ──
-const coreGeo = new THREE.SphereGeometry(0.3, 24, 24);
-const coreMat = new THREE.MeshBasicMaterial({ color: 0x44ddff, transparent: true, opacity: 0.04 });
-const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-scene.add(coreMesh);
-
-// ── ORBITAL ENERGY RINGS ──
-const rings = [];
-const ringConfigs = [
-  { radius: 1.25, tube: 0.004, color: 0xff2d8e, tiltX: 0.3, tiltZ: 0.1, speed: 0.4, opacity: 0.12 },
-  { radius: 1.45, tube: 0.003, color: 0x2dffa8, tiltX: -0.15, tiltZ: 0.25, speed: -0.3, opacity: 0.10 },
-  { radius: 1.65, tube: 0.002, color: 0x66bbff, tiltX: 0.5, tiltZ: -0.2, speed: 0.2, opacity: 0.06 },
-  { radius: 1.85, tube: 0.002, color: 0xffffff, tiltX: -0.35, tiltZ: 0.35, speed: -0.15, opacity: 0.03 },
-  { radius: 2.1, tube: 0.001, color: 0x2dffa8, tiltX: 0.1, tiltZ: -0.1, speed: 0.1, opacity: 0.02 },
-];
-
-ringConfigs.forEach(cfg => {
-  const ringGeo = new THREE.TorusGeometry(cfg.radius, cfg.tube, 6, 128);
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: cfg.color, transparent: true, opacity: cfg.opacity
-  });
-  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-  ringMesh.rotation.x = Math.PI / 2 + cfg.tiltX;
-  ringMesh.rotation.z = cfg.tiltZ;
-  scene.add(ringMesh);
-  rings.push({ mesh: ringMesh, mat: ringMat, cfg });
-});
-
-// ── ORBITAL PARTICLES (energy dots on rings) ──
-const orbParticles = [];
-for (let i = 0; i < 30; i++) {
-  const pGeo = new THREE.SphereGeometry(0.012 + Math.random() * 0.01, 4, 4);
-  const ringIdx = Math.floor(Math.random() * ringConfigs.length);
-  const cfg = ringConfigs[ringIdx];
-  const pMat = new THREE.MeshBasicMaterial({ color: cfg.color, transparent: true, opacity: 0.2 + Math.random() * 0.3 });
-  const pMesh = new THREE.Mesh(pGeo, pMat);
-  scene.add(pMesh);
-  orbParticles.push({
-    mesh: pMesh, mat: pMat,
-    radius: cfg.radius + (Math.random() - 0.5) * 0.08,
-    angle: Math.random() * Math.PI * 2,
-    speed: cfg.speed * (0.8 + Math.random() * 0.4),
-    tiltX: cfg.tiltX, tiltZ: cfg.tiltZ,
-    baseOpacity: 0.15 + Math.random() * 0.25
-  });
+function logout(){
+  sessionStorage.removeItem('nerve_auth');
+  location.reload();
 }
 
-// ── CONCENTRIC GROUND RINGS (reflection effect) ──
-const groundRings = [];
-for (let i = 0; i < 5; i++) {
-  const gGeo = new THREE.RingGeometry(1.0 + i * 0.4, 1.02 + i * 0.4, 64);
-  const gMat = new THREE.MeshBasicMaterial({
-    color: 0x66bbff, transparent: true, opacity: 0.02 - i * 0.003, side: THREE.DoubleSide
-  });
-  const gMesh = new THREE.Mesh(gGeo, gMat);
-  gMesh.rotation.x = -Math.PI / 2;
-  gMesh.position.y = -1.6;
-  scene.add(gMesh);
-  groundRings.push({ mesh: gMesh, mat: gMat });
+// Auto-login if session exists
+if(sessionStorage.getItem('nerve_auth')==='1'){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  requestAnimationFrame(()=>init());
 }
 
-// ── LIGHTS ──
-const light1 = new THREE.PointLight(0xff2d8e, 0.6, 10);
-light1.position.set(2, 1.5, 3);
-scene.add(light1);
-const light2 = new THREE.PointLight(0x2dffa8, 0.5, 10);
-light2.position.set(-2, -0.5, 3);
-scene.add(light2);
-const light3 = new THREE.PointLight(0x4488ff, 0.3, 10);
-light3.position.set(0, 2, -2);
-scene.add(light3);
-scene.add(new THREE.AmbientLight(0x223344, 0.2));
-
-// ── NOISE ──
-function noise3D(x, y, z) {
-  const p = x * 1.1 + y * 2.3 + z * 3.7;
-  return Math.sin(p) * Math.cos(y * 1.7 + z) * Math.sin(z * 2.1 + x);
-}
-
-function getOrganicParams() {
-  const h = getHourSeed();
-  if (h >= 0 && h < 6) return { speed: 0.5, intensity: 0.1, rotSpeed: 0.06 };
-  if (h >= 6 && h < 10) return { speed: 0.8, intensity: 0.14, rotSpeed: 0.1 };
-  if (h >= 10 && h < 14) return { speed: 1.1, intensity: 0.2, rotSpeed: 0.15 };
-  if (h >= 14 && h < 18) return { speed: 0.9, intensity: 0.16, rotSpeed: 0.12 };
-  if (h >= 18 && h < 22) return { speed: 0.6, intensity: 0.12, rotSpeed: 0.08 };
-  return { speed: 0.4, intensity: 0.08, rotSpeed: 0.05 };
-}
-
-let organMouseX = 0, organMouseY = 0;
-
-function animate(time) {
-  requestAnimationFrame(animate);
-  const t = time * 0.001;
-  const params = getOrganicParams();
-
-  organMouseX += ((mxNorm - 0.5) * 0.3 - organMouseX) * 0.02;
-  organMouseY += ((myNorm - 0.5) * 0.3 - organMouseY) * 0.02;
-
-  // Displace globe vertices organically
-  for (let i = 0; i < posAttr.count; i++) {
-    const bx = basePos[i * 3], by = basePos[i * 3 + 1], bz = basePos[i * 3 + 2];
-    const n = noise3D(
-      bx + t * 0.25 * params.speed + organMouseX * 0.4,
-      by + t * 0.18 * params.speed + organMouseY * 0.4,
-      bz + t * 0.12 * params.speed
-    );
-    const d = 1 + n * params.intensity;
-    posAttr.setXYZ(i, bx * d, by * d, bz * d);
-  }
-  posAttr.needsUpdate = true;
-  geo.computeVertexNormals();
-
-  // Globe rotation
-  mesh.rotation.y = t * params.rotSpeed + organMouseX * 0.4;
-  mesh.rotation.x = Math.sin(t * params.rotSpeed * 0.5) * 0.15 + organMouseY * 0.2;
-  wire.rotation.copy(mesh.rotation);
-
-  // Core pulses
-  const pulse = Math.sin(t * 0.6) * 0.5 + 0.5;
-  coreMesh.scale.setScalar(0.85 + pulse * 0.25);
-  coreMat.opacity = 0.02 + pulse * 0.03;
-
-  // Orbital rings rotate and breathe
-  rings.forEach((r, i) => {
-    r.mesh.rotation.y = t * r.cfg.speed;
-    const ringPulse = Math.sin(t * 0.4 + i * 1.2) * 0.5 + 0.5;
-    r.mat.opacity = r.cfg.opacity * (0.6 + ringPulse * 0.4);
-  });
-
-  // Orbital particles move along ring paths
-  orbParticles.forEach(op => {
-    op.angle += op.speed * 0.01;
-    const x = Math.cos(op.angle) * op.radius;
-    const z = Math.sin(op.angle) * op.radius;
-    // Apply ring tilt
-    const y = z * Math.sin(op.tiltX) + x * Math.sin(op.tiltZ) * 0.3;
-    op.mesh.position.set(
-      x * Math.cos(op.tiltZ) - y * Math.sin(op.tiltZ) * 0.5,
-      z * Math.sin(op.tiltX),
-      z * Math.cos(op.tiltX)
-    );
-    op.mat.opacity = op.baseOpacity * (0.5 + Math.sin(t * 2 + op.angle) * 0.5);
-  });
-
-  // Ground rings breathe
-  groundRings.forEach((gr, i) => {
-    const gPulse = Math.sin(t * 0.3 + i * 0.5) * 0.5 + 0.5;
-    gr.mat.opacity = (0.015 - i * 0.003) * (0.5 + gPulse * 0.5);
-    gr.mesh.scale.setScalar(1 + gPulse * 0.03);
-  });
-
-  // Light colors shift with hovered world
-  const targetPink = organHue === 0.92 ? 1.0 : organHue === 0.0 ? 0.4 : 0.15;
-  const targetHeal = organHue === 0.45 ? 1.0 : organHue === 0.0 ? 0.35 : 0.1;
-  light1.intensity += (targetPink * 0.8 - light1.intensity) * 0.03;
-  light2.intensity += (targetHeal * 0.6 - light2.intensity) * 0.03;
-
-  // Globe material shifts color with world
-  if (activeWorld === 'music') {
-    mat.color.lerp(new THREE.Color(0xff6699), 0.02);
-    wireMat.color.lerp(new THREE.Color(0xff2d8e), 0.02);
-  } else if (activeWorld === 'heal') {
-    mat.color.lerp(new THREE.Color(0x44ffbb), 0.02);
-    wireMat.color.lerp(new THREE.Color(0x2dffa8), 0.02);
-  } else {
-    mat.color.lerp(new THREE.Color(0x88ccff), 0.01);
-    wireMat.color.lerp(new THREE.Color(0x66bbff), 0.01);
-  }
-
-  mat.opacity = 0.1 + Math.sin(t * 0.6) * 0.04;
-  wireMat.opacity = 0.04 + Math.sin(t * 1.0) * 0.02;
-  coreMat.color.copy(mat.color);
-
-  renderer.render(scene, camera);
-}
-animate(0);
-
-window.addEventListener('resize', () => {
-  const s = Math.min(420, window.innerWidth * 0.3);
-  renderer.setSize(s, s);
-});
-
-// ═══════════════════════════════════════════════════════════
-// EASTER BANNER: auto-hide after Ostern 2026
-// ═══════════════════════════════════════════════════════════
-(function() {
-  const banner = document.getElementById('easter-banner');
-  if (!banner) return;
-  const easterEnd = new Date('2026-04-06T00:00:00+02:00');
-  if (new Date() > easterEnd) {
-    banner.classList.add('eb-hidden');
-  }
+// ── GRAIN ──
+(function(){
+  const c=document.getElementById('grain'),ctx=c.getContext('2d');
+  function r(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function d(){const im=ctx.createImageData(c.width,c.height);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=12}ctx.putImageData(im,0,0);requestAnimationFrame(d)}
+  window.addEventListener('resize',r);r();d();
 })();
 
-// ═══════════════════════════════════════════════════════════
-// TRACK WHICH WORLD USER ENTERED FROM
-// ═══════════════════════════════════════════════════════════
-document.querySelectorAll('.w-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const world = btn.closest('#w-music') ? 'music' : 'heal';
-    sessionStorage.setItem('ttao_portal_entry', world);
-    sessionStorage.setItem('ttao_portal_ts', Date.now().toString());
-  });
-});
+// ── GATE BACKGROUND ANIMATION ──
+(function(){
+  const c=document.getElementById('gate-bg'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  const particles=[];
+  for(let i=0;i<60;i++) particles.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5,c:['#00f0ff','#ff2d8e','#2dffa8'][Math.floor(Math.random()*3)]});
+  function draw(){
+    ctx.fillStyle='rgba(3,3,8,.15)';ctx.fillRect(0,0,c.width,c.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;
+    });
+    // Draw connections
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=particles[i].c;ctx.globalAlpha=.08*(1-d/120);ctx.stroke();ctx.globalAlpha=1}
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ── API HELPER ──
+async function api(action, params={}){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...params})});
+  if(!res.ok) throw new Error((await res.json()).error||'API Fehler');
+  return res.json();
+}
+
+// ── TOAST ──
+function toast(msg,dur=3000){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── CLOCK ──
+function updateClock(){
+  const d=new Date();
+  document.getElementById('topbar-time').textContent=
+    d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})+' '+
+    d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── MODULE ROUTER ──
+let currentMod='home';
+function openMod(mod){
+  currentMod=mod;
+  document.querySelectorAll('.book').forEach(b=>b.classList.toggle('active',b.dataset.mod===mod));
+  render();
+}
+
+// ── INIT ──
+async function init(){
+  updateClock();setInterval(updateClock,30000);
+  loadStats();
+  render();
+}
+
+async function loadStats(){
+  try{
+    const s=await api('stats');
+    document.getElementById('topbar-stats').innerHTML=
+      `<div class="stat"><b>${s.knowledge}</b> Wissen</div>`+
+      `<div class="stat"><b>${s.questions}</b> Fragen</div>`+
+      `<div class="stat"><b>${s.situations}</b> Analysen</div>`+
+      `<div class="stat"><b>${s.patients}</b> Patienten</div>`;
+    const vb=document.getElementById('badge-vault');if(vb)vb.textContent=s.knowledge;
+    const db=document.getElementById('badge-daily');if(db)db.textContent=s.questions;
+  }catch(e){console.warn('Stats:',e)}
+}
+
+// ── RENDER ──
+function render(){
+  const p=document.getElementById('panel');
+  switch(currentMod){
+    case 'home': renderHome(p);break;
+    case 'vault': renderVault(p);break;
+    case 'daily': renderDaily(p);break;
+    case 'analyze': renderAnalyze(p);break;
+    case 'patients': renderPatients(p);break;
+    default: p.innerHTML='<div class="empty"><div class="empty-icon">?</div><p>Unbekanntes Modul</p></div>';
+  }
+}
+
+// ══════ HOME ══════
+function renderHome(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">WILLKOMMEN IM NERVE CENTER</div>
+      <div class="panel-subtitle">Dein persoenliches KI-Gehirn — Wissen, Strategie, Evolution</div>
+    </div>
+    <div class="home-grid">
+      <div class="home-card" onclick="openMod('vault')" style="--c:var(--green)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
+        <h3>WISSENSSPEICHER</h3>
+        <p>Dein gesamtes Know-how. Jede Information, jede Erkenntnis — fuer immer gespeichert und sofort abrufbar.</p>
+        <div class="card-stat" style="color:var(--green)" id="home-vault">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('daily')" style="--c:var(--gold)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <h3>DAILY 10</h3>
+        <p>10 gezielte Fragen pro Tag. Geld verdienen, Wert steigern, physikalische Prinzipien nutzen.</p>
+        <div class="card-stat" style="color:var(--gold)" id="home-daily">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('analyze')" style="--c:var(--pink)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink)"></div>
+        <h3>SITUATION ANALYZER</h3>
+        <p>Text rein &rarr; Recherche &rarr; Plan &rarr; Auswertung. Die Intelligenz aller deiner Daten in einer Antwort.</p>
+        <div class="card-stat" style="color:var(--pink)" id="home-analyze">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('patients')" style="--c:var(--purple)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--purple)"></div>
+        <h3>PATIENTEN-KI</h3>
+        <p>Ethische Datenanalyse. Muster erkennen, versteckte Signale finden — Heilung optimieren.</p>
+        <div class="card-stat" style="color:var(--purple)" id="home-patients">—</div>
+      </div>
+      <div class="home-card" onclick="window.open('/','_blank')">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan)"></div>
+        <h3>PORTAL</h3>
+        <p>Zurueck zur Hauptseite — THETOYSAREOUT &times; PTGO METHOD. Zwei Welten, ein Koerper.</p>
+      </div>
+      <div class="home-card" onclick="window.open('/live','_blank')">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <h3>LIVE PIANO</h3>
+        <p>Live-Erlebnisse buchen und verwalten. Dein kuenstlerisches Standbein.</p>
+      </div>
+    </div>`;
+  // Load home stats
+  api('stats').then(s=>{
+    const ve=document.getElementById('home-vault');if(ve)ve.textContent=s.knowledge+' Eintraege';
+    const de=document.getElementById('home-daily');if(de)de.textContent=s.questions+' Fragen';
+    const ae=document.getElementById('home-analyze');if(ae)ae.textContent=s.situations+' Analysen';
+    const pe=document.getElementById('home-patients');if(pe)pe.textContent=s.patients+' Insights';
+  }).catch(()=>{});
+}
+
+// ══════ KNOWLEDGE VAULT ══════
+let vaultData=[];
+const VAULT_CATEGORIES=['general','therapie','business','physik','evolution','musik','technik','strategie','persoenlich'];
+
+async function renderVault(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">WISSENSSPEICHER</div>
+      <div class="panel-subtitle">Dein permanenter Know-how Tresor — jede Information fuer immer</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUES WISSEN SPEICHERN</div>
+      <div class="field"><label>Titel</label><input id="v-title" placeholder="Kurzer Titel"></div>
+      <div class="field"><label>Kategorie</label>
+        <select id="v-cat">${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Inhalt / Information</label><textarea id="v-content" placeholder="Paste hier alles rein — Texte, Erkenntnisse, Daten, Strategien..."></textarea></div>
+      <div class="field"><label>Tags (kommagetrennt)</label><input id="v-tags" placeholder="z.B. ptgo, schmerztherapie, innovation"></div>
+      <button class="btn" onclick="saveKnowledge()">SPEICHERN</button>
+    </div>
+    <div class="section">
+      <div class="section-title">SUCHE</div>
+      <div style="display:flex;gap:8px">
+        <input id="v-search" placeholder="Durchsuchen..." style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px 12px;outline:none" onkeydown="if(event.key==='Enter')searchVault()">
+        <select id="v-filter" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="searchVault()">
+          <option value="all">Alle</option>
+          ${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+        <button class="btn secondary" onclick="searchVault()">SUCHEN</button>
+      </div>
+    </div>
+    <div id="vault-list"><div class="loading">Lade Wissensspeicher...</div></div>`;
+  searchVault();
+}
+
+async function searchVault(){
+  const search=document.getElementById('v-search')?.value||'';
+  const cat=document.getElementById('v-filter')?.value||'all';
+  try{
+    vaultData=await api('knowledge_list',{search,category:cat});
+    const el=document.getElementById('vault-list');
+    if(!vaultData.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#128218;</div><p>Noch kein Wissen gespeichert.<br>Fuege dein erstes Wissen oben hinzu.</p></div>';return}
+    el.innerHTML=vaultData.map(k=>`
+      <div class="item" onclick="this.querySelector('.item-content').style.display=this.querySelector('.item-content').style.display==='none'?'block':'none'">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div class="item-title">${esc(k.title)}</div>
+            <div class="item-meta">${esc(k.category)} &middot; ${timeAgo(k.created_at)}</div>
+          </div>
+          <button class="btn danger" style="font-size:9px;padding:4px 8px" onclick="event.stopPropagation();deleteKnowledge('${k.id}')">X</button>
+        </div>
+        <div class="item-content" style="display:none;white-space:pre-wrap">${esc(k.content)}</div>
+        ${(k.tags||[]).length?`<div class="item-tags">${k.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('vault-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function saveKnowledge(){
+  const title=document.getElementById('v-title').value.trim();
+  const content=document.getElementById('v-content').value.trim();
+  const category=document.getElementById('v-cat').value;
+  const tags=document.getElementById('v-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!title||!content){toast('Titel und Inhalt erforderlich');return}
+  try{
+    await api('knowledge_save',{title,content,category,tags});
+    document.getElementById('v-title').value='';document.getElementById('v-content').value='';document.getElementById('v-tags').value='';
+    toast('Wissen gespeichert!');searchVault();loadStats();
+  }catch(e){toast('Fehler: '+e.message)}
+}
+
+async function deleteKnowledge(id){
+  if(!confirm('Wirklich loeschen?'))return;
+  try{await api('knowledge_delete',{id});toast('Geloescht');searchVault();loadStats();}catch(e){toast('Fehler: '+e.message)}
+}
+
+// ══════ DAILY 10 ══════
+async function renderDaily(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">DAILY 10</div>
+      <div class="panel-subtitle">10 gezielte Fragen pro Tag — dein Turbo fuer Wert und Einkommen</div>
+    </div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn" onclick="generateDaily()">NEUE FRAGEN GENERIEREN</button>
+      <input type="date" id="daily-date" value="${new Date().toISOString().split('T')[0]}" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="loadDaily()">
+    </div>
+    <div id="daily-list"><div class="loading">Lade Tagesfragen...</div></div>`;
+  loadDaily();
+}
+
+async function loadDaily(){
+  const date=document.getElementById('daily-date')?.value||new Date().toISOString().split('T')[0];
+  try{
+    const data=await api('daily_list',{date});
+    const el=document.getElementById('daily-list');
+    if(!data.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#10067;</div><p>Keine Fragen fuer diesen Tag.<br>Klicke "NEUE FRAGEN GENERIEREN" um zu starten.</p></div>';return}
+    el.innerHTML=data.map(q=>`
+      <div class="q-card${q.answer?' answered':''}">
+        <div class="q-number">FRAGE ${q.question_number} &middot; ${esc(q.category)}</div>
+        <div class="q-text">${esc(q.question)}</div>
+        ${q.answer?`
+          <div class="q-answer"><strong>Deine Antwort:</strong> ${esc(q.answer)}</div>
+          ${q.ai_insight?`<div class="q-insight"><strong>KI-Insight:</strong> ${esc(q.ai_insight)}</div>`:''}
+        `:`
+          <textarea class="q-input" id="qa-${q.id}" placeholder="Deine Antwort..."></textarea>
+          <button class="btn" style="margin-top:8px;font-size:10px;padding:6px 16px" onclick="answerDaily('${q.id}')">ANTWORTEN</button>
+        `}
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('daily-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function generateDaily(){
+  const el=document.getElementById('daily-list');
+  el.innerHTML='<div class="loading">KI generiert 10 personalisierte Fragen...</div>';
+  try{
+    await api('daily_generate');
+    toast('10 neue Fragen generiert!');loadDaily();loadStats();
+  }catch(e){el.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function answerDaily(id){
+  const answer=document.getElementById('qa-'+id)?.value?.trim();
+  if(!answer){toast('Bitte Antwort eingeben');return}
+  try{
+    await api('daily_answer',{id,answer});
+    toast('Antwort gespeichert + KI-Insight generiert');loadDaily();
+  }catch(e){toast('Fehler: '+e.message)}
+}
+
+// ══════ SITUATION ANALYZER ══════
+async function renderAnalyze(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">SITUATION ANALYZER</div>
+      <div class="panel-subtitle">Text rein &rarr; Recherche &rarr; Plan &rarr; Gesamtauswertung</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUE ANALYSE STARTEN</div>
+      <div class="field"><label>Titel (optional)</label><input id="a-title" placeholder="z.B. Patientenfall, Geschaeftsidee, Problem..."></div>
+      <div class="field"><label>Text / Situation / Information</label>
+        <textarea id="a-text" style="min-height:150px" placeholder="Kopiere hier den Text, die Information, das Problem oder die Situation rein. Die KI recherchiert, plant und gibt dir eine Auswertung basierend auf ALLEM was du je gespeichert hast."></textarea>
+      </div>
+      <button class="btn" onclick="startAnalysis()">ANALYSE STARTEN</button>
+    </div>
+    <div class="section">
+      <div class="section-title">BISHERIGE ANALYSEN</div>
+      <div id="analyze-list"><div class="loading">Lade Analysen...</div></div>
+    </div>
+    <div id="analyze-detail" style="display:none"></div>`;
+  loadAnalyses();
+}
+
+async function loadAnalyses(){
+  try{
+    const data=await api('situation_list');
+    const el=document.getElementById('analyze-list');
+    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Analysen. Starte deine erste Analyse oben.</p></div>';return}
+    el.innerHTML=data.map(s=>`
+      <div class="item" onclick="showAnalysis('${s.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="item-title">${esc(s.title)}</div>
+            <div class="item-meta">${esc(s.category)} &middot; ${timeAgo(s.created_at)}</div>
+          </div>
+          <span class="status ${s.status}">${s.status}</span>
+        </div>
+        <div class="item-content" style="display:block;max-height:40px;overflow:hidden">${esc((s.input_text||'').substring(0,150))}...</div>
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('analyze-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function startAnalysis(){
+  const title=document.getElementById('a-title').value.trim()||'Neue Analyse';
+  const input_text=document.getElementById('a-text').value.trim();
+  if(!input_text){toast('Bitte Text eingeben');return}
+  const detail=document.getElementById('analyze-detail');
+  detail.style.display='block';
+  detail.innerHTML='<div class="loading">KI analysiert... Recherche &rarr; Plan &rarr; Auswertung (kann 15-30 Sek. dauern)</div>';
+  try{
+    const result=await api('situation_analyze',{title,input_text});
+    document.getElementById('a-text').value='';document.getElementById('a-title').value='';
+    showAnalysisResult(result,detail);
+    toast('Analyse komplett!');loadAnalyses();loadStats();
+  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function showAnalysis(id){
+  const detail=document.getElementById('analyze-detail');
+  detail.style.display='block';detail.innerHTML='<div class="loading">Lade...</div>';
+  try{
+    const result=await api('situation_get',{id});
+    showAnalysisResult(result,detail);
+  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+function showAnalysisResult(r,el){
+  const research=typeof r.research==='object'?r.research:{};
+  const plan=Array.isArray(r.plan)?r.plan:[];
+  el.innerHTML=`
+    <div style="margin-top:16px">
+      <div class="section">
+        <div class="section-title">ORIGINALTEXT</div>
+        <div style="font-size:12px;line-height:1.7;white-space:pre-wrap">${esc(r.input_text)}</div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--cyan)">
+        <div class="phase-label" style="color:var(--cyan)">PHASE 1 — RECHERCHE</div>
+        <div class="phase-content">
+          ${research.kernpunkte?`<p><strong>Kernpunkte:</strong></p><ul>${research.kernpunkte.map(k=>`<li>${esc(k)}</li>`).join('')}</ul>`:''}
+          ${research.physik?`<p><strong>Physik:</strong> ${esc(research.physik)}</p>`:''}
+          ${research.evolution?`<p><strong>Evolution:</strong> ${esc(research.evolution)}</p>`:''}
+          ${research.historie?`<p><strong>Historie:</strong> ${esc(research.historie)}</p>`:''}
+          ${research.chancen?`<p><strong>Chancen:</strong></p><ul>${research.chancen.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
+          ${research.raw?`<p>${esc(research.raw)}</p>`:''}
+        </div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--gold)">
+        <div class="phase-label" style="color:var(--gold)">PHASE 2 — AKTIONSPLAN</div>
+        <div class="phase-content">
+          ${plan.map(s=>`
+            <div style="margin-bottom:8px;padding:8px;background:var(--surface)">
+              <strong>Schritt ${s.schritt||'?'}:</strong> ${esc(s.aktion||s.raw||JSON.stringify(s))}<br>
+              ${s.zeitrahmen?`<span style="color:var(--gold);font-size:10px">Zeitrahmen: ${esc(s.zeitrahmen)}</span>`:''}
+              ${s.erwartetes_ergebnis?`<span style="color:var(--green);font-size:10px">Ergebnis: ${esc(s.erwartetes_ergebnis)}</span>`:''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--green)">
+        <div class="phase-label" style="color:var(--green)">PHASE 3 — GESAMTAUSWERTUNG</div>
+        <div class="phase-content" style="white-space:pre-wrap;color:var(--text)">${esc(r.analysis||r.recommendation||'Keine Auswertung')}</div>
+      </div>
+      <button class="btn secondary" onclick="document.getElementById('analyze-detail').style.display='none'" style="margin-top:12px">SCHLIESSEN</button>
+    </div>`;
+}
+
+// ══════ PATIENT INTELLIGENCE ══════
+async function renderPatients(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">PATIENTEN-KI</div>
+      <div class="panel-subtitle">Ethische Intelligenz — Muster erkennen, Heilung optimieren</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUE PATIENTENANALYSE</div>
+      <div class="field"><label>Patient-Referenz (anonym)</label><input id="p-ref" placeholder="z.B. Patient A, Fall 2024-03, etc."></div>
+      <div class="field"><label>Patientendaten / Beobachtungen</label>
+        <textarea id="p-data" style="min-height:150px" placeholder="Paste hier Beobachtungen, Symptome, Verlaeufe, Check-in-Daten, etc. Die KI findet versteckte Muster und Zusammenhaenge."></textarea>
+      </div>
+      <button class="btn" onclick="analyzePatient()">ANALYSE STARTEN</button>
+    </div>
+    <div id="patient-result" style="display:none"></div>
+    <div class="section">
+      <div class="section-title">BISHERIGE INSIGHTS</div>
+      <div id="patient-list"><div class="loading">Lade...</div></div>
+    </div>`;
+  loadPatientInsights();
+}
+
+async function analyzePatient(){
+  const patient_ref=document.getElementById('p-ref').value.trim();
+  const rawData=document.getElementById('p-data').value.trim();
+  if(!patient_ref||!rawData){toast('Referenz und Daten erforderlich');return}
+  const result=document.getElementById('patient-result');
+  result.style.display='block';result.innerHTML='<div class="loading">KI analysiert Patientendaten...</div>';
+  try{
+    const r=await api('patient_analyze',{patient_ref,data:rawData});
+    const pd=r.pattern_data||{};
+    result.innerHTML=`
+      <div class="section" style="border-color:var(--purple)">
+        <div class="section-title" style="color:var(--purple)">ANALYSE: ${esc(patient_ref)}</div>
+        ${pd.muster?`<p><strong>Erkannte Muster:</strong></p><ul>${pd.muster.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`:''}
+        ${pd.versteckte_signale?`<p><strong>Versteckte Signale:</strong></p><ul>${pd.versteckte_signale.map(s=>`<li style="color:var(--cyan)">${esc(s)}</li>`).join('')}</ul>`:''}
+        ${pd.physik_bezug?`<p><strong>Physik-Bezug:</strong> ${esc(pd.physik_bezug)}</p>`:''}
+        ${pd.evolution_bezug?`<p><strong>Evolution-Bezug:</strong> ${esc(pd.evolution_bezug)}</p>`:''}
+        ${pd.empfehlung?`<p style="margin-top:12px;padding:12px;background:var(--surface2);border-left:3px solid var(--green)"><strong>Empfehlung:</strong> ${esc(pd.empfehlung)}</p>`:''}
+        ${pd.raw?`<p>${esc(pd.raw)}</p>`:''}
+        <div style="margin-top:8px;font-size:10px;color:var(--dim)">Konfidenz: ${Math.round((r.confidence||0.5)*100)}%</div>
+      </div>`;
+    document.getElementById('p-ref').value='';document.getElementById('p-data').value='';
+    toast('Patientenanalyse abgeschlossen');loadPatientInsights();loadStats();
+  }catch(e){result.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function loadPatientInsights(){
+  try{
+    const data=await api('patient_list');
+    const el=document.getElementById('patient-list');
+    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Patientenanalysen.</p></div>';return}
+    el.innerHTML=data.map(i=>{
+      const pd=i.pattern_data||{};
+      return `
+        <div class="item">
+          <div class="item-title">${esc(i.patient_ref)} &middot; ${esc(i.insight_type)}</div>
+          <div class="item-meta">${timeAgo(i.created_at)} &middot; Konfidenz: ${Math.round((i.confidence||0)*100)}%</div>
+          ${i.recommendation?`<div class="item-content" style="display:block">${esc(i.recommendation)}</div>`:''}
+        </div>`;
+    }).join('');
+  }catch(e){document.getElementById('patient-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+// ── HELPERS ──
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function timeAgo(d){
+  if(!d)return '';
+  const s=Math.floor((Date.now()-new Date(d).getTime())/1000);
+  if(s<60)return 'gerade eben';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
 </script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});</script>
 </body>
 </html>
