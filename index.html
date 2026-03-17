@@ -195,45 +195,23 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
   <div class="content">
     <!-- BOOKSHELF SIDEBAR -->
     <nav class="shelf" id="shelf">
-      <div class="shelf-label">Module</div>
+      <div class="shelf-label">Zentrale</div>
 
       <div class="book active" data-mod="home" onclick="openMod('home')">
         <div class="book-spine" style="background:var(--cyan)"></div>
         <div class="book-info"><div class="book-title">HOME</div><div class="book-desc">Uebersicht</div></div>
       </div>
 
-      <div class="book" data-mod="vault" onclick="openMod('vault')">
-        <div class="book-spine" style="background:var(--green)"></div>
-        <div class="book-info"><div class="book-title">WISSENSSPEICHER</div><div class="book-desc">Know-how Tresor</div></div>
-        <div class="book-badge" id="badge-vault">0</div>
+      <div class="book" onclick="window.location.href='/coaching'">
+        <div class="book-spine" style="background:linear-gradient(180deg,var(--cyan),var(--pink))"></div>
+        <div class="book-info"><div class="book-title">COACHING ENGINE</div><div class="book-desc">Alles in Einem</div></div>
       </div>
 
-      <div class="book" data-mod="daily" onclick="openMod('daily')">
-        <div class="book-spine" style="background:var(--gold)"></div>
-        <div class="book-info"><div class="book-title">DAILY 10</div><div class="book-desc">Tagesfragen</div></div>
-        <div class="book-badge" id="badge-daily">0</div>
-      </div>
-
-      <div class="book" data-mod="analyze" onclick="openMod('analyze')">
-        <div class="book-spine" style="background:var(--pink)"></div>
-        <div class="book-info"><div class="book-title">ANALYZER</div><div class="book-desc">Situation &rarr; Loesung</div></div>
-      </div>
-
-      <div class="book" data-mod="patients" onclick="openMod('patients')">
-        <div class="book-spine" style="background:var(--purple)"></div>
-        <div class="book-info"><div class="book-title">PATIENTEN-KI</div><div class="book-desc">Ethische Analyse</div></div>
-      </div>
-
-      <div class="shelf-label">Links</div>
+      <div class="shelf-label">Tools</div>
 
       <div class="book" onclick="window.open('/heal','_blank')">
-        <div class="book-spine" style="background:var(--green);opacity:.5"></div>
+        <div class="book-spine" style="background:var(--green)"></div>
         <div class="book-info"><div class="book-title">PTGO</div><div class="book-desc">Heal Sessions</div></div>
-      </div>
-
-      <div class="book" onclick="window.open('/coaching','_blank')">
-        <div class="book-spine" style="background:var(--gold)"></div>
-        <div class="book-info"><div class="book-title">COACHING</div><div class="book-desc">Daily Engine</div></div>
       </div>
 
       <div class="book" onclick="window.open('/musik','_blank')">
@@ -375,11 +353,7 @@ async function loadStats(){
     const s=await api('stats');
     document.getElementById('topbar-stats').innerHTML=
       `<div class="stat"><b>${s.knowledge}</b> Wissen</div>`+
-      `<div class="stat"><b>${s.questions}</b> Fragen</div>`+
-      `<div class="stat"><b>${s.situations}</b> Analysen</div>`+
-      `<div class="stat"><b>${s.patients}</b> Patienten</div>`;
-    const vb=document.getElementById('badge-vault');if(vb)vb.textContent=s.knowledge;
-    const db=document.getElementById('badge-daily');if(db)db.textContent=s.questions;
+      `<div class="stat"><b>${s.situations}</b> Analysen</div>`;
   }catch(e){console.warn('Stats:',e)}
 }
 
@@ -388,10 +362,8 @@ function render(){
   const p=document.getElementById('panel');
   switch(currentMod){
     case 'home': renderHome(p);break;
-    case 'vault': renderVault(p);break;
-    case 'daily': renderDaily(p);break;
-    case 'analyze': renderAnalyze(p);break;
-    case 'patients': renderPatients(p);break;
+    case 'vault': case 'daily': case 'analyze': case 'patients':
+      window.location.href='/coaching';break;
     default: p.innerHTML='<div class="empty"><div class="empty-icon">?</div><p>Unbekanntes Modul</p></div>';
   }
 }
@@ -400,356 +372,43 @@ function render(){
 function renderHome(p){
   p.innerHTML=`
     <div class="panel-header">
-      <div class="panel-title">WILLKOMMEN IM NERVE CENTER</div>
-      <div class="panel-subtitle">Dein persoenliches KI-Gehirn — Wissen, Strategie, Evolution</div>
+      <div class="panel-title">NERVE CENTER</div>
+      <div class="panel-subtitle">Dein persoenliches KI-Gehirn — alles an einem Ort</div>
     </div>
+
     <div class="home-grid">
-      <div class="home-card" onclick="openMod('vault')" style="--c:var(--green)">
+      <div class="home-card" onclick="window.location.href='/coaching'" style="--c:var(--cyan);grid-column:1/-1">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--pink))"></div>
+        <h3 style="font-size:18px">COACHING ENGINE</h3>
+        <p>Dein zentraler Hub — Daily Coaching, Wissensspeicher, Situation Analyzer, Patienten-KI, Habits, AI Coach. Alles konsolidiert in einem Tool.</p>
+        <div class="card-stat" style="background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent">STARTEN &rarr;</div>
+      </div>
+
+      <div class="home-card" onclick="window.open('/heal','_blank')" style="--c:var(--green)">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
-        <h3>WISSENSSPEICHER</h3>
-        <p>Dein gesamtes Know-how. Jede Information, jede Erkenntnis — fuer immer gespeichert und sofort abrufbar.</p>
-        <div class="card-stat" style="color:var(--green)" id="home-vault">—</div>
+        <h3>PTGO METHOD</h3>
+        <p>Pain &middot; Trauma &middot; Growth &middot; Outcome. Premium 1:1 Heal Sessions.</p>
       </div>
-      <div class="home-card" onclick="openMod('daily')" style="--c:var(--gold)">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
-        <h3>DAILY 10</h3>
-        <p>10 gezielte Fragen pro Tag. Geld verdienen, Wert steigern, physikalische Prinzipien nutzen.</p>
-        <div class="card-stat" style="color:var(--gold)" id="home-daily">—</div>
-      </div>
-      <div class="home-card" onclick="openMod('analyze')" style="--c:var(--pink)">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink)"></div>
-        <h3>SITUATION ANALYZER</h3>
-        <p>Text rein &rarr; Recherche &rarr; Plan &rarr; Auswertung. Die Intelligenz aller deiner Daten in einer Antwort.</p>
-        <div class="card-stat" style="color:var(--pink)" id="home-analyze">—</div>
-      </div>
-      <div class="home-card" onclick="openMod('patients')" style="--c:var(--purple)">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--purple)"></div>
-        <h3>PATIENTEN-KI</h3>
-        <p>Ethische Datenanalyse. Muster erkennen, versteckte Signale finden — Heilung optimieren.</p>
-        <div class="card-stat" style="color:var(--purple)" id="home-patients">—</div>
-      </div>
-      <div class="home-card" onclick="window.open('/','_blank')">
-        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan)"></div>
-        <h3>PORTAL</h3>
-        <p>Zurueck zur Hauptseite — THETOYSAREOUT &times; PTGO METHOD. Zwei Welten, ein Koerper.</p>
-      </div>
-      <div class="home-card" onclick="window.open('/live','_blank')">
+      <div class="home-card" onclick="window.open('/live','_blank')" style="--c:var(--gold)">
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
         <h3>LIVE PIANO</h3>
         <p>Live-Erlebnisse buchen und verwalten. Dein kuenstlerisches Standbein.</p>
       </div>
-    </div>`;
-  // Load home stats
-  api('stats').then(s=>{
-    const ve=document.getElementById('home-vault');if(ve)ve.textContent=s.knowledge+' Eintraege';
-    const de=document.getElementById('home-daily');if(de)de.textContent=s.questions+' Fragen';
-    const ae=document.getElementById('home-analyze');if(ae)ae.textContent=s.situations+' Analysen';
-    const pe=document.getElementById('home-patients');if(pe)pe.textContent=s.patients+' Insights';
-  }).catch(()=>{});
-}
-
-// ══════ KNOWLEDGE VAULT ══════
-let vaultData=[];
-const VAULT_CATEGORIES=['general','therapie','business','physik','evolution','musik','technik','strategie','persoenlich'];
-
-async function renderVault(p){
-  p.innerHTML=`
-    <div class="panel-header">
-      <div class="panel-title">WISSENSSPEICHER</div>
-      <div class="panel-subtitle">Dein permanenter Know-how Tresor — jede Information fuer immer</div>
-    </div>
-    <div class="section">
-      <div class="section-title">NEUES WISSEN SPEICHERN</div>
-      <div class="field"><label>Titel</label><input id="v-title" placeholder="Kurzer Titel"></div>
-      <div class="field"><label>Kategorie</label>
-        <select id="v-cat">${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select>
+      <div class="home-card" onclick="window.open('/musik','_blank')" style="--c:var(--pink)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink)"></div>
+        <h3>MUSIK</h3>
+        <p>THETOYSAREOUT — Beats, Produktion, Releases.</p>
       </div>
-      <div class="field"><label>Inhalt / Information</label><textarea id="v-content" placeholder="Paste hier alles rein — Texte, Erkenntnisse, Daten, Strategien..."></textarea></div>
-      <div class="field"><label>Tags (kommagetrennt)</label><input id="v-tags" placeholder="z.B. ptgo, schmerztherapie, innovation"></div>
-      <button class="btn" onclick="saveKnowledge()">SPEICHERN</button>
-    </div>
-    <div class="section">
-      <div class="section-title">SUCHE</div>
-      <div style="display:flex;gap:8px">
-        <input id="v-search" placeholder="Durchsuchen..." style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px 12px;outline:none" onkeydown="if(event.key==='Enter')searchVault()">
-        <select id="v-filter" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="searchVault()">
-          <option value="all">Alle</option>
-          ${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}
-        </select>
-        <button class="btn secondary" onclick="searchVault()">SUCHEN</button>
+      <div class="home-card" onclick="window.open('/bot-admin','_blank')" style="--c:var(--dim)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--dim)"></div>
+        <h3>BOT ADMIN</h3>
+        <p>WhatsApp Bot Steuerung und Monitoring.</p>
       </div>
-    </div>
-    <div id="vault-list"><div class="loading">Lade Wissensspeicher...</div></div>`;
-  searchVault();
-}
-
-async function searchVault(){
-  const search=document.getElementById('v-search')?.value||'';
-  const cat=document.getElementById('v-filter')?.value||'all';
-  try{
-    vaultData=await api('knowledge_list',{search,category:cat});
-    const el=document.getElementById('vault-list');
-    if(!vaultData.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#128218;</div><p>Noch kein Wissen gespeichert.<br>Fuege dein erstes Wissen oben hinzu.</p></div>';return}
-    el.innerHTML=vaultData.map(k=>`
-      <div class="item" onclick="this.querySelector('.item-content').style.display=this.querySelector('.item-content').style.display==='none'?'block':'none'">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div class="item-title">${esc(k.title)}</div>
-            <div class="item-meta">${esc(k.category)} &middot; ${timeAgo(k.created_at)}</div>
-          </div>
-          <button class="btn danger" style="font-size:9px;padding:4px 8px" onclick="event.stopPropagation();deleteKnowledge('${k.id}')">X</button>
-        </div>
-        <div class="item-content" style="display:none;white-space:pre-wrap">${esc(k.content)}</div>
-        ${(k.tags||[]).length?`<div class="item-tags">${k.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
-      </div>
-    `).join('');
-  }catch(e){document.getElementById('vault-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function saveKnowledge(){
-  const title=document.getElementById('v-title').value.trim();
-  const content=document.getElementById('v-content').value.trim();
-  const category=document.getElementById('v-cat').value;
-  const tags=document.getElementById('v-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  if(!title||!content){toast('Titel und Inhalt erforderlich');return}
-  try{
-    await api('knowledge_save',{title,content,category,tags});
-    document.getElementById('v-title').value='';document.getElementById('v-content').value='';document.getElementById('v-tags').value='';
-    toast('Wissen gespeichert!');searchVault();loadStats();
-  }catch(e){toast('Fehler: '+e.message)}
-}
-
-async function deleteKnowledge(id){
-  if(!confirm('Wirklich loeschen?'))return;
-  try{await api('knowledge_delete',{id});toast('Geloescht');searchVault();loadStats();}catch(e){toast('Fehler: '+e.message)}
-}
-
-// ══════ DAILY 10 ══════
-async function renderDaily(p){
-  p.innerHTML=`
-    <div class="panel-header">
-      <div class="panel-title">DAILY 10</div>
-      <div class="panel-subtitle">10 gezielte Fragen pro Tag — dein Turbo fuer Wert und Einkommen</div>
-    </div>
-    <div class="btn-row" style="margin-bottom:16px">
-      <button class="btn" onclick="generateDaily()">NEUE FRAGEN GENERIEREN</button>
-      <input type="date" id="daily-date" value="${new Date().toISOString().split('T')[0]}" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="loadDaily()">
-    </div>
-    <div id="daily-list"><div class="loading">Lade Tagesfragen...</div></div>`;
-  loadDaily();
-}
-
-async function loadDaily(){
-  const date=document.getElementById('daily-date')?.value||new Date().toISOString().split('T')[0];
-  try{
-    const data=await api('daily_list',{date});
-    const el=document.getElementById('daily-list');
-    if(!data.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#10067;</div><p>Keine Fragen fuer diesen Tag.<br>Klicke "NEUE FRAGEN GENERIEREN" um zu starten.</p></div>';return}
-    el.innerHTML=data.map(q=>`
-      <div class="q-card${q.answer?' answered':''}">
-        <div class="q-number">FRAGE ${q.question_number} &middot; ${esc(q.category)}</div>
-        <div class="q-text">${esc(q.question)}</div>
-        ${q.answer?`
-          <div class="q-answer"><strong>Deine Antwort:</strong> ${esc(q.answer)}</div>
-          ${q.ai_insight?`<div class="q-insight"><strong>KI-Insight:</strong> ${esc(q.ai_insight)}</div>`:''}
-        `:`
-          <textarea class="q-input" id="qa-${q.id}" placeholder="Deine Antwort..."></textarea>
-          <button class="btn" style="margin-top:8px;font-size:10px;padding:6px 16px" onclick="answerDaily('${q.id}')">ANTWORTEN</button>
-        `}
-      </div>
-    `).join('');
-  }catch(e){document.getElementById('daily-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function generateDaily(){
-  const el=document.getElementById('daily-list');
-  el.innerHTML='<div class="loading">KI generiert 10 personalisierte Fragen...</div>';
-  try{
-    await api('daily_generate');
-    toast('10 neue Fragen generiert!');loadDaily();loadStats();
-  }catch(e){el.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function answerDaily(id){
-  const answer=document.getElementById('qa-'+id)?.value?.trim();
-  if(!answer){toast('Bitte Antwort eingeben');return}
-  try{
-    await api('daily_answer',{id,answer});
-    toast('Antwort gespeichert + KI-Insight generiert');loadDaily();
-  }catch(e){toast('Fehler: '+e.message)}
-}
-
-// ══════ SITUATION ANALYZER ══════
-async function renderAnalyze(p){
-  p.innerHTML=`
-    <div class="panel-header">
-      <div class="panel-title">SITUATION ANALYZER</div>
-      <div class="panel-subtitle">Text rein &rarr; Recherche &rarr; Plan &rarr; Gesamtauswertung</div>
-    </div>
-    <div class="section">
-      <div class="section-title">NEUE ANALYSE STARTEN</div>
-      <div class="field"><label>Titel (optional)</label><input id="a-title" placeholder="z.B. Patientenfall, Geschaeftsidee, Problem..."></div>
-      <div class="field"><label>Text / Situation / Information</label>
-        <textarea id="a-text" style="min-height:150px" placeholder="Kopiere hier den Text, die Information, das Problem oder die Situation rein. Die KI recherchiert, plant und gibt dir eine Auswertung basierend auf ALLEM was du je gespeichert hast."></textarea>
-      </div>
-      <button class="btn" onclick="startAnalysis()">ANALYSE STARTEN</button>
-    </div>
-    <div class="section">
-      <div class="section-title">BISHERIGE ANALYSEN</div>
-      <div id="analyze-list"><div class="loading">Lade Analysen...</div></div>
-    </div>
-    <div id="analyze-detail" style="display:none"></div>`;
-  loadAnalyses();
-}
-
-async function loadAnalyses(){
-  try{
-    const data=await api('situation_list');
-    const el=document.getElementById('analyze-list');
-    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Analysen. Starte deine erste Analyse oben.</p></div>';return}
-    el.innerHTML=data.map(s=>`
-      <div class="item" onclick="showAnalysis('${s.id}')">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div class="item-title">${esc(s.title)}</div>
-            <div class="item-meta">${esc(s.category)} &middot; ${timeAgo(s.created_at)}</div>
-          </div>
-          <span class="status ${s.status}">${s.status}</span>
-        </div>
-        <div class="item-content" style="display:block;max-height:40px;overflow:hidden">${esc((s.input_text||'').substring(0,150))}...</div>
-      </div>
-    `).join('');
-  }catch(e){document.getElementById('analyze-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function startAnalysis(){
-  const title=document.getElementById('a-title').value.trim()||'Neue Analyse';
-  const input_text=document.getElementById('a-text').value.trim();
-  if(!input_text){toast('Bitte Text eingeben');return}
-  const detail=document.getElementById('analyze-detail');
-  detail.style.display='block';
-  detail.innerHTML='<div class="loading">KI analysiert... Recherche &rarr; Plan &rarr; Auswertung (kann 15-30 Sek. dauern)</div>';
-  try{
-    const result=await api('situation_analyze',{title,input_text});
-    document.getElementById('a-text').value='';document.getElementById('a-title').value='';
-    showAnalysisResult(result,detail);
-    toast('Analyse komplett!');loadAnalyses();loadStats();
-  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function showAnalysis(id){
-  const detail=document.getElementById('analyze-detail');
-  detail.style.display='block';detail.innerHTML='<div class="loading">Lade...</div>';
-  try{
-    const result=await api('situation_get',{id});
-    showAnalysisResult(result,detail);
-  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-function showAnalysisResult(r,el){
-  const research=typeof r.research==='object'?r.research:{};
-  const plan=Array.isArray(r.plan)?r.plan:[];
-  el.innerHTML=`
-    <div style="margin-top:16px">
-      <div class="section">
-        <div class="section-title">ORIGINALTEXT</div>
-        <div style="font-size:12px;line-height:1.7;white-space:pre-wrap">${esc(r.input_text)}</div>
-      </div>
-      <div class="analysis-phase" style="border-color:var(--cyan)">
-        <div class="phase-label" style="color:var(--cyan)">PHASE 1 — RECHERCHE</div>
-        <div class="phase-content">
-          ${research.kernpunkte?`<p><strong>Kernpunkte:</strong></p><ul>${research.kernpunkte.map(k=>`<li>${esc(k)}</li>`).join('')}</ul>`:''}
-          ${research.physik?`<p><strong>Physik:</strong> ${esc(research.physik)}</p>`:''}
-          ${research.evolution?`<p><strong>Evolution:</strong> ${esc(research.evolution)}</p>`:''}
-          ${research.historie?`<p><strong>Historie:</strong> ${esc(research.historie)}</p>`:''}
-          ${research.chancen?`<p><strong>Chancen:</strong></p><ul>${research.chancen.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
-          ${research.raw?`<p>${esc(research.raw)}</p>`:''}
-        </div>
-      </div>
-      <div class="analysis-phase" style="border-color:var(--gold)">
-        <div class="phase-label" style="color:var(--gold)">PHASE 2 — AKTIONSPLAN</div>
-        <div class="phase-content">
-          ${plan.map(s=>`
-            <div style="margin-bottom:8px;padding:8px;background:var(--surface)">
-              <strong>Schritt ${s.schritt||'?'}:</strong> ${esc(s.aktion||s.raw||JSON.stringify(s))}<br>
-              ${s.zeitrahmen?`<span style="color:var(--gold);font-size:10px">Zeitrahmen: ${esc(s.zeitrahmen)}</span>`:''}
-              ${s.erwartetes_ergebnis?`<span style="color:var(--green);font-size:10px">Ergebnis: ${esc(s.erwartetes_ergebnis)}</span>`:''}
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      <div class="analysis-phase" style="border-color:var(--green)">
-        <div class="phase-label" style="color:var(--green)">PHASE 3 — GESAMTAUSWERTUNG</div>
-        <div class="phase-content" style="white-space:pre-wrap;color:var(--text)">${esc(r.analysis||r.recommendation||'Keine Auswertung')}</div>
-      </div>
-      <button class="btn secondary" onclick="document.getElementById('analyze-detail').style.display='none'" style="margin-top:12px">SCHLIESSEN</button>
     </div>`;
 }
 
-// ══════ PATIENT INTELLIGENCE ══════
-async function renderPatients(p){
-  p.innerHTML=`
-    <div class="panel-header">
-      <div class="panel-title">PATIENTEN-KI</div>
-      <div class="panel-subtitle">Ethische Intelligenz — Muster erkennen, Heilung optimieren</div>
-    </div>
-    <div class="section">
-      <div class="section-title">NEUE PATIENTENANALYSE</div>
-      <div class="field"><label>Patient-Referenz (anonym)</label><input id="p-ref" placeholder="z.B. Patient A, Fall 2024-03, etc."></div>
-      <div class="field"><label>Patientendaten / Beobachtungen</label>
-        <textarea id="p-data" style="min-height:150px" placeholder="Paste hier Beobachtungen, Symptome, Verlaeufe, Check-in-Daten, etc. Die KI findet versteckte Muster und Zusammenhaenge."></textarea>
-      </div>
-      <button class="btn" onclick="analyzePatient()">ANALYSE STARTEN</button>
-    </div>
-    <div id="patient-result" style="display:none"></div>
-    <div class="section">
-      <div class="section-title">BISHERIGE INSIGHTS</div>
-      <div id="patient-list"><div class="loading">Lade...</div></div>
-    </div>`;
-  loadPatientInsights();
-}
-
-async function analyzePatient(){
-  const patient_ref=document.getElementById('p-ref').value.trim();
-  const rawData=document.getElementById('p-data').value.trim();
-  if(!patient_ref||!rawData){toast('Referenz und Daten erforderlich');return}
-  const result=document.getElementById('patient-result');
-  result.style.display='block';result.innerHTML='<div class="loading">KI analysiert Patientendaten...</div>';
-  try{
-    const r=await api('patient_analyze',{patient_ref,data:rawData});
-    const pd=r.pattern_data||{};
-    result.innerHTML=`
-      <div class="section" style="border-color:var(--purple)">
-        <div class="section-title" style="color:var(--purple)">ANALYSE: ${esc(patient_ref)}</div>
-        ${pd.muster?`<p><strong>Erkannte Muster:</strong></p><ul>${pd.muster.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`:''}
-        ${pd.versteckte_signale?`<p><strong>Versteckte Signale:</strong></p><ul>${pd.versteckte_signale.map(s=>`<li style="color:var(--cyan)">${esc(s)}</li>`).join('')}</ul>`:''}
-        ${pd.physik_bezug?`<p><strong>Physik-Bezug:</strong> ${esc(pd.physik_bezug)}</p>`:''}
-        ${pd.evolution_bezug?`<p><strong>Evolution-Bezug:</strong> ${esc(pd.evolution_bezug)}</p>`:''}
-        ${pd.empfehlung?`<p style="margin-top:12px;padding:12px;background:var(--surface2);border-left:3px solid var(--green)"><strong>Empfehlung:</strong> ${esc(pd.empfehlung)}</p>`:''}
-        ${pd.raw?`<p>${esc(pd.raw)}</p>`:''}
-        <div style="margin-top:8px;font-size:10px;color:var(--dim)">Konfidenz: ${Math.round((r.confidence||0.5)*100)}%</div>
-      </div>`;
-    document.getElementById('p-ref').value='';document.getElementById('p-data').value='';
-    toast('Patientenanalyse abgeschlossen');loadPatientInsights();loadStats();
-  }catch(e){result.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
-
-async function loadPatientInsights(){
-  try{
-    const data=await api('patient_list');
-    const el=document.getElementById('patient-list');
-    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Patientenanalysen.</p></div>';return}
-    el.innerHTML=data.map(i=>{
-      const pd=i.pattern_data||{};
-      return `
-        <div class="item">
-          <div class="item-title">${esc(i.patient_ref)} &middot; ${esc(i.insight_type)}</div>
-          <div class="item-meta">${timeAgo(i.created_at)} &middot; Konfidenz: ${Math.round((i.confidence||0)*100)}%</div>
-          ${i.recommendation?`<div class="item-content" style="display:block">${esc(i.recommendation)}</div>`:''}
-        </div>`;
-    }).join('');
-  }catch(e){document.getElementById('patient-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
-}
+// ══════ OLD MODULES — Now in Coaching Engine ══════
+// Vault, Daily 10, Analyzer, Patienten-KI all consolidated into /coaching
 
 // ── HELPERS ──
 function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
