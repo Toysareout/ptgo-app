@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Coaching Engine</title>
+<style>
+:root{--bg:#0b0f1a;--card:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#f59e0b;--line:#1f2937;--green:#22c55e;--red:#ef4444;--blue:#6366f1}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;background:radial-gradient(1000px 600px at 50% -100px,#1f2a52,transparent),var(--bg);color:var(--text);overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 80px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.brand{font-weight:700;letter-spacing:.2px;font-size:18px}
+.pill{font-size:11px;color:var(--muted);border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+
+.card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:24px 20px;box-shadow:0 20px 60px rgba(0,0,0,.35);margin-bottom:16px}
+
+h1{font-size:28px;line-height:1.1;margin:8px 0 12px}
+h2{font-size:18px;margin:16px 0 10px;color:#f3f4f6}
+h3{font-size:15px;margin:12px 0 8px;color:#cbd5e1}
+p{color:var(--muted);line-height:1.6;margin-bottom:8px}
+.small{font-size:12px;color:var(--muted)}
+
+.hr{height:1px;background:var(--line);margin:16px 0}
+
+textarea{width:100%;background:#0b1223;border:1px solid #263246;color:#e5e7eb;border-radius:12px;padding:12px;font-size:15px;outline:none;resize:vertical;min-height:80px;font-family:inherit}
+textarea:focus{border-color:var(--accent)}
+
+button,.btn{display:inline-block;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111827;border:none;border-radius:14px;padding:14px 20px;font-weight:700;font-size:16px;cursor:pointer;text-align:center;width:100%;margin-top:8px}
+button:hover{opacity:.9}
+.btn-outline{background:transparent;border:1px solid var(--line);color:var(--muted);font-size:14px;padding:10px 16px}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:8px 14px;font-size:13px;width:auto;margin:4px}
+
+.progress-bar{height:4px;background:var(--line);border-radius:999px;margin-bottom:14px}
+.progress-fill{height:4px;background:var(--accent);border-radius:999px;transition:width .4s}
+
+.tag{display:inline-block;font-size:11px;border:1px solid #374151;padding:3px 8px;border-radius:999px;color:#cbd5e1;margin:2px 4px 2px 0}
+.tag-gold{border-color:rgba(245,158,11,.4);color:#fbbf24;background:rgba(245,158,11,.1)}
+.tag-blue{border-color:rgba(99,102,241,.4);color:#a5b4fc;background:rgba(99,102,241,.1)}
+.tag-green{border-color:rgba(34,197,94,.4);color:#86efac;background:rgba(34,197,94,.1)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.kpi{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);text-align:center}
+.kpi b{display:block;font-size:24px;margin-top:4px;color:var(--accent)}
+
+.score-ring{width:100px;height:100px;margin:0 auto 10px}
+.score-ring svg{width:100%;height:100%}
+
+.book-ref{font-size:11px;color:#6366f1;margin-top:4px;opacity:.8}
+.analysis-box{background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:14px;padding:16px;margin:10px 0}
+.action-box{background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:16px;margin:10px 0}
+.plan-item{padding:10px 0;border-bottom:1px solid var(--line)}
+.plan-item:last-child{border-bottom:none}
+.plan-time{color:var(--accent);font-weight:700;font-size:14px;min-width:55px;display:inline-block}
+
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(11,15,26,.95);border-top:1px solid var(--line);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;justify-content:space-around;padding:0 10px}
+.nav-btn{background:none;border:none;color:var(--muted);font-size:11px;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0}
+.nav-btn.active{color:var(--accent)}
+.nav-btn svg{width:20px;height:20px}
+
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.streak-flame{font-size:24px;display:inline}
+.hidden{display:none}
+
+.history-entry{padding:12px 0;border-bottom:1px solid var(--line)}
+.history-date{font-weight:700;color:var(--accent);font-size:14px}
+.history-score{font-size:20px;font-weight:700}
+
+input[type=range]{width:100%;padding:0;height:6px;accent-color:var(--accent);margin:8px 0}
+.slider-val{font-size:22px;font-weight:700;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="top">
+    <div class="brand">COACHING ENGINE</div>
+    <div class="pill" id="streak-pill">Tag 1</div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<div class="nav">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showScreen('daily')" id="nav-daily">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Heute
+    </button>
+    <button class="nav-btn" onclick="showScreen('plan')" id="nav-plan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      Plan
+    </button>
+    <button class="nav-btn" onclick="showScreen('progress')" id="nav-progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Fortschritt
+    </button>
+    <button class="nav-btn" onclick="showScreen('history')" id="nav-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+      Verlauf
+    </button>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// BOOK DATABASE — Kernlehren aus allen 12 Buechern
+// =========================================================
+const BOOKS = [
+  {
+    id: "models",
+    title: "Models",
+    author: "Mark Manson",
+    color: "#f59e0b",
+    principles: [
+      "Echte Attraktivitaet kommt aus Verletzlichkeit und Authentizitaet, nicht aus Techniken.",
+      "Dein Lebensstil und deine Werte sind wichtiger als jede Anmachstrategie.",
+      "Ehrliche Selbstdarstellung polarisiert — und genau das ist das Ziel.",
+      "Investiere nicht in Menschen, die nicht in dich investieren.",
+      "Ablehnung ist ein Filter, kein Urteil ueber deinen Wert."
+    ],
+    questions: [
+      "Wo warst du heute nicht authentisch — und warum hattest du Angst, echt zu sein?",
+      "Hast du heute jemanden beeindruckt oder warst du einfach du selbst? Was fuehlt sich langfristig besser an?",
+      "In welcher Situation hast du dich heute verstellt, um gemocht zu werden?",
+      "Welche ehrliche Meinung hast du heute zurueckgehalten — und was haette sich geaendert, wenn du sie gesagt haettest?",
+      "Was ist eine unangenehme Wahrheit ueber dich, die du heute akzeptieren musst?"
+    ],
+    actions: [
+      "Sage heute einer Person etwas, das du wirklich denkst, auch wenn es unbequem ist.",
+      "Schreibe 3 Dinge auf, die dich einzigartig machen — ohne Bescheidenheit.",
+      "Gehe heute ein kleines soziales Risiko ein: sprich jemanden an, sage Nein, oder zeige Verletzlichkeit."
+    ]
+  },
+  {
+    id: "12rules",
+    title: "12 Rules for Life",
+    author: "Jordan Peterson",
+    color: "#3b82f6",
+    principles: [
+      "Steh gerade und zieh die Schultern zurueck — Koerperhaltung bestimmt Selbstbild.",
+      "Vergleiche dich mit dem, der du gestern warst — nicht mit anderen.",
+      "Ordne erst dein eigenes Haus, bevor du die Welt kritisierst.",
+      "Verfolge das, was bedeutungsvoll ist — nicht das, was gerade bequem ist.",
+      "Sag die Wahrheit — oder luege zumindest nicht."
+    ],
+    questions: [
+      "Was ist eine Sache in deinem Leben, die du schon laengst haettest ordnen sollen?",
+      "Wie hast du dich heute im Vergleich zu gestern verbessert — auch wenn es nur minimal war?",
+      "Wo hast du heute den einfachen Weg gewaehlt statt den richtigen?",
+      "Welche Verantwortung drueckst du dich gerade zu uebernehmen?",
+      "Welche kleine Luege erzaehlst du dir selbst — und was ist die brutale Wahrheit?"
+    ],
+    actions: [
+      "Raeum heute einen Bereich deines Lebens auf — Zimmer, Schreibtisch, Finanzen, oder eine Beziehung.",
+      "Schreibe auf, worin du heute 1% besser warst als gestern.",
+      "Uebernimm heute fuer eine Sache volle Verantwortung, die du bisher abgeschoben hast."
+    ]
+  },
+  {
+    id: "negotiation",
+    title: "Kompromissloses Verhandeln",
+    author: "Chris Voss",
+    color: "#ef4444",
+    principles: [
+      "Taktische Empathie: Verstehe die Emotionen des anderen, ohne ihnen zuzustimmen.",
+      "Spiegeln: Wiederhole die letzten 1-3 Worte — es oeffnet Menschen.",
+      "Labeling: Benenne Emotionen ('Es scheint, als ob...') um Spannung zu loesen.",
+      "Kalibrierte Fragen ('Wie soll ich das machen?') geben dir Kontrolle ohne Konfrontation.",
+      "Ein 'Nein' ist der Anfang einer Verhandlung, nicht das Ende."
+    ],
+    questions: [
+      "In welchem Gespraech heute haettest du besser zuhoeren koennen statt zu reden?",
+      "Wo hast du heute einen faulen Kompromiss gemacht, statt fuer das beste Ergebnis zu verhandeln?",
+      "Hast du heute die Emotionen einer anderen Person wirklich verstanden — oder nur deine eigene Position verteidigt?",
+      "Welche Frage haettest du heute stellen koennen, um eine bessere Loesung zu finden?",
+      "Wo haettest du 'Nein' sagen sollen, es aber nicht getan?"
+    ],
+    actions: [
+      "Nutze heute in einem Gespraech aktives Spiegeln — wiederhole die letzten Worte deines Gegenueber.",
+      "Stelle heute eine kalibrierte Frage: 'Wie koennen wir das loesen?' statt Forderungen zu stellen.",
+      "Benenne in einem Gespraech die Emotion des anderen: 'Es klingt, als ob dich das frustriert.'"
+    ]
+  },
+  {
+    id: "loveyourself",
+    title: "Liebe dich selbst",
+    author: "Kamal Ravikant",
+    color: "#ec4899",
+    principles: [
+      "Der wichtigste Satz: 'Ich liebe mich.' — Wiederhole ihn bis er zur Wahrheit wird.",
+      "Selbstliebe ist keine Schwaeche, sondern das Fundament aller Staerke.",
+      "Dein innerer Dialog formt deine Realitaet — aendere die Worte, aendere das Leben.",
+      "Du kannst andere nicht wirklich lieben, wenn du dich selbst nicht liebst.",
+      "Jeder Gedanke ist eine Wahl — waehle den, der dich staerkt."
+    ],
+    questions: [
+      "Wie hast du heute mit dir selbst gesprochen? Wuerdest du so mit deinem besten Freund reden?",
+      "Was ist eine negative Ueberzeugung ueber dich, die du heute loslassen kannst?",
+      "Hast du dir heute erlaubt, stolz auf dich zu sein — oder hast du dich selbst kleingemacht?",
+      "Welchen Moment heute hast du nicht genossen, weil du zu hart mit dir warst?",
+      "Was wuerdest du tun, wenn du dich wirklich bedingungslos lieben wuerdest?"
+    ],
+    actions: [
+      "Sage dir jetzt 10x laut: 'Ich liebe mich.' Mein es ernst.",
+      "Schreibe 5 Dinge auf, die du an dir magst — ohne 'aber'.",
+      "Ersetze heute jeden negativen Selbstkommentar bewusst durch einen positiven."
+    ]
+  },
+  {
+    id: "trading",
+    title: "Trading Psychologie",
+    author: "Norman Welz",
+    color: "#14b8a6",
+    principles: [
+      "Emotionen sind der groesste Feind rationaler Entscheidungen.",
+      "Disziplin schlaegt Talent — jeden einzelnen Tag.",
+      "Verluste gehoeren zum System. Akzeptiere sie, statt sie zu vermeiden.",
+      "Dein Risikomanagement bestimmt dein Ueberleben, nicht deine Gewinne.",
+      "Geduld ist die profitabelste Eigenschaft die du entwickeln kannst."
+    ],
+    questions: [
+      "Welche Entscheidung hast du heute aus Emotion statt aus Logik getroffen?",
+      "Wo hast du heute deine eigene Disziplin gebrochen — und was hat es dich gekostet?",
+      "Hast du heute ein Risiko vermieden, das kalkuliert sinnvoll gewesen waere?",
+      "Welche Situation heute haette mehr Geduld verdient?",
+      "Wo hast du heute einem kurzfristigen Impuls nachgegeben, der dein langfristiges Ziel sabotiert?"
+    ],
+    actions: [
+      "Schreibe vor deiner naechsten wichtigen Entscheidung 3 Argumente dafuer und dagegen auf.",
+      "Setze dir heute ein klares Risiko-Limit: Was bist du bereit zu verlieren?",
+      "Warte heute bei einer Entscheidung bewusst 10 Minuten, bevor du handelst."
+    ]
+  },
+  {
+    id: "naval",
+    title: "Almanach von Naval Ravikant",
+    author: "Naval Ravikant",
+    color: "#8b5cf6",
+    principles: [
+      "Spezifisches Wissen + Leverage + Verantwortung = Reichtum.",
+      "Suche dir Arbeit, die sich wie Spielen anfuehlt — dort wirst du unbezahlbar.",
+      "Glueck ist eine Faehigkeit, die man trainieren kann — nicht ein Zufall.",
+      "Lies viel. Denke klar. Handle entschlossen.",
+      "Code und Medien sind Leverage ohne Erlaubnis — nutze sie."
+    ],
+    questions: [
+      "Was ist dein 'spezifisches Wissen' — die Sache, die nur du so kannst?",
+      "Hast du heute an etwas gearbeitet, das auch ohne dich Wert erzeugt (Leverage)?",
+      "Welche Faehigkeit wuerdest du lernen, wenn Geld keine Rolle spielt — und warum lernst du sie nicht jetzt?",
+      "Hast du heute etwas gelesen oder gelernt, das dein Denken veraendert hat?",
+      "Was waere, wenn du heute anfaengst, Glueck als taegliche Praxis zu behandeln?"
+    ],
+    actions: [
+      "Investiere heute 30 Minuten in dein spezifisches Wissen — lerne, uebe, baue.",
+      "Schreibe eine Idee auf, wie du mit Code, Content oder einem System Leverage aufbauen kannst.",
+      "Lies heute 20 Seiten eines Buches, das dein Denken erweitert."
+    ]
+  },
+  {
+    id: "sexismus",
+    title: "Lob des Sexismus",
+    author: "Lodovico Satana",
+    color: "#f97316",
+    principles: [
+      "Polaritaet zwischen Maskulin und Feminin erzeugt Anziehung.",
+      "Direkte Kommunikation ist attraktiver als Unsicherheit.",
+      "Selbstbewusstsein kommt aus Handlung, nicht aus Gedanken.",
+      "Frauen testen — bestehe die Tests durch Gelassenheit und Humor.",
+      "Sei entschlossen. Unentschlossenheit ist unattraktiver als eine falsche Entscheidung."
+    ],
+    questions: [
+      "Wo warst du heute zu zurueckhaltend — wo haettest du entschlossener sein koennen?",
+      "Hast du heute klar gesagt, was du willst — oder hast du drum herum geredet?",
+      "In welcher Situation warst du heute unsicher, obwohl du die Antwort eigentlich kanntest?",
+      "Wann hast du heute auf Bestaetigung gewartet, statt einfach zu handeln?",
+      "Was wuerde die selbstbewussteste Version von dir jetzt anders machen?"
+    ],
+    actions: [
+      "Triff heute 3 Entscheidungen sofort — ohne zu zoegern.",
+      "Sage heute klar, was du willst. Kein 'vielleicht', kein 'egal'.",
+      "Halte heute in jedem Gespraech Blickkontakt, bis der andere wegschaut."
+    ]
+  },
+  {
+    id: "power",
+    title: "Power",
+    author: "Robert Greene",
+    color: "#dc2626",
+    principles: [
+      "Verstehe die Machtdynamik in jedem Raum, den du betrittst.",
+      "Sage weniger als noetig — Schweigen ist Macht.",
+      "Plane bis zum Ende — die meisten scheitern im letzten Schritt.",
+      "Lasse andere sich schlauer fuehlen als dich — lerne im Stillen.",
+      "Timing ist alles. Handle zur richtigen Zeit, nicht zur fruehesten."
+    ],
+    questions: [
+      "Wo hast du heute zu viel geredet, statt zuzuhoeren und zu beobachten?",
+      "In welcher Situation hast du die Machtdynamik nicht erkannt — und wer hatte wirklich die Kontrolle?",
+      "Hast du heute dein Ego ueber deine Strategie gestellt?",
+      "Welchen langfristigen Plan vernachlaessigst du gerade fuer kurzfristige Befriedigung?",
+      "Wo haettest du heute besser schweigen sollen?"
+    ],
+    actions: [
+      "Beobachte heute in einem Meeting oder Gespraech: Wer hat die echte Macht — und warum?",
+      "Sage heute in einem Gespraech bewusst 50% weniger als du normalerweise wuerdest.",
+      "Schreibe deinen Plan fuer die naechsten 30 Tage auf — was ist das Endziel?"
+    ]
+  },
+  {
+    id: "subtle",
+    title: "Die subtile Kunst des Draufscheissens",
+    author: "Mark Manson",
+    color: "#a855f7",
+    principles: [
+      "Du kannst nicht auf alles scheissen — waehle weise, was dir wichtig ist.",
+      "Leid ist unvermeidbar. Waehle ein Leid, das sich lohnt.",
+      "Du bist nicht besonders — und das ist befreiend.",
+      "Verantwortung ist nicht Schuld. Du bist immer verantwortlich fuer deine Reaktion.",
+      "Echte Staerke kommt aus dem Akzeptieren deiner Grenzen, nicht aus dem Leugnen."
+    ],
+    questions: [
+      "Wofuer hast du heute unnoetig Energie verschwendet — und was ist dir wirklich wichtig?",
+      "Welches Problem in deinem Leben ist es wert, geloest zu werden — und welches nicht?",
+      "Hast du heute versucht, etwas zu kontrollieren, das ausserhalb deiner Kontrolle liegt?",
+      "Welche unbequeme Wahrheit ueber dich hast du heute vermieden?",
+      "Was wuerdest du aufgeben, wenn du nur noch 3 Dinge in deinem Leben behalten koenntest?"
+    ],
+    actions: [
+      "Streiche heute eine Sache von deiner To-Do-Liste, die dir eigentlich egal ist.",
+      "Schreibe die 3 wichtigsten Werte auf, nach denen du dein Leben ausrichten willst.",
+      "Akzeptiere heute eine Sache, die du nicht aendern kannst — und lass sie los."
+    ]
+  },
+  {
+    id: "alpha",
+    title: "Alpha Mann Bibel",
+    author: "Sean Wayne",
+    color: "#eab308",
+    principles: [
+      "Ein Alpha definiert sich durch Taten, nicht durch Worte.",
+      "Dein Koerper ist dein erstes Werkzeug — trainiere ihn taeglich.",
+      "Fuehrung beginnt bei dir selbst — fuehre erst dich, dann andere.",
+      "Comfort Zone ist der Feind von Wachstum.",
+      "Respekt verdient man sich — man fordert ihn nicht ein."
+    ],
+    questions: [
+      "Was hast du heute GETAN — nicht geplant, nicht gedacht, sondern wirklich getan?",
+      "Hast du heute deinen Koerper gefordert — Training, Bewegung, kalte Dusche?",
+      "Wo bist du heute in deiner Komfortzone geblieben, obwohl du wusstest, dass du raus musst?",
+      "Hast du heute gefuehrt — oder hast du gewartet, dass jemand anderes die Entscheidung trifft?",
+      "Welche schwierige Sache hast du heute vermieden — und was kostet dich das langfristig?"
+    ],
+    actions: [
+      "Mach jetzt 50 Liegestuetze. Keine Ausreden.",
+      "Nimm heute eine kalte Dusche — 2 Minuten, komplett kalt.",
+      "Erledige heute die eine Aufgabe, die du seit Tagen vor dir herschiebst."
+    ]
+  },
+  {
+    id: "tate",
+    title: "Tate Bibel",
+    author: "Andrew Tate",
+    color: "#f43f5e",
+    principles: [
+      "Disziplin > Motivation. Motivation laesst nach, Disziplin nicht.",
+      "Geld ist Freiheit. Baue mehrere Einkommensquellen auf.",
+      "Dein Netzwerk bestimmt deinen Wert. Umgib dich mit Gewinnern.",
+      "Haerte kommt aus freiwilligem Leiden — Training, Arbeit, Verzicht.",
+      "Rede nicht ueber Plaene. Zeige Ergebnisse."
+    ],
+    questions: [
+      "Hast du heute an deiner finanziellen Freiheit gearbeitet — oder nur 'gearbeitet'?",
+      "Welche weiche Ausrede hast du dir heute erlaubt?",
+      "Bist du heute um 5 Uhr aufgestanden oder hast du den Snooze-Button gedrueckt?",
+      "Mit wem hast du heute Zeit verbracht — ziehen diese Menschen dich hoch oder runter?",
+      "Was hast du heute Konkretes fuer dein Einkommen getan — nicht gedacht, GETAN?"
+    ],
+    actions: [
+      "Stehe morgen um 5:00 auf. Kein Snooze. Sofort produktiv.",
+      "Arbeite heute 2 Stunden an einem Nebenprojekt, das Geld generieren kann.",
+      "Loesche heute 30 Minuten Social Media und nutze die Zeit produktiv."
+    ]
+  },
+  {
+    id: "deida",
+    title: "Der Weg des wahren Mannes",
+    author: "David Deida",
+    color: "#06b6d4",
+    principles: [
+      "Dein Lebenszweck (Purpose) muss immer an erster Stelle stehen.",
+      "Lebe an deiner Kante — dort wo Angst und Wachstum sich treffen.",
+      "Praesenz ist die maennlichste Qualitaet: Sei vollstaendig da.",
+      "Oeffne dich durch den Schmerz hindurch — Widerstand ist Schwaeche.",
+      "Deine Beziehung spiegelt deine Tiefe. Willst du mehr, wachse."
+    ],
+    questions: [
+      "Was ist dein Lebenszweck — und hast du heute danach gelebt?",
+      "In welchem Moment warst du heute voll und ganz praesent — ohne Ablenkung?",
+      "Wo hast du heute vor Unbehagen zurueckgewichen, statt dich durchzukaempfen?",
+      "Hast du heute an deiner 'Kante' gelebt — dort wo Angst und Wachstum sich treffen?",
+      "Was haelt dich davon ab, die beste Version von dir zu sein — und ist diese Angst real?"
+    ],
+    actions: [
+      "Meditiere 10 Minuten. Nur atmen. Volle Praesenz.",
+      "Schreibe deinen Lebenszweck in einem Satz auf. Wenn du keinen hast — finde ihn.",
+      "Tue heute eine Sache, die dich aengstigt. Geh durch die Angst hindurch."
+    ]
+  }
+];
+
+// =========================================================
+// DATA LAYER — localStorage
+// =========================================================
+const STORAGE_KEY = "coaching_engine_data";
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { entries: [], streakStartDate: null };
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function todayStr() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function getTodayEntry() {
+  const data = loadData();
+  return data.entries.find(e => e.date === todayStr());
+}
+
+function getStreak() {
+  const data = loadData();
+  const entries = data.entries.sort((a,b) => b.date.localeCompare(a.date));
+  if (!entries.length) return 0;
+  let streak = 0;
+  let checkDate = new Date();
+  // Allow today or yesterday as start
+  const todayE = entries.find(e => e.date === todayStr());
+  if (!todayE) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yStr = yesterday.toISOString().split("T")[0];
+    if (!entries.find(e => e.date === yStr)) return 0;
+    checkDate = yesterday;
+  }
+  for (let i = 0; i < 365; i++) {
+    const dStr = checkDate.toISOString().split("T")[0];
+    if (entries.find(e => e.date === dStr && e.completed)) {
+      streak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+  return streak;
+}
+
+// =========================================================
+// QUESTION SELECTION — taegliche Rotation ueber alle Buecher
+// =========================================================
+function getDailyQuestions() {
+  // Seed basierend auf Datum fuer konsistente taegliche Fragen
+  const today = todayStr();
+  let seed = 0;
+  for (let i = 0; i < today.length; i++) seed += today.charCodeAt(i) * (i+1);
+
+  // 10 Fragen aus verschiedenen Buechern
+  const questions = [];
+  const usedBooks = new Set();
+
+  // Erst 10 verschiedene Buecher waehlen, dann je 1 Frage
+  const bookOrder = [...BOOKS].sort((a,b) => {
+    const ha = (seed * 31 + a.id.charCodeAt(0)) % 1000;
+    const hb = (seed * 31 + b.id.charCodeAt(0)) % 1000;
+    return ha - hb;
+  });
+
+  for (let i = 0; i < 10 && i < bookOrder.length; i++) {
+    const book = bookOrder[i];
+    const qIdx = (seed + i * 7) % book.questions.length;
+    questions.push({
+      bookId: book.id,
+      bookTitle: book.title,
+      bookAuthor: book.author,
+      bookColor: book.color,
+      question: book.questions[qIdx],
+      principle: book.principles[qIdx % book.principles.length],
+      action: book.actions[(seed + i) % book.actions.length]
+    });
+  }
+  return questions;
+}
+
+// =========================================================
+// ANALYSIS ENGINE
+// =========================================================
+function analyzeAnswers(questions, answers) {
+  const analysis = {
+    totalScore: 0,
+    categories: {},
+    strengths: [],
+    weaknesses: [],
+    bookScores: {},
+    dailyPlan: [],
+    insights: []
+  };
+
+  // Keyword-basierte Analyse
+  const positiveWords = ["ja","gut","gemacht","getan","geschafft","stolz","besser","gewaehlt","bewusst","klar","ehrlich","stark","diszipliniert","fokussiert","trainiert","gelernt","gewachsen","ueberwunden","konfrontiert","praesent","entschlossen","verantwortung","gelesen","gearbeitet","aufgestanden"];
+  const negativeWords = ["nein","nicht","leider","versagt","vermieden","angst","faul","aufgeschoben","abgelenkt","weich","zoegernd","unsicher","excuse","ausrede","prokrastiniert","ignoriert","geschwanzt","vergessen","verschwendet","komfortzone"];
+  const neutralWords = ["vielleicht","manchmal","teilweise","versucht","bisschen","wenig","etwas"];
+
+  questions.forEach((q, i) => {
+    const answer = (answers[i] || "").toLowerCase().trim();
+    if (!answer) return;
+
+    const words = answer.split(/\s+/);
+    let posCount = 0, negCount = 0, neutCount = 0;
+
+    words.forEach(w => {
+      if (positiveWords.some(p => w.includes(p))) posCount++;
+      if (negativeWords.some(n => w.includes(n))) negCount++;
+      if (neutralWords.some(n => w.includes(n))) neutCount++;
+    });
+
+    // Laenge der Antwort als Engagement-Indikator
+    const lengthScore = Math.min(words.length / 15, 1);
+
+    // Score pro Frage: 0-100
+    let qScore;
+    if (posCount > negCount) qScore = 60 + Math.min(posCount * 10, 40);
+    else if (negCount > posCount) qScore = 20 + Math.max(40 - negCount * 10, 0);
+    else qScore = 45 + (lengthScore * 20);
+
+    // Engagement Bonus fuer ausfuehrliche Antworten
+    qScore = Math.min(100, qScore + lengthScore * 10);
+
+    const bookId = q.bookId;
+    if (!analysis.bookScores[bookId]) {
+      analysis.bookScores[bookId] = { scores: [], book: q };
+    }
+    analysis.bookScores[bookId].scores.push(qScore);
+    analysis.totalScore += qScore;
+
+    // Staerken/Schwaechen identifizieren
+    if (qScore >= 70) {
+      analysis.strengths.push({ question: q, score: qScore, answer: answers[i] });
+    } else if (qScore < 45) {
+      analysis.weaknesses.push({ question: q, score: qScore, answer: answers[i], action: q.action });
+    }
+  });
+
+  const answeredCount = answers.filter(a => a && a.trim()).length;
+  analysis.totalScore = answeredCount > 0 ? Math.round(analysis.totalScore / answeredCount) : 0;
+
+  // Insights generieren
+  if (analysis.weaknesses.length >= 3) {
+    analysis.insights.push("Du hast heute mehrere Schwachstellen identifiziert. Das ist GUT — Bewusstsein ist der erste Schritt.");
+  }
+  if (analysis.strengths.length >= 5) {
+    analysis.insights.push("Starker Tag. Du bist auf einem guten Weg. Bleib dran und erhoehe die Intensitaet.");
+  }
+  if (answeredCount < 7) {
+    analysis.insights.push("Du hast nicht alle Fragen beantwortet. Vollstaendige Selbstreflexion braucht Disziplin.");
+  }
+
+  // Schwaechen-basierte Aktionen fuer den Tagesplan
+  analysis.weaknesses.forEach(w => {
+    analysis.dailyPlan.push({
+      action: w.action,
+      reason: `Basierend auf: "${w.question.question.substring(0,50)}..."`,
+      book: w.question.bookTitle,
+      priority: "high"
+    });
+  });
+
+  // Allgemeine Aktionen hinzufuegen
+  const timeSlots = ["06:00","07:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"];
+  const generalActions = [
+    {time:"06:00", action:"Aufstehen. Kein Snooze. Glas Wasser. 5 Min Stille.", book:"Tate Bibel / 12 Rules"},
+    {time:"07:00", action:"Koerperliches Training — Kraft oder Ausdauer. Minimum 30 Min.", book:"Alpha Mann Bibel"},
+    {time:"08:00", action:"Kalte Dusche. 2 Minuten. Atemkontrolle.", book:"Der Weg des wahren Mannes"},
+    {time:"10:00", action:"Deep Work — 2h fokussierte Arbeit an deinem wichtigsten Projekt.", book:"Almanach / Trading Psychologie"},
+    {time:"12:00", action:"Mittagspause: Bewusst essen. 10 Min spazieren.", book:"12 Rules for Life"},
+    {time:"14:00", action:"Spezifisches Wissen aufbauen — lernen, lesen, ueben.", book:"Almanach von Naval"},
+    {time:"16:00", action:"Soziale Interaktion: Ein echtes Gespraech fuehren.", book:"Models / Verhandeln"},
+    {time:"18:00", action:"Reflexion: Was habe ich heute geschafft? Was morgen?", book:"Trading Psychologie"},
+    {time:"20:00", action:"30 Min Lesen. Kein Screen.", book:"Almanach von Naval"},
+    {time:"22:00", action:"Tagesabschluss: Coaching-Fragen beantworten. Frueh schlafen.", book:"12 Rules / Liebe dich selbst"}
+  ];
+
+  analysis.generalPlan = generalActions;
+  return analysis;
+}
+
+// =========================================================
+// SCREENS
+// =========================================================
+let currentScreen = "daily";
+let currentQuestion = 0;
+let dailyQuestions = [];
+let dailyAnswers = [];
+
+function showScreen(screen) {
+  currentScreen = screen;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("nav-" + screen)?.classList.add("active");
+
+  const streak = getStreak();
+  document.getElementById("streak-pill").textContent = streak > 0 ? `${streak} Tage Streak 🔥` : "Tag 1";
+
+  switch(screen) {
+    case "daily": renderDaily(); break;
+    case "plan": renderPlan(); break;
+    case "progress": renderProgress(); break;
+    case "history": renderHistory(); break;
+  }
+}
+
+function renderDaily() {
+  const entry = getTodayEntry();
+
+  if (entry && entry.completed) {
+    renderTodayResult(entry);
+    return;
+  }
+
+  dailyQuestions = getDailyQuestions();
+  if (entry && entry.answers) {
+    dailyAnswers = entry.answers;
+    currentQuestion = entry.answers.filter(a => a && a.trim()).length;
+    if (currentQuestion >= 10) currentQuestion = 9;
+  } else {
+    dailyAnswers = new Array(10).fill("");
+    currentQuestion = 0;
+  }
+
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = dailyQuestions[currentQuestion];
+  const pct = ((currentQuestion) / 10 * 100);
+  const book = BOOKS.find(b => b.id === q.bookId);
+
+  const html = `
+    <div class="card fade-in">
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <p class="small">Frage ${currentQuestion + 1} von 10</p>
+      <div style="margin:10px 0">
+        <span class="tag" style="border-color:${q.bookColor};color:${q.bookColor}">${q.bookTitle}</span>
+        <span class="tag">${q.bookAuthor}</span>
+      </div>
+      <div class="hr"></div>
+      <p style="font-size:12px;color:${q.bookColor};margin-bottom:6px;font-style:italic">"${q.principle}"</p>
+      <h2 style="font-size:17px;line-height:1.4;margin-top:10px">${q.question}</h2>
+      <textarea id="answer-input" placeholder="Sei ehrlich. Schreib alles raus..." rows="4"
+        style="margin-top:14px">${dailyAnswers[currentQuestion] || ""}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        ${currentQuestion > 0 ? '<button class="btn-outline btn-sm" onclick="prevQuestion()" style="flex:1">Zurueck</button>' : ''}
+        <button onclick="nextQuestion()" style="flex:2">${currentQuestion === 9 ? "Analyse starten" : "Weiter"}</button>
+      </div>
+      <p class="small" style="margin-top:10px;text-align:center">Ehrlichkeit > Perfektion</p>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+  // Focus on textarea
+  setTimeout(() => document.getElementById("answer-input")?.focus(), 100);
+}
+
+function prevQuestion() {
+  saveCurrentAnswer();
+  if (currentQuestion > 0) {
+    currentQuestion--;
+    renderQuestion();
+  }
+}
+
+function nextQuestion() {
+  saveCurrentAnswer();
+
+  if (currentQuestion < 9) {
+    currentQuestion++;
+    renderQuestion();
+  } else {
+    finishDaily();
+  }
+}
+
+function saveCurrentAnswer() {
+  const input = document.getElementById("answer-input");
+  if (input) dailyAnswers[currentQuestion] = input.value;
+
+  // Zwischenspeichern
+  const data = loadData();
+  let entry = data.entries.find(e => e.date === todayStr());
+  if (!entry) {
+    entry = { date: todayStr(), completed: false, answers: [], questions: [], analysis: null };
+    data.entries.push(entry);
+  }
+  entry.answers = [...dailyAnswers];
+  saveData(data);
+}
+
+function finishDaily() {
+  const analysis = analyzeAnswers(dailyQuestions, dailyAnswers);
+
+  const data = loadData();
+  let entry = data.entries.find(e => e.date === todayStr());
+  if (!entry) {
+    entry = { date: todayStr(), completed: false, answers: [], questions: [], analysis: null };
+    data.entries.push(entry);
+  }
+  entry.completed = true;
+  entry.answers = [...dailyAnswers];
+  entry.questions = dailyQuestions.map(q => ({ bookId: q.bookId, question: q.question, bookTitle: q.bookTitle }));
+  entry.analysis = analysis;
+  entry.score = analysis.totalScore;
+  saveData(data);
+
+  renderTodayResult(entry);
+}
+
+function renderTodayResult(entry) {
+  const a = entry.analysis;
+  const score = a.totalScore;
+  const scoreColor = score >= 70 ? "#22c55e" : score >= 45 ? "#f59e0b" : "#ef4444";
+  const scoreLabel = score >= 70 ? "Starker Tag" : score >= 45 ? "Solide Basis" : "Mehr Einsatz noetig";
+
+  // Score Ring SVG
+  const circumference = 2 * Math.PI * 42;
+  const offset = circumference - (score / 100) * circumference;
+
+  let strengthsHtml = "";
+  if (a.strengths.length > 0) {
+    strengthsHtml = `<h3 style="color:#22c55e">Staerken heute</h3>`;
+    a.strengths.slice(0, 3).forEach(s => {
+      strengthsHtml += `<div style="padding:6px 0;font-size:13px;color:#cbd5e1">
+        <span class="tag tag-green">${s.question.bookTitle}</span> Score: ${s.score}/100
+      </div>`;
+    });
+  }
+
+  let weaknessHtml = "";
+  if (a.weaknesses.length > 0) {
+    weaknessHtml = `<h3 style="color:#f87171">Wachstumsfelder</h3>`;
+    a.weaknesses.slice(0, 3).forEach(w => {
+      weaknessHtml += `<div class="action-box" style="padding:12px;margin:6px 0">
+        <span class="tag" style="border-color:${w.question.bookColor};color:${w.question.bookColor}">${w.question.bookTitle}</span>
+        <p style="font-size:13px;margin:6px 0 4px;color:#fbbf24">Aktion: ${w.action}</p>
+      </div>`;
+    });
+  }
+
+  let insightsHtml = "";
+  if (a.insights.length > 0) {
+    insightsHtml = `<div class="analysis-box">
+      <h3 style="margin-top:0">Analyse</h3>
+      ${a.insights.map(ins => `<p style="font-size:13px;margin:4px 0">${ins}</p>`).join("")}
+    </div>`;
+  }
+
+  // Book Scores
+  let bookScoresHtml = '<div style="margin-top:12px">';
+  Object.keys(a.bookScores).forEach(bookId => {
+    const bs = a.bookScores[bookId];
+    const avg = Math.round(bs.scores.reduce((a,b)=>a+b,0) / bs.scores.length);
+    const bColor = bs.book.bookColor;
+    bookScoresHtml += `<div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+      <span style="font-size:12px;color:${bColor};min-width:120px">${bs.book.bookTitle}</span>
+      <div style="flex:1;height:6px;background:var(--line);border-radius:3px">
+        <div style="height:6px;background:${bColor};border-radius:3px;width:${avg}%"></div>
+      </div>
+      <span style="font-size:12px;color:var(--muted)">${avg}</span>
+    </div>`;
+  });
+  bookScoresHtml += '</div>';
+
+  const html = `
+    <div class="card fade-in">
+      <div style="text-align:center">
+        <div class="score-ring">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" stroke-width="6"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="${scoreColor}" stroke-width="6"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+              stroke-linecap="round" transform="rotate(-90 50 50)"
+              style="transition:stroke-dashoffset 1s ease"/>
+            <text x="50" y="46" text-anchor="middle" fill="${scoreColor}" font-size="22" font-weight="700">${score}</text>
+            <text x="50" y="60" text-anchor="middle" fill="var(--muted)" font-size="8">/100</text>
+          </svg>
+        </div>
+        <h2>${scoreLabel}</h2>
+        <p class="small">${todayStr()} — ${entry.answers.filter(a => a && a.trim()).length}/10 Fragen beantwortet</p>
+      </div>
+      <div class="hr"></div>
+      ${insightsHtml}
+      ${strengthsHtml}
+      ${weaknessHtml}
+      <div class="hr"></div>
+      <h3>Buch-Scores</h3>
+      ${bookScoresHtml}
+      <div class="hr"></div>
+      <button onclick="resetToday()" class="btn-outline" style="width:100%;margin-top:8px">Heute nochmal machen</button>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+}
+
+function resetToday() {
+  const data = loadData();
+  data.entries = data.entries.filter(e => e.date !== todayStr());
+  saveData(data);
+  currentQuestion = 0;
+  dailyAnswers = new Array(10).fill("");
+  renderDaily();
+}
+
+// =========================================================
+// PLAN SCREEN
+// =========================================================
+function renderPlan() {
+  const entry = getTodayEntry();
+  let planHtml = "";
+
+  // Allgemeiner Tagesplan
+  const generalPlan = [
+    {time:"06:00", action:"Aufstehen. Kein Snooze. Glas Wasser. 5 Min Stille.", book:"Tate Bibel / 12 Rules", icon:"☀️"},
+    {time:"06:30", action:"10x 'Ich liebe mich' laut sagen. Inneren Dialog positiv starten.", book:"Liebe dich selbst", icon:"❤️"},
+    {time:"07:00", action:"Training — Kraft oder Ausdauer. Minimum 30 Minuten. Keine Ausreden.", book:"Alpha Mann Bibel", icon:"💪"},
+    {time:"07:45", action:"Kalte Dusche. 2 Minuten. Atme durch. Fuehle dich lebendig.", book:"Der Weg des wahren Mannes", icon:"🧊"},
+    {time:"08:30", action:"Deep Work beginnen. Wichtigstes Projekt zuerst. 2h ohne Ablenkung.", book:"Almanach von Naval", icon:"🎯"},
+    {time:"10:30", action:"Pause: Spaziergang. Reflektiere deine Strategie fuer den Tag.", book:"Power / Robert Greene", icon:"🚶"},
+    {time:"11:00", action:"Spezifisches Wissen aufbauen: Lernen, lesen, Skill-Building.", book:"Almanach von Naval", icon:"📚"},
+    {time:"12:30", action:"Bewusst essen. Kein Screen. Pruefe: Bin ich auf Kurs?", book:"12 Rules for Life", icon:"🍽️"},
+    {time:"13:30", action:"Verhandlungs-Training: Uebe in Gespraechen bewusst Spiegeln & Labeling.", book:"Kompromissloses Verhandeln", icon:"🗣️"},
+    {time:"15:00", action:"Soziales Risiko eingehen: Jemanden ansprechen, ehrlich sein, fuehren.", book:"Models / Lob des Sexismus", icon:"⚡"},
+    {time:"17:00", action:"Finanzielle Freiheit: 1h an Nebenprojekt oder Einkommensquelle arbeiten.", book:"Tate Bibel / Naval", icon:"💰"},
+    {time:"18:30", action:"Review: Was habe ich heute geschafft? Was war emotional? Journaling.", book:"Trading Psychologie", icon:"📝"},
+    {time:"19:30", action:"Beziehung/Praesenz: Sei voll da fuer die Menschen um dich.", book:"Der Weg des wahren Mannes", icon:"🌟"},
+    {time:"20:30", action:"30 Min lesen. Kein Bildschirm. Nur ein Buch.", book:"Almanach von Naval", icon:"📖"},
+    {time:"21:30", action:"Coaching-Fragen beantworten. Sei brutal ehrlich.", book:"Alle Buecher", icon:"🔥"},
+    {time:"22:00", action:"Tagesabschluss: 3 Dinge wofuer du dankbar bist. Dann schlafen.", book:"12 Rules / Liebe dich selbst", icon:"🌙"}
+  ];
+
+  // Personalisierte Aktionen aus Analyse
+  let personalHtml = "";
+  if (entry && entry.analysis && entry.analysis.weaknesses.length > 0) {
+    personalHtml = `<div class="card fade-in">
+      <h2 style="color:#f87171">Deine heutigen Fokus-Aktionen</h2>
+      <p class="small">Basierend auf deiner Analyse — hier musst du heute ansetzen:</p>
+      <div class="hr"></div>`;
+    entry.analysis.weaknesses.forEach(w => {
+      personalHtml += `<div class="action-box">
+        <span class="tag" style="border-color:${w.question.bookColor};color:${w.question.bookColor}">${w.question.bookTitle}</span>
+        <p style="color:var(--text);font-weight:600;margin:8px 0 4px">${w.action}</p>
+        <p class="small">Weil: "${w.question.question.substring(0,60)}..."</p>
+      </div>`;
+    });
+    personalHtml += `</div>`;
+  }
+
+  planHtml = `
+    ${personalHtml}
+    <div class="card fade-in">
+      <h2>Dein Tagesplan</h2>
+      <p class="small">Struktur aus 12 Buechern — jeden Tag ausfuehren</p>
+      <div class="hr"></div>
+      ${generalPlan.map(p => `
+        <div class="plan-item" style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:18px">${p.icon}</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span class="plan-time">${p.time}</span>
+              <span class="tag tag-blue" style="font-size:10px">${p.book}</span>
+            </div>
+            <p style="font-size:14px;color:var(--text);margin:4px 0 0">${p.action}</p>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="card">
+      <h2>Die 12 Regeln</h2>
+      <p class="small">Taegliche Erinnerungen aus allen Buechern</p>
+      <div class="hr"></div>
+      ${BOOKS.map(b => `
+        <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+          <span style="font-weight:700;color:${b.color};font-size:13px">${b.title}</span>
+          <span class="small"> — ${b.author}</span>
+          <p style="font-size:13px;margin:4px 0 0;color:#cbd5e1;font-style:italic">"${b.principles[0]}"</p>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  document.getElementById("content").innerHTML = planHtml;
+}
+
+// =========================================================
+// PROGRESS SCREEN
+// =========================================================
+function renderProgress() {
+  const data = loadData();
+  const entries = data.entries.filter(e => e.completed).sort((a,b) => b.date.localeCompare(a.date));
+  const streak = getStreak();
+  const totalDays = entries.length;
+  const avgScore = totalDays > 0 ? Math.round(entries.reduce((s,e) => s + (e.score || 0), 0) / totalDays) : 0;
+
+  // Letzte 7 Tage Score-Verlauf
+  const last7 = entries.slice(0, 7).reverse();
+  const maxScore = 100;
+  let chartHtml = "";
+  if (last7.length > 0) {
+    const barWidth = Math.floor(90 / Math.max(last7.length, 1));
+    chartHtml = `<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:10px 0">`;
+    last7.forEach(e => {
+      const h = Math.max((e.score || 0) / maxScore * 100, 5);
+      const color = (e.score || 0) >= 70 ? "#22c55e" : (e.score || 0) >= 45 ? "#f59e0b" : "#ef4444";
+      const dayLabel = e.date.substring(5);
+      chartHtml += `<div style="flex:1;text-align:center">
+        <div style="height:${h}px;background:${color};border-radius:6px 6px 0 0;min-height:5px;margin:0 2px"></div>
+        <p class="small" style="margin:4px 0 0">${dayLabel}</p>
+      </div>`;
+    });
+    chartHtml += `</div>`;
+  }
+
+  // Buch-Gesamtanalyse ueber alle Tage
+  const bookTotals = {};
+  entries.forEach(e => {
+    if (e.analysis && e.analysis.bookScores) {
+      Object.keys(e.analysis.bookScores).forEach(bid => {
+        if (!bookTotals[bid]) bookTotals[bid] = { scores: [], book: e.analysis.bookScores[bid].book };
+        bookTotals[bid].scores.push(...e.analysis.bookScores[bid].scores);
+      });
+    }
+  });
+
+  let bookProgressHtml = "";
+  Object.keys(bookTotals).forEach(bid => {
+    const bt = bookTotals[bid];
+    const avg = Math.round(bt.scores.reduce((a,b)=>a+b,0) / bt.scores.length);
+    const color = bt.book.bookColor;
+    bookProgressHtml += `<div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+      <span style="font-size:12px;color:${color};min-width:110px">${bt.book.bookTitle}</span>
+      <div style="flex:1;height:6px;background:var(--line);border-radius:3px">
+        <div style="height:6px;background:${color};border-radius:3px;width:${avg}%"></div>
+      </div>
+      <span style="font-size:12px;color:var(--muted)">${avg}</span>
+    </div>`;
+  });
+
+  // Trend berechnen
+  let trendHtml = "";
+  if (entries.length >= 2) {
+    const recent = entries.slice(0, 3).reduce((s,e) => s + (e.score||0), 0) / Math.min(entries.length, 3);
+    const older = entries.slice(3, 6);
+    if (older.length > 0) {
+      const olderAvg = older.reduce((s,e) => s + (e.score||0), 0) / older.length;
+      const diff = Math.round(recent - olderAvg);
+      if (diff > 0) trendHtml = `<span style="color:#22c55e;font-weight:700">+${diff} Punkte</span> vs. letzte Woche`;
+      else if (diff < 0) trendHtml = `<span style="color:#ef4444;font-weight:700">${diff} Punkte</span> vs. letzte Woche`;
+      else trendHtml = `<span style="color:var(--muted)">Gleichbleibend</span> vs. letzte Woche`;
+    }
+  }
+
+  const html = `
+    <div class="card fade-in">
+      <h2>Dein Fortschritt</h2>
+      <div class="grid3" style="margin:14px 0">
+        <div class="kpi">
+          <span class="small">Streak</span>
+          <b>${streak} ${streak > 0 ? "🔥" : ""}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Tage gesamt</span>
+          <b>${totalDays}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Schnitt</span>
+          <b>${avgScore}</b>
+        </div>
+      </div>
+      ${trendHtml ? `<p style="text-align:center;font-size:13px">${trendHtml}</p>` : ""}
+    </div>
+
+    ${last7.length > 0 ? `
+    <div class="card fade-in">
+      <h3>Letzte 7 Tage</h3>
+      ${chartHtml}
+    </div>` : ""}
+
+    ${bookProgressHtml ? `
+    <div class="card fade-in">
+      <h3>Buch-Fortschritt (Gesamt)</h3>
+      <p class="small">Durchschnittliche Scores pro Buch ueber alle Tage</p>
+      ${bookProgressHtml}
+    </div>` : ""}
+
+    <div class="card fade-in">
+      <h3>Level-System</h3>
+      <div style="margin:10px 0">
+        ${getLevelHtml(totalDays)}
+      </div>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+}
+
+function getLevelHtml(days) {
+  const levels = [
+    { name: "Anfaenger", min: 0, color: "#6b7280" },
+    { name: "Erwacht", min: 7, color: "#3b82f6" },
+    { name: "Diszipliniert", min: 21, color: "#8b5cf6" },
+    { name: "Krieger", min: 50, color: "#f59e0b" },
+    { name: "Meister", min: 100, color: "#22c55e" },
+    { name: "Maschine", min: 200, color: "#ef4444" },
+    { name: "Legende", min: 365, color: "#ec4899" }
+  ];
+
+  let currentLevel = levels[0];
+  let nextLevel = levels[1];
+  for (let i = levels.length - 1; i >= 0; i--) {
+    if (days >= levels[i].min) {
+      currentLevel = levels[i];
+      nextLevel = levels[i+1] || null;
+      break;
+    }
+  }
+
+  let progressToNext = "";
+  if (nextLevel) {
+    const pct = Math.round((days - currentLevel.min) / (nextLevel.min - currentLevel.min) * 100);
+    progressToNext = `
+      <div style="margin-top:10px">
+        <p class="small">Naechstes Level: <span style="color:${nextLevel.color}">${nextLevel.name}</span> (${nextLevel.min} Tage)</p>
+        <div style="height:6px;background:var(--line);border-radius:3px;margin-top:6px">
+          <div style="height:6px;background:${currentLevel.color};border-radius:3px;width:${pct}%"></div>
+        </div>
+        <p class="small" style="margin-top:4px">${days}/${nextLevel.min} Tage</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div style="text-align:center">
+      <p style="font-size:28px;font-weight:700;color:${currentLevel.color}">${currentLevel.name}</p>
+      <p class="small">${days} Tage aktiv</p>
+      ${progressToNext}
+    </div>
+  `;
+}
+
+// =========================================================
+// HISTORY SCREEN
+// =========================================================
+function renderHistory() {
+  const data = loadData();
+  const entries = data.entries.filter(e => e.completed).sort((a,b) => b.date.localeCompare(a.date));
+
+  if (entries.length === 0) {
+    document.getElementById("content").innerHTML = `
+      <div class="card fade-in">
+        <h2>Noch kein Verlauf</h2>
+        <p>Beantworte deine ersten 10 Fragen, um deinen Verlauf zu starten.</p>
+        <button onclick="showScreen('daily')">Jetzt starten</button>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `<div class="card fade-in"><h2>Verlauf</h2><p class="small">${entries.length} Eintraege gesamt</p><div class="hr"></div>`;
+
+  entries.forEach(entry => {
+    const score = entry.score || 0;
+    const scoreColor = score >= 70 ? "#22c55e" : score >= 45 ? "#f59e0b" : "#ef4444";
+    const answered = (entry.answers || []).filter(a => a && a.trim()).length;
+
+    html += `
+      <div class="history-entry" onclick="showHistoryDetail('${entry.date}')" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <span class="history-date">${formatDate(entry.date)}</span>
+            <p class="small" style="margin:2px 0">${answered}/10 Fragen</p>
+          </div>
+          <div style="text-align:right">
+            <span class="history-score" style="color:${scoreColor}">${score}</span>
+            <p class="small">/100</p>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  document.getElementById("content").innerHTML = html;
+}
+
+function showHistoryDetail(date) {
+  const data = loadData();
+  const entry = data.entries.find(e => e.date === date);
+  if (!entry) return;
+
+  let questionsHtml = "";
+  if (entry.questions && entry.answers) {
+    entry.questions.forEach((q, i) => {
+      const answer = entry.answers[i] || "(nicht beantwortet)";
+      questionsHtml += `
+        <div style="padding:10px 0;border-bottom:1px solid var(--line)">
+          <span class="tag tag-blue" style="font-size:10px">${q.bookTitle || "Buch"}</span>
+          <p style="font-size:13px;color:var(--text);margin:6px 0 4px;font-weight:600">${q.question}</p>
+          <p style="font-size:13px;color:var(--muted);font-style:italic">${answer}</p>
+        </div>
+      `;
+    });
+  }
+
+  const html = `
+    <div class="card fade-in">
+      <button class="btn-outline btn-sm" onclick="renderHistory()" style="margin-bottom:12px">← Zurueck</button>
+      <h2>${formatDate(date)}</h2>
+      <p>Score: <span style="font-weight:700;font-size:20px;color:var(--accent)">${entry.score || 0}</span>/100</p>
+      <div class="hr"></div>
+      ${questionsHtml}
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  const days = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+  const months = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  return `${days[d.getDay()]}, ${d.getDate()}. ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// =========================================================
+// INIT
+// =========================================================
+showScreen("daily");
+</script>
+</body>
+</html>

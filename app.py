@@ -212,6 +212,7 @@ app.add_middleware(SessionMiddleware, secret_key=APP_SECRET)
 _TTAO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "thetoysareout.html")
 _LIVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "live.html")
 _DASHBOARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mein-dashboard.html")
+_COACHING_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coaching.html")
 
 @app.get("/thetoysareout", response_class=HTMLResponse)
 async def thetoysareout():
@@ -229,6 +230,12 @@ async def live_page():
 async def mein_dashboard():
     if os.path.exists(_DASHBOARD_PATH):
         return FileResponse(_DASHBOARD_PATH, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Not found")
+
+@app.get("/coaching", response_class=HTMLResponse)
+async def coaching_page():
+    if os.path.exists(_COACHING_PATH):
+        return FileResponse(_COACHING_PATH, media_type="text/html")
     raise HTTPException(status_code=404, detail="Not found")
 
 
