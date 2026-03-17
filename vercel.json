@@ -14,6 +14,11 @@
     { "source": "/bot-admin", "destination": "/bot-admin.html" },
     { "source": "/nerve", "destination": "/nerve.html" },
     { "source": "/coaching", "destination": "/coaching.html" },
+    { "source": "/mastery", "destination": "/mastery.html" },
+    { "source": "/mastery-rollo", "destination": "/mastery-rollo.html" },
+    { "source": "/mastery-tagesplan", "destination": "/mastery-tagesplan.html" },
+    { "source": "/mastery-income", "destination": "/mastery-income.html" },
+    { "source": "/mastery-today", "destination": "/mastery-today.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

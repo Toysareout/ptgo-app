@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>ROLLO TOMASSI — Nerve Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);--glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--pink),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--pink),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--pink);border:1px solid var(--pink);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:20px 0 12px;color:var(--text);text-transform:uppercase}
+h3{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;margin:12px 0 8px;color:var(--dim);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:20px 0}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}.nav-btn:hover{color:var(--cyan)}
+
+.rule-card{background:var(--surface);border:1px solid rgba(255,45,142,.2);padding:20px;margin-bottom:14px;position:relative;overflow:hidden}
+.rule-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pink),transparent);opacity:.4}
+.rule-num{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--pink);letter-spacing:2px;margin-bottom:6px}
+.rule-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--pink);margin-bottom:8px}
+.rule-desc{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:10px}
+.practice-box{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);padding:12px;margin-top:8px}
+.practice-label{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);letter-spacing:2px;margin-bottom:4px}
+.practice-text{font-size:11px;color:var(--gold);line-height:1.5}
+
+.smv-card{background:var(--surface);border:1px solid rgba(168,85,247,.2);padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.smv-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.3}
+.smv-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.smv-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--purple)}
+.smv-pct{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:var(--gold)}
+.smv-bar{height:3px;background:var(--border);margin-bottom:12px}
+.smv-fill{height:3px;background:var(--purple);transition:width .6s}
+.smv-actions li{font-size:11px;color:var(--dim);margin:4px 0;line-height:1.5}
+
+.book-card{background:var(--surface);border:1px solid var(--border);padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.book-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3}
+.book-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:10px;letter-spacing:1px}
+.book-concept{font-size:11px;color:var(--dim);margin:4px 0;padding-left:12px;border-left:2px solid var(--border);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <a href="/mastery" class="back-link">← HUB</a>
+  <div class="brand">ROLLO TOMASSI</div>
+  <span class="pill">THE RATIONAL MALE</span>
+</div>
+
+<div style="text-align:center;margin:0 0 24px">
+  <div style="font-size:48px">🔴</div>
+  <h1>THE RATIONAL MALE</h1>
+  <p>Das komplette Framework. 9 Iron Rules. 4 Bücher. SMV Pillars.</p>
+</div>
+
+<!-- IRON RULES -->
+<h2 style="color:var(--pink)">IRON RULES OF TOMASSI</h2>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #1</div>
+  <div class="rule-title">Frame ist alles</div>
+  <div class="rule-desc">Wer den Frame kontrolliert, kontrolliert die Dynamik. In jeder Interaktion gibt es einen Frame – deinen oder den des anderen. Frame ist die mentale Struktur durch die du die Realität interpretierst und präsentierst.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm bewusst die Führung in mindestens 3 Gesprächen. Wenn jemand deinen Frame bricht, erkenne es – und setze deinen bewusst neu.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #2</div>
+  <div class="rule-title">Zeige niemals mehr Interesse als sie</div>
+  <div class="rule-desc">Investition muss immer proportional sein. Wer mehr investiert, hat weniger Macht. Das gilt für Beziehungen, Business, und jede soziale Dynamik. Der, der weniger braucht, hat die Kontrolle.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Spiegel heute das Engagement deines Gegenübers. Antworte nicht sofort. Setze deine Zeit bewusst ein. Wenn du merkst dass du overinvestest – stopp.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #3</div>
+  <div class="rule-title">Abundance Mentality – Jede Frau ist eine Option</div>
+  <div class="rule-desc">Nie alles auf eine Karte setzen. Du bist die Wahl, nicht der Wartende. Oneitis (Fixierung auf eine Person) ist die größte Schwäche. Optionen zu haben ist keine Illoyalität – es ist Selbstrespekt.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Erweitere heute dein soziales Netzwerk. Sprich mit 3 neuen Menschen. Baue Optionen auf – in Beziehungen UND im Business.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #4</div>
+  <div class="rule-title">Verdecke deine Absichten nie mit Freundschaft</div>
+  <div class="rule-desc">Sei direkt. Friendzone entsteht durch fehlende Polarisierung. Mache deine Intention klar. Wer sich als "der gute Freund" positioniert um dann romantisches Interesse zu zeigen, hat bereits verloren.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Kommuniziere heute eine unbequeme Wahrheit direkt. Keine Umwege. Keine Entschuldigung für das was du willst.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #5</div>
+  <div class="rule-title">Dein Wert steigt wenn du dich selbst priorisierst</div>
+  <div class="rule-desc">Sexual Market Value (SMV) ist real. Dein Wert wird durch dein Verhalten definiert, nicht durch deine Worte. Wer sich selbst an erste Stelle setzt – Training, Karriere, Ziele – wird automatisch attraktiver.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Priorisiere heute DEIN Training, DEINE Karriere, DEINE Ziele. Sage mindestens einmal Nein zu etwas das nicht deiner Mission dient.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #6</div>
+  <div class="rule-title">Verstehe die fundamentalen Unterschiede</div>
+  <div class="rule-desc">Frauen sind keine Männer mit anderen Körpern. Kommunikation, Attraktion und Bindung funktionieren fundamental anders. Covert Communication (versteckte Signale) ist die Sprache der weiblichen Kommunikation.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Beobachte heute Kommunikationsmuster. Höre auf das WAS nicht gesagt wird. Verstehe die Subdynamik hinter den Worten.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #7</div>
+  <div class="rule-title">Hypergamie ist Natur, nicht Moral</div>
+  <div class="rule-desc">Frauen optimieren instinktiv nach oben. Das ist keine Kritik, sondern Biologie. Hypergamie bedeutet: sie sucht den besten verfügbaren Partner. Deine Aufgabe: Werde die beste Version deiner selbst.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Arbeite heute an einem Skill der deinen Marktwert steigert. Körper, Geld, oder Status. Jeden Tag 1% besser = 37x besser in einem Jahr.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #8</div>
+  <div class="rule-title">Sei der Preis</div>
+  <div class="rule-desc">Wenn du dich als Preis verhältst, wirst du als Preis behandelt. Internalisiere deinen Wert. Das bedeutet nicht Arroganz – es bedeutet unerschütterliches Selbstvertrauen basierend auf dem Wissen wer du bist.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Handle heute so als wärst du die wichtigste Person im Raum. Nicht arrogant – aber absolut sicher in dem was du wert bist.</div></div>
+</div>
+
+<div class="rule-card">
+  <div class="rule-num">IRON RULE #9</div>
+  <div class="rule-title">Vertraue dem Verhalten, nicht den Worten</div>
+  <div class="rule-desc">Was Menschen TUN ist die Wahrheit. Was sie SAGEN ist oft Rationalisierung. Wenn Worte und Taten nicht übereinstimmen – glaube den Taten. Immer. Ohne Ausnahme.</div>
+  <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Ignoriere heute was dir gesagt wird. Beobachte was getan wird. Entscheide basierend auf Handlungen, nicht Versprechen.</div></div>
+</div>
+
+<div class="hr"></div>
+
+<!-- SMV PILLARS -->
+<h2 style="color:var(--purple)">SMV PILLARS — DEIN MARKTWERT</h2>
+<p>Sexual Market Value = Summe aus 4 Bereichen. Optimiere alle parallel.</p>
+
+<div class="smv-card">
+  <div class="smv-header"><span class="smv-name">PHYSIQUE / KÖRPER</span><span class="smv-pct">25%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:25%"></div></div>
+  <ul class="smv-actions">
+    <li>5x/Woche Krafttraining (Push/Pull/Legs)</li>
+    <li>Körperfett unter 15% halten</li>
+    <li>Kleidung die deinen Körperbau betont</li>
+    <li>Körpersprache: offen, breit, ruhig, langsam</li>
+  </ul>
+</div>
+
+<div class="smv-card">
+  <div class="smv-header"><span class="smv-name">STATUS / EINFLUSS</span><span class="smv-pct">30%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:30%"></div></div>
+  <ul class="smv-actions">
+    <li>Karriere als Mission behandeln – nicht als Job</li>
+    <li>Social Proof aufbauen (Events, Netzwerk, Sichtbarkeit)</li>
+    <li>Führungsrollen übernehmen in jeder Situation</li>
+    <li>Expertise in deinem Feld demonstrieren – werde der Go-To</li>
+  </ul>
+</div>
+
+<div class="smv-card">
+  <div class="smv-header"><span class="smv-name">GAME / SOZIALE KOMPETENZ</span><span class="smv-pct">25%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:25%"></div></div>
+  <ul class="smv-actions">
+    <li>Täglich mit Fremden sprechen – Komfortzone erweitern</li>
+    <li>Push/Pull Dynamik meistern</li>
+    <li>Kino Escalation verstehen und anwenden</li>
+    <li>Storytelling und Humor als Werkzeuge entwickeln</li>
+  </ul>
+</div>
+
+<div class="smv-card">
+  <div class="smv-header"><span class="smv-name">RESSOURCEN / VERMÖGEN</span><span class="smv-pct">20%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:20%"></div></div>
+  <ul class="smv-actions">
+    <li>Einkommensströme diversifizieren – nie nur 1 Quelle</li>
+    <li>Investieren lernen und ab Tag 1 umsetzen</li>
+    <li>Lifestyle Design: wenig Fixkosten, hoher Impact</li>
+    <li>Finanzielle Unabhängigkeit als Ziel #1</li>
+  </ul>
+</div>
+
+<div class="hr"></div>
+
+<!-- BOOKS -->
+<h2 style="color:var(--cyan)">BÜCHER & KEY CONCEPTS</h2>
+
+<div class="book-card">
+  <div class="book-title">📕 THE RATIONAL MALE — BUCH 1</div>
+  <div class="book-concept">Hypergamie verstehen und akzeptieren</div>
+  <div class="book-concept">SMV (Sexual Market Value) Kurven – Männer peaken später (30-45)</div>
+  <div class="book-concept">Blue Pill vs Red Pill Bewusstsein – die Matrix erkennen</div>
+  <div class="book-concept">Oneitis als größte Gefahr – die Illusion der "Einen"</div>
+  <div class="book-concept">Plate Theory – Optionen aufbauen und halten</div>
+  <div class="book-concept">Frame Control als Lebensphilosophie – nicht nur Beziehungen</div>
+</div>
+
+<div class="book-card">
+  <div class="book-title">📗 PREVENTIVE MEDICINE — BUCH 2</div>
+  <div class="book-concept">Phase 1: DENIAL – Ablehnung der Realität, "So ist das nicht"</div>
+  <div class="book-concept">Phase 2: ANGER – Wut über die Täuschung, "Warum hat mir niemand das gesagt?"</div>
+  <div class="book-concept">Phase 3: BARGAINING – Verhandlung, "Vielleicht kann ich beides haben"</div>
+  <div class="book-concept">Phase 4: DEPRESSION – Trauer über die Illusion, notwendiger Schmerz</div>
+  <div class="book-concept">Phase 5: ACCEPTANCE – Integration und Neuaufbau. Hier beginnt die Stärke.</div>
+  <div class="book-concept">Feminine Imperative erkennen – gesellschaftliche Konditionierung</div>
+  <div class="book-concept">Social Conventions die Männer klein halten</div>
+</div>
+
+<div class="book-card">
+  <div class="book-title">📘 POSITIVE MASCULINITY — BUCH 3</div>
+  <div class="book-concept">Maskulinität ist kein Fehler – es ist eine Stärke</div>
+  <div class="book-concept">Konventionelle Attraktivität aktiv aufbauen</div>
+  <div class="book-concept">Mission vor Beziehung – immer. Ohne Ausnahme.</div>
+  <div class="book-concept">Red Pill Parenting – die nächste Generation vorbereiten</div>
+  <div class="book-concept">Komplementäre Geschlechterrollen – Stärken ergänzen</div>
+  <div class="book-concept">Authentic vs Performance Masculinity – echt sein, nicht spielen</div>
+</div>
+
+<div class="book-card">
+  <div class="book-title">📙 RELIGION — BUCH 4</div>
+  <div class="book-concept">Spiritualität und Red Pill vereinen – kein Widerspruch</div>
+  <div class="book-concept">Traditionelle Werte im modernen Kontext</div>
+  <div class="book-concept">Purpose-driven Leadership – Führen mit Zweck</div>
+  <div class="book-concept">Moralische Integrität ohne Blue Pill Conditioning</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- KEY QUOTE -->
+<div style="background:var(--surface2);border:1px solid var(--border);padding:24px;text-align:center;margin:16px 0;position:relative">
+  <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--pink),transparent);opacity:.5"></div>
+  <p style="font-size:14px;color:var(--text);font-style:italic;line-height:1.7;margin-bottom:8px">"The best you can do as a Man is to become the best version of yourself and let women compete for your attention."</p>
+  <p class="small" style="color:var(--pink)">— Rollo Tomassi</p>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/mastery">← HUB</a> · <a href="/mastery-tagesplan">TAGESPLAN</a> · <a href="/mastery-income">INCOME</a> · <a href="/mastery-today">HEUTE</a>
+</p>
+
+</div>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn">HOME</a>
+  <a href="/coaching" class="nav-btn">COACHING</a>
+  <a href="/mastery" class="nav-btn active">MASTERY</a>
+  <a href="/nerve" class="nav-btn">NERVE</a>
+</div></nav>
+
+<script>
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>
