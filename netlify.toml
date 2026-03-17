@@ -67,6 +67,17 @@
   to = "/bot-admin.html"
   status = 200
 
+[[redirects]]
+  from = "/nerve"
+  to = "/nerve.html"
+  status = 200
+
+# Nerve Center API
+[[redirects]]
+  from = "/api/nerve"
+  to = "/.netlify/functions/nerve-brain"
+  status = 200
+
 # Live booking API
 [[redirects]]
   from = "/api/live-booking"
