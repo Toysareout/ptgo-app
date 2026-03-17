@@ -1393,7 +1393,7 @@ def checkin_1(request: Request, db=Depends(get_db)):
           🎙️ Check starten
         </button>
         <div class="hr"></div>
-        <p class="small" style="text-align:center"><a href="/subscribe">⭐ Premium</a> · <a href="/profile">Body Profile</a> · <a href="/logout">Logout</a></p>
+        <p class="small" style="text-align:center"><a href="/mastery">⚡ Mastery</a> · <a href="/subscribe">⭐ Premium</a> · <a href="/profile">Body Profile</a> · <a href="/logout">Logout</a></p>
       </div>
 
       <!-- VOICE SCREEN -->
@@ -3103,3 +3103,785 @@ def _should_send_evening_message(p: Patient, now_local: datetime) -> bool:
     if hour == 19 and minute >= 45:
         return True
     return False
+
+
+# =========================================================
+# MODUL 20 – ROLLO TOMASSI FRAMEWORK
+# =========================================================
+
+ROLLO_TOMASSI = {
+    "core_principles": {
+        "iron_rules": [
+            {
+                "rule": "Iron Rule #1: Frame ist alles",
+                "description": "Wer den Frame kontrolliert, kontrolliert die Dynamik. In jeder Interaktion gibt es einen Frame – deinen oder den des anderen.",
+                "daily_practice": "Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm bewusst die Führung in mindestens 3 Gesprächen.",
+                "metric": "frame_control",
+            },
+            {
+                "rule": "Iron Rule #2: Zeige niemals mehr Interesse als sie",
+                "description": "Investition muss immer proportional sein. Wer mehr investiert, hat weniger Macht.",
+                "daily_practice": "Spiegel heute das Engagement deines Gegenübers. Antworte nicht sofort. Setze deine Zeit bewusst ein.",
+                "metric": "investment_balance",
+            },
+            {
+                "rule": "Iron Rule #3: Jede Frau ist eine Option, keine Garantie",
+                "description": "Abundance Mentality. Nie alles auf eine Karte setzen. Du bist die Wahl, nicht der Wartende.",
+                "daily_practice": "Erweitere heute dein soziales Netzwerk. Sprich mit 3 neuen Menschen. Baue Optionen auf.",
+                "metric": "abundance_mindset",
+            },
+            {
+                "rule": "Iron Rule #4: Verdecke deine Absichten nie mit Freundschaft",
+                "description": "Sei direkt. Friendzone entsteht durch fehlende Polarisierung. Mache deine Intention klar.",
+                "daily_practice": "Kommuniziere heute eine unbequeme Wahrheit direkt. Keine Umwege. Keine Entschuldigung.",
+                "metric": "directness",
+            },
+            {
+                "rule": "Iron Rule #5: Dein Wert steigt, wenn du dich selbst priorisierst",
+                "description": "Sexual Market Value (SMV) ist real. Dein Wert wird durch dein Verhalten definiert, nicht durch deine Worte.",
+                "daily_practice": "Priorisiere heute DEIN Training, DEINE Karriere, DEINE Ziele. Sage mindestens einmal Nein.",
+                "metric": "self_priority",
+            },
+            {
+                "rule": "Iron Rule #6: Frauen sind keine Männer mit anderen Körpern",
+                "description": "Verstehe die fundamentalen Unterschiede in Kommunikation, Attraktion und Bindung.",
+                "daily_practice": "Beobachte heute Kommunikationsmuster. Höre auf das WAS nicht gesagt wird.",
+                "metric": "awareness",
+            },
+            {
+                "rule": "Iron Rule #7: Hypergamie ist Natur, nicht Moral",
+                "description": "Frauen optimieren instinktiv nach oben. Das ist keine Kritik, sondern Biologie. Deine Aufgabe: Werde die beste Version.",
+                "daily_practice": "Arbeite heute an einem Skill der deinen Marktwert steigert. Körper, Geld, oder Status.",
+                "metric": "smv_improvement",
+            },
+            {
+                "rule": "Iron Rule #8: Sei der Preis",
+                "description": "Wenn du dich als Preis verhältst, wirst du als Preis behandelt. Internalisiere deinen Wert.",
+                "daily_practice": "Handle heute so, als wärst du die wichtigste Person im Raum. Nicht arrogant – aber sicher.",
+                "metric": "prize_mentality",
+            },
+            {
+                "rule": "Iron Rule #9: Vertraue dem Verhalten, nicht den Worten",
+                "description": "Was Menschen TUN ist die Wahrheit. Was sie SAGEN ist oft Rationalisierung.",
+                "daily_practice": "Ignoriere heute was dir gesagt wird. Beobachte was getan wird. Entscheide basierend auf Handlungen.",
+                "metric": "behavioral_reading",
+            },
+        ],
+    },
+    "books": {
+        "rational_male_1": {
+            "title": "The Rational Male – Buch 1",
+            "key_concepts": [
+                "Hypergamie verstehen und akzeptieren",
+                "SMV (Sexual Market Value) Kurven – Männer peaken später",
+                "Blue Pill vs Red Pill Bewusstsein",
+                "Oneitis als größte Gefahr",
+                "Plate Theory – Optionen aufbauen",
+                "Frame Control als Lebensphilosophie",
+            ],
+        },
+        "rational_male_2": {
+            "title": "The Rational Male – Preventive Medicine",
+            "key_concepts": [
+                "Die 5 Phasen der Red Pill Entwicklung",
+                "Phase 1: Denial – Ablehnung der Realität",
+                "Phase 2: Anger – Wut über die Täuschung",
+                "Phase 3: Bargaining – Verhandlung mit dem alten Ich",
+                "Phase 4: Depression – Trauer über die Illusion",
+                "Phase 5: Acceptance – Integration und Neuaufbau",
+                "Feminine Imperative erkennen",
+                "Social Conventions die Männer klein halten",
+            ],
+        },
+        "rational_male_3": {
+            "title": "The Rational Male – Positive Masculinity",
+            "key_concepts": [
+                "Maskulinität ist kein Fehler",
+                "Konventionelle Attraktivität aufbauen",
+                "Mission vor Beziehung",
+                "Red Pill Parenting",
+                "Komplementäre Geschlechterrollen",
+                "Authentic vs Performance Masculinity",
+            ],
+        },
+        "rational_male_4": {
+            "title": "The Rational Male – Religion",
+            "key_concepts": [
+                "Spiritualität und Red Pill vereinen",
+                "Traditionelle Werte im modernen Kontext",
+                "Purpose-driven Leadership",
+                "Moralische Integrität ohne Blue Pill Conditioning",
+            ],
+        },
+    },
+    "smv_pillars": {
+        "physique": {
+            "label": "Körper / Physique",
+            "weight": 0.25,
+            "actions": [
+                "5x/Woche Krafttraining (Push/Pull/Legs)",
+                "Körperfett unter 15% halten",
+                "Kleidung die deinen Körperbau betont",
+                "Körpersprache: offen, breit, ruhig",
+            ],
+        },
+        "status": {
+            "label": "Status / Einfluss",
+            "weight": 0.30,
+            "actions": [
+                "Karriere als Mission behandeln",
+                "Social Proof aufbauen (Events, Netzwerk)",
+                "Führungsrollen übernehmen",
+                "Expertise in deinem Feld demonstrieren",
+            ],
+        },
+        "game": {
+            "label": "Game / Soziale Kompetenz",
+            "weight": 0.25,
+            "actions": [
+                "Täglich mit Fremden sprechen",
+                "Push/Pull Dynamik meistern",
+                "Kino Escalation verstehen",
+                "Storytelling und Humor entwickeln",
+            ],
+        },
+        "resources": {
+            "label": "Ressourcen / Vermögen",
+            "weight": 0.20,
+            "actions": [
+                "Einkommensströme diversifizieren",
+                "Investieren lernen und umsetzen",
+                "Lifestyle Design: wenig Kosten, hoher Impact",
+                "Finanzielle Unabhängigkeit als Ziel #1",
+            ],
+        },
+    },
+}
+
+
+# =========================================================
+# MODUL 21 – MILLIARDÄRS-TAGESPLAN
+# =========================================================
+
+BILLIONAIRE_DAILY_PLAN = {
+    "meta": {
+        "based_on": [
+            "Elon Musk (Tesla, SpaceX, X) – Time Blocking in 5-Minuten-Einheiten",
+            "Jeff Bezos (Amazon) – Regret Minimization Framework",
+            "Ray Dalio (Bridgewater) – Principles-based Decision Making",
+            "Naval Ravikant – Specific Knowledge + Leverage",
+            "Andrew Huberman – Neuroscience-optimierte Routinen",
+            "Alex Hormozi – $100M Offers Methodik",
+            "Sam Altman – Compound Growth Thinking",
+        ],
+        "core_philosophy": "Milliardäre optimieren nicht ihre Zeit – sie optimieren ihren IMPACT pro Stunde. "
+                          "Jede Stunde muss entweder Lernen, Bauen, oder Skalieren sein.",
+    },
+    "schedule": [
+        {"time": "05:00", "block": "WAKE PROTOCOL", "duration": "15min",
+         "action": "Kein Handy. Wasser (500ml). 2min Sonnenlicht oder helles Licht. Kalt duschen (30sec).",
+         "why": "Huberman: Cortisol-Peak durch Licht. Dopamin-Reset durch Kälte. Musk: 'I wake up and think about problems.'",
+         "category": "health"},
+        {"time": "05:15", "block": "DEEP WORK I – BUILD", "duration": "120min",
+         "action": "Die EINE Sache die am meisten Impact hat. Kein E-Mail, kein Social Media. Phone off. Timer auf 25min Pomodoro.",
+         "why": "Bezos: Die wichtigsten Entscheidungen morgens. Dein präfrontaler Cortex ist jetzt am schärfsten.",
+         "category": "build"},
+        {"time": "07:15", "block": "TRAINING", "duration": "45min",
+         "action": "Krafttraining (Push/Pull/Legs Rotation). Keine Ausdauer am Morgen. Heavy Compound Lifts.",
+         "why": "Musk trainiert 2-3x/Woche. Bezos macht es täglich. Testosteron + Disziplin + Körper = höherer SMV.",
+         "category": "health"},
+        {"time": "08:00", "block": "FUEL", "duration": "20min",
+         "action": "High-Protein Frühstück (40g+). Schwarzer Kaffee. Keine Kohlenhydrate vor 12:00.",
+         "why": "Hormozi: 'Your body is your first business.' Insulin-Kontrolle = Energie-Kontrolle.",
+         "category": "health"},
+        {"time": "08:20", "block": "REVIEW & PLAN", "duration": "10min",
+         "action": "PTGO Check-in machen. 3 MIT (Most Important Tasks) festlegen. Kalender checken.",
+         "why": "Dalio: 'Without data, you're just guessing.' Dein Check-in IST dein Daten-Dashboard.",
+         "category": "review"},
+        {"time": "08:30", "block": "DEEP WORK II – REVENUE", "duration": "150min",
+         "action": "Direkt umsatzgenerierende Arbeit. Verkaufen, Pitchen, Content erstellen, Produkte bauen.",
+         "why": "Hormozi: Die ersten 4 Stunden deines Tages gehören der Umsatzgenerierung. Alles andere ist Ablenkung.",
+         "category": "revenue"},
+        {"time": "11:00", "block": "COMMUNICATION BLOCK", "duration": "60min",
+         "action": "Alle E-Mails, Calls, Messages gebündelt. Batch Processing. Entscheidungen treffen, nicht aufschieben.",
+         "why": "Musk: Time-Boxing. Bezos: 'I do my email at 10am.' Nie reactive arbeiten.",
+         "category": "communication"},
+        {"time": "12:00", "block": "LUNCH + LEARNING", "duration": "45min",
+         "action": "Essen + Podcast/Audiobook. Themen: Business, Psychology, Finance. 30min Input pro Tag minimum.",
+         "why": "Naval: 'Read what you love until you love to read.' Compound Knowledge = Compound Wealth.",
+         "category": "learning"},
+        {"time": "12:45", "block": "DEEP WORK III – SCALE", "duration": "120min",
+         "action": "Systeme bauen. Automatisierung. Delegation. SOPs schreiben. Das Geschäft ohne dich möglich machen.",
+         "why": "Bezos: 'Your margin is my opportunity.' Skalierung = Marge = Freiheit. Arbeite AM Business, nicht IM Business.",
+         "category": "scale"},
+        {"time": "14:45", "block": "NETWORKING / SOCIAL", "duration": "60min",
+         "action": "2-3 strategische Gespräche. LinkedIn Outreach. Mastermind. Kontakte die 10x deinem Level sind.",
+         "why": "Naval: 'Your network is your net worth.' Du bist der Durchschnitt der 5 Menschen um dich.",
+         "category": "network"},
+        {"time": "15:45", "block": "CONTENT & BRAND", "duration": "75min",
+         "action": "1 Content Piece pro Tag. Video, Thread, oder Artikel. Dokumentiere was du lernst/baust.",
+         "why": "Hormozi: 'Content is the new cold call.' Musk kommuniziert direkt. Deine Brand IST dein Hebel.",
+         "category": "brand"},
+        {"time": "17:00", "block": "REVIEW & ITERATE", "duration": "30min",
+         "action": "KPIs checken. Was hat heute Impact gehabt? Was war Zeitverschwendung? Morgen anpassen.",
+         "why": "Dalio: 'Pain + Reflection = Progress.' Tägliche Iteration schlägt jährliche Planung.",
+         "category": "review"},
+        {"time": "17:30", "block": "RELATIONSHIPS & LIFE", "duration": "150min",
+         "action": "Frame-bewusste Quality Time. Rollo-Prinzipien leben. Sei der Preis. Führe Interaktionen.",
+         "why": "Tomassi: 'Your mission comes first.' Aber Beziehungen sind Teil der Mission. Balance durch Frame.",
+         "category": "relationships"},
+        {"time": "20:00", "block": "EVENING PROTOCOL", "duration": "60min",
+         "action": "PTGO Abend-Reflexion. Journaling. Lesen (30min). Screen-Time reduzieren. Schlaf vorbereiten.",
+         "why": "Huberman: Licht dimmen 2h vor Schlaf. Melatonin-Produktion. Schlaf = Recovery = Performance.",
+         "category": "wind_down"},
+        {"time": "21:00", "block": "SLEEP", "duration": "8h",
+         "action": "Zimmer kalt (18°C), dunkel, kein Handy. 7-8h durchschlafen. Nicht verhandelbar.",
+         "why": "Jeder Top-Performer sagt: Schlaf ist nicht optional. Walker: 'Sleep is the greatest legal performance enhancer.'",
+         "category": "sleep"},
+    ],
+}
+
+
+# =========================================================
+# MODUL 22 – HIGH-INCOME STRATEGIE & FAHRPLAN
+# =========================================================
+
+INCOME_STRATEGY = {
+    "reality_check": {
+        "title": "Reality Check – Die Wahrheit über 5000€/Tag",
+        "facts": [
+            "5.000€/Tag = 150.000€/Monat = 1.800.000€/Jahr",
+            "Das ist Top 0.1% in Deutschland",
+            "Es ist MÖGLICH – aber nicht in einer Woche, nicht passiv, nicht ohne extremen Einsatz",
+            "Elon Musk hat 12 Jahre gebraucht um seinen ersten großen Exit zu machen",
+            "Alex Hormozi hat 3 Jahre gebraucht für $100M Revenue",
+            "Naval Ravikant: 'You won't get rich renting out your time. You must own equity.'",
+        ],
+    },
+    "elon_prediction": {
+        "title": "Was Elon meint mit 'viele neue Milliardäre'",
+        "analysis": [
+            "AI-native Businesses: Wer KI als Hebel nutzt, kann mit 1-3 Leuten Firmen bauen die früher 100 brauchten",
+            "Robotik + Physical AI: Tesla Optimus, humanoide Roboter – neue Industrien entstehen",
+            "xAI + Grok: AI-Tools werden Produktivität 10-100x steigern",
+            "Musk's These: Arbeit wird durch AI so produktiv, dass Wertschöpfung pro Person explodiert",
+            "ABER: Du musst der BUILDER sein, nicht der Konsument. Builder profitieren, Konsumenten werden ersetzt.",
+        ],
+    },
+    "phases": [
+        {
+            "phase": "Phase 1: Foundation (Monat 1-3)",
+            "target": "500-2.000€/Tag",
+            "focus": "High-Value Skill + erstes Angebot",
+            "actions": [
+                "SKILL: Lerne AI-Tools (Claude, GPT, Midjourney) bis du schneller bist als 99% der Leute",
+                "ANGEBOT: Biete AI-Transformation für KMUs an (5.000-15.000€ pro Projekt)",
+                "KUNDEN: 100 kalte Nachrichten pro Tag auf LinkedIn. Ohne Ausnahme.",
+                "PREIS: Starte bei 3.000€/Projekt. Steigere auf 10.000€ nach 3 Kunden.",
+                "CONTENT: 1 LinkedIn Post pro Tag über deine AI-Ergebnisse",
+                "MINDSET: Du verkaufst nicht 'AI' – du verkaufst ERGEBNISSE. Zeitersparnis. Kostensenkung. Umsatzsteigerung.",
+            ],
+            "weekly_kpi": "Mindestens 3 Erstgespräche pro Woche, 1 Abschluss pro Woche",
+        },
+        {
+            "phase": "Phase 2: Scale (Monat 4-12)",
+            "target": "2.000-5.000€/Tag",
+            "focus": "Systeme + Team + Recurring Revenue",
+            "actions": [
+                "PRODUCTIZE: Mach dein Angebot wiederholbar. SOPs für alles.",
+                "TEAM: Stelle 2-3 Freelancer ein die die Delivery machen",
+                "RETAINER: Verkaufe monatliche AI-Betreuung (2.000-5.000€/Monat pro Kunde)",
+                "CONTENT: Skaliere auf YouTube + Newsletter. Zeige Case Studies.",
+                "LEVERAGE: Nutze AI um 10x so viel zu liefern bei gleicher Zeit",
+                "UPSELL: Biete Premium-Pakete an (25.000€+ für große Transformationen)",
+            ],
+            "weekly_kpi": "10+ aktive Kunden, 50.000€+ Monatsrevenue, 60%+ Marge",
+        },
+        {
+            "phase": "Phase 3: Compound (Jahr 2-3)",
+            "target": "5.000-50.000€/Tag",
+            "focus": "Equity + Software + Multiple Income Streams",
+            "actions": [
+                "SAAS: Baue ein AI-Tool das deine beste Dienstleistung automatisiert",
+                "EQUITY: Nimm Beteiligungen an statt Cash bei ausgewählten Kunden",
+                "FUND: Starte einen kleinen AI-Fonds oder Angel-Investing",
+                "BRAND: Du bist jetzt bekannt. Monetisiere die Audience (Kurse, Events, Consulting)",
+                "TEAM: 10-20 Leute. Du bist CEO, nicht Operator.",
+                "EXIT: Baue verkaufbare Assets (SaaS mit ARR, Content-Imperium, Kundenportfolio)",
+            ],
+            "weekly_kpi": "7-stelliger Monatsumsatz, multiple Revenue Streams, <20h/Woche operativ",
+        },
+    ],
+    "immediate_actions": {
+        "title": "Was du HEUTE tun kannst",
+        "today": [
+            "Erstelle ein LinkedIn Profil das dich als AI-Experte positioniert",
+            "Schreibe 20 personalisierte Nachrichten an Geschäftsführer von KMUs",
+            "Lerne ein AI-Tool bis du es besser kannst als 95% der Leute",
+            "Erstelle ein einfaches Angebot: 'Ich spare Ihrem Team 10h/Woche mit AI – oder Sie zahlen nichts'",
+            "Setze einen Preis fest (mind. 3.000€) und stehe dazu",
+        ],
+        "this_week": [
+            "30 Outreach-Nachrichten pro Tag (Mo-Fr = 150 Kontakte)",
+            "3 Discovery Calls buchen",
+            "1 Case Study erstellen (auch wenn es ein Eigenprojekt ist)",
+            "PTGO Daily Check-in JEDEN Tag – dein State bestimmt dein Income",
+            "Abends: 1h Skill-Development (AI, Sales, Marketing)",
+        ],
+    },
+    "leverage_types": {
+        "title": "Die 4 Hebel zum Reichtum (nach Naval Ravikant)",
+        "levers": [
+            {
+                "name": "Code (Software)",
+                "description": "Software arbeitet 24/7, skaliert unendlich, kostet fast nichts zu duplizieren.",
+                "action": "Baue ein SaaS-Tool, eine App, oder automatisiere Prozesse.",
+            },
+            {
+                "name": "Media (Content)",
+                "description": "Ein Video kann 10 Millionen Menschen erreichen. Ein Buch kann 50 Jahre verkaufen.",
+                "action": "Erstelle täglich Content. Baue eine Audience. Audience = Attention = Money.",
+            },
+            {
+                "name": "Capital (Geld)",
+                "description": "Geld arbeiten lassen. Investieren. Compound Interest. Aber du brauchst erst Capital.",
+                "action": "Investiere 20% von allem was reinkommt. Ab Tag 1. Auch wenn es 50€ sind.",
+            },
+            {
+                "name": "People (Team)",
+                "description": "Ein Team multipliziert deine Kapazität. Du kannst nur 16h/Tag arbeiten. 10 Leute = 160h.",
+                "action": "Stelle so früh wie möglich ein. Billige Freelancer zuerst, dann A-Player.",
+            },
+        ],
+    },
+}
+
+
+# =========================================================
+# ROLLO TOMASSI + INCOME + TAGESPLAN – ROUTES
+# =========================================================
+
+@app.get("/mastery", response_class=HTMLResponse)
+def mastery_hub(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Get today's Rollo rule (rotate daily)
+    day_of_year = _now_local().timetuple().tm_yday
+    rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rules[day_of_year % len(rules)]
+
+    # Get current schedule block
+    now = _now_local()
+    current_block = None
+    for block in BILLIONAIRE_DAILY_PLAN["schedule"]:
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+        if now >= block_time:
+            current_block = block
+
+    streak = _get_patient_streak(db, p.id)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">⚡</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">MASTERY HUB</div>
+      </div>
+      <h1 style="text-align:center;font-size:24px">Dein Weg zur Meisterschaft</h1>
+
+      <!-- Current Time Block -->
+      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:18px;margin:16px 0">
+        <div class="small" style="color:#f59e0b;margin-bottom:4px">JETZT – {current_block['time'] if current_block else '--:--'}</div>
+        <b style="font-size:18px;color:#fbbf24">{current_block['block'] if current_block else 'Schlaf-Modus'}</b>
+        <p style="font-size:13px;margin:8px 0 0">{current_block['action'] if current_block else 'Erhole dich. Morgen wird gebaut.'}</p>
+      </div>
+
+      <!-- Today's Iron Rule -->
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-radius:16px;padding:18px;margin:16px 0">
+        <div class="small" style="color:#f87171;margin-bottom:4px">IRON RULE DES TAGES</div>
+        <b style="font-size:16px;color:#fca5a5">{todays_rule['rule']}</b>
+        <p style="font-size:13px;margin:8px 0 4px">{todays_rule['description']}</p>
+        <p style="font-size:12px;color:#f59e0b;margin:4px 0 0">→ {todays_rule['daily_practice']}</p>
+      </div>
+
+      <!-- Streak -->
+      {"<div style='margin:12px 0;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center'><span style='font-size:24px'>🔥</span> <span style='font-size:18px;font-weight:700;color:#f59e0b'>" + str(streak['current_streak']) + " Tage Streak</span></div>" if streak['current_streak'] >= 2 else ""}
+
+      <!-- Navigation -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0">
+        <a href="/mastery/rollo" style="display:block;padding:16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">🔴</div>
+          <div style="font-size:14px;font-weight:700;color:#fca5a5;margin-top:6px">Rollo Tomassi</div>
+          <div style="font-size:11px;color:#6b7280">Iron Rules & SMV</div>
+        </a>
+        <a href="/mastery/tagesplan" style="display:block;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#fcd34d;margin-top:6px">Tagesplan</div>
+          <div style="font-size:11px;color:#6b7280">Milliardärs-Routine</div>
+        </a>
+        <a href="/mastery/income" style="display:block;padding:16px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">💰</div>
+          <div style="font-size:14px;font-weight:700;color:#86efac;margin-top:6px">Income Engine</div>
+          <div style="font-size:11px;color:#6b7280">5.000€/Tag Fahrplan</div>
+        </a>
+        <a href="/mastery/today" style="display:block;padding:16px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#a5b4fc;margin-top:6px">Heute umsetzen</div>
+          <div style="font-size:11px;color:#6b7280">Sofort-Actions</div>
+        </a>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/checkin/1">Check-in</a> •
+        <a href="/insights">Trends</a> •
+        <a href="/progress">Progress</a>
+      </p>
+    """
+    return _page("PTGO • Mastery Hub", body, request=request)
+
+
+@app.get("/mastery/rollo", response_class=HTMLResponse)
+def mastery_rollo(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Iron Rules
+    rules_html = ""
+    for i, rule in enumerate(ROLLO_TOMASSI["core_principles"]["iron_rules"]):
+        rules_html += f"""
+        <div style="border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(239,68,68,.03)">
+          <b style="color:#fca5a5;font-size:15px">{rule['rule']}</b>
+          <p style="font-size:13px;margin:8px 0 6px">{rule['description']}</p>
+          <div style="background:rgba(245,158,11,.08);border-radius:10px;padding:10px;margin-top:8px">
+            <span style="font-size:11px;color:#f59e0b;font-weight:600">DAILY PRACTICE:</span>
+            <p style="font-size:12px;margin:4px 0 0;color:#fcd34d">{rule['daily_practice']}</p>
+          </div>
+        </div>
+        """
+
+    # Books
+    books_html = ""
+    for key, book in ROLLO_TOMASSI["books"].items():
+        concepts = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{c}</li>" for c in book["key_concepts"])
+        books_html += f"""
+        <div style="border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(255,255,255,.02)">
+          <b style="color:#e5e7eb;font-size:14px">{book['title']}</b>
+          <ul style="margin:8px 0 0;padding-left:18px">{concepts}</ul>
+        </div>
+        """
+
+    # SMV Pillars
+    smv_html = ""
+    for key, pillar in ROLLO_TOMASSI["smv_pillars"].items():
+        actions = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{a}</li>" for a in pillar["actions"])
+        pct = int(pillar["weight"] * 100)
+        smv_html += f"""
+        <div style="border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(99,102,241,.03)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b style="color:#a5b4fc;font-size:14px">{pillar['label']}</b>
+            <span style="font-size:12px;color:#f59e0b;font-weight:700">{pct}%</span>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0">
+            <div style="height:4px;background:#6366f1;border-radius:999px;width:{pct}%"></div>
+          </div>
+          <ul style="margin:6px 0 0;padding-left:18px">{actions}</ul>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🔴</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">THE RATIONAL MALE</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Rollo Tomassi Framework</h1>
+      <p class="small" style="text-align:center">Alle Iron Rules, alle Bücher, das komplette System</p>
+
+      <div class="hr"></div>
+      <h2 style="color:#fca5a5">Iron Rules of Tomassi</h2>
+      {rules_html}
+
+      <div class="hr"></div>
+      <h2 style="color:#a5b4fc">SMV Pillars – Dein Marktwert</h2>
+      <p class="small">Sexual Market Value = Summe aus 4 Bereichen. Optimiere alle parallel.</p>
+      {smv_html}
+
+      <div class="hr"></div>
+      <h2>Bücher & Key Concepts</h2>
+      {books_html}
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/tagesplan">Tagesplan</a> •
+        <a href="/mastery/income">Income</a>
+      </p>
+    """
+    return _page("PTGO • Rollo Tomassi", body, request=request)
+
+
+@app.get("/mastery/tagesplan", response_class=HTMLResponse)
+def mastery_tagesplan(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    now = _now_local()
+    schedule_html = ""
+    for block in BILLIONAIRE_DAILY_PLAN["schedule"]:
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+
+        # Determine if this block is current, past, or future
+        is_current = False
+        idx = BILLIONAIRE_DAILY_PLAN["schedule"].index(block)
+        next_block = BILLIONAIRE_DAILY_PLAN["schedule"][idx + 1] if idx + 1 < len(BILLIONAIRE_DAILY_PLAN["schedule"]) else None
+        if next_block:
+            nh, nm = next_block["time"].split(":")
+            next_time = now.replace(hour=int(nh), minute=int(nm), second=0)
+            is_current = block_time <= now < next_time
+        else:
+            is_current = now >= block_time
+
+        cat_colors = {
+            "health": "#22c55e", "build": "#f59e0b", "revenue": "#ef4444",
+            "review": "#6366f1", "communication": "#94a3b8", "learning": "#a855f7",
+            "scale": "#ec4899", "network": "#06b6d4", "brand": "#f97316",
+            "relationships": "#e879f9", "wind_down": "#6b7280", "sleep": "#334155",
+        }
+        color = cat_colors.get(block["category"], "#6b7280")
+        border = f"2px solid {color}" if is_current else "1px solid #1f2937"
+        bg = f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},.08)" if is_current else "rgba(255,255,255,.02)"
+
+        schedule_html += f"""
+        <div style="border:{border};border-radius:14px;padding:14px;margin-bottom:10px;background:{bg}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:13px;color:{color};font-weight:700">{block['time']}</span>
+              <b style="margin-left:10px;font-size:15px">{block['block']}</b>
+            </div>
+            <span style="font-size:11px;color:#6b7280">{block['duration']}</span>
+          </div>
+          <p style="font-size:13px;margin:8px 0 4px">{block['action']}</p>
+          <p style="font-size:11px;color:#6b7280;margin:0;font-style:italic">{block['why']}</p>
+          {'<div style="margin-top:6px;font-size:11px;color:' + color + ';font-weight:700">← DU BIST HIER</div>' if is_current else ''}
+        </div>
+        """
+
+    sources = "".join(f"<li style='font-size:11px;color:#6b7280;margin:2px 0'>{s}</li>" for s in BILLIONAIRE_DAILY_PLAN["meta"]["based_on"])
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">📋</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">MILLIARDÄRS-TAGESPLAN</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Der optimale Tag</h1>
+
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:14px;margin:12px 0">
+        <p style="font-size:13px;color:#fcd34d;margin:0">{BILLIONAIRE_DAILY_PLAN['meta']['core_philosophy']}</p>
+      </div>
+
+      <div class="hr"></div>
+      {schedule_html}
+
+      <div class="hr"></div>
+      <h2>Quellen</h2>
+      <ul style="padding-left:18px">{sources}</ul>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/rollo">Rollo</a> •
+        <a href="/mastery/income">Income</a>
+      </p>
+    """
+    return _page("PTGO • Tagesplan", body, request=request)
+
+
+@app.get("/mastery/income", response_class=HTMLResponse)
+def mastery_income(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Reality Check
+    facts = "".join(f"<li style='font-size:13px;margin:4px 0;color:#94a3b8'>{f}</li>" for f in INCOME_STRATEGY["reality_check"]["facts"])
+
+    # Elon Analysis
+    elon = "".join(f"<li style='font-size:13px;margin:4px 0;color:#86efac'>{a}</li>" for a in INCOME_STRATEGY["elon_prediction"]["analysis"])
+
+    # Phases
+    phases_html = ""
+    phase_colors = ["#f59e0b", "#22c55e", "#6366f1"]
+    for i, phase in enumerate(INCOME_STRATEGY["phases"]):
+        color = phase_colors[i]
+        actions = "".join(f"<li style='font-size:12px;margin:4px 0;color:#94a3b8'>{a}</li>" for a in phase["actions"])
+        phases_html += f"""
+        <div style="border:1px solid {color}40;border-radius:16px;padding:18px;margin-bottom:14px;background:{color}08">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b style="color:{color};font-size:16px">{phase['phase']}</b>
+            <span style="font-size:14px;font-weight:700;color:{color}">{phase['target']}</span>
+          </div>
+          <p style="font-size:13px;color:#e5e7eb;margin:8px 0 4px;font-weight:600">{phase['focus']}</p>
+          <ul style="padding-left:18px;margin:8px 0">{actions}</ul>
+          <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:10px;margin-top:8px">
+            <span style="font-size:11px;color:{color};font-weight:600">WEEKLY KPI:</span>
+            <span style="font-size:12px;color:#94a3b8"> {phase['weekly_kpi']}</span>
+          </div>
+        </div>
+        """
+
+    # Leverage Types
+    levers_html = ""
+    lever_icons = ["💻", "📱", "💰", "👥"]
+    for i, lever in enumerate(INCOME_STRATEGY["leverage_types"]["levers"]):
+        levers_html += f"""
+        <div style="border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.02)">
+          <div style="font-size:20px;display:inline">{lever_icons[i]}</div>
+          <b style="margin-left:8px;color:#e5e7eb">{lever['name']}</b>
+          <p style="font-size:12px;margin:6px 0 4px">{lever['description']}</p>
+          <p style="font-size:12px;color:#f59e0b;margin:0">→ {lever['action']}</p>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">💰</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">INCOME ENGINE</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">5.000€/Tag Fahrplan</h1>
+
+      <!-- Reality Check -->
+      <div style="border:1px solid rgba(239,68,68,.3);border-radius:16px;padding:18px;margin:16px 0;background:rgba(239,68,68,.05)">
+        <h2 style="color:#fca5a5;margin:0 0 8px;font-size:16px">⚠️ {INCOME_STRATEGY['reality_check']['title']}</h2>
+        <ul style="padding-left:18px;margin:0">{facts}</ul>
+      </div>
+
+      <!-- Elon Prediction -->
+      <div style="border:1px solid rgba(34,197,94,.3);border-radius:16px;padding:18px;margin:16px 0;background:rgba(34,197,94,.05)">
+        <h2 style="color:#86efac;margin:0 0 8px;font-size:16px">🚀 {INCOME_STRATEGY['elon_prediction']['title']}</h2>
+        <ul style="padding-left:18px;margin:0">{elon}</ul>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Die 4 Hebel zum Reichtum</h2>
+      <p class="small">Nach Naval Ravikant – nutze mindestens 2 gleichzeitig</p>
+      {levers_html}
+
+      <div class="hr"></div>
+      <h2>Der 3-Phasen Fahrplan</h2>
+      {phases_html}
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/today">Sofort-Actions</a> •
+        <a href="/mastery/rollo">Rollo</a>
+      </p>
+    """
+    return _page("PTGO • Income Engine", body, request=request)
+
+
+@app.get("/mastery/today", response_class=HTMLResponse)
+def mastery_today(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Today's actions
+    today_actions = "".join(
+        f"""<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #1f2937;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.02)">
+          <div style="font-size:18px;margin-top:2px">⬜</div>
+          <div style="font-size:13px;color:#e5e7eb">{a}</div>
+        </div>"""
+        for a in INCOME_STRATEGY["immediate_actions"]["today"]
+    )
+
+    week_actions = "".join(
+        f"""<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(245,158,11,.2);border-radius:12px;margin-bottom:8px;background:rgba(245,158,11,.03)">
+          <div style="font-size:18px;margin-top:2px">📌</div>
+          <div style="font-size:13px;color:#e5e7eb">{a}</div>
+        </div>"""
+        for a in INCOME_STRATEGY["immediate_actions"]["this_week"]
+    )
+
+    # Today's Rollo rule
+    day_of_year = _now_local().timetuple().tm_yday
+    rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rules[day_of_year % len(rules)]
+
+    # AI Coaching for today
+    coaching_prompt = ""
+    if ANTHROPIC_API_KEY:
+        last_checkin = db.query(CheckIn).filter(
+            CheckIn.patient_id == p.id
+        ).order_by(CheckIn.created_at.desc()).first()
+
+        if last_checkin:
+            try:
+                prompt = (
+                    f"Du bist ein Coach der Rollo Tomassi's Prinzipien kennt UND ein Business-Mentor ist.\n"
+                    f"Der Nutzer hat folgende Daten:\n"
+                    f"- Recovery Score: {last_checkin.score}/100\n"
+                    f"- Stress: {last_checkin.stress}/10\n"
+                    f"- Schlaf: {last_checkin.sleep}/10\n"
+                    f"- Pattern: {last_checkin.pattern_label}\n\n"
+                    f"Heute gilt Iron Rule: {todays_rule['rule']}\n\n"
+                    f"Gib ihm einen persönlichen Tages-Impuls (3 Sätze) der:\n"
+                    f"1. Seinen aktuellen State berücksichtigt\n"
+                    f"2. Die heutige Iron Rule integriert\n"
+                    f"3. Einen konkreten Business/Income Tipp gibt\n"
+                    f"Deutsch. Direkt. Kein Gelaber."
+                )
+                resp = requests.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                    json={"model": "claude-haiku-4-5", "max_tokens": 250, "messages": [{"role": "user", "content": prompt}]},
+                    timeout=15,
+                )
+                resp.raise_for_status()
+                coaching_prompt = resp.json()["content"][0]["text"].strip()
+            except Exception as e:
+                print("[WARN] Today coaching failed:", e)
+
+    coaching_html = ""
+    if coaching_prompt:
+        coaching_html = f"""
+        <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:18px;margin:16px 0">
+          <div class="small" style="color:#a5b4fc;margin-bottom:4px">AI COACHING – DEIN TAGES-IMPULS</div>
+          <p style="font-size:14px;line-height:1.7;color:#e5e7eb;margin:0">{coaching_prompt}</p>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🎯</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">HEUTE UMSETZEN</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Dein Action Plan für heute</h1>
+
+      {coaching_html}
+
+      <!-- Today's Iron Rule -->
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:14px;margin:12px 0">
+        <div class="small" style="color:#f87171;margin-bottom:4px">IRON RULE</div>
+        <b style="font-size:14px;color:#fca5a5">{todays_rule['rule']}</b>
+        <p style="font-size:12px;margin:4px 0 0;color:#f59e0b">→ {todays_rule['daily_practice']}</p>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Sofort-Actions für heute</h2>
+      {today_actions}
+
+      <div class="hr"></div>
+      <h2>Diese Woche</h2>
+      {week_actions}
+
+      <div class="hr"></div>
+      <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:14px;text-align:center">
+        <p style="font-size:14px;color:#86efac;margin:0;font-weight:600">
+          "Specific knowledge + leverage + judgment = wealth"
+        </p>
+        <p class="small" style="margin:6px 0 0">— Naval Ravikant</p>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/income">Income</a> •
+        <a href="/checkin/1">Check-in</a>
+      </p>
+    """
+    return _page("PTGO • Heute", body, request=request)
