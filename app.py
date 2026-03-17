@@ -3458,6 +3458,21 @@ INCOME_STRATEGY = {
 
 
 # =========================================================
+# DEV LOGIN (only works when APP_SECRET is default)
+# =========================================================
+
+@app.get("/dev-login", response_class=HTMLResponse)
+def dev_login(request: Request, db=Depends(get_db)):
+    if APP_SECRET != "dev-secret-change-me":
+        raise HTTPException(status_code=404)
+    patient = db.query(Patient).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="No patients in DB")
+    request.session["patient_id"] = patient.id
+    return RedirectResponse("/mastery", status_code=302)
+
+
+# =========================================================
 # ROLLO TOMASSI + INCOME + TAGESPLAN – ROUTES
 # =========================================================
 
