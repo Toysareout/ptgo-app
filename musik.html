@@ -312,8 +312,8 @@ async function checkPw(){var v=document.getElementById('pw-input').value;var h=a
   <div class="hero-content">
     <div id="hero-name">THE<span class="pk">TOYS</span><br><span class="ol">ARE</span>OUT</div>
     <div id="hero-dot"></div>
-    <div id="hero-sub"><!--HEADLINE-START-->Limitiert heißt limitiert.<!--HEADLINE-END--></div>
-    <div id="hero-count"><b id="face-count"><!--WATCHERS-START-->160<!--WATCHERS-END--></b> Gesichter sind bereits Teil der Welt</div>
+    <div id="hero-sub"><!--HEADLINE-START-->Alles echt. Nichts gespielt.<!--HEADLINE-END--></div>
+    <div id="hero-count"><b id="face-count"><!--WATCHERS-START-->136<!--WATCHERS-END--></b> Gesichter sind bereits Teil der Welt</div>
     <div id="choices">
       <button class="ch ch-a" onclick="openPanel('cam-panel')">Ich bin dabei. →</button>
       <button class="ch ch-b" onclick="openPanel('gal-panel')">Die Welt ansehen.</button>
@@ -419,35 +419,35 @@ async function checkPw(){var v=document.getElementById('pw-input').value;var h=a
   <div class="s-title">Drops.<br><span class="ol">Limitiert.</span></div>
   <div class="s-sub">Wenn es weg ist, ist es weg.</div>
   <div class="drop-grid"><!--DROPS-START-->
-    <div class="drop-card">
-      <div class="drop-tag">DROP 031</div>
-      <div class="drop-name">VOID SIGNAL</div>
-      <div class="drop-desc">Nur solange der Vorrat reicht.</div>
-      <div class="drop-bottom">
-        <div class="drop-price">42 €</div>
-        <div class="drop-stock"><b>18</b> / 29 übrig</div>
-      </div>
-      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 031 — VOID SIGNAL',42)">42 € — JETZT</button>
-    </div>
     <div class="drop-card sold-out">
-      <div class="drop-tag">DROP 007</div>
-      <div class="drop-name">ZERO HOUR</div>
-      <div class="drop-desc">Fast vergriffen.</div>
+      <div class="drop-tag">DROP 017</div>
+      <div class="drop-name">RAW NERVE</div>
+      <div class="drop-desc">Nicht lange verfügbar.</div>
       <div class="drop-bottom">
-        <div class="drop-price">12 €</div>
+        <div class="drop-price">25 €</div>
         <div class="drop-stock">SOLD OUT</div>
       </div>
       <button class="btn btn-g" style="width:100%;margin-top:12px;opacity:.3" disabled>VERGRIFFEN</button>
     </div>
     <div class="drop-card">
-      <div class="drop-tag">DROP 092</div>
-      <div class="drop-name">DEAD PIXEL</div>
-      <div class="drop-desc">Nur solange der Vorrat reicht.</div>
+      <div class="drop-tag">DROP 091</div>
+      <div class="drop-name">BURNT EDGE</div>
+      <div class="drop-desc">Nicht lange verfügbar.</div>
       <div class="drop-bottom">
-        <div class="drop-price">12 €</div>
-        <div class="drop-stock"><b>20</b> / 23 übrig</div>
+        <div class="drop-price">25 €</div>
+        <div class="drop-stock"><b>23</b> / 20 übrig</div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 092 — DEAD PIXEL',12)">12 € — JETZT</button>
+      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 091 — BURNT EDGE',25)">25 € — JETZT</button>
+    </div>
+    <div class="drop-card">
+      <div class="drop-tag">DROP 076</div>
+      <div class="drop-name">NIGHT CODE</div>
+      <div class="drop-desc">Limitiert auf diesen Drop.</div>
+      <div class="drop-bottom">
+        <div class="drop-price">29 €</div>
+        <div class="drop-stock"><b>23</b> / 27 übrig</div>
+      </div>
+      <button class="btn btn-p" style="width:100%;margin-top:12px" onclick="buyItem('drop','DROP 076 — NIGHT CODE',29)">29 € — JETZT</button>
     </div>
   <!--DROPS-END--></div>
 </section>
@@ -503,10 +503,10 @@ async function checkPw(){var v=document.getElementById('pw-input').value;var h=a
   <div class="s-sub">20 Plätze. Eine Stunde. Unwiederholbar.</div>
   <!--LIVE-START--><div class="live-card">
     <div class="live-dot"></div>
-    <div class="live-date">21.03.2026</div>
-    <div class="live-info">Untergrund Session<br>20:00 Uhr · Exklusiver Livestream<br>Nur für Ticketinhaber</div>
-    <button class="btn btn-p" onclick="buyItem('ticket','Untergrund Session',10)">10€ · Ticket sichern →</button>
-    <div class="live-slots">Plätze: <b>3</b> / 20 verfügbar</div>
+    <div class="live-date">29.03.2026</div>
+    <div class="live-info">Rohes Signal Live<br>21:00 Uhr · Exklusiver Livestream<br>Nur für Ticketinhaber</div>
+    <button class="btn btn-p" onclick="buyItem('ticket','Rohes Signal Live',5)">5€ · Ticket sichern →</button>
+    <div class="live-slots">Plätze: <b>6</b> / 34 verfügbar</div>
   </div><!--LIVE-END-->
 </section>
 
@@ -516,15 +516,15 @@ async function checkPw(){var v=document.getElementById('pw-input').value;var h=a
   <div class="s-title">Merch.<br><span class="ol">Ein Stück.</span></div>
   <div class="s-sub">Kein Shop. Ein Produkt. Limitiert.</div>
   <!--MERCH-START--><div class="merch-item">
-    <div class="merch-img">HOODIE</div>
+    <div class="merch-img">T-SHIRT</div>
     <div class="merch-info">
-      <div class="merch-name">STATIC CAP</div>
-      <div class="merch-desc">Nur 11 von 59 — Single Drop. Limitiert.</div>
+      <div class="merch-name">SIGNAL TEE</div>
+      <div class="merch-desc">Nur 12 von 98 — Single Drop. Limitiert.</div>
       <div class="merch-bottom">
-        <div class="merch-price">45 €</div>
-        <div class="merch-ed">Edition 035 · 59 Stück</div>
+        <div class="merch-price">25 €</div>
+        <div class="merch-ed">Edition 003 · 98 Stück</div>
       </div>
-      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','STATIC CAP',45)">45 € — Kaufen →</button>
+      <button class="btn btn-p" style="width:100%;margin-top:16px" onclick="buyItem('merch','SIGNAL TEE',25)">25 € — Kaufen →</button>
     </div>
   </div><!--MERCH-END-->
 </section>
