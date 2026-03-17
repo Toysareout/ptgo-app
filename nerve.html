@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NERVE CENTER — Dein KI-Gehirn</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── PASSWORD GATE ── */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#gate.hidden{display:none}
+#gate canvas{position:absolute;inset:0;z-index:0}
+.gate-box{position:relative;z-index:1;text-align:center}
+.gate-title{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.gate-sub{color:var(--dim);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+.gate-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:280px;border-radius:2px;text-align:center;outline:none;transition:border-color .3s}
+.gate-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.gate-input::placeholder{color:var(--dim)}
+.gate-btn{margin-top:16px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;padding:12px 40px;cursor:pointer;transition:all .3s}
+.gate-btn:hover{background:var(--cyan);color:var(--bg)}
+.gate-error{color:var(--red);font-size:12px;margin-top:12px;min-height:16px}
+
+/* ── MAIN LAYOUT ── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.active{display:flex}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;letter-spacing:3px}
+.topbar-title span{color:var(--cyan)}
+.topbar-stats{display:flex;gap:16px;font-size:11px;color:var(--dim)}
+.topbar-stats .stat{display:flex;align-items:center;gap:4px}
+.topbar-stats .stat b{color:var(--cyan);font-size:13px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--dim)}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--dim);font-size:11px;padding:6px 12px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .3s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* CONTENT */
+.content{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR BOOKSHELF */
+.shelf{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;padding:8px 0}
+.shelf-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);padding:16px 16px 8px;text-transform:uppercase}
+.book{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .25s;position:relative}
+.book:hover{background:rgba(255,255,255,.03)}
+.book.active{background:rgba(0,240,255,.05);border-left-color:var(--cyan)}
+.book-spine{width:6px;height:40px;border-radius:1px;flex-shrink:0}
+.book-info{flex:1;min-width:0}
+.book-title{font-size:12px;font-weight:700;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-desc{font-size:10px;color:var(--dim);margin-top:2px}
+.book-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'Orbitron',sans-serif;font-size:9px;background:var(--surface2);padding:2px 6px;border-radius:2px;color:var(--cyan)}
+
+/* MAIN PANEL */
+.panel{flex:1;overflow-y:auto;padding:32px;position:relative}
+.panel-header{margin-bottom:24px}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:900;letter-spacing:2px}
+.panel-subtitle{color:var(--dim);font-size:12px;margin-top:4px;letter-spacing:1px}
+
+/* MODULE: HOME */
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:24px}
+.home-card{background:var(--surface);border:1px solid var(--border);padding:24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.home-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.home-card h3{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:1px;margin-bottom:8px}
+.home-card p{font-size:12px;color:var(--dim);line-height:1.6}
+.home-card .card-stat{font-family:'Orbitron',sans-serif;font-size:24px;margin-top:12px}
+
+/* MODULE SECTIONS */
+.section{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.section-title{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--dim);margin-bottom:12px;text-transform:uppercase}
+
+/* FORMS */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .3s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cyan)}
+.field textarea{min-height:100px}
+
+.btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.btn:hover{background:var(--cyan);color:var(--bg)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn.secondary{border-color:var(--border);color:var(--dim)}
+.btn.secondary:hover{border-color:var(--text);color:var(--text)}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn.danger:hover{background:var(--red);color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* LISTS */
+.item{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px;transition:border-color .3s;cursor:pointer}
+.item:hover{border-color:var(--cyan)}
+.item-title{font-size:13px;font-weight:700}
+.item-meta{font-size:10px;color:var(--dim);margin-top:4px}
+.item-content{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.6}
+.item-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:9px;padding:2px 8px;border:1px solid var(--border);color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+
+/* QUESTION CARDS */
+.q-card{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px}
+.q-card.answered{border-left:3px solid var(--green)}
+.q-number{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:2px}
+.q-text{font-size:13px;margin:8px 0;line-height:1.6}
+.q-answer{background:var(--surface);padding:12px;margin-top:8px;font-size:12px;border-left:2px solid var(--green)}
+.q-insight{background:rgba(0,240,255,.05);padding:12px;margin-top:8px;font-size:11px;color:var(--cyan);border-left:2px solid var(--cyan)}
+.q-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;margin-top:8px;outline:none;resize:vertical;min-height:60px}
+.q-input:focus{border-color:var(--cyan)}
+
+/* SITUATION ANALYSIS */
+.analysis-phase{padding:16px;border:1px solid var(--border);margin-bottom:8px}
+.phase-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;margin-bottom:8px}
+.phase-content{font-size:12px;line-height:1.7;color:var(--dim)}
+.phase-content strong{color:var(--text)}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.status::before{content:'';width:6px;height:6px;border-radius:50%}
+.status.pending::before{background:var(--gold)}.status.complete::before{background:var(--green)}.status.researching::before{background:var(--cyan)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--dim);font-size:12px}
+.loading::after{content:'';display:block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:12px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-size:12px;padding:12px 20px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--dim)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.empty p{font-size:12px;line-height:1.6}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .shelf{width:60px;overflow:visible}
+  .shelf .book-info,.shelf .book-badge,.shelf .shelf-label{display:none}
+  .shelf .book{padding:12px 0;justify-content:center}
+  .panel{padding:16px}
+  .home-grid{grid-template-columns:1fr}
+  .topbar-stats{display:none}
+}
+
+/* GRAIN */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+</style>
+</head>
+<body>
+
+<!-- GRAIN OVERLAY -->
+<canvas id="grain"></canvas>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <canvas id="gate-bg"></canvas>
+  <div class="gate-box">
+    <div class="gate-title">NERVE CENTER</div>
+    <div class="gate-sub">Persoenliches KI-Gehirn</div>
+    <input type="password" class="gate-input" id="gate-pw" placeholder="Zugangsformel" onkeydown="if(event.key==='Enter')tryGate()">
+    <br>
+    <button class="gate-btn" onclick="tryGate()">ZUGANG</button>
+    <div class="gate-error" id="gate-err"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="topbar-title">NERVE <span>CENTER</span></div>
+      <div class="topbar-stats" id="topbar-stats"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbar-time"></div>
+      <button class="btn-logout" onclick="logout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- BOOKSHELF SIDEBAR -->
+    <nav class="shelf" id="shelf">
+      <div class="shelf-label">Module</div>
+
+      <div class="book active" data-mod="home" onclick="openMod('home')">
+        <div class="book-spine" style="background:var(--cyan)"></div>
+        <div class="book-info"><div class="book-title">HOME</div><div class="book-desc">Uebersicht</div></div>
+      </div>
+
+      <div class="book" data-mod="vault" onclick="openMod('vault')">
+        <div class="book-spine" style="background:var(--green)"></div>
+        <div class="book-info"><div class="book-title">WISSENSSPEICHER</div><div class="book-desc">Know-how Tresor</div></div>
+        <div class="book-badge" id="badge-vault">0</div>
+      </div>
+
+      <div class="book" data-mod="daily" onclick="openMod('daily')">
+        <div class="book-spine" style="background:var(--gold)"></div>
+        <div class="book-info"><div class="book-title">DAILY 10</div><div class="book-desc">Tagesfragen</div></div>
+        <div class="book-badge" id="badge-daily">0</div>
+      </div>
+
+      <div class="book" data-mod="analyze" onclick="openMod('analyze')">
+        <div class="book-spine" style="background:var(--pink)"></div>
+        <div class="book-info"><div class="book-title">ANALYZER</div><div class="book-desc">Situation &rarr; Loesung</div></div>
+      </div>
+
+      <div class="book" data-mod="patients" onclick="openMod('patients')">
+        <div class="book-spine" style="background:var(--purple)"></div>
+        <div class="book-info"><div class="book-title">PATIENTEN-KI</div><div class="book-desc">Ethische Analyse</div></div>
+      </div>
+
+      <div class="shelf-label">Links</div>
+
+      <div class="book" onclick="window.open('/heal','_blank')">
+        <div class="book-spine" style="background:var(--green);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">PTGO</div><div class="book-desc">Heal Sessions</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/musik','_blank')">
+        <div class="book-spine" style="background:var(--pink);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">MUSIK</div><div class="book-desc">THETOYSAREOUT</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/bot-admin','_blank')">
+        <div class="book-spine" style="background:var(--gold);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BOT ADMIN</div><div class="book-desc">WhatsApp Bot</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/admin','_blank')">
+        <div class="book-spine" style="background:var(--dim);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BEWERBUNGEN</div><div class="book-desc">Admin Panel</div></div>
+      </div>
+    </nav>
+
+    <!-- MAIN PANEL -->
+    <main class="panel" id="panel"></main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   NERVE CENTER — Client Logic
+   ══════════════════════════════════════════ */
+
+const API='/.netlify/functions/nerve-brain';
+const PW_HASH='a7e0d6b5f1c3e2a4b8d9f0c1e2a3b4c5'; // placeholder, real check below
+
+// ── PASSWORD GATE ──
+function hashPw(s){
+  // Simple hash for client-side gate; not crypto-secure but prevents casual access
+  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h;
+}
+const CORRECT_HASH=hashPw('1+1 ist eins');
+
+function tryGate(){
+  const val=document.getElementById('gate-pw').value.trim();
+  if(hashPw(val)===CORRECT_HASH){
+    sessionStorage.setItem('nerve_auth','1');
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    init();
+  } else {
+    document.getElementById('gate-err').textContent='Falsche Formel. Versuche es erneut.';
+    document.getElementById('gate-pw').value='';
+    document.getElementById('gate-pw').focus();
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('nerve_auth');
+  location.reload();
+}
+
+// Auto-login if session exists
+if(sessionStorage.getItem('nerve_auth')==='1'){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  requestAnimationFrame(()=>init());
+}
+
+// ── GRAIN ──
+(function(){
+  const c=document.getElementById('grain'),ctx=c.getContext('2d');
+  function r(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function d(){const im=ctx.createImageData(c.width,c.height);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=12}ctx.putImageData(im,0,0);requestAnimationFrame(d)}
+  window.addEventListener('resize',r);r();d();
+})();
+
+// ── GATE BACKGROUND ANIMATION ──
+(function(){
+  const c=document.getElementById('gate-bg'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  const particles=[];
+  for(let i=0;i<60;i++) particles.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5,c:['#00f0ff','#ff2d8e','#2dffa8'][Math.floor(Math.random()*3)]});
+  function draw(){
+    ctx.fillStyle='rgba(3,3,8,.15)';ctx.fillRect(0,0,c.width,c.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;
+    });
+    // Draw connections
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=particles[i].c;ctx.globalAlpha=.08*(1-d/120);ctx.stroke();ctx.globalAlpha=1}
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ── API HELPER ──
+async function api(action, params={}){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...params})});
+  if(!res.ok) throw new Error((await res.json()).error||'API Fehler');
+  return res.json();
+}
+
+// ── TOAST ──
+function toast(msg,dur=3000){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── CLOCK ──
+function updateClock(){
+  const d=new Date();
+  document.getElementById('topbar-time').textContent=
+    d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})+' '+
+    d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── MODULE ROUTER ──
+let currentMod='home';
+function openMod(mod){
+  currentMod=mod;
+  document.querySelectorAll('.book').forEach(b=>b.classList.toggle('active',b.dataset.mod===mod));
+  render();
+}
+
+// ── INIT ──
+async function init(){
+  updateClock();setInterval(updateClock,30000);
+  loadStats();
+  render();
+}
+
+async function loadStats(){
+  try{
+    const s=await api('stats');
+    document.getElementById('topbar-stats').innerHTML=
+      `<div class="stat"><b>${s.knowledge}</b> Wissen</div>`+
+      `<div class="stat"><b>${s.questions}</b> Fragen</div>`+
+      `<div class="stat"><b>${s.situations}</b> Analysen</div>`+
+      `<div class="stat"><b>${s.patients}</b> Patienten</div>`;
+    const vb=document.getElementById('badge-vault');if(vb)vb.textContent=s.knowledge;
+    const db=document.getElementById('badge-daily');if(db)db.textContent=s.questions;
+  }catch(e){console.warn('Stats:',e)}
+}
+
+// ── RENDER ──
+function render(){
+  const p=document.getElementById('panel');
+  switch(currentMod){
+    case 'home': renderHome(p);break;
+    case 'vault': renderVault(p);break;
+    case 'daily': renderDaily(p);break;
+    case 'analyze': renderAnalyze(p);break;
+    case 'patients': renderPatients(p);break;
+    default: p.innerHTML='<div class="empty"><div class="empty-icon">?</div><p>Unbekanntes Modul</p></div>';
+  }
+}
+
+// ══════ HOME ══════
+function renderHome(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">WILLKOMMEN IM NERVE CENTER</div>
+      <div class="panel-subtitle">Dein persoenliches KI-Gehirn — Wissen, Strategie, Evolution</div>
+    </div>
+    <div class="home-grid">
+      <div class="home-card" onclick="openMod('vault')" style="--c:var(--green)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
+        <h3>WISSENSSPEICHER</h3>
+        <p>Dein gesamtes Know-how. Jede Information, jede Erkenntnis — fuer immer gespeichert und sofort abrufbar.</p>
+        <div class="card-stat" style="color:var(--green)" id="home-vault">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('daily')" style="--c:var(--gold)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <h3>DAILY 10</h3>
+        <p>10 gezielte Fragen pro Tag. Geld verdienen, Wert steigern, physikalische Prinzipien nutzen.</p>
+        <div class="card-stat" style="color:var(--gold)" id="home-daily">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('analyze')" style="--c:var(--pink)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink)"></div>
+        <h3>SITUATION ANALYZER</h3>
+        <p>Text rein &rarr; Recherche &rarr; Plan &rarr; Auswertung. Die Intelligenz aller deiner Daten in einer Antwort.</p>
+        <div class="card-stat" style="color:var(--pink)" id="home-analyze">—</div>
+      </div>
+      <div class="home-card" onclick="openMod('patients')" style="--c:var(--purple)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--purple)"></div>
+        <h3>PATIENTEN-KI</h3>
+        <p>Ethische Datenanalyse. Muster erkennen, versteckte Signale finden — Heilung optimieren.</p>
+        <div class="card-stat" style="color:var(--purple)" id="home-patients">—</div>
+      </div>
+      <div class="home-card" onclick="window.open('/','_blank')">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan)"></div>
+        <h3>PORTAL</h3>
+        <p>Zurueck zur Hauptseite — THETOYSAREOUT &times; PTGO METHOD. Zwei Welten, ein Koerper.</p>
+      </div>
+      <div class="home-card" onclick="window.open('/live','_blank')">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <h3>LIVE PIANO</h3>
+        <p>Live-Erlebnisse buchen und verwalten. Dein kuenstlerisches Standbein.</p>
+      </div>
+    </div>`;
+  // Load home stats
+  api('stats').then(s=>{
+    const ve=document.getElementById('home-vault');if(ve)ve.textContent=s.knowledge+' Eintraege';
+    const de=document.getElementById('home-daily');if(de)de.textContent=s.questions+' Fragen';
+    const ae=document.getElementById('home-analyze');if(ae)ae.textContent=s.situations+' Analysen';
+    const pe=document.getElementById('home-patients');if(pe)pe.textContent=s.patients+' Insights';
+  }).catch(()=>{});
+}
+
+// ══════ KNOWLEDGE VAULT ══════
+let vaultData=[];
+const VAULT_CATEGORIES=['general','therapie','business','physik','evolution','musik','technik','strategie','persoenlich'];
+
+async function renderVault(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">WISSENSSPEICHER</div>
+      <div class="panel-subtitle">Dein permanenter Know-how Tresor — jede Information fuer immer</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUES WISSEN SPEICHERN</div>
+      <div class="field"><label>Titel</label><input id="v-title" placeholder="Kurzer Titel"></div>
+      <div class="field"><label>Kategorie</label>
+        <select id="v-cat">${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Inhalt / Information</label><textarea id="v-content" placeholder="Paste hier alles rein — Texte, Erkenntnisse, Daten, Strategien..."></textarea></div>
+      <div class="field"><label>Tags (kommagetrennt)</label><input id="v-tags" placeholder="z.B. ptgo, schmerztherapie, innovation"></div>
+      <button class="btn" onclick="saveKnowledge()">SPEICHERN</button>
+    </div>
+    <div class="section">
+      <div class="section-title">SUCHE</div>
+      <div style="display:flex;gap:8px">
+        <input id="v-search" placeholder="Durchsuchen..." style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px 12px;outline:none" onkeydown="if(event.key==='Enter')searchVault()">
+        <select id="v-filter" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="searchVault()">
+          <option value="all">Alle</option>
+          ${VAULT_CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+        <button class="btn secondary" onclick="searchVault()">SUCHEN</button>
+      </div>
+    </div>
+    <div id="vault-list"><div class="loading">Lade Wissensspeicher...</div></div>`;
+  searchVault();
+}
+
+async function searchVault(){
+  const search=document.getElementById('v-search')?.value||'';
+  const cat=document.getElementById('v-filter')?.value||'all';
+  try{
+    vaultData=await api('knowledge_list',{search,category:cat});
+    const el=document.getElementById('vault-list');
+    if(!vaultData.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#128218;</div><p>Noch kein Wissen gespeichert.<br>Fuege dein erstes Wissen oben hinzu.</p></div>';return}
+    el.innerHTML=vaultData.map(k=>`
+      <div class="item" onclick="this.querySelector('.item-content').style.display=this.querySelector('.item-content').style.display==='none'?'block':'none'">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div class="item-title">${esc(k.title)}</div>
+            <div class="item-meta">${esc(k.category)} &middot; ${timeAgo(k.created_at)}</div>
+          </div>
+          <button class="btn danger" style="font-size:9px;padding:4px 8px" onclick="event.stopPropagation();deleteKnowledge('${k.id}')">X</button>
+        </div>
+        <div class="item-content" style="display:none;white-space:pre-wrap">${esc(k.content)}</div>
+        ${(k.tags||[]).length?`<div class="item-tags">${k.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('vault-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function saveKnowledge(){
+  const title=document.getElementById('v-title').value.trim();
+  const content=document.getElementById('v-content').value.trim();
+  const category=document.getElementById('v-cat').value;
+  const tags=document.getElementById('v-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!title||!content){toast('Titel und Inhalt erforderlich');return}
+  try{
+    await api('knowledge_save',{title,content,category,tags});
+    document.getElementById('v-title').value='';document.getElementById('v-content').value='';document.getElementById('v-tags').value='';
+    toast('Wissen gespeichert!');searchVault();loadStats();
+  }catch(e){toast('Fehler: '+e.message)}
+}
+
+async function deleteKnowledge(id){
+  if(!confirm('Wirklich loeschen?'))return;
+  try{await api('knowledge_delete',{id});toast('Geloescht');searchVault();loadStats();}catch(e){toast('Fehler: '+e.message)}
+}
+
+// ══════ DAILY 10 ══════
+async function renderDaily(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">DAILY 10</div>
+      <div class="panel-subtitle">10 gezielte Fragen pro Tag — dein Turbo fuer Wert und Einkommen</div>
+    </div>
+    <div class="btn-row" style="margin-bottom:16px">
+      <button class="btn" onclick="generateDaily()">NEUE FRAGEN GENERIEREN</button>
+      <input type="date" id="daily-date" value="${new Date().toISOString().split('T')[0]}" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:8px;outline:none" onchange="loadDaily()">
+    </div>
+    <div id="daily-list"><div class="loading">Lade Tagesfragen...</div></div>`;
+  loadDaily();
+}
+
+async function loadDaily(){
+  const date=document.getElementById('daily-date')?.value||new Date().toISOString().split('T')[0];
+  try{
+    const data=await api('daily_list',{date});
+    const el=document.getElementById('daily-list');
+    if(!data.length){el.innerHTML='<div class="empty"><div class="empty-icon">&#10067;</div><p>Keine Fragen fuer diesen Tag.<br>Klicke "NEUE FRAGEN GENERIEREN" um zu starten.</p></div>';return}
+    el.innerHTML=data.map(q=>`
+      <div class="q-card${q.answer?' answered':''}">
+        <div class="q-number">FRAGE ${q.question_number} &middot; ${esc(q.category)}</div>
+        <div class="q-text">${esc(q.question)}</div>
+        ${q.answer?`
+          <div class="q-answer"><strong>Deine Antwort:</strong> ${esc(q.answer)}</div>
+          ${q.ai_insight?`<div class="q-insight"><strong>KI-Insight:</strong> ${esc(q.ai_insight)}</div>`:''}
+        `:`
+          <textarea class="q-input" id="qa-${q.id}" placeholder="Deine Antwort..."></textarea>
+          <button class="btn" style="margin-top:8px;font-size:10px;padding:6px 16px" onclick="answerDaily('${q.id}')">ANTWORTEN</button>
+        `}
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('daily-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function generateDaily(){
+  const el=document.getElementById('daily-list');
+  el.innerHTML='<div class="loading">KI generiert 10 personalisierte Fragen...</div>';
+  try{
+    await api('daily_generate');
+    toast('10 neue Fragen generiert!');loadDaily();loadStats();
+  }catch(e){el.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function answerDaily(id){
+  const answer=document.getElementById('qa-'+id)?.value?.trim();
+  if(!answer){toast('Bitte Antwort eingeben');return}
+  try{
+    await api('daily_answer',{id,answer});
+    toast('Antwort gespeichert + KI-Insight generiert');loadDaily();
+  }catch(e){toast('Fehler: '+e.message)}
+}
+
+// ══════ SITUATION ANALYZER ══════
+async function renderAnalyze(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">SITUATION ANALYZER</div>
+      <div class="panel-subtitle">Text rein &rarr; Recherche &rarr; Plan &rarr; Gesamtauswertung</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUE ANALYSE STARTEN</div>
+      <div class="field"><label>Titel (optional)</label><input id="a-title" placeholder="z.B. Patientenfall, Geschaeftsidee, Problem..."></div>
+      <div class="field"><label>Text / Situation / Information</label>
+        <textarea id="a-text" style="min-height:150px" placeholder="Kopiere hier den Text, die Information, das Problem oder die Situation rein. Die KI recherchiert, plant und gibt dir eine Auswertung basierend auf ALLEM was du je gespeichert hast."></textarea>
+      </div>
+      <button class="btn" onclick="startAnalysis()">ANALYSE STARTEN</button>
+    </div>
+    <div class="section">
+      <div class="section-title">BISHERIGE ANALYSEN</div>
+      <div id="analyze-list"><div class="loading">Lade Analysen...</div></div>
+    </div>
+    <div id="analyze-detail" style="display:none"></div>`;
+  loadAnalyses();
+}
+
+async function loadAnalyses(){
+  try{
+    const data=await api('situation_list');
+    const el=document.getElementById('analyze-list');
+    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Analysen. Starte deine erste Analyse oben.</p></div>';return}
+    el.innerHTML=data.map(s=>`
+      <div class="item" onclick="showAnalysis('${s.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div class="item-title">${esc(s.title)}</div>
+            <div class="item-meta">${esc(s.category)} &middot; ${timeAgo(s.created_at)}</div>
+          </div>
+          <span class="status ${s.status}">${s.status}</span>
+        </div>
+        <div class="item-content" style="display:block;max-height:40px;overflow:hidden">${esc((s.input_text||'').substring(0,150))}...</div>
+      </div>
+    `).join('');
+  }catch(e){document.getElementById('analyze-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function startAnalysis(){
+  const title=document.getElementById('a-title').value.trim()||'Neue Analyse';
+  const input_text=document.getElementById('a-text').value.trim();
+  if(!input_text){toast('Bitte Text eingeben');return}
+  const detail=document.getElementById('analyze-detail');
+  detail.style.display='block';
+  detail.innerHTML='<div class="loading">KI analysiert... Recherche &rarr; Plan &rarr; Auswertung (kann 15-30 Sek. dauern)</div>';
+  try{
+    const result=await api('situation_analyze',{title,input_text});
+    document.getElementById('a-text').value='';document.getElementById('a-title').value='';
+    showAnalysisResult(result,detail);
+    toast('Analyse komplett!');loadAnalyses();loadStats();
+  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function showAnalysis(id){
+  const detail=document.getElementById('analyze-detail');
+  detail.style.display='block';detail.innerHTML='<div class="loading">Lade...</div>';
+  try{
+    const result=await api('situation_get',{id});
+    showAnalysisResult(result,detail);
+  }catch(e){detail.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+function showAnalysisResult(r,el){
+  const research=typeof r.research==='object'?r.research:{};
+  const plan=Array.isArray(r.plan)?r.plan:[];
+  el.innerHTML=`
+    <div style="margin-top:16px">
+      <div class="section">
+        <div class="section-title">ORIGINALTEXT</div>
+        <div style="font-size:12px;line-height:1.7;white-space:pre-wrap">${esc(r.input_text)}</div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--cyan)">
+        <div class="phase-label" style="color:var(--cyan)">PHASE 1 — RECHERCHE</div>
+        <div class="phase-content">
+          ${research.kernpunkte?`<p><strong>Kernpunkte:</strong></p><ul>${research.kernpunkte.map(k=>`<li>${esc(k)}</li>`).join('')}</ul>`:''}
+          ${research.physik?`<p><strong>Physik:</strong> ${esc(research.physik)}</p>`:''}
+          ${research.evolution?`<p><strong>Evolution:</strong> ${esc(research.evolution)}</p>`:''}
+          ${research.historie?`<p><strong>Historie:</strong> ${esc(research.historie)}</p>`:''}
+          ${research.chancen?`<p><strong>Chancen:</strong></p><ul>${research.chancen.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:''}
+          ${research.raw?`<p>${esc(research.raw)}</p>`:''}
+        </div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--gold)">
+        <div class="phase-label" style="color:var(--gold)">PHASE 2 — AKTIONSPLAN</div>
+        <div class="phase-content">
+          ${plan.map(s=>`
+            <div style="margin-bottom:8px;padding:8px;background:var(--surface)">
+              <strong>Schritt ${s.schritt||'?'}:</strong> ${esc(s.aktion||s.raw||JSON.stringify(s))}<br>
+              ${s.zeitrahmen?`<span style="color:var(--gold);font-size:10px">Zeitrahmen: ${esc(s.zeitrahmen)}</span>`:''}
+              ${s.erwartetes_ergebnis?`<span style="color:var(--green);font-size:10px">Ergebnis: ${esc(s.erwartetes_ergebnis)}</span>`:''}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="analysis-phase" style="border-color:var(--green)">
+        <div class="phase-label" style="color:var(--green)">PHASE 3 — GESAMTAUSWERTUNG</div>
+        <div class="phase-content" style="white-space:pre-wrap;color:var(--text)">${esc(r.analysis||r.recommendation||'Keine Auswertung')}</div>
+      </div>
+      <button class="btn secondary" onclick="document.getElementById('analyze-detail').style.display='none'" style="margin-top:12px">SCHLIESSEN</button>
+    </div>`;
+}
+
+// ══════ PATIENT INTELLIGENCE ══════
+async function renderPatients(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">PATIENTEN-KI</div>
+      <div class="panel-subtitle">Ethische Intelligenz — Muster erkennen, Heilung optimieren</div>
+    </div>
+    <div class="section">
+      <div class="section-title">NEUE PATIENTENANALYSE</div>
+      <div class="field"><label>Patient-Referenz (anonym)</label><input id="p-ref" placeholder="z.B. Patient A, Fall 2024-03, etc."></div>
+      <div class="field"><label>Patientendaten / Beobachtungen</label>
+        <textarea id="p-data" style="min-height:150px" placeholder="Paste hier Beobachtungen, Symptome, Verlaeufe, Check-in-Daten, etc. Die KI findet versteckte Muster und Zusammenhaenge."></textarea>
+      </div>
+      <button class="btn" onclick="analyzePatient()">ANALYSE STARTEN</button>
+    </div>
+    <div id="patient-result" style="display:none"></div>
+    <div class="section">
+      <div class="section-title">BISHERIGE INSIGHTS</div>
+      <div id="patient-list"><div class="loading">Lade...</div></div>
+    </div>`;
+  loadPatientInsights();
+}
+
+async function analyzePatient(){
+  const patient_ref=document.getElementById('p-ref').value.trim();
+  const rawData=document.getElementById('p-data').value.trim();
+  if(!patient_ref||!rawData){toast('Referenz und Daten erforderlich');return}
+  const result=document.getElementById('patient-result');
+  result.style.display='block';result.innerHTML='<div class="loading">KI analysiert Patientendaten...</div>';
+  try{
+    const r=await api('patient_analyze',{patient_ref,data:rawData});
+    const pd=r.pattern_data||{};
+    result.innerHTML=`
+      <div class="section" style="border-color:var(--purple)">
+        <div class="section-title" style="color:var(--purple)">ANALYSE: ${esc(patient_ref)}</div>
+        ${pd.muster?`<p><strong>Erkannte Muster:</strong></p><ul>${pd.muster.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`:''}
+        ${pd.versteckte_signale?`<p><strong>Versteckte Signale:</strong></p><ul>${pd.versteckte_signale.map(s=>`<li style="color:var(--cyan)">${esc(s)}</li>`).join('')}</ul>`:''}
+        ${pd.physik_bezug?`<p><strong>Physik-Bezug:</strong> ${esc(pd.physik_bezug)}</p>`:''}
+        ${pd.evolution_bezug?`<p><strong>Evolution-Bezug:</strong> ${esc(pd.evolution_bezug)}</p>`:''}
+        ${pd.empfehlung?`<p style="margin-top:12px;padding:12px;background:var(--surface2);border-left:3px solid var(--green)"><strong>Empfehlung:</strong> ${esc(pd.empfehlung)}</p>`:''}
+        ${pd.raw?`<p>${esc(pd.raw)}</p>`:''}
+        <div style="margin-top:8px;font-size:10px;color:var(--dim)">Konfidenz: ${Math.round((r.confidence||0.5)*100)}%</div>
+      </div>`;
+    document.getElementById('p-ref').value='';document.getElementById('p-data').value='';
+    toast('Patientenanalyse abgeschlossen');loadPatientInsights();loadStats();
+  }catch(e){result.innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+async function loadPatientInsights(){
+  try{
+    const data=await api('patient_list');
+    const el=document.getElementById('patient-list');
+    if(!data.length){el.innerHTML='<div class="empty"><p>Noch keine Patientenanalysen.</p></div>';return}
+    el.innerHTML=data.map(i=>{
+      const pd=i.pattern_data||{};
+      return `
+        <div class="item">
+          <div class="item-title">${esc(i.patient_ref)} &middot; ${esc(i.insight_type)}</div>
+          <div class="item-meta">${timeAgo(i.created_at)} &middot; Konfidenz: ${Math.round((i.confidence||0)*100)}%</div>
+          ${i.recommendation?`<div class="item-content" style="display:block">${esc(i.recommendation)}</div>`:''}
+        </div>`;
+    }).join('');
+  }catch(e){document.getElementById('patient-list').innerHTML=`<div class="empty"><p>Fehler: ${esc(e.message)}</p></div>`}
+}
+
+// ── HELPERS ──
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function timeAgo(d){
+  if(!d)return '';
+  const s=Math.floor((Date.now()-new Date(d).getTime())/1000);
+  if(s<60)return 'gerade eben';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+</script>
+</body>
+</html>
