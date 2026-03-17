@@ -187,7 +187,7 @@ async function _h(s){var e=new TextEncoder().encode(s);var b=await crypto.subtle
 async function checkPw(){
   var v = document.getElementById('pw-input').value;
   var h = await _h(v);
-  if(h === 'b579f23eb5018812d7dd3677ff81c3300e746bab20ba69ded86224b18e185a77'){
+  if(h === 'ba8cff43c691031423db049fb4b8f806fab51e184d7e0746cfe92c306e0df2f2'){
     sessionStorage.setItem('ttao_auth','ok');
     document.getElementById('pw-gate').style.display = 'none';
   } else {
