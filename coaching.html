@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
 <title>Daily Coaching Engine</title>
 <style>
 :root{--bg:#0b0f1a;--card:#0f172a;--muted:#94a3b8;--text:#e5e7eb;--accent:#f59e0b;--line:#1f2937;--green:#22c55e;--red:#ef4444;--blue:#6366f1}
@@ -977,6 +981,16 @@ function prevQuestion() {
 }
 
 function nextQuestion() {
+  const input = document.getElementById("answer-input");
+  const text = input ? input.value.trim() : "";
+
+  if (text.length < 10) {
+    input.style.borderColor = "#ef4444";
+    input.setAttribute("placeholder", "Mindestens 10 Zeichen — sei ehrlich mit dir selbst!");
+    input.focus();
+    return;
+  }
+
   saveCurrentAnswer();
 
   if (currentQuestion < 9) {
@@ -1316,6 +1330,7 @@ function renderProgress() {
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn-outline" onclick="renderWeeklyInsights()" style="flex:1;font-size:13px">📊 Wochen-Analyse</button>
       <button class="export-btn" onclick="exportData()" style="flex:1">📥 Export</button>
+      <button class="export-btn" onclick="importData()" style="flex:1">📤 Import</button>
     </div>
 
     ${renderChallengesSection()}
@@ -1641,6 +1656,51 @@ function exportData() {
   a.download = `coaching-export-${todayStr()}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function importData() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!imported.entries || !Array.isArray(imported.entries)) {
+          alert("Ungueltige Datei — kein gueltiger Coaching-Export.");
+          return;
+        }
+        const current = loadData();
+        // Merge: keep existing entries, add new ones by date
+        const existingDates = new Set(current.entries.map(e => e.date));
+        const newEntries = imported.entries.filter(e => !existingDates.has(e.date));
+        current.entries.push(...newEntries);
+        // Merge mood log
+        if (imported.moodLog) {
+          if (!current.moodLog) current.moodLog = [];
+          const existingMoodDates = new Set(current.moodLog.map(m => m.date));
+          imported.moodLog.filter(m => !existingMoodDates.has(m.date)).forEach(m => current.moodLog.push(m));
+        }
+        // Merge habits
+        if (imported.habits) {
+          if (!current.habits) current.habits = {};
+          Object.keys(imported.habits).forEach(d => {
+            if (!current.habits[d]) current.habits[d] = imported.habits[d];
+          });
+        }
+        saveData(current);
+        alert(`Import erfolgreich! ${newEntries.length} neue Eintraege hinzugefuegt.`);
+        showScreen(currentScreen);
+      } catch(err) {
+        alert("Fehler beim Import: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 // =========================================================

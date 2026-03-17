@@ -1,5 +1,5 @@
-const CACHE = 'ptgo-v6';
-const PRECACHE = ['/', '/heal', '/musik'];
+const CACHE = 'ptgo-v7';
+const PRECACHE = ['/', '/heal', '/musik', '/coaching.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
