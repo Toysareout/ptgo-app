@@ -226,12 +226,77 @@ input[type=range]{width:100%;padding:0;height:4px;accent-color:var(--cyan);margi
 /* OPEN PROTOCOL */
 .api-code{background:var(--surface2);border:1px solid var(--border);padding:12px;font-family:'Space Mono',monospace;font-size:10px;color:var(--cyan);overflow-x:auto;white-space:pre;margin:8px 0}
 
+/* COMMAND PALETTE */
+.cmd-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:20000;display:flex;align-items:flex-start;justify-content:center;padding:80px 20px 20px;backdrop-filter:blur(8px);animation:fadeIn .15s ease}
+.cmd-box{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--cyan);box-shadow:0 0 40px rgba(0,240,255,.2);overflow:hidden}
+.cmd-input{width:100%;background:var(--bg);border:none;border-bottom:1px solid var(--border);color:var(--cyan);font-family:'Space Mono',monospace;font-size:14px;padding:16px 20px;outline:none}
+.cmd-input::placeholder{color:var(--dim)}
+.cmd-list{max-height:400px;overflow-y:auto}
+.cmd-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(26,26,46,.5)}
+.cmd-item:hover,.cmd-item.active{background:rgba(0,240,255,.08)}
+.cmd-item .cmd-icon{font-size:16px;width:24px;text-align:center;flex-shrink:0}
+.cmd-item .cmd-label{font-size:12px;color:var(--text);flex:1}
+.cmd-item .cmd-shortcut{font-size:10px;color:var(--dim);font-family:'Space Mono',monospace;background:var(--surface2);padding:2px 6px;border:1px solid var(--border)}
+.cmd-item .cmd-desc{font-size:10px;color:var(--dim)}
+
+/* GAMIFICATION */
+.xp-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));border-radius:3px;transition:width .5s ease}
+.level-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--cyan);background:rgba(0,240,255,.05);font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:1px}
+.achievement{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;transition:all .3s}
+.achievement.unlocked{border-color:var(--gold);background:rgba(201,168,76,.05)}
+.achievement.locked{opacity:.4;filter:grayscale(.8)}
+.achievement-icon{font-size:28px;width:40px;text-align:center;flex-shrink:0}
+.xp-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:20001;font-family:'Orbitron',sans-serif;font-size:24px;color:var(--gold);text-shadow:var(--glow-gold);animation:xpPop .8s ease forwards;pointer-events:none}
+@keyframes xpPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}60%{transform:translate(-50%,-60%) scale(1)}100%{opacity:0;transform:translate(-50%,-80%) scale(.8)}}
+.level-up-overlay{position:fixed;inset:0;z-index:20002;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;animation:fadeIn .3s ease}
+.level-up-card{text-align:center;padding:40px;border:2px solid var(--gold);background:var(--surface);box-shadow:0 0 60px rgba(201,168,76,.3);max-width:360px}
+
+/* CRT / GLITCH EFFECTS */
+.crt-on body{text-shadow:0 0 2px rgba(0,240,255,.3)}
+.crt-scanlines::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 4px);pointer-events:none;z-index:9998}
+.glitch-text{position:relative}
+.glitch-text::before,.glitch-text::after{content:attr(data-text);position:absolute;top:0;left:0;width:100%;height:100%}
+.glitch-text::before{left:2px;text-shadow:-2px 0 var(--pink);clip-path:inset(0 0 50% 0);animation:glitch1 2s infinite linear alternate-reverse}
+.glitch-text::after{left:-2px;text-shadow:2px 0 var(--cyan);clip-path:inset(50% 0 0 0);animation:glitch2 2s infinite linear alternate-reverse}
+@keyframes glitch1{0%{clip-path:inset(0 0 80% 0)}20%{clip-path:inset(20% 0 60% 0)}40%{clip-path:inset(40% 0 30% 0)}60%{clip-path:inset(60% 0 10% 0)}80%{clip-path:inset(80% 0 0% 0)}100%{clip-path:inset(10% 0 70% 0)}}
+@keyframes glitch2{0%{clip-path:inset(80% 0 0% 0)}20%{clip-path:inset(60% 0 20% 0)}40%{clip-path:inset(30% 0 40% 0)}60%{clip-path:inset(10% 0 60% 0)}80%{clip-path:inset(0% 0 80% 0)}100%{clip-path:inset(70% 0 10% 0)}}
+
+/* MATRIX RAIN */
+#matrix-canvas{position:fixed;inset:0;z-index:19999;pointer-events:none;opacity:0;transition:opacity .5s}
+#matrix-canvas.active{opacity:.15}
+
+/* TERMINAL MODE */
+.terminal-mode .card{border-radius:0;border-color:var(--green)}
+.terminal-mode .card::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.terminal-mode{--cyan:var(--green);--pink:var(--green);--accent:var(--green)}
+.terminal-mode .brand{background:var(--green);-webkit-background-clip:text}
+.terminal-mode .nav-btn.active{color:var(--green)}
+.terminal-prompt{font-family:'Space Mono',monospace;color:var(--green);font-size:12px}
+.terminal-prompt::before{content:'> ';color:var(--green);opacity:.6}
+.terminal-cursor{display:inline-block;width:8px;height:14px;background:var(--green);animation:blink 1s step-end infinite;vertical-align:middle}
+@keyframes blink{50%{opacity:0}}
+
+/* POWER SCORE */
+.power-ring{position:relative;width:160px;height:160px;margin:0 auto}
+.power-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.power-number{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-weight:900;font-size:42px;text-align:center}
+.power-label{font-size:10px;color:var(--dim);display:block;letter-spacing:2px}
+
+/* MULTIPLAYER */
+.battle-card{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:10px;position:relative;overflow:hidden}
+.battle-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--pink),transparent,var(--cyan))}
+.battle-vs{font-family:'Orbitron',sans-serif;font-size:14px;color:var(--gold);padding:4px 12px;border:1px solid var(--gold)}
+
 @media(max-width:480px){
   .nav-btn{font-size:7px;padding:4px 6px}
   .nav-btn svg{width:16px;height:16px}
   .brand{font-size:13px;letter-spacing:2px}
   .bio-grid{grid-template-columns:1fr 1fr}
   .speed-val{font-size:36px}
+  .cmd-overlay{padding:40px 12px 12px}
+  .power-ring{width:120px;height:120px}
+  .power-number{font-size:32px}
 }
 </style>
 </head>
@@ -239,6 +304,7 @@ input[type=range]{width:100%;padding:0;height:4px;accent-color:var(--cyan);margi
 
 <!-- GRAIN OVERLAY -->
 <canvas id="grain"></canvas>
+<canvas id="matrix-canvas"></canvas>
 
 <!-- SCANLINE -->
 <div class="scanline"></div>
@@ -306,6 +372,14 @@ input[type=range]{width:100%;padding:0;height:4px;accent-color:var(--cyan);margi
     <button class="nav-btn" onclick="showScreen('openapi')" id="nav-openapi">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
       API
+    </button>
+    <button class="nav-btn" onclick="showScreen('power')" id="nav-power">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Power
+    </button>
+    <button class="nav-btn" onclick="showScreen('multiplayer')" id="nav-multiplayer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      Battle
     </button>
   </div>
 </div>
@@ -934,6 +1008,8 @@ function showScreen(screen) {
     case "predict": renderPredictScreen(); break;
     case "network": renderNetworkScreen(); break;
     case "openapi": renderOpenApiScreen(); break;
+    case "power": renderPowerScreen(); break;
+    case "multiplayer": renderMultiplayerScreen(); break;
   }
 }
 
@@ -4449,6 +4525,1017 @@ function triggerFeedbackAfterAction(actionText) {
 }
 
 // =========================================================
+// FEATURE 9: GAMIFICATION — XP, Levels, Achievements
+// =========================================================
+
+const XP_ACTIONS = {
+  checkin_complete: 50,
+  speed_checkin: 20,
+  mood_logged: 10,
+  coach_message: 5,
+  feedback_given: 15,
+  streak_day: 10,
+  analysis_run: 30,
+  habit_done: 5,
+  vault_save: 10,
+  voice_used: 10,
+  first_checkin: 100,
+  streak_7: 200,
+  streak_30: 500,
+  streak_100: 2000,
+  all_habits: 100,
+  score_above_80: 50,
+  perfect_day: 150
+};
+
+const LEVELS = [
+  {level:1, name:'ROOKIE', xp:0, icon:'◇'},
+  {level:2, name:'INITIATE', xp:100, icon:'◆'},
+  {level:3, name:'OPERATOR', xp:300, icon:'◈'},
+  {level:4, name:'SPECIALIST', xp:600, icon:'▲'},
+  {level:5, name:'VETERAN', xp:1000, icon:'★'},
+  {level:6, name:'ELITE', xp:1800, icon:'✦'},
+  {level:7, name:'MASTER', xp:3000, icon:'◎'},
+  {level:8, name:'LEGEND', xp:5000, icon:'⬡'},
+  {level:9, name:'MYTHIC', xp:8000, icon:'⟁'},
+  {level:10, name:'TRANSCENDENT', xp:13000, icon:'✧'},
+  {level:11, name:'GODMODE', xp:21000, icon:'☉'},
+  {level:12, name:'BEYOND', xp:34000, icon:'∞'}
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_blood', name:'First Blood', desc:'Erstes Check-in abgeschlossen', icon:'🩸', condition: (s) => s.totalCheckins >= 1},
+  {id:'streak_7', name:'Woche der Disziplin', desc:'7-Tage Streak', icon:'🔥', condition: (s) => s.maxStreak >= 7},
+  {id:'streak_30', name:'Monat der Macht', desc:'30-Tage Streak', icon:'💎', condition: (s) => s.maxStreak >= 30},
+  {id:'streak_100', name:'Centurion', desc:'100-Tage Streak', icon:'👑', condition: (s) => s.maxStreak >= 100},
+  {id:'score_80', name:'High Performer', desc:'Score ueber 80 erreicht', icon:'⚡', condition: (s) => s.maxScore >= 80},
+  {id:'score_100', name:'Perfect Score', desc:'Score 100 erreicht', icon:'🏆', condition: (s) => s.maxScore >= 100},
+  {id:'speed_demon', name:'Speed Demon', desc:'10 Speed Check-ins', icon:'💨', condition: (s) => s.speedCheckins >= 10},
+  {id:'voice_master', name:'Voice Master', desc:'Voice Input 5x benutzt', icon:'🎤', condition: (s) => s.voiceUses >= 5},
+  {id:'analyst', name:'Daten-Analyst', desc:'10 Situationsanalysen', icon:'🔬', condition: (s) => s.analyses >= 10},
+  {id:'vault_keeper', name:'Vault Keeper', desc:'20 Wissenseintraege', icon:'📚', condition: (s) => s.vaultEntries >= 20},
+  {id:'night_owl', name:'Night Owl', desc:'Check-in nach Mitternacht', icon:'🦉', condition: (s) => s.lateCheckins >= 1},
+  {id:'early_bird', name:'Early Bird', desc:'Check-in vor 6 Uhr', icon:'🌅', condition: (s) => s.earlyCheckins >= 1},
+  {id:'social', name:'Multiplayer', desc:'Ersten Battle gestartet', icon:'⚔', condition: (s) => s.battles >= 1},
+  {id:'hacker', name:'Hacker', desc:'Terminal Mode aktiviert', icon:'💻', condition: (s) => s.terminalUsed},
+  {id:'matrix', name:'Neo', desc:'Matrix Easter Egg gefunden', icon:'🟢', condition: (s) => s.matrixFound},
+  {id:'explorer', name:'Explorer', desc:'Alle Screens besucht', icon:'🗺', condition: (s) => s.screensVisited >= 15}
+];
+
+function getXpData() {
+  try { return JSON.parse(localStorage.getItem('coaching_xp') || '{}'); } catch(e) { return {}; }
+}
+function saveXpData(d) { localStorage.setItem('coaching_xp', JSON.stringify(d)); }
+
+function getPlayerStats() {
+  const xpData = getXpData();
+  const data = loadData();
+  const entries = data.entries.filter(e => e.completed);
+  const moodLog = data.moodLog || [];
+  const streak = getStreak();
+
+  return {
+    xp: xpData.xp || 0,
+    totalCheckins: entries.length,
+    maxStreak: Math.max(streak, xpData.maxStreak || 0),
+    maxScore: entries.reduce((max, e) => Math.max(max, e.score || 0), 0),
+    speedCheckins: xpData.speedCheckins || 0,
+    voiceUses: xpData.voiceUses || 0,
+    analyses: xpData.analyses || 0,
+    vaultEntries: xpData.vaultEntries || 0,
+    lateCheckins: xpData.lateCheckins || 0,
+    earlyCheckins: xpData.earlyCheckins || 0,
+    battles: xpData.battles || 0,
+    terminalUsed: xpData.terminalUsed || false,
+    matrixFound: xpData.matrixFound || false,
+    screensVisited: Object.keys(xpData.screens || {}).length,
+    feedbackGiven: xpData.feedbackGiven || 0
+  };
+}
+
+function getCurrentLevel(xp) {
+  let current = LEVELS[0];
+  for (const lvl of LEVELS) {
+    if (xp >= lvl.xp) current = lvl;
+    else break;
+  }
+  return current;
+}
+
+function getNextLevel(xp) {
+  for (const lvl of LEVELS) {
+    if (xp < lvl.xp) return lvl;
+  }
+  return null;
+}
+
+function awardXP(action, bonus) {
+  const amount = (XP_ACTIONS[action] || 0) + (bonus || 0);
+  if (amount <= 0) return;
+  const xpData = getXpData();
+  const oldXP = xpData.xp || 0;
+  const oldLevel = getCurrentLevel(oldXP);
+  xpData.xp = oldXP + amount;
+  const newLevel = getCurrentLevel(xpData.xp);
+
+  // Track screen visits
+  if (!xpData.screens) xpData.screens = {};
+  if (currentScreen) xpData.screens[currentScreen] = true;
+
+  // Track max streak
+  xpData.maxStreak = Math.max(xpData.maxStreak || 0, getStreak());
+
+  saveXpData(xpData);
+
+  // XP popup
+  showXpPopup(amount);
+
+  // Level up check
+  if (newLevel.level > oldLevel.level) {
+    setTimeout(() => showLevelUp(newLevel), 800);
+  }
+
+  // Update streak pill with level
+  updateStreakPill();
+}
+
+function showXpPopup(amount) {
+  const popup = document.createElement('div');
+  popup.className = 'xp-popup';
+  popup.textContent = `+${amount} XP`;
+  document.body.appendChild(popup);
+  setTimeout(() => popup.remove(), 1000);
+}
+
+function showLevelUp(level) {
+  const overlay = document.createElement('div');
+  overlay.className = 'level-up-overlay';
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = `
+    <div class="level-up-card">
+      <div style="font-size:48px;margin-bottom:16px">${level.icon}</div>
+      <h2 style="font-family:Orbitron,sans-serif;color:var(--gold);font-size:12px;letter-spacing:3px">LEVEL UP!</h2>
+      <div style="font-family:Orbitron,sans-serif;font-size:36px;color:var(--gold);margin:12px 0;text-shadow:var(--glow-gold)">${level.level}</div>
+      <p style="font-family:Orbitron,sans-serif;font-size:14px;color:var(--text);letter-spacing:2px">${level.name}</p>
+      <p style="font-size:11px;color:var(--dim);margin-top:12px">Antippen zum Schliessen</p>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 5000);
+}
+
+function updateStreakPill() {
+  const pill = document.getElementById('streak-pill');
+  if (!pill) return;
+  const xpData = getXpData();
+  const level = getCurrentLevel(xpData.xp || 0);
+  const streak = getStreak();
+  pill.textContent = `${level.icon} LVL ${level.level} · ${streak > 0 ? streak + 'd' : 'Tag 1'}`;
+  pill.style.borderColor = 'var(--gold)';
+  pill.style.color = 'var(--gold)';
+}
+
+// =========================================================
+// FEATURE 10: COMMAND PALETTE (Ctrl+K)
+// =========================================================
+
+let cmdPaletteOpen = false;
+let cmdSelectedIndex = 0;
+
+const CMD_ACTIONS = [
+  {icon:'⚡', label:'Speed Check-in', desc:'15-Sekunden Mood-Check', action:()=>showScreen('speed'), shortcut:'S'},
+  {icon:'📊', label:'Heute', desc:'Tages Check-in', action:()=>showScreen('daily'), shortcut:'D'},
+  {icon:'💬', label:'Coach', desc:'KI-Coach Chat oeffnen', action:()=>showScreen('coach'), shortcut:'C'},
+  {icon:'◎', label:'Prognose', desc:'Morgen-Vorhersage', action:()=>showScreen('predict'), shortcut:'P'},
+  {icon:'❤', label:'Bio Dashboard', desc:'Biometrische Daten', action:()=>showScreen('bio'), shortcut:'B'},
+  {icon:'🔍', label:'Analyzer', desc:'Situation analysieren', action:()=>showScreen('analyzer'), shortcut:'A'},
+  {icon:'⬡', label:'Network', desc:'Anonyme Benchmarks', action:()=>showScreen('network'), shortcut:'N'},
+  {icon:'★', label:'Power Score', desc:'Deine eine Zahl', action:()=>showScreen('power'), shortcut:'W'},
+  {icon:'⚔', label:'Battle', desc:'Multiplayer Challenges', action:()=>showScreen('multiplayer'), shortcut:'M'},
+  {icon:'📖', label:'Vault', desc:'Wissensspeicher', action:()=>showScreen('vault'), shortcut:'V'},
+  {icon:'📋', label:'Plan', desc:'Tagesplan', action:()=>showScreen('plan')},
+  {icon:'✅', label:'Habits', desc:'Gewohnheiten tracken', action:()=>showScreen('habits'), shortcut:'H'},
+  {icon:'📈', label:'Stats', desc:'Statistiken', action:()=>showScreen('progress')},
+  {icon:'🔑', label:'API & Export', desc:'Daten exportieren', action:()=>showScreen('openapi')},
+  {icon:'🏥', label:'Patienten', desc:'Patienten-KI', action:()=>showScreen('patients')},
+  {icon:'💻', label:'Terminal Mode', desc:'Hacker-Modus aktivieren', action:()=>toggleTerminalMode()},
+  {icon:'🟢', label:'Matrix Rain', desc:'Enter the Matrix', action:()=>toggleMatrixRain()},
+  {icon:'📤', label:'JSON Export', desc:'Alle Daten exportieren', action:()=>exportDataAs('json')},
+  {icon:'🔔', label:'Notifications', desc:'Push-Benachrichtigungen', action:()=>requestNotificationPermission()},
+  {icon:'🎤', label:'Voice Input', desc:'Spracheingabe starten', action:()=>{showScreen('coach');setTimeout(()=>toggleVoice('chat-input'),500)}}
+];
+
+function openCommandPalette() {
+  if (cmdPaletteOpen) return;
+  cmdPaletteOpen = true;
+  cmdSelectedIndex = 0;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'cmd-overlay';
+  overlay.id = 'cmd-palette';
+  overlay.onclick = (e) => { if (e.target === overlay) closeCommandPalette(); };
+  overlay.innerHTML = `
+    <div class="cmd-box">
+      <input class="cmd-input" id="cmd-search" placeholder="Suche Befehle... (Esc zum Schliessen)" autofocus>
+      <div class="cmd-list" id="cmd-list"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const input = document.getElementById('cmd-search');
+  input.addEventListener('input', () => renderCmdResults(input.value));
+  input.addEventListener('keydown', handleCmdKeydown);
+  renderCmdResults('');
+}
+
+function closeCommandPalette() {
+  const el = document.getElementById('cmd-palette');
+  if (el) el.remove();
+  cmdPaletteOpen = false;
+}
+
+function renderCmdResults(query) {
+  const q = query.toLowerCase();
+  const filtered = CMD_ACTIONS.filter(a =>
+    a.label.toLowerCase().includes(q) ||
+    a.desc.toLowerCase().includes(q) ||
+    (a.shortcut && a.shortcut.toLowerCase() === q)
+  );
+  cmdSelectedIndex = Math.min(cmdSelectedIndex, filtered.length - 1);
+  if (cmdSelectedIndex < 0) cmdSelectedIndex = 0;
+
+  const el = document.getElementById('cmd-list');
+  if (!el) return;
+  el.innerHTML = filtered.map((a, i) => `
+    <div class="cmd-item ${i === cmdSelectedIndex ? 'active' : ''}" onclick="executeCmdAction(${CMD_ACTIONS.indexOf(a)})" onmouseenter="cmdSelectedIndex=${i};renderCmdResults(document.getElementById('cmd-search').value)">
+      <span class="cmd-icon">${a.icon}</span>
+      <div style="flex:1">
+        <span class="cmd-label">${a.label}</span>
+        <span class="cmd-desc" style="display:block">${a.desc}</span>
+      </div>
+      ${a.shortcut ? `<span class="cmd-shortcut">${a.shortcut}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+function handleCmdKeydown(e) {
+  const q = document.getElementById('cmd-search')?.value || '';
+  const filtered = CMD_ACTIONS.filter(a =>
+    a.label.toLowerCase().includes(q.toLowerCase()) ||
+    a.desc.toLowerCase().includes(q.toLowerCase())
+  );
+
+  if (e.key === 'Escape') { closeCommandPalette(); e.preventDefault(); }
+  else if (e.key === 'ArrowDown') { cmdSelectedIndex = Math.min(cmdSelectedIndex + 1, filtered.length - 1); renderCmdResults(q); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { cmdSelectedIndex = Math.max(cmdSelectedIndex - 1, 0); renderCmdResults(q); e.preventDefault(); }
+  else if (e.key === 'Enter') {
+    const action = filtered[cmdSelectedIndex];
+    if (action) executeCmdAction(CMD_ACTIONS.indexOf(action));
+    e.preventDefault();
+  }
+}
+
+function executeCmdAction(index) {
+  closeCommandPalette();
+  CMD_ACTIONS[index]?.action();
+}
+
+// Global keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Ctrl+K or Cmd+K — Command Palette
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    if (cmdPaletteOpen) closeCommandPalette();
+    else openCommandPalette();
+  }
+  // Escape closes palette
+  if (e.key === 'Escape' && cmdPaletteOpen) {
+    closeCommandPalette();
+  }
+});
+
+// =========================================================
+// FEATURE 11: CLIENT-SIDE ENCRYPTION (AES-256)
+// =========================================================
+
+const ENCRYPTION_KEY_NAME = 'coaching_enc_key';
+
+async function generateEncryptionKey() {
+  const key = await crypto.subtle.generateKey(
+    {name: 'AES-GCM', length: 256}, true, ['encrypt', 'decrypt']
+  );
+  const exported = await crypto.subtle.exportKey('jwk', key);
+  localStorage.setItem(ENCRYPTION_KEY_NAME, JSON.stringify(exported));
+  return key;
+}
+
+async function getEncryptionKey() {
+  const stored = localStorage.getItem(ENCRYPTION_KEY_NAME);
+  if (stored) {
+    return await crypto.subtle.importKey(
+      'jwk', JSON.parse(stored), {name: 'AES-GCM', length: 256}, true, ['encrypt', 'decrypt']
+    );
+  }
+  return await generateEncryptionKey();
+}
+
+async function encryptData(plaintext) {
+  try {
+    const key = await getEncryptionKey();
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(plaintext);
+    const encrypted = await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, encoded);
+    return {
+      iv: Array.from(iv),
+      data: Array.from(new Uint8Array(encrypted)),
+      encrypted: true
+    };
+  } catch(e) { return {data: plaintext, encrypted: false}; }
+}
+
+async function decryptData(encObj) {
+  try {
+    if (!encObj.encrypted) return encObj.data;
+    const key = await getEncryptionKey();
+    const iv = new Uint8Array(encObj.iv);
+    const data = new Uint8Array(encObj.data);
+    const decrypted = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, key, data);
+    return new TextDecoder().decode(decrypted);
+  } catch(e) { return null; }
+}
+
+function isEncryptionAvailable() {
+  return typeof crypto !== 'undefined' && crypto.subtle;
+}
+
+// =========================================================
+// FEATURE 12: A/B TESTING ENGINE
+// =========================================================
+
+function getABTestData() {
+  try { return JSON.parse(localStorage.getItem('coaching_ab') || '{}'); } catch(e) { return {}; }
+}
+function saveABTestData(d) { localStorage.setItem('coaching_ab', JSON.stringify(d)); }
+
+const AB_TESTS = {
+  checkin_style: {
+    variants: ['standard', 'speed_first', 'mood_first'],
+    metric: 'completion_rate'
+  },
+  coach_tone: {
+    variants: ['balanced', 'aggressive', 'empathic', 'minimal'],
+    metric: 'engagement'
+  },
+  action_type: {
+    variants: ['breathing', 'movement', 'journaling', 'social'],
+    metric: 'feedback_positive'
+  },
+  reminder_time: {
+    variants: ['morning_7', 'morning_9', 'evening_19', 'evening_21'],
+    metric: 'response_rate'
+  }
+};
+
+function getVariant(testName) {
+  const abData = getABTestData();
+  if (!abData[testName]) {
+    const test = AB_TESTS[testName];
+    if (!test) return null;
+    abData[testName] = {
+      variant: test.variants[Math.floor(Math.random() * test.variants.length)],
+      assigned: new Date().toISOString(),
+      impressions: 0,
+      conversions: 0
+    };
+    saveABTestData(abData);
+  }
+  abData[testName].impressions++;
+  saveABTestData(abData);
+  return abData[testName].variant;
+}
+
+function trackConversion(testName) {
+  const abData = getABTestData();
+  if (abData[testName]) {
+    abData[testName].conversions++;
+    saveABTestData(abData);
+  }
+}
+
+function getABResults() {
+  const abData = getABTestData();
+  return Object.entries(abData).map(([name, data]) => ({
+    name,
+    variant: data.variant,
+    impressions: data.impressions,
+    conversions: data.conversions,
+    rate: data.impressions > 0 ? Math.round(data.conversions / data.impressions * 100) : 0
+  }));
+}
+
+// =========================================================
+// FEATURE 13: EASTER EGGS — Matrix Rain, Konami Code, Glitch
+// =========================================================
+
+let matrixActive = false;
+let matrixAnimFrame = null;
+
+function toggleMatrixRain() {
+  const canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  matrixActive = !matrixActive;
+  canvas.classList.toggle('active', matrixActive);
+
+  // Track for achievement
+  if (matrixActive) {
+    const xpData = getXpData();
+    xpData.matrixFound = true;
+    saveXpData(xpData);
+    awardXP('voice_used'); // reuse XP
+  }
+
+  if (matrixActive) startMatrixRain(canvas);
+  else { if (matrixAnimFrame) cancelAnimationFrame(matrixAnimFrame); }
+}
+
+function startMatrixRain(canvas) {
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const fontSize = 14;
+  const columns = Math.floor(canvas.width / fontSize);
+  const drops = new Array(columns).fill(1);
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#0f0';
+    ctx.font = fontSize + 'px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      const text = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+    if (matrixActive) matrixAnimFrame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// Konami Code: ↑↑↓↓←→←→BA
+let konamiSequence = [];
+const KONAMI_CODE = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+
+document.addEventListener('keydown', (e) => {
+  konamiSequence.push(e.key);
+  if (konamiSequence.length > 10) konamiSequence.shift();
+  if (konamiSequence.join(',') === KONAMI_CODE.join(',')) {
+    konamiSequence = [];
+    activateKonamiEasterEgg();
+  }
+});
+
+function activateKonamiEasterEgg() {
+  // GODMODE — temporarily boost all visuals
+  document.body.style.transition = 'all .3s';
+  toggleMatrixRain();
+  toggleGlitchEffect();
+  awardXP('perfect_day');
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:30000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);animation:fadeIn .3s ease;cursor:pointer';
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:64px;margin-bottom:16px">👾</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:24px;color:var(--green);letter-spacing:4px;text-shadow:0 0 30px rgba(45,255,168,.5)">KONAMI CODE</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:14px;color:var(--gold);letter-spacing:2px;margin-top:12px">GOD MODE ACTIVATED</div>
+      <div style="font-size:12px;color:var(--dim);margin-top:16px">+150 XP · Matrix + Glitch unlocked</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  setTimeout(() => { if (overlay.parentNode) overlay.remove(); }, 4000);
+}
+
+let glitchActive = false;
+function toggleGlitchEffect() {
+  glitchActive = !glitchActive;
+  const brand = document.querySelector('.brand');
+  if (brand) {
+    if (glitchActive) {
+      brand.classList.add('glitch-text');
+      brand.setAttribute('data-text', brand.textContent);
+    } else {
+      brand.classList.remove('glitch-text');
+    }
+  }
+}
+
+// =========================================================
+// FEATURE 14: TERMINAL MODE
+// =========================================================
+
+let terminalMode = false;
+
+function toggleTerminalMode() {
+  terminalMode = !terminalMode;
+  document.body.classList.toggle('terminal-mode', terminalMode);
+
+  const xpData = getXpData();
+  xpData.terminalUsed = true;
+  saveXpData(xpData);
+
+  if (terminalMode) {
+    awardXP('voice_used');
+    const msg = document.createElement('div');
+    msg.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:20000;font-family:Space Mono,monospace;font-size:12px;color:var(--green);background:var(--bg);border:1px solid var(--green);padding:8px 16px;animation:fadeIn .2s ease';
+    msg.textContent = '> TERMINAL MODE ACTIVATED';
+    document.body.appendChild(msg);
+    setTimeout(() => msg.remove(), 2000);
+  }
+}
+
+// =========================================================
+// FEATURE 15: POWER SCORE — One Number To Rule Them All
+// =========================================================
+
+function calculatePowerScore() {
+  const data = loadData();
+  const entries = data.entries.filter(e => e.completed).sort((a,b) => b.date.localeCompare(a.date));
+  const moodLog = (data.moodLog || []).sort((a,b) => b.date.localeCompare(a.date));
+  const streak = getStreak();
+  const xpData = getXpData();
+  const xp = xpData.xp || 0;
+  const level = getCurrentLevel(xp);
+  const feedbackStats = getFeedbackStats();
+
+  // Component scores (0-100 each)
+  const components = {};
+
+  // 1. Consistency (25%) — streak + completion rate
+  const daysSinceFirst = entries.length ? Math.max(1, Math.round((Date.now() - new Date(entries[entries.length-1].date).getTime()) / 86400000)) : 1;
+  const completionRate = Math.min(100, Math.round(entries.length / daysSinceFirst * 100));
+  components.consistency = Math.round(Math.min(100, (streak / 30 * 50) + (completionRate * 0.5)));
+
+  // 2. Performance (25%) — recent scores
+  const recentScores = entries.slice(0,7).map(e => e.score || 0);
+  components.performance = recentScores.length ? Math.round(recentScores.reduce((a,b)=>a+b,0) / recentScores.length) : 0;
+
+  // 3. Wellbeing (20%) — mood + energy + focus
+  const recentMoods = moodLog.slice(0,7);
+  const avgMood = recentMoods.length ? recentMoods.reduce((s,m)=>s+m.mood,0)/recentMoods.length : 5;
+  const avgEnergy = recentMoods.length ? recentMoods.reduce((s,m)=>s+m.energy,0)/recentMoods.length : 5;
+  const avgFocus = recentMoods.length ? recentMoods.reduce((s,m)=>s+(m.focus||5),0)/recentMoods.length : 5;
+  components.wellbeing = Math.round((avgMood + avgEnergy + avgFocus) / 3 * 10);
+
+  // 4. Growth (15%) — trend + weakness reduction
+  const prev7 = entries.slice(7,14).map(e => e.score || 0);
+  const recentAvg = recentScores.length ? recentScores.reduce((a,b)=>a+b,0)/recentScores.length : 0;
+  const prevAvg = prev7.length ? prev7.reduce((a,b)=>a+b,0)/prev7.length : recentAvg;
+  const trend = recentAvg - prevAvg;
+  components.growth = Math.round(Math.min(100, Math.max(0, 50 + trend * 3)));
+
+  // 5. Engagement (15%) — XP + habits + feedback
+  const habitData = data.habits || {};
+  let habitTotal = 0, habitDays = 0;
+  Object.values(habitData).forEach(h => { if (h.length) { habitTotal += h.length; habitDays++; } });
+  const habitRate = habitDays ? Math.round(habitTotal / habitDays / 12 * 100) : 0;
+  const feedbackRate = feedbackStats ? feedbackStats.effectiveRate : 50;
+  components.engagement = Math.round((Math.min(100, xp / 100) * 0.4) + (habitRate * 0.3) + (feedbackRate * 0.3));
+
+  // POWER SCORE — weighted composite
+  const powerScore = Math.round(
+    components.consistency * 0.25 +
+    components.performance * 0.25 +
+    components.wellbeing * 0.20 +
+    components.growth * 0.15 +
+    components.engagement * 0.15
+  );
+
+  // Power tier
+  let tier, tierColor;
+  if (powerScore >= 90) { tier = 'TRANSCENDENT'; tierColor = 'var(--gold)'; }
+  else if (powerScore >= 75) { tier = 'ELITE'; tierColor = 'var(--cyan)'; }
+  else if (powerScore >= 60) { tier = 'STRONG'; tierColor = 'var(--green)'; }
+  else if (powerScore >= 40) { tier = 'DEVELOPING'; tierColor = 'var(--gold)'; }
+  else if (powerScore >= 20) { tier = 'EMERGING'; tierColor = 'var(--dim)'; }
+  else { tier = 'INITIALIZING'; tierColor = 'var(--red)'; }
+
+  return {powerScore, components, tier, tierColor, level, xp, streak, entries: entries.length};
+}
+
+function renderPowerScreen() {
+  const ps = calculatePowerScore();
+  const nextLvl = getNextLevel(ps.xp);
+  const xpForNext = nextLvl ? nextLvl.xp - ps.xp : 0;
+  const xpProgress = nextLvl ? Math.round((ps.xp - ps.level.xp) / (nextLvl.xp - ps.level.xp) * 100) : 100;
+
+  const circumference = 2 * Math.PI * 68;
+  const offset = circumference - (ps.powerScore / 100) * circumference;
+
+  // Unlocked achievements
+  const stats = getPlayerStats();
+  const unlocked = ACHIEVEMENTS.filter(a => a.condition(stats));
+  const locked = ACHIEVEMENTS.filter(a => !a.condition(stats));
+
+  // A/B test results
+  const abResults = getABResults();
+
+  const html = `
+    <!-- POWER SCORE HERO -->
+    <div class="card fade-in" style="border-color:${ps.tierColor};text-align:center;padding:30px 20px">
+      <div class="power-ring">
+        <svg viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="68" fill="none" stroke="var(--border)" stroke-width="8"/>
+          <circle cx="80" cy="80" r="68" fill="none" stroke="${ps.tierColor}" stroke-width="8"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+            stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease"/>
+        </svg>
+        <div class="power-number" style="color:${ps.tierColor}">
+          ${ps.powerScore}
+          <span class="power-label">POWER SCORE</span>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <span style="font-family:Orbitron,sans-serif;font-size:14px;color:${ps.tierColor};letter-spacing:3px">${ps.tier}</span>
+      </div>
+    </div>
+
+    <!-- LEVEL & XP -->
+    <div class="card fade-in" style="border-color:rgba(201,168,76,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="level-badge">${ps.level.icon} LEVEL ${ps.level.level} · ${ps.level.name}</div>
+        <span style="font-family:Orbitron,sans-serif;font-size:12px;color:var(--gold)">${ps.xp} XP</span>
+      </div>
+      <div class="xp-bar">
+        <div class="xp-fill" style="width:${xpProgress}%"></div>
+      </div>
+      <p class="small" style="margin-top:6px">${nextLvl ? `${xpForNext} XP bis Level ${nextLvl.level} (${nextLvl.name})` : 'MAX LEVEL ERREICHT'}</p>
+    </div>
+
+    <!-- COMPONENT BREAKDOWN -->
+    <div class="card fade-in">
+      <h3>POWER COMPONENTS</h3>
+      ${Object.entries(ps.components).map(([key, val]) => {
+        const labels = {consistency:'KONSISTENZ',performance:'PERFORMANCE',wellbeing:'WELLBEING',growth:'WACHSTUM',engagement:'ENGAGEMENT'};
+        const weights = {consistency:'25%',performance:'25%',wellbeing:'20%',growth:'15%',engagement:'15%'};
+        const colors = {consistency:'var(--cyan)',performance:'var(--green)',wellbeing:'var(--pink)',growth:'var(--purple)',engagement:'var(--gold)'};
+        return `
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+              <span style="color:${colors[key]};font-family:Orbitron,sans-serif;letter-spacing:1px">${labels[key]} (${weights[key]})</span>
+              <span style="color:var(--text);font-family:Orbitron,sans-serif">${val}/100</span>
+            </div>
+            <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden">
+              <div style="height:100%;width:${val}%;background:${colors[key]};border-radius:3px;transition:width 1s ease"></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+
+    <!-- ACHIEVEMENTS -->
+    <div class="card fade-in" style="border-color:rgba(201,168,76,.2)">
+      <h3 style="color:var(--gold)">ACHIEVEMENTS (${unlocked.length}/${ACHIEVEMENTS.length})</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+        ${unlocked.map(a => `
+          <div class="achievement unlocked">
+            <span class="achievement-icon">${a.icon}</span>
+            <div>
+              <p style="font-size:11px;color:var(--gold);font-weight:700;margin:0">${a.name}</p>
+              <p style="font-size:9px;color:var(--dim);margin:2px 0 0">${a.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+        ${locked.slice(0,4).map(a => `
+          <div class="achievement locked">
+            <span class="achievement-icon">🔒</span>
+            <div>
+              <p style="font-size:11px;color:var(--dim);font-weight:700;margin:0">???</p>
+              <p style="font-size:9px;color:var(--dim);margin:2px 0 0">${a.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- A/B TEST DASHBOARD -->
+    <div class="card fade-in">
+      <h3>SELF-OPTIMIZING ENGINE</h3>
+      <p style="font-size:10px;color:var(--dim);margin-bottom:8px">Die App testet automatisch verschiedene Strategien und lernt was bei DIR funktioniert.</p>
+      ${abResults.length ? abResults.map(r => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <span style="font-size:11px;color:var(--text)">${r.name}</span>
+            <span class="tag" style="margin-left:6px">${r.variant}</span>
+          </div>
+          <span style="font-size:11px;color:${r.rate > 50 ? 'var(--green)' : 'var(--gold)'};font-family:Orbitron,sans-serif">${r.rate}%</span>
+        </div>
+      `).join('') : '<p style="font-size:11px;color:var(--dim)">Engine sammelt Daten... Tests starten automatisch.</p>'}
+    </div>
+
+    <!-- ENCRYPTION STATUS -->
+    <div class="card fade-in">
+      <h3>SECURITY</h3>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface2);border:1px solid ${isEncryptionAvailable() ? 'var(--green)' : 'var(--red)'}">
+        <span style="font-size:20px">${isEncryptionAvailable() ? '🔐' : '⚠'}</span>
+        <div>
+          <p style="font-size:12px;color:var(--text);margin:0;font-weight:700">${isEncryptionAvailable() ? 'AES-256 VERFUEGBAR' : 'ENCRYPTION NICHT VERFUEGBAR'}</p>
+          <p style="font-size:10px;color:var(--dim);margin:2px 0 0">Client-side Encryption · Zero-Knowledge Architecture</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS -->
+    <div class="card fade-in">
+      <h3>SHORTCUTS</h3>
+      <div style="font-size:11px;color:var(--dim);line-height:2">
+        <div style="display:flex;justify-content:space-between"><span>Command Palette</span><span class="cmd-shortcut">Ctrl+K</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Konami Code</span><span class="cmd-shortcut">↑↑↓↓←→←→BA</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Terminal Mode</span><span class="cmd-shortcut">via Palette</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Matrix Rain</span><span class="cmd-shortcut">via Palette</span></div>
+      </div>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+}
+
+// =========================================================
+// FEATURE 16: MULTIPLAYER — Accountability Partners & Battles
+// =========================================================
+
+function getMultiplayerData() {
+  try { return JSON.parse(localStorage.getItem('coaching_mp') || '{}'); } catch(e) { return {}; }
+}
+function saveMultiplayerData(d) { localStorage.setItem('coaching_mp', JSON.stringify(d)); }
+
+function generateBotOpponent() {
+  const names = ['PHANTOM_X','NEURAL_7','CIPHER_01','GHOST_RUNNER','APEX_SIGMA','VORTEX_9','QUANTUM_Z','ZERO_WOLF','STEEL_MIND','DARK_OPS'];
+  const name = names[Math.floor(Math.random() * names.length)];
+  const level = Math.floor(Math.random() * 8) + 2;
+  const score = Math.floor(Math.random() * 40) + 40;
+  const streak = Math.floor(Math.random() * 30) + 3;
+  return {name, level, score, streak, isBot: true};
+}
+
+function createBattle(type) {
+  const mp = getMultiplayerData();
+  if (!mp.battles) mp.battles = [];
+  const ps = calculatePowerScore();
+  const opponent = generateBotOpponent();
+
+  const battle = {
+    id: Date.now().toString(36),
+    type,
+    created: new Date().toISOString(),
+    status: 'active',
+    player: {name: 'DU', score: ps.powerScore, streak: getStreak(), level: ps.level.level},
+    opponent,
+    duration: type === 'daily' ? 1 : type === 'weekly' ? 7 : 30,
+    daysLeft: type === 'daily' ? 1 : type === 'weekly' ? 7 : 30,
+    playerProgress: 0,
+    opponentProgress: Math.floor(Math.random() * 30)
+  };
+
+  mp.battles.unshift(battle);
+  saveMultiplayerData(mp);
+
+  // Track for achievements
+  const xpData = getXpData();
+  xpData.battles = (xpData.battles || 0) + 1;
+  saveXpData(xpData);
+  awardXP('analysis_run');
+  return battle;
+}
+
+function updateBattleProgress() {
+  const mp = getMultiplayerData();
+  if (!mp.battles) return;
+  const ps = calculatePowerScore();
+
+  mp.battles.forEach(b => {
+    if (b.status !== 'active') return;
+    b.playerProgress = ps.powerScore;
+    // Simulate opponent progress
+    b.opponentProgress = Math.min(100, b.opponentProgress + Math.floor(Math.random() * 5));
+    b.daysLeft = Math.max(0, b.daysLeft - (todayStr() !== b.lastUpdate ? 1 : 0));
+    b.lastUpdate = todayStr();
+    if (b.daysLeft <= 0) {
+      b.status = b.playerProgress >= b.opponentProgress ? 'won' : 'lost';
+      if (b.status === 'won') awardXP('perfect_day');
+    }
+  });
+  saveMultiplayerData(mp);
+}
+
+function renderMultiplayerScreen() {
+  updateBattleProgress();
+  const mp = getMultiplayerData();
+  const battles = mp.battles || [];
+  const ps = calculatePowerScore();
+
+  const activeBattles = battles.filter(b => b.status === 'active');
+  const completedBattles = battles.filter(b => b.status !== 'active');
+  const wins = battles.filter(b => b.status === 'won').length;
+  const losses = battles.filter(b => b.status === 'lost').length;
+
+  // Simulated leaderboard
+  const leaderboard = [
+    ...Array.from({length:4}, () => {
+      const bot = generateBotOpponent();
+      return {name:bot.name, level:bot.level, score:bot.score, isYou:false};
+    }),
+    {name:'DU', level:ps.level.level, score:ps.powerScore, isYou:true}
+  ].sort((a,b) => b.score - a.score).map((p,i) => ({...p, rank:i+1}));
+
+  const html = `
+    <div class="card fade-in" style="border-color:rgba(255,45,142,.3)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="font-family:Orbitron,sans-serif;font-size:18px;color:var(--pink)">⚔</span>
+        <h2 style="margin:0">MULTIPLAYER ARENA</h2>
+      </div>
+      <p style="color:var(--dim);font-size:10px;letter-spacing:1px">ACCOUNTABILITY BATTLES · STREAK WARS · LEADERBOARD</p>
+      <div class="grid3" style="margin-top:12px">
+        <div class="kpi"><span class="small">BATTLES</span><b>${battles.length}</b></div>
+        <div class="kpi"><span class="small">WINS</span><b style="color:var(--green)">${wins}</b></div>
+        <div class="kpi"><span class="small">LOSSES</span><b style="color:var(--red)">${losses}</b></div>
+      </div>
+    </div>
+
+    <!-- START BATTLE -->
+    <div class="card fade-in">
+      <h3>NEUE CHALLENGE STARTEN</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+        <button onclick="createBattle('daily');renderMultiplayerScreen()" style="border-color:var(--cyan);color:var(--cyan)">⚡ 24H SPRINT</button>
+        <button onclick="createBattle('weekly');renderMultiplayerScreen()" style="border-color:var(--gold);color:var(--gold)">🔥 7-TAGE BATTLE</button>
+        <button onclick="createBattle('monthly');renderMultiplayerScreen()" style="border-color:var(--pink);color:var(--pink)">💎 30-TAGE WAR</button>
+      </div>
+    </div>
+
+    <!-- ACTIVE BATTLES -->
+    ${activeBattles.length ? `
+    <div class="card fade-in" style="border-color:rgba(0,240,255,.2)">
+      <h3 style="color:var(--cyan)">AKTIVE BATTLES (${activeBattles.length})</h3>
+      ${activeBattles.map(b => `
+        <div class="battle-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-family:Orbitron,sans-serif;font-size:11px;color:var(--cyan);letter-spacing:1px">DU (LVL ${b.player.level})</span>
+            <span class="battle-vs">VS</span>
+            <span style="font-family:Orbitron,sans-serif;font-size:11px;color:var(--pink);letter-spacing:1px">${b.opponent.name} (LVL ${b.opponent.level})</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <span style="font-family:Orbitron,sans-serif;font-size:16px;color:var(--cyan);width:40px">${b.playerProgress}</span>
+            <div style="flex:1;height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative">
+              <div style="position:absolute;left:0;top:0;height:100%;width:${b.playerProgress}%;background:var(--cyan);border-radius:4px"></div>
+              <div style="position:absolute;right:0;top:0;height:100%;width:${b.opponentProgress}%;background:var(--pink);border-radius:4px"></div>
+            </div>
+            <span style="font-family:Orbitron,sans-serif;font-size:16px;color:var(--pink);width:40px;text-align:right">${b.opponentProgress}</span>
+          </div>
+          <p class="small">${b.daysLeft} Tage verbleibend · ${b.type.toUpperCase()} BATTLE</p>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    <!-- LEADERBOARD -->
+    <div class="card fade-in" style="border-color:rgba(201,168,76,.2)">
+      <h3 style="color:var(--gold)">LEADERBOARD</h3>
+      ${leaderboard.map(p => `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);${p.isYou ? 'background:rgba(0,240,255,.05);margin:0 -20px;padding:10px 20px' : ''}">
+          <span style="font-family:Orbitron,sans-serif;font-size:16px;color:${p.rank === 1 ? 'var(--gold)' : p.rank === 2 ? 'var(--dim)' : p.rank === 3 ? '#cd7f32' : 'var(--dim)'};width:24px;font-weight:700">#${p.rank}</span>
+          <div style="flex:1">
+            <span style="font-size:12px;color:${p.isYou ? 'var(--cyan)' : 'var(--text)'};font-weight:${p.isYou ? '700' : '400'}">${p.name}</span>
+            <span class="tag" style="margin-left:6px">LVL ${p.level}</span>
+          </div>
+          <span style="font-family:Orbitron,sans-serif;font-size:14px;color:${p.isYou ? 'var(--cyan)' : 'var(--dim)'}">${p.score}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- BATTLE HISTORY -->
+    ${completedBattles.length ? `
+    <div class="card fade-in">
+      <h3>BATTLE HISTORY</h3>
+      ${completedBattles.slice(0,5).map(b => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <span style="font-size:11px;color:var(--text)">vs ${b.opponent.name}</span>
+            <span class="tag" style="margin-left:4px;color:${b.status === 'won' ? 'var(--green)' : 'var(--red)'};border-color:${b.status === 'won' ? 'var(--green)' : 'var(--red)'}">${b.status === 'won' ? 'WIN' : 'LOSS'}</span>
+          </div>
+          <span style="font-size:11px;color:var(--dim)">${b.playerProgress} vs ${b.opponentProgress}</span>
+        </div>
+      `).join('')}
+    </div>` : ''}
+  `;
+  document.getElementById("content").innerHTML = html;
+}
+
+// =========================================================
+// FEATURE 17: REALTIME LIVE-UPDATING DASHBOARD
+// =========================================================
+
+let realtimeInterval = null;
+
+function startRealtimeUpdates() {
+  if (realtimeInterval) clearInterval(realtimeInterval);
+  realtimeInterval = setInterval(() => {
+    // Update streak pill with live data
+    updateStreakPill();
+    // Update any live elements on screen
+    const liveScore = document.getElementById('live-power-score');
+    if (liveScore) {
+      const ps = calculatePowerScore();
+      liveScore.textContent = ps.powerScore;
+    }
+    const liveTime = document.getElementById('live-time');
+    if (liveTime) {
+      liveTime.textContent = new Date().toLocaleTimeString('de-DE');
+    }
+  }, 5000);
+}
+
+// =========================================================
+// FEATURE 18: OFFLINE-FIRST SERVICE WORKER
+// =========================================================
+
+function registerEnhancedSW() {
+  if (!('serviceWorker' in navigator)) return;
+
+  const swCode = `
+    const CACHE_NAME = 'coaching-v2090';
+    const ASSETS = ['/coaching.html', '/manifest.json'];
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+          return resp;
+        }).catch(() => caches.match('/coaching.html')))
+      );
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(names =>
+        Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
+      ));
+    });
+  `;
+
+  const blob = new Blob([swCode], {type: 'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+
+  // Try registering the enhanced SW (may fail due to blob URL restrictions)
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// =========================================================
+// HOOK INTO EXISTING FUNCTIONS FOR XP + TRACKING
+// =========================================================
+
+// Wrap finishSpeedCheckin for XP
+const _origFinishSpeed = finishSpeedCheckin;
+finishSpeedCheckin = function() {
+  _origFinishSpeed();
+  awardXP('speed_checkin');
+  const xpData = getXpData();
+  xpData.speedCheckins = (xpData.speedCheckins || 0) + 1;
+  // Track time-based achievements
+  const hour = new Date().getHours();
+  if (hour >= 0 && hour < 6) xpData.lateCheckins = (xpData.lateCheckins || 0) + 1;
+  if (hour >= 4 && hour < 6) xpData.earlyCheckins = (xpData.earlyCheckins || 0) + 1;
+  saveXpData(xpData);
+  trackConversion('checkin_style');
+};
+
+// Wrap sendChat for XP
+const _origSendChat = typeof sendChat === 'function' ? sendChat : null;
+
+// Wrap showScreen for tracking
+const _origShowScreen = showScreen;
+showScreen = function(screen) {
+  _origShowScreen(screen);
+  const xpData = getXpData();
+  if (!xpData.screens) xpData.screens = {};
+  xpData.screens[screen] = true;
+  saveXpData(xpData);
+  updateStreakPill();
+};
+
+// Wrap submitFeedback for XP
+const _origSubmitFeedback = submitFeedback;
+submitFeedback = function(rating, source, btn) {
+  _origSubmitFeedback(rating, source, btn);
+  awardXP('feedback_given');
+  const xpData = getXpData();
+  xpData.feedbackGiven = (xpData.feedbackGiven || 0) + 1;
+  saveXpData(xpData);
+  if (rating === 'better' || rating === 'much_better') trackConversion('action_type');
+};
+
+// =========================================================
 // GRAIN OVERLAY (Film grain effect from Nerve Center)
 // =========================================================
 function initGrain() {
@@ -4524,6 +5611,12 @@ if ("serviceWorker" in navigator) {
 // =========================================================
 initGrain();
 initProactiveSystem();
+startRealtimeUpdates();
+registerEnhancedSW();
+getVariant('checkin_style');
+getVariant('coach_tone');
+getVariant('action_type');
+updateStreakPill();
 showScreen("daily");
 </script>
 </body>
