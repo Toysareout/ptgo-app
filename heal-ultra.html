@@ -101,7 +101,7 @@ Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
 <script>
 (function(){var s=sessionStorage.getItem('ttao_auth');if(s==='ok')document.getElementById('pw-gate').style.display='none';document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPw()})})();
 async function _h(s){var e=new TextEncoder().encode(s);var b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
-async function checkPw(){var v=document.getElementById('pw-input').value;var h=await _h(v);if(h==='056c0bf74aaa44f92e4dd53cd72cc96a2c820912e9f998f3027d3c0b70c60a3d'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
+async function checkPw(){var v=document.getElementById('pw-input').value;var h=await _h(v);if(h==='ba8cff43c691031423db049fb4b8f806fab51e184d7e0746cfe92c306e0df2f2'){sessionStorage.setItem('ttao_auth','ok');document.getElementById('pw-gate').style.display='none'}else{document.getElementById('pw-error').style.opacity='1';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();setTimeout(function(){document.getElementById('pw-error').style.opacity='0'},2000)}}
 </script>
 
 <div id="cur"></div>
