@@ -16,12 +16,7 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { password, id, status, notes } = JSON.parse(event.body);
-
-    const adminPw = process.env.ADMIN_PASSWORD || 'Toy1';
-    if (!password || password !== adminPw) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Falsches Passwort' }) };
-    }
+    const { id, status, notes } = JSON.parse(event.body);
 
     if (!id) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing application id' }) };

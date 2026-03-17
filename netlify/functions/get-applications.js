@@ -16,13 +16,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { password } = JSON.parse(event.body);
-
-    const adminPw = process.env.ADMIN_PASSWORD || 'Toy1';
-    if (!password || password !== adminPw) {
-      return { statusCode: 401, headers, body: JSON.stringify({ error: 'Falsches Passwort' }) };
-    }
-
     const supabase = createClient(
       process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co',
       process.env.SUPABASE_SERVICE_KEY

@@ -130,17 +130,8 @@ Meta Pixel: Uncomment and replace XXXXXXXXXXXXXXXX with your Pixel ID
 <!-- GRAIN -->
 <canvas id="grain"></canvas>
 
-<!-- LOGIN -->
-<div class="login" id="login">
-  <div class="login-label">PTGO <span class="acc">ADMIN</span></div>
-  <div class="login-sub">Bewerbungsverwaltung</div>
-  <input type="password" id="pw" placeholder="Passwort" onkeydown="if(event.key==='Enter')doLogin()">
-  <button onclick="doLogin()">Zugang</button>
-  <div class="error" id="login-error"></div>
-</div>
-
 <!-- DASHBOARD -->
-<div class="dashboard" id="dashboard">
+<div class="dashboard" id="dashboard" style="display:block">
 
   <!-- HEADER -->
   <div class="dash-header">
@@ -226,35 +217,17 @@ const STATUS_LABELS = {new:'Neu',contacted:'Kontaktiert',call_scheduled:'Call ge
   window.addEventListener('resize',resize);resize();draw();
 })();
 
-/* ── LOGIN ── */
-async function doLogin(){
-  const pw=document.getElementById('pw').value;
-  const errEl=document.getElementById('login-error');
-  errEl.textContent='';
-  try{
-    const res=await fetch('/.netlify/functions/get-applications',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:pw})
-    });
-    if(!res.ok){errEl.textContent='Falsches Passwort';return}
-    adminPw=pw;
-    allData=await res.json();
-    document.getElementById('login').style.display='none';
-    document.getElementById('dashboard').style.display='block';
-    updateStats();renderCards();
-  }catch(e){errEl.textContent='Verbindungsfehler'}
-}
-
-/* ── LOAD DATA ── */
+/* ── INIT ── */
 async function loadData(){
   try{
     const res=await fetch('/.netlify/functions/get-applications',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:adminPw})
+      body:JSON.stringify({})
     });
     if(res.ok){allData=await res.json();updateStats();renderCards();toast('Daten aktualisiert')}
   }catch(_){}
 }
+loadData();
 
 /* ── STATS ── */
 function updateStats(){
@@ -357,7 +330,7 @@ async function saveNotes(id){
   try{
     const res=await fetch('/.netlify/functions/update-application',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:adminPw,id,notes})
+      body:JSON.stringify({id,notes})
     });
     if(res.ok){
       const updated=await res.json();
@@ -377,7 +350,7 @@ async function changeStatus(id,newStatus){
   try{
     const res=await fetch('/.netlify/functions/update-application',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({password:adminPw,id,status:newStatus})
+      body:JSON.stringify({id,status:newStatus})
     });
     if(res.ok){
       const updated=await res.json();
@@ -403,7 +376,7 @@ function esc(s){
 }
 
 /* ── AUTO REFRESH ── */
-setInterval(()=>{if(adminPw)loadData()},60000);
+setInterval(()=>loadData(),60000);
 </script>
 </body>
 </html>
