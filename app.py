@@ -12,6 +12,7 @@
 import os
 import json
 import time
+import random
 import secrets
 import hashlib
 import threading
@@ -108,6 +109,7 @@ class Patient(Base):
     reminder_enabled = Column(Boolean, default=True)
     reminder_time_local = Column(String(5), default="08:00")
     last_reminder_sent_on = Column(String(10), nullable=True)
+    last_evening_sent_on = Column(String(10), nullable=True)
     therapist_id = Column(Integer, ForeignKey("therapists.id"), nullable=True)
     therapist = relationship("Therapist", back_populates="patients")
     checkins = relationship("CheckIn", back_populates="patient")
@@ -760,25 +762,38 @@ def reminder_loop():
             db = SessionLocal()
             patients = db.query(Patient).filter(Patient.reminder_enabled == True).all()
             for p in patients:
-                if not _should_send_reminder_now(p, now_local):
-                    continue
-                if _patient_checked_in_today(db, p):
-                    p.last_reminder_sent_on = now_local.date().isoformat()
-                    db.commit()
-                    continue
-                magic = issue_magic_link(db, p, ttl_minutes=60 * 24)
-                msg = (
-                    f"Guten Morgen {p.name} ☀️\n\n"
-                    f"Dein Daily Check wartet.\n"
-                    f"30 Sekunden → Pattern → 1 Action.\n\n"
-                    f"➡️ {magic}"
-                )
-                try:
-                    send_whatsapp_to_patient(p, msg)
-                    p.last_reminder_sent_on = now_local.date().isoformat()
-                    db.commit()
-                except Exception as e:
-                    print("[WARN] Reminder send failed:", e)
+                # Morning reminder
+                if _should_send_reminder_now(p, now_local):
+                    if _patient_checked_in_today(db, p):
+                        p.last_reminder_sent_on = now_local.date().isoformat()
+                        db.commit()
+                        continue
+                    magic = issue_magic_link(db, p, ttl_minutes=60 * 24)
+                    msg = (
+                        f"Guten Morgen {p.name} ☀️\n\n"
+                        f"Dein Daily Check wartet.\n"
+                        f"30 Sekunden → Pattern → 1 Action.\n\n"
+                        f"➡️ {magic}"
+                    )
+                    try:
+                        send_whatsapp_to_patient(p, msg)
+                        p.last_reminder_sent_on = now_local.date().isoformat()
+                        db.commit()
+                    except Exception as e:
+                        print("[WARN] Reminder send failed:", e)
+
+                # Evening reflection (2nd daily message)
+                if _should_send_evening_message(p, now_local):
+                    today = now_local.date().isoformat()
+                    if getattr(p, 'last_evening_sent_on', None) != today:
+                        try:
+                            evening_msg = _generate_evening_message(db, p)
+                            send_whatsapp_to_patient(p, evening_msg)
+                            p.last_evening_sent_on = today
+                            db.commit()
+                        except Exception as e:
+                            print("[WARN] Evening message failed:", e)
+
             db.close()
         except Exception as e:
             print("[WARN] Reminder loop error:", e)
@@ -1463,93 +1478,6 @@ def checkin_1(request: Request, db=Depends(get_db)):
     """
     return _page("PTGO • Voice Check", body, request=request)
 
-    body = voice_js + """
-
-      <!-- START SCREEN -->
-      <div id="start-screen">
-        <div style="text-align:center;margin:8px 0 16px">
-          <div id="avatar-start" style="font-size:60px;line-height:1">&#x1F9D8;</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">PTGO DAILY CHECK</div>
-        </div>
-        <h1 style="text-align:center">Wie geht es dir heute?</h1>
-        <p style="text-align:center">6 tiefe Fragen. Dein Koerper. Dein System. Deine Wahrheit.</p>
-        <div class="hr"></div>
-        <p class="small" style="text-align:center">Sprachgesteuert - laeuft im Browser - kein Download</p>
-        <div style="height:16px"></div>
-        <button onclick="startVoiceCheck()" style="font-size:18px;padding:18px;">
-          Check starten
-        </button>
-        <div class="hr"></div>
-        <p class="small" style="text-align:center"><a href="/subscribe">Premium</a> &middot; <a href="/profile">Body Profile</a> &middot; <a href="/logout">Logout</a></p>
-      </div>
-
-      <!-- VOICE SCREEN -->
-      <div id="voice-screen" style="display:none">
-        <div style="text-align:center;margin:4px 0 12px">
-          <div id="avatar" style="font-size:48px;line-height:1;transition:all .3s">&#x1F9D8;</div>
-        </div>
-        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:6px">
-          <div id="progress-bar" style="height:4px;background:#f59e0b;border-radius:999px;width:0%;transition:width .4s"></div>
-        </div>
-        <p class="small" id="progress-text" style="text-align:center">Frage 1 von 6</p>
-        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:14px 16px;margin:10px 0">
-          <p style="color:#fbbf24;font-size:15px;margin:0;line-height:1.5" id="question-text">...</p>
-        </div>
-        <div id="body-map-section" style="display:none;margin:10px 0">
-          <p class="small" style="margin-bottom:6px;color:#a5b4fc">PTGO Body System</p>
-          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-            <button class="draw-mode-btn" data-mode="point" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Punkt</button>
-            <button class="draw-mode-btn" data-mode="line" style="background:rgba(245,158,11,.15);border:1px solid #374151;color:#fcd34d;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Linie</button>
-            <button class="draw-mode-btn" data-mode="area" style="background:rgba(99,102,241,.15);border:1px solid #374151;color:#a5b4fc;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Flaeche</button>
-            <button onclick="clearBodyMap()" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Loeschen</button>
-          </div>
-          <canvas id="body-canvas" width="280" height="220" style="width:100%;max-width:320px;border:1px solid #1f2937;border-radius:12px;display:block;margin:0 auto;touch-action:none;background:#0b1223"></canvas>
-          <p class="small" style="text-align:center;margin-top:6px">Tippe oder ziehe auf dem Koerper</p>
-        </div>
-        <div style="min-height:44px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
-          Deine Antwort erscheint hier...
-        </div>
-        <div style="text-align:center;margin:12px 0">
-          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:72px;height:72px;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
-            <span id="mic-icon">&#x1F399;</span>
-          </button>
-          <p class="small" id="status" style="margin-top:6px">Tippe um zu sprechen</p>
-          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:8px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer;">
-            Antwort bestaetigen
-          </button>
-        </div>
-        <div id="answers-list"></div>
-      </div>
-
-      <form id="checkin-form" method="post" action="/checkin/voice" style="display:none">
-        <input type="hidden" id="f_overall_text" name="overall_text">
-        <input type="hidden" id="f_context_text" name="context_text">
-        <input type="hidden" id="f_body_text" name="body_text">
-        <input type="hidden" id="f_sleep_text" name="sleep_text">
-        <input type="hidden" id="f_mental_text" name="mental_text">
-        <input type="hidden" id="f_goal_text" name="goal_text">
-        <input type="hidden" id="f_pain_map" name="pain_map_json">
-      </form>
-
-      <style>
-        .mic-btn.listening {
-          background: rgba(239,68,68,0.2) !important;
-          border-color: #ef4444 !important;
-          box-shadow: 0px 0px 20px rgba(239,68,68,0.4);
-          animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-        @keyframes avatarPulse {
-          0%, 100% { transform: scale(1); opacity:1; }
-          50% { transform: scale(1.15); opacity:0.8; }
-        }
-      </style>
-    """
-    return _page("PTGO Voice Check", body, request=request)
-
 
 # Keep old routes as redirects for backwards compatibility
 @app.post("/checkin/1", response_class=HTMLResponse)
@@ -1697,6 +1625,12 @@ def checkin_voice_submit(
     except Exception as e:
         print("[WARN] Therapist WhatsApp failed:", e)
 
+    # Emergency escalation for critical values
+    try:
+        _check_emergency_escalation(db, p, c)
+    except Exception as e:
+        print("[WARN] Emergency check failed:", e)
+
     return RedirectResponse(f"/result/{c.id}", status_code=303)
 
 
@@ -1787,6 +1721,13 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
       </div>
 
       {outcome_section}
+
+      <div class="hr"></div>
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:18px;margin:12px 0">
+        <h2 style="margin:0 0 8px;color:#a5b4fc;font-size:16px">AI Coaching</h2>
+        <p style="font-size:13px;color:#94a3b8;margin:0 0 10px">Dein personalisierter KI-Coach analysiert dein Pattern und gibt dir einen Impuls.</p>
+        <a href="/coaching/{c.id}" class="btn" style="background:linear-gradient(180deg,#818cf8,#6366f1);font-size:14px;padding:12px 16px">Coaching-Impuls erhalten</a>
+      </div>
 
       {premium_teaser}
 
@@ -1908,7 +1849,11 @@ def progress_page(request: Request, db=Depends(get_db)):
       <div class="hr"></div>
       {items if items else "<p class='small'>Noch keine Daten.</p>"}
       <div class="hr"></div>
-      <p class="small"><a href="/checkin/1">Neuer Check</a></p>
+      <p class="small">
+        <a href="/checkin/1">Neuer Check</a> •
+        <a href="/insights">AI Trends</a> •
+        <a href="/timeline">Timeline</a>
+      </p>
     """
     return _page("PTGO • Progress", body, request=request)
 
@@ -2807,3 +2752,354 @@ def therapist_view_checkin(checkin_id: int, request: Request, db=Depends(get_db)
       <p><a href="/therapist">← Back</a></p>
     """
     return _page("Therapist • Checkin", body, request=request)
+
+
+# =========================================================
+# AI MICRO-COACHING
+# =========================================================
+
+def _generate_coaching_impulse(checkin: CheckIn, patient: Patient, recent_checkins: list) -> str:
+    """Generate a personalized AI coaching impulse based on check-in data and history."""
+    if not ANTHROPIC_API_KEY:
+        return ""
+
+    history = ""
+    if recent_checkins:
+        for rc in recent_checkins[:5]:
+            history += f"- {rc.local_day}: Score {rc.score}, Pattern: {rc.pattern_label}, Stress: {rc.stress}, Schlaf: {rc.sleep}\n"
+
+    prompt = (
+        f"Du bist ein empathischer, erfahrener Therapeut und Coach. "
+        f"Der Patient '{patient.name}' hat gerade einen Check-in gemacht.\n\n"
+        f"HEUTIGES ERGEBNIS:\n"
+        f"- Recovery Score: {checkin.score}/100\n"
+        f"- Risk Level: {checkin.risk_level}\n"
+        f"- Pattern: {checkin.pattern_label}\n"
+        f"- Stress: {checkin.stress}/10, Schlaf: {checkin.sleep}/10, Körper: {checkin.body}/10\n"
+        f"- Craving: {checkin.craving}/10, Vermeidung: {checkin.avoidance}/10\n"
+        f"- Stimmung: {checkin.overall_text or '–'}\n"
+        f"- Herausforderung: {checkin.context_text or '–'}\n"
+        f"- Gedanken: {checkin.mental_text or '–'}\n"
+        f"- Tagesziel: {checkin.goal_text or '–'}\n\n"
+        f"LETZTE TAGE:\n{history or 'Keine Historie.'}\n\n"
+        f"Schreibe einen kurzen, persönlichen Coaching-Impuls (3-5 Sätze) auf Deutsch. "
+        f"Sei warm aber direkt. Erkenne Muster. Gib EINEN konkreten Micro-Tipp für die nächsten 2 Stunden. "
+        f"Kein Gelaber, kein Therapeuten-Deutsch. Sprich wie ein weiser Freund."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 400, "messages": [{"role": "user", "content": prompt}]},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print("[WARN] Coaching impulse failed:", e)
+        return ""
+
+
+@app.get("/coaching/{checkin_id}", response_class=HTMLResponse)
+def coaching_page(checkin_id: int, request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    c = db.query(CheckIn).filter(CheckIn.id == checkin_id, CheckIn.patient_id == p.id).first()
+    if not c:
+        raise HTTPException(status_code=404)
+
+    recent = db.query(CheckIn).filter(
+        CheckIn.patient_id == p.id, CheckIn.id != c.id
+    ).order_by(CheckIn.created_at.desc()).limit(5).all()
+
+    impulse = _generate_coaching_impulse(c, p, recent)
+    if not impulse:
+        impulse = "KI-Coaching ist gerade nicht verfügbar. Deine heutige Action ist dein bester nächster Schritt."
+
+    action = ACTION_LIBRARY.get(c.action_code or "", None)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🧠</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">AI COACHING</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Dein Coaching-Impuls</h1>
+
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:20px;margin:16px 0">
+        <p style="font-size:15px;line-height:1.7;color:#e5e7eb;margin:0">{impulse}</p>
+      </div>
+
+      <div class="grid3" style="margin:16px 0">
+        <div class="kpi"><span class="small">Score</span><b>{c.score}</b></div>
+        <div class="kpi"><span class="small">Pattern</span><b style="font-size:14px">{c.pattern_label}</b></div>
+        <div class="kpi"><span class="small">Risk</span><b>{c.risk_level}</b></div>
+      </div>
+
+      <div class="action-box">
+        <p class="small" style="color:#f59e0b;margin:0 0 6px">DEINE ACTION</p>
+        <b style="font-size:16px">{c.action_label or '–'}</b>
+        <p style="font-size:13px;margin:8px 0 0">{action['instructions'] if action else c.action_text or ''}</p>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/result/{c.id}">← Ergebnis</a> •
+        <a href="/checkin/1">Neuer Check</a> •
+        <a href="/insights">Trends</a>
+      </p>
+    """
+    return _page("PTGO • AI Coaching", body, request=request)
+
+
+# =========================================================
+# SMART TREND INSIGHTS (AI-powered)
+# =========================================================
+
+def _generate_trend_insights(checkins: list, patient_name: str) -> str:
+    """Generate AI-powered trend analysis from recent check-ins."""
+    if not ANTHROPIC_API_KEY or len(checkins) < 3:
+        return ""
+
+    data_rows = []
+    for c in checkins:
+        data_rows.append(
+            f"{c.local_day}: Score={c.score}, Stress={c.stress}, Schlaf={c.sleep}, "
+            f"Körper={c.body}, Craving={c.craving}, Vermeidung={c.avoidance}, "
+            f"Pattern={c.pattern_label}, Risk={c.risk_level}"
+        )
+
+    prompt = (
+        f"Du analysierst die Check-in-Daten von {patient_name}.\n\n"
+        f"DATEN (neueste zuerst):\n" + "\n".join(data_rows) + "\n\n"
+        f"Erstelle eine kurze Trend-Analyse auf Deutsch (3-4 Sätze):\n"
+        f"1. Welcher Trend ist erkennbar? (besser/schlechter/stabil)\n"
+        f"2. Was ist der größte Risikofaktor?\n"
+        f"3. Was läuft gut?\n"
+        f"4. Ein konkreter Tipp für die nächste Woche.\n"
+        f"Sei direkt und konkret. Keine Floskeln."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 300, "messages": [{"role": "user", "content": prompt}]},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print("[WARN] Trend insights failed:", e)
+        return ""
+
+
+@app.get("/insights", response_class=HTMLResponse)
+def insights_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    checkins = db.query(CheckIn).filter(
+        CheckIn.patient_id == p.id
+    ).order_by(CheckIn.created_at.desc()).limit(14).all()
+
+    if len(checkins) < 3:
+        body = """
+          <h1>Trend Insights</h1>
+          <p>Du brauchst mindestens 3 Check-ins für eine Trend-Analyse.</p>
+          <a class="btn" href="/checkin/1">Check-in starten</a>
+        """
+        return _page("PTGO • Insights", body, request=request)
+
+    insight = _generate_trend_insights(checkins, p.name)
+
+    scores = [c.score for c in reversed(checkins)]
+    max_s = max(scores) if scores else 100
+    min_s = min(scores) if scores else 0
+    range_s = max(max_s - min_s, 1)
+    bar_w = max(int(100 / len(scores)), 4)
+    sparkline = ""
+    for s in scores:
+        h = max(int((s - min_s) / range_s * 60), 4)
+        color = "#22c55e" if s >= 70 else ("#f59e0b" if s >= 40 else "#ef4444")
+        sparkline += f'<div style="width:{bar_w}%;height:{h}px;background:{color};border-radius:3px;flex-shrink:0" title="Score {s}"></div>'
+
+    avg_stress = sum(c.stress or 5 for c in checkins) / len(checkins)
+    avg_sleep = sum(c.sleep or 5 for c in checkins) / len(checkins)
+    avg_score = sum(c.score or 0 for c in checkins) / len(checkins)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">📊</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">AI TREND INSIGHTS</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Deine Trends</h1>
+      <p class="small" style="text-align:center">Basierend auf {len(checkins)} Check-ins</p>
+
+      <div style="margin:16px 0;padding:14px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px">
+        <p style="font-size:14px;line-height:1.7;color:#e5e7eb;margin:0">{insight or 'KI-Analyse nicht verfügbar.'}</p>
+      </div>
+
+      <div style="margin:16px 0">
+        <p class="small" style="margin-bottom:6px">Recovery Score Verlauf</p>
+        <div style="display:flex;align-items:end;gap:2px;height:64px;padding:4px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px">
+          {sparkline}
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div class="kpi">
+          <span class="small">Ø Score</span>
+          <b style="color:{'#22c55e' if avg_score >= 70 else '#f59e0b' if avg_score >= 40 else '#ef4444'}">{int(avg_score)}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Ø Stress</span>
+          <b style="color:{'#ef4444' if avg_stress > 7 else '#f59e0b' if avg_stress > 5 else '#22c55e'}">{avg_stress:.1f}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Ø Schlaf</span>
+          <b style="color:{'#ef4444' if avg_sleep < 4 else '#f59e0b' if avg_sleep < 6 else '#22c55e'}">{avg_sleep:.1f}</b>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/progress">Progress</a> •
+        <a href="/timeline">Timeline</a> •
+        <a href="/profile">Body Profile</a> •
+        <a href="/checkin/1">Neuer Check</a>
+      </p>
+    """
+    return _page("PTGO • Trend Insights", body, request=request)
+
+
+# =========================================================
+# EMERGENCY ESCALATION
+# =========================================================
+
+def _check_emergency_escalation(db, patient: Patient, checkin: CheckIn):
+    """Check for critical patterns and escalate to therapist immediately."""
+    risk_triggers = []
+
+    if checkin.risk_level == "high":
+        risk_triggers.append("HIGH RISK Check-in")
+    if (checkin.craving or 0) >= 9:
+        risk_triggers.append(f"Extremes Craving: {checkin.craving}/10")
+    if (checkin.stress or 0) >= 9 and (checkin.sleep or 10) <= 2:
+        risk_triggers.append(f"Kritisch: Stress {checkin.stress} + Schlaf {checkin.sleep}")
+    if (checkin.daily_state or 10) <= 1:
+        risk_triggers.append(f"Minimale Stimmung: {checkin.daily_state}/10")
+
+    # Check for rapid decline
+    prev = db.query(CheckIn).filter(
+        CheckIn.patient_id == patient.id, CheckIn.id != checkin.id
+    ).order_by(CheckIn.created_at.desc()).first()
+    if prev and prev.score and checkin.score and (prev.score - checkin.score) >= 30:
+        risk_triggers.append(f"Rapider Abfall: {prev.score} → {checkin.score} (-{prev.score - checkin.score})")
+
+    if not risk_triggers:
+        return
+
+    alert_msg = (
+        f"🚨 EMERGENCY ALERT 🚨\n"
+        f"Patient: {patient.name}\n"
+        f"Score: {checkin.score}/100\n\n"
+        f"Auslöser:\n" + "\n".join(f"• {t}" for t in risk_triggers) + "\n\n"
+        f"Sofort prüfen: {BASE_URL}/therapist/checkin/{checkin.id}"
+    )
+
+    try:
+        therapist = db.query(Therapist).filter(Therapist.id == patient.therapist_id).first() if patient.therapist_id else None
+        send_whatsapp_to_therapist(patient, therapist, alert_msg)
+    except Exception as e:
+        print("[WARN] Emergency escalation failed:", e)
+
+    if SMTP_HOST and patient.therapist_id:
+        try:
+            therapist = db.query(Therapist).filter(Therapist.id == patient.therapist_id).first()
+            if therapist and therapist.email:
+                msg = EmailMessage()
+                msg["Subject"] = f"🚨 PTGO Emergency: {patient.name}"
+                msg["From"] = SMTP_FROM
+                msg["To"] = therapist.email
+                msg.set_content(alert_msg)
+                with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASS)
+                    server.send_message(msg)
+        except Exception as e:
+            print("[WARN] Emergency email failed:", e)
+
+
+# =========================================================
+# EVENING REFLECTION — 2x daily automated coaching
+# =========================================================
+
+EVENING_COACHING_PROMPTS = [
+    "Was war heute dein kleiner Sieg – auch wenn er winzig war?",
+    "Wofür bist du heute dankbar, auch wenn der Tag schwer war?",
+    "Was hast du heute über dich gelernt?",
+    "Wenn du deinem Körper eine Nachricht schicken könntest – was würdest du sagen?",
+    "Was brauchst du jetzt gerade in diesem Moment?",
+    "Welche Entscheidung hat dir heute am meisten Energie gegeben?",
+    "Was kannst du morgen anders machen als heute?",
+]
+
+def _generate_evening_message(db, patient: Patient) -> str:
+    """Generate personalized evening reflection message."""
+    today = _now_local().date().isoformat()
+    todays_checkin = db.query(CheckIn).filter(
+        CheckIn.patient_id == patient.id, CheckIn.local_day == today
+    ).order_by(CheckIn.created_at.desc()).first()
+
+    prompt_of_day = random.choice(EVENING_COACHING_PROMPTS)
+
+    if todays_checkin and ANTHROPIC_API_KEY:
+        try:
+            ai_prompt = (
+                f"Der Patient {patient.name} hatte heute folgendes Ergebnis:\n"
+                f"Score: {todays_checkin.score}/100, Pattern: {todays_checkin.pattern_label}\n"
+                f"Action: {todays_checkin.action_label}\n\n"
+                f"Schreibe eine kurze Abend-Reflexion (2 Sätze) auf Deutsch. "
+                f"Beziehe dich auf den heutigen Tag. Sei warm und ermutigend. "
+                f"Ende mit einer Reflexionsfrage."
+            )
+            resp = requests.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                json={"model": "claude-haiku-4-5", "max_tokens": 200, "messages": [{"role": "user", "content": ai_prompt}]},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            return resp.json()["content"][0]["text"].strip()
+        except Exception as e:
+            print("[WARN] Evening AI message failed:", e)
+
+    if todays_checkin:
+        return (
+            f"Guten Abend {patient.name} 🌙\n\n"
+            f"Dein Score heute: {todays_checkin.score}/100\n"
+            f"Pattern: {todays_checkin.pattern_label}\n\n"
+            f"Abend-Reflexion:\n{prompt_of_day}\n\n"
+            f"Morgen geht's weiter. Schlaf gut."
+        )
+
+    return (
+        f"Guten Abend {patient.name} 🌙\n\n"
+        f"Du hast heute keinen Check-in gemacht. Kein Stress – morgen ist ein neuer Tag.\n\n"
+        f"Abend-Impuls:\n{prompt_of_day}\n\n"
+        f"Schlaf gut."
+    )
+
+
+def _should_send_evening_message(p: Patient, now_local: datetime) -> bool:
+    """Check if evening message should be sent (around 20:00)."""
+    if not p.reminder_enabled:
+        return False
+    today = now_local.date().isoformat()
+    # Use a simple marker: last_reminder_sent_on tracks morning, we track evening differently
+    # Evening window: 19:45 - 20:15
+    hour = now_local.hour
+    minute = now_local.minute
+    if hour == 20 and minute <= 15:
+        return True
+    if hour == 19 and minute >= 45:
+        return True
+    return False
