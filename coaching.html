@@ -212,21 +212,29 @@ input[type=range]{width:100%;padding:0;height:4px;accent-color:var(--cyan);margi
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
       Plan
     </button>
-    <button class="nav-btn" onclick="showScreen('progress')" id="nav-progress">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
-      Fortschritt
-    </button>
     <button class="nav-btn" onclick="showScreen('coach')" id="nav-coach">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       Coach
     </button>
-    <button class="nav-btn" onclick="showScreen('habits')" id="nav-habits">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
-      Habits
+    <button class="nav-btn" onclick="showScreen('vault')" id="nav-vault">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      Vault
     </button>
-    <button class="nav-btn" onclick="showScreen('history')" id="nav-history">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
-      Verlauf
+    <button class="nav-btn" onclick="showScreen('analyzer')" id="nav-analyzer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Analyzer
+    </button>
+    <button class="nav-btn" onclick="showScreen('patients')" id="nav-patients">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Patienten
+    </button>
+    <button class="nav-btn" onclick="showScreen('progress')" id="nav-progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Stats
+    </button>
+    <button class="nav-btn" onclick="showScreen('habits')" id="nav-habits">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+      Habits
     </button>
   </div>
 </div>
@@ -847,6 +855,9 @@ function showScreen(screen) {
     case "coach": renderCoach(); break;
     case "habits": renderHabits(); break;
     case "history": renderHistory(); break;
+    case "vault": renderVaultScreen(); break;
+    case "analyzer": renderAnalyzerScreen(); break;
+    case "patients": renderPatientsScreen(); break;
   }
 }
 
@@ -2266,6 +2277,324 @@ function renderBadgesSection() {
 
   html += `</div></div>`;
   return html;
+}
+
+// =========================================================
+// API HELPER — Nerve Center Backend
+// =========================================================
+const NERVE_API = '/.netlify/functions/nerve-brain';
+
+async function nerveApi(action, params={}) {
+  const res = await fetch(NERVE_API, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action, ...params})
+  });
+  if (!res.ok) throw new Error((await res.json()).error || 'API Fehler');
+  return res.json();
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeAgo(d) {
+  if (!d) return '';
+  const s = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  if (s < 60) return 'gerade eben';
+  if (s < 3600) return Math.floor(s/60) + 'm';
+  if (s < 86400) return Math.floor(s/3600) + 'h';
+  return Math.floor(s/86400) + 'd';
+}
+
+// =========================================================
+// WISSENSSPEICHER (VAULT)
+// =========================================================
+const VAULT_CATEGORIES = ['general','therapie','business','physik','evolution','musik','technik','strategie','persoenlich'];
+
+function renderVaultScreen() {
+  const html = `
+    <div class="card fade-in">
+      <h2>WISSENSSPEICHER</h2>
+      <p>Dein permanenter Know-how Tresor — jede Information fuer immer</p>
+      <div class="hr"></div>
+      <h3>Neues Wissen speichern</h3>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">TITEL</p>
+        <input id="v-title" placeholder="Kurzer Titel" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+      </div>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">KATEGORIE</p>
+        <select id="v-cat" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+          ${VAULT_CATEGORIES.map(c => `<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">INHALT</p>
+        <textarea id="v-content" placeholder="Texte, Erkenntnisse, Daten, Strategien..." style="min-height:120px"></textarea>
+      </div>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">TAGS (kommagetrennt)</p>
+        <input id="v-tags" placeholder="z.B. ptgo, schmerztherapie, innovation" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+      </div>
+      <button onclick="saveVaultEntry()">SPEICHERN</button>
+    </div>
+    <div class="card fade-in">
+      <h3>Suche</h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="v-search" placeholder="Durchsuchen..." style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none" onkeydown="if(event.key==='Enter')searchVaultEntries()">
+        <select id="v-filter" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none" onchange="searchVaultEntries()">
+          <option value="all">Alle</option>
+          ${VAULT_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <button class="btn-outline" onclick="searchVaultEntries()" style="width:100%">SUCHEN</button>
+    </div>
+    <div id="vault-list" class="fade-in"><div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">Lade Wissensspeicher...</div></div>
+  `;
+  document.getElementById("content").innerHTML = html;
+  searchVaultEntries();
+}
+
+async function searchVaultEntries() {
+  const search = document.getElementById('v-search')?.value || '';
+  const cat = document.getElementById('v-filter')?.value || 'all';
+  const el = document.getElementById('vault-list');
+  try {
+    const data = await nerveApi('knowledge_list', {search, category: cat});
+    if (!data.length) {
+      el.innerHTML = '<div class="card" style="text-align:center"><p>Noch kein Wissen gespeichert.</p></div>';
+      return;
+    }
+    el.innerHTML = data.map(k => `
+      <div class="card" style="cursor:pointer;padding:16px" onclick="this.querySelector('.vault-detail').style.display=this.querySelector('.vault-detail').style.display==='none'?'block':'none'">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(k.title)}</p>
+            <p class="small" style="margin:4px 0 0">${escHtml(k.category)} · ${timeAgo(k.created_at)}</p>
+          </div>
+          <button class="btn-sm btn-outline" style="border-color:var(--red);color:var(--red);font-size:9px" onclick="event.stopPropagation();deleteVaultEntry('${k.id}')">DEL</button>
+        </div>
+        <div class="vault-detail" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);white-space:pre-wrap;font-size:12px;color:var(--dim);line-height:1.7">${escHtml(k.content)}</div>
+        ${(k.tags||[]).length ? `<div style="margin-top:8px">${k.tags.map(t => `<span class="tag">${escHtml(t)}</span>`).join('')}</div>` : ''}
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`;
+  }
+}
+
+async function saveVaultEntry() {
+  const title = document.getElementById('v-title').value.trim();
+  const content = document.getElementById('v-content').value.trim();
+  const category = document.getElementById('v-cat').value;
+  const tags = document.getElementById('v-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  if (!title || !content) { alert('Titel und Inhalt erforderlich'); return; }
+  try {
+    await nerveApi('knowledge_save', {title, content, category, tags});
+    document.getElementById('v-title').value = '';
+    document.getElementById('v-content').value = '';
+    document.getElementById('v-tags').value = '';
+    alert('Wissen gespeichert!');
+    searchVaultEntries();
+  } catch(e) { alert('Fehler: ' + e.message); }
+}
+
+async function deleteVaultEntry(id) {
+  if (!confirm('Wirklich loeschen?')) return;
+  try {
+    await nerveApi('knowledge_delete', {id});
+    searchVaultEntries();
+  } catch(e) { alert('Fehler: ' + e.message); }
+}
+
+// =========================================================
+// SITUATION ANALYZER
+// =========================================================
+function renderAnalyzerScreen() {
+  const html = `
+    <div class="card fade-in">
+      <h2>SITUATION ANALYZER</h2>
+      <p>Text rein → Recherche → Plan → Gesamtauswertung</p>
+      <div class="hr"></div>
+      <h3>Neue Analyse starten</h3>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">TITEL (optional)</p>
+        <input id="a-title" placeholder="z.B. Patientenfall, Geschaeftsidee..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+      </div>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">TEXT / SITUATION</p>
+        <textarea id="a-text" placeholder="Kopiere hier alles rein. Die KI recherchiert, plant und gibt dir eine Auswertung basierend auf ALLEM was du je gespeichert hast." style="min-height:150px"></textarea>
+      </div>
+      <button onclick="startAnalyzerAnalysis()">ANALYSE STARTEN</button>
+    </div>
+    <div id="analyzer-result" class="fade-in" style="display:none"></div>
+    <div class="card fade-in">
+      <h3>Bisherige Analysen</h3>
+      <div id="analyzer-list"><div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">Lade...</div></div>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+  loadAnalyzerList();
+}
+
+async function loadAnalyzerList() {
+  const el = document.getElementById('analyzer-list');
+  try {
+    const data = await nerveApi('situation_list');
+    if (!data.length) { el.innerHTML = '<p style="text-align:center;color:var(--dim)">Noch keine Analysen.</p>'; return; }
+    el.innerHTML = data.map(s => `
+      <div class="card" style="cursor:pointer;padding:14px;margin-bottom:8px" onclick="showAnalyzerDetail('${s.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(s.title)}</p>
+            <p class="small" style="margin:4px 0 0">${escHtml(s.category)} · ${timeAgo(s.created_at)}</p>
+          </div>
+          <span class="tag" style="color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'};border-color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'}">${s.status}</span>
+        </div>
+        <p style="font-size:11px;color:var(--dim);margin:8px 0 0;max-height:30px;overflow:hidden">${escHtml((s.input_text||'').substring(0,120))}...</p>
+      </div>
+    `).join('');
+  } catch(e) { el.innerHTML = `<p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p>`; }
+}
+
+async function startAnalyzerAnalysis() {
+  const title = document.getElementById('a-title').value.trim() || 'Neue Analyse';
+  const input_text = document.getElementById('a-text').value.trim();
+  if (!input_text) { alert('Bitte Text eingeben'); return; }
+  const detail = document.getElementById('analyzer-result');
+  detail.style.display = 'block';
+  detail.innerHTML = '<div class="card" style="text-align:center;padding:30px"><div style="color:var(--cyan);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px">KI ANALYSIERT...</div><p style="margin-top:8px">Recherche → Plan → Auswertung (15-30 Sek.)</p></div>';
+  try {
+    const result = await nerveApi('situation_analyze', {title, input_text});
+    document.getElementById('a-text').value = '';
+    document.getElementById('a-title').value = '';
+    showAnalyzerResult(result, detail);
+    loadAnalyzerList();
+  } catch(e) { detail.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`; }
+}
+
+async function showAnalyzerDetail(id) {
+  const detail = document.getElementById('analyzer-result');
+  detail.style.display = 'block';
+  detail.innerHTML = '<div class="card" style="text-align:center;padding:20px"><p style="color:var(--dim)">Lade...</p></div>';
+  try {
+    const result = await nerveApi('situation_get', {id});
+    showAnalyzerResult(result, detail);
+  } catch(e) { detail.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`; }
+}
+
+function showAnalyzerResult(r, el) {
+  const research = typeof r.research === 'object' ? r.research : {};
+  const plan = Array.isArray(r.plan) ? r.plan : [];
+  el.innerHTML = `
+    <div class="card fade-in" style="border-color:rgba(0,240,255,.3)">
+      <h3 style="color:var(--cyan)">PHASE 1 — RECHERCHE</h3>
+      <div style="font-size:12px;line-height:1.7;color:var(--dim)">
+        ${research.kernpunkte ? `<p style="color:var(--text);font-weight:700">Kernpunkte:</p><ul style="padding-left:16px">${research.kernpunkte.map(k=>`<li>${escHtml(k)}</li>`).join('')}</ul>` : ''}
+        ${research.physik ? `<p><b style="color:var(--text)">Physik:</b> ${escHtml(research.physik)}</p>` : ''}
+        ${research.evolution ? `<p><b style="color:var(--text)">Evolution:</b> ${escHtml(research.evolution)}</p>` : ''}
+        ${research.chancen ? `<p style="color:var(--text);font-weight:700">Chancen:</p><ul style="padding-left:16px">${research.chancen.map(c=>`<li>${escHtml(c)}</li>`).join('')}</ul>` : ''}
+        ${research.raw ? `<p>${escHtml(research.raw)}</p>` : ''}
+      </div>
+    </div>
+    <div class="card fade-in" style="border-color:rgba(201,168,76,.3)">
+      <h3 style="color:var(--gold)">PHASE 2 — AKTIONSPLAN</h3>
+      ${plan.map(s => `
+        <div style="padding:10px;margin-bottom:6px;background:var(--surface2);border-left:2px solid var(--gold)">
+          <p style="font-size:12px;color:var(--text);margin:0"><b>Schritt ${s.schritt||'?'}:</b> ${escHtml(s.aktion||s.raw||JSON.stringify(s))}</p>
+          ${s.zeitrahmen ? `<p class="small" style="color:var(--gold);margin:4px 0 0">Zeitrahmen: ${escHtml(s.zeitrahmen)}</p>` : ''}
+          ${s.erwartetes_ergebnis ? `<p class="small" style="color:var(--green);margin:2px 0 0">Ergebnis: ${escHtml(s.erwartetes_ergebnis)}</p>` : ''}
+        </div>
+      `).join('')}
+    </div>
+    <div class="card fade-in" style="border-color:rgba(45,255,168,.3)">
+      <h3 style="color:var(--green)">PHASE 3 — GESAMTAUSWERTUNG</h3>
+      <div style="font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text)">${escHtml(r.analysis||r.recommendation||'Keine Auswertung')}</div>
+    </div>
+    <button class="btn-outline" onclick="document.getElementById('analyzer-result').style.display='none'" style="width:100%;margin-bottom:16px">SCHLIESSEN</button>
+  `;
+}
+
+// =========================================================
+// PATIENTEN-KI
+// =========================================================
+function renderPatientsScreen() {
+  const html = `
+    <div class="card fade-in">
+      <h2>PATIENTEN-KI</h2>
+      <p>Ethische Intelligenz — Muster erkennen, Heilung optimieren</p>
+      <div class="hr"></div>
+      <h3>Neue Patientenanalyse</h3>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">PATIENT-REFERENZ (anonym)</p>
+        <input id="p-ref" placeholder="z.B. Patient A, Fall 2024-03..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+      </div>
+      <div style="margin-bottom:10px">
+        <p class="small" style="margin-bottom:4px">PATIENTENDATEN / BEOBACHTUNGEN</p>
+        <textarea id="p-data" placeholder="Beobachtungen, Symptome, Verlaeufe, Check-in-Daten... Die KI findet versteckte Muster." style="min-height:150px"></textarea>
+      </div>
+      <button onclick="analyzePatientData()">ANALYSE STARTEN</button>
+    </div>
+    <div id="patient-result" class="fade-in" style="display:none"></div>
+    <div class="card fade-in">
+      <h3>Bisherige Insights</h3>
+      <div id="patient-list"><div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">Lade...</div></div>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+  loadPatientList();
+}
+
+async function analyzePatientData() {
+  const patient_ref = document.getElementById('p-ref').value.trim();
+  const rawData = document.getElementById('p-data').value.trim();
+  if (!patient_ref || !rawData) { alert('Referenz und Daten erforderlich'); return; }
+  const result = document.getElementById('patient-result');
+  result.style.display = 'block';
+  result.innerHTML = '<div class="card" style="text-align:center;padding:30px"><div style="color:var(--purple);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px">KI ANALYSIERT PATIENTENDATEN...</div></div>';
+  try {
+    const r = await nerveApi('patient_analyze', {patient_ref, data: rawData});
+    const pd = r.pattern_data || {};
+    result.innerHTML = `
+      <div class="card fade-in" style="border-color:rgba(168,85,247,.3)">
+        <h3 style="color:var(--purple)">ANALYSE: ${escHtml(patient_ref)}</h3>
+        ${pd.muster ? `<p style="font-size:12px;color:var(--text);font-weight:700">Erkannte Muster:</p><ul style="padding-left:16px;font-size:12px;color:var(--dim)">${pd.muster.map(m=>`<li>${escHtml(m)}</li>`).join('')}</ul>` : ''}
+        ${pd.versteckte_signale ? `<p style="font-size:12px;color:var(--text);font-weight:700;margin-top:10px">Versteckte Signale:</p><ul style="padding-left:16px;font-size:12px;color:var(--cyan)">${pd.versteckte_signale.map(s=>`<li>${escHtml(s)}</li>`).join('')}</ul>` : ''}
+        ${pd.physik_bezug ? `<p style="font-size:12px;margin-top:10px"><b style="color:var(--text)">Physik-Bezug:</b> <span style="color:var(--dim)">${escHtml(pd.physik_bezug)}</span></p>` : ''}
+        ${pd.evolution_bezug ? `<p style="font-size:12px"><b style="color:var(--text)">Evolution-Bezug:</b> <span style="color:var(--dim)">${escHtml(pd.evolution_bezug)}</span></p>` : ''}
+        ${pd.empfehlung ? `<div style="margin-top:12px;padding:12px;background:var(--surface2);border-left:2px solid var(--green)"><p style="font-size:12px;color:var(--text)"><b>Empfehlung:</b> ${escHtml(pd.empfehlung)}</p></div>` : ''}
+        ${pd.raw ? `<p style="font-size:12px;color:var(--dim);margin-top:10px">${escHtml(pd.raw)}</p>` : ''}
+        <p class="small" style="margin-top:8px">Konfidenz: ${Math.round((r.confidence||0.5)*100)}%</p>
+      </div>
+    `;
+    document.getElementById('p-ref').value = '';
+    document.getElementById('p-data').value = '';
+    loadPatientList();
+  } catch(e) { result.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`; }
+}
+
+async function loadPatientList() {
+  const el = document.getElementById('patient-list');
+  try {
+    const data = await nerveApi('patient_list');
+    if (!data.length) { el.innerHTML = '<p style="text-align:center;color:var(--dim)">Noch keine Patientenanalysen.</p>'; return; }
+    el.innerHTML = data.map(i => {
+      const pd = i.pattern_data || {};
+      return `
+        <div class="card" style="padding:14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(i.patient_ref)} · ${escHtml(i.insight_type)}</p>
+              <p class="small" style="margin:4px 0 0">${timeAgo(i.created_at)} · Konfidenz: ${Math.round((i.confidence||0)*100)}%</p>
+            </div>
+          </div>
+          ${i.recommendation ? `<p style="font-size:12px;color:var(--dim);margin:8px 0 0;line-height:1.6">${escHtml(i.recommendation)}</p>` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch(e) { el.innerHTML = `<p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p>`; }
 }
 
 // =========================================================
