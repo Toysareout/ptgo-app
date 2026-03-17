@@ -27,7 +27,7 @@ a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
 .login-error{color:var(--red);font-size:.8rem;margin-top:8px;display:none}
 
 /* DASHBOARD */
-#dashboard{display:none}
+#dashboard{display:block}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:100}
 .topbar h1{font-size:1.1rem;color:var(--accent2)}
 .topbar .date{color:var(--muted);font-size:.85rem}
@@ -131,16 +131,6 @@ a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
 </head>
 <body>
 
-<!-- LOGIN GATE -->
-<div id="login-gate">
-<div id="login-box">
-<h1>AZ COMMAND CENTER</h1>
-<p>Privates Dashboard — Nur fuer Alexander Zeis</p>
-<input type="password" id="pw-input" placeholder="Passwort" autofocus>
-<button onclick="tryLogin()">Zugang</button>
-<div class="login-error" id="login-error">Falsches Passwort</div>
-</div>
-</div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
@@ -862,39 +852,7 @@ uvicorn app:app --host 0.0.0.0 --port 8000<br>
 <div class="toast" id="toast"></div>
 
 <script>
-// ============ PASSWORD ============
-// Passwort: AZcommand2026!
-const PW_HASH = '7a7b3e3c1f2d8a9e4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7';
-
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return hash;
-}
-
-function tryLogin() {
-  const pw = document.getElementById('pw-input').value;
-  // Passwort: AZcommand2026!
-  if (pw === 'AZcommand2026!') {
-    sessionStorage.setItem('az-auth', 'true');
-    showDashboard();
-  } else {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('pw-input').value = '';
-    setTimeout(() => document.getElementById('login-error').style.display = 'none', 3000);
-  }
-}
-
-document.getElementById('pw-input').addEventListener('keypress', e => {
-  if (e.key === 'Enter') tryLogin();
-});
-
 function showDashboard() {
-  document.getElementById('login-gate').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   updateDate();
   loadDailyQuestion();
@@ -902,14 +860,8 @@ function showDashboard() {
   loadSavedAudit();
 }
 
-function logout() {
-  sessionStorage.removeItem('az-auth');
-  document.getElementById('dashboard').style.display = 'none';
-  document.getElementById('login-gate').style.display = 'flex';
-}
-
-// Auto-login if session exists
-if (sessionStorage.getItem('az-auth') === 'true') showDashboard();
+// Auto-init dashboard
+showDashboard();
 
 // ============ DATE ============
 function updateDate() {
