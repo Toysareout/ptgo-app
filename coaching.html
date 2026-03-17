@@ -547,7 +547,7 @@ function analyzeAnswers(questions, answers) {
     else qScore = 45 + (lengthScore * 20);
 
     // Engagement Bonus fuer ausfuehrliche Antworten
-    qScore = Math.min(100, qScore + lengthScore * 10);
+    qScore = Math.round(Math.min(100, qScore + lengthScore * 10));
 
     const bookId = q.bookId;
     if (!analysis.bookScores[bookId]) {
@@ -750,7 +750,7 @@ function renderTodayResult(entry) {
     strengthsHtml = `<h3 style="color:#22c55e">Staerken heute</h3>`;
     a.strengths.slice(0, 3).forEach(s => {
       strengthsHtml += `<div style="padding:6px 0;font-size:13px;color:#cbd5e1">
-        <span class="tag tag-green">${s.question.bookTitle}</span> Score: ${s.score}/100
+        <span class="tag tag-green">${s.question.bookTitle}</span> Score: ${Math.round(s.score)}/100
       </div>`;
     });
   }
@@ -1133,7 +1133,7 @@ function showHistoryDetail(date) {
     <div class="card fade-in">
       <button class="btn-outline btn-sm" onclick="renderHistory()" style="margin-bottom:12px">← Zurueck</button>
       <h2>${formatDate(date)}</h2>
-      <p>Score: <span style="font-weight:700;font-size:20px;color:var(--accent)">${entry.score || 0}</span>/100</p>
+      <p>Score: <span style="font-weight:700;font-size:20px;color:var(--accent)">${Math.round(entry.score || 0)}</span>/100</p>
       <div class="hr"></div>
       ${questionsHtml}
     </div>
