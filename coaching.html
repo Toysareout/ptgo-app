@@ -105,15 +105,70 @@ input[type=range]{width:100%;padding:0;height:6px;accent-color:var(--accent);mar
 .cat-social{background:rgba(245,158,11,.15);color:#fbbf24}
 .cat-finance{background:rgba(239,68,68,.15);color:#fca5a5}
 .cat-purpose{background:rgba(6,182,212,.15);color:#67e8f9}
+
+/* AI COACH CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:400px}
+.chat-messages{flex:1;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:8px}
+.chat-bubble{max-width:85%;padding:12px 16px;border-radius:16px;font-size:14px;line-height:1.5;animation:fadeIn .2s ease}
+.chat-bubble.user{align-self:flex-end;background:linear-gradient(135deg,#f59e0b,#d97706);color:#111;border-bottom-right-radius:4px}
+.chat-bubble.ai{align-self:flex-start;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:var(--text);border-bottom-left-radius:4px}
+.chat-bubble.ai .coach-name{font-size:11px;color:#818cf8;font-weight:700;margin-bottom:4px}
+.chat-input-wrap{display:flex;gap:8px;padding:10px 0}
+.chat-input{flex:1;background:#0b1223;border:1px solid #263246;color:#e5e7eb;border-radius:14px;padding:12px;font-size:15px;outline:none;font-family:inherit;resize:none;min-height:44px;max-height:120px}
+.chat-input:focus{border-color:var(--accent)}
+.chat-send{width:44px;height:44px;border-radius:14px;background:linear-gradient(180deg,#fbbf24,#f59e0b);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-send svg{width:20px;height:20px;stroke:#111;fill:none}
+.typing-dots{display:flex;gap:4px;padding:8px 0}
+.typing-dots span{width:6px;height:6px;background:var(--muted);border-radius:50%;animation:typing .8s infinite}
+.typing-dots span:nth-child(2){animation-delay:.15s}
+.typing-dots span:nth-child(3){animation-delay:.3s}
+@keyframes typing{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
+
+/* CHALLENGES */
+.challenge-card{background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(239,68,68,.06));border:1px solid rgba(245,158,11,.25);border-radius:16px;padding:18px;margin-bottom:12px}
+.challenge-card.active{border-color:var(--accent);box-shadow:0 0 20px rgba(245,158,11,.1)}
+.challenge-card.completed{opacity:.7;border-color:var(--green)}
+.challenge-timer{font-size:12px;color:var(--accent);font-weight:700}
+.challenge-reward{display:inline-block;font-size:11px;background:rgba(245,158,11,.15);color:#fbbf24;padding:3px 8px;border-radius:6px;margin-top:6px}
+
+/* BADGES */
+.badge{display:inline-flex;flex-direction:column;align-items:center;gap:4px;padding:12px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.02);text-align:center;min-width:80px}
+.badge.earned{border-color:var(--accent);background:rgba(245,158,11,.06)}
+.badge.locked{opacity:.4;filter:grayscale(1)}
+.badge-icon{font-size:28px}
+.badge-name{font-size:10px;font-weight:700;color:var(--text)}
+.badge-desc{font-size:9px;color:var(--muted)}
+
+/* THEME TOGGLE */
+.theme-toggle{position:absolute;top:20px;right:16px;background:none;border:1px solid var(--line);width:36px;height:36px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);padding:0;margin:0}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+
+/* LIGHT THEME */
+body.light{--bg:#f5f5f5;--card:#ffffff;--muted:#6b7280;--text:#1f2937;--accent:#d97706;--line:#e5e7eb;--green:#16a34a;--red:#dc2626;--blue:#4f46e5}
+body.light{background:radial-gradient(1000px 600px at 50% -100px,#e0e7ff,transparent),var(--bg)}
+body.light .nav{background:rgba(245,245,245,.95)}
+body.light textarea,body.light .chat-input{background:#fff;border-color:#d1d5db;color:#1f2937}
+body.light .kpi,body.light .badge{background:rgba(0,0,0,.02)}
+
+/* PWA INSTALL */
+.install-banner{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(245,158,11,.1));border:1px solid rgba(99,102,241,.3);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.install-banner:hover{border-color:var(--accent)}
+.install-banner .ib-icon{font-size:28px}
+.install-banner .ib-text{flex:1}
+.install-banner .ib-text b{font-size:14px;color:var(--text);display:block}
+.install-banner .ib-text span{font-size:12px;color:var(--muted)}
+.install-banner .ib-close{color:var(--muted);font-size:18px;cursor:pointer;padding:4px}
 </style>
 </head>
 <body>
 
 <div class="wrap" id="app">
-  <div class="top">
+  <div class="top" style="position:relative">
     <div class="brand">COACHING ENGINE</div>
     <div class="pill" id="streak-pill">Tag 1</div>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">🌙</button>
   </div>
+  <div id="install-banner-slot"></div>
   <div id="content"></div>
 </div>
 
@@ -130,6 +185,10 @@ input[type=range]{width:100%;padding:0;height:6px;accent-color:var(--accent);mar
     <button class="nav-btn" onclick="showScreen('progress')" id="nav-progress">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
       Fortschritt
+    </button>
+    <button class="nav-btn" onclick="showScreen('coach')" id="nav-coach">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Coach
     </button>
     <button class="nav-btn" onclick="showScreen('habits')" id="nav-habits">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
@@ -755,6 +814,7 @@ function showScreen(screen) {
     case "daily": renderDaily(); break;
     case "plan": renderPlan(); break;
     case "progress": renderProgress(); break;
+    case "coach": renderCoach(); break;
     case "habits": renderHabits(); break;
     case "history": renderHistory(); break;
   }
@@ -1257,6 +1317,9 @@ function renderProgress() {
       <button class="btn-outline" onclick="renderWeeklyInsights()" style="flex:1;font-size:13px">📊 Wochen-Analyse</button>
       <button class="export-btn" onclick="exportData()" style="flex:1">📥 Export</button>
     </div>
+
+    ${renderChallengesSection()}
+    ${renderBadgesSection()}
   `;
   document.getElementById("content").innerHTML = html;
 }
@@ -1664,8 +1727,529 @@ function formatDate(dateStr) {
 }
 
 // =========================================================
+// AI COACH CHAT
+// =========================================================
+let chatMessages = [];
+
+function loadChatHistory() {
+  try {
+    const raw = localStorage.getItem("coaching_chat");
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return [];
+}
+
+function saveChatHistory(msgs) {
+  localStorage.setItem("coaching_chat", JSON.stringify(msgs.slice(-50)));
+}
+
+function getCoachContext() {
+  const data = loadData();
+  const entry = getTodayEntry();
+  const streak = getStreak();
+  const todayMood = data.moodLog ? data.moodLog.find(m => m.date === todayStr()) : null;
+  const recentEntries = data.entries.filter(e => e.completed).slice(0, 5);
+  const avgScore = recentEntries.length > 0 ? Math.round(recentEntries.reduce((s,e) => s + (e.score||0), 0) / recentEntries.length) : 0;
+
+  let ctx = `Streak: ${streak} Tage. `;
+  if (todayMood) ctx += `Heutige Stimmung: ${todayMood.mood}/10, Energie: ${todayMood.energy}/10, Fokus: ${todayMood.focus}/10. `;
+  if (entry && entry.completed) ctx += `Heutiger Score: ${entry.score}/100. `;
+  if (avgScore) ctx += `Durchschnitt letzte Tage: ${avgScore}/100. `;
+
+  // Weaknesses
+  if (entry && entry.analysis && entry.analysis.weaknesses.length > 0) {
+    ctx += "Schwachstellen heute: " + entry.analysis.weaknesses.map(w => w.question.bookTitle).join(", ") + ". ";
+  }
+
+  return ctx;
+}
+
+function generateCoachResponse(userMsg) {
+  const msg = userMsg.toLowerCase();
+  const data = loadData();
+  const ctx = getCoachContext();
+  const streak = getStreak();
+
+  // Topic detection
+  const topics = {
+    motivation: ["motivation","antrieb","keine lust","aufgeben","schwer","muede","erschoepft","keinen bock"],
+    discipline: ["disziplin","prokrastin","aufschieb","abgelenkt","fokus","konzentration","social media","handy"],
+    confidence: ["selbstbewusst","unsicher","angst","scheu","traue mich nicht","mutig","verletzlich"],
+    relationships: ["beziehung","freundin","partner","frauen","maenner","date","ansprechen","sozial"],
+    finance: ["geld","finanzen","einkommen","business","nebenprojekt","investier","karriere"],
+    fitness: ["training","sport","koerper","fitness","gym","laufen","kraft","bewegung"],
+    purpose: ["sinn","zweck","purpose","lebensziel","was will ich","richtung","orientierung"],
+    mood: ["traurig","schlecht","down","deprimiert","hoffnungslos","verzweifelt","wertlos"],
+    morning: ["morgen","aufstehen","snooze","frueh","morgenroutine","wecker"],
+    books: ["buch","lesen","empfehlung","welches buch","buchtipp"]
+  };
+
+  let detectedTopic = null;
+  for (const [topic, keywords] of Object.entries(topics)) {
+    if (keywords.some(k => msg.includes(k))) { detectedTopic = topic; break; }
+  }
+
+  // Book-based responses
+  const responses = {
+    motivation: [
+      `${ctx}\n\n🔥 **Disziplin > Motivation.** Motivation ist ein Gefuehl — es kommt und geht. Disziplin ist eine Entscheidung.\n\n*"Disziplin schlaegt Talent. Jeden. Einzelnen. Tag."* — Andrew Tate\n\nDein naechster Schritt: Steh auf und mach EINE kleine Sache. Jetzt. Nicht morgen. Der Momentum-Effekt erledigt den Rest.`,
+      `💪 Du brauchst keine Motivation. Du brauchst einen **Grund**.\n\n*"Verfolge das, was bedeutungsvoll ist — nicht das, was gerade bequem ist."* — Jordan Peterson\n\nFrage dich: Wofuer stehst du morgens auf? Wenn du keine Antwort hast — DAS ist dein Problem, nicht fehlende Motivation.`,
+      `⚡ Hier ist die Wahrheit: **Motivation folgt Aktion**, nicht umgekehrt.\n\n*"Ein Alpha definiert sich durch Taten, nicht durch Worte."* — Sean Wayne\n\nMach jetzt 20 Liegestuetze. Ernsthaft. Danach reden wir weiter.`
+    ],
+    discipline: [
+      `🎯 **Dein Feind ist nicht die Ablenkung — es ist die fehlende Klarheit.**\n\n*"Deep Work braucht Struktur, nicht Willenskraft."* — Naval Ravikant\n\nJetzt sofort:\n1. Handy in einen anderen Raum\n2. Timer auf 25 Minuten\n3. EINE Aufgabe. Nur eine.\n\nNach 25 Min darfst du 5 Min Pause machen. Dann nochmal.`,
+      `📵 Social Media ist **designt**, um dich suechtig zu machen.\n\n*"Emotionen sind der groesste Feind rationaler Entscheidungen."* — Norman Welz\n\nLoesungsansatz: Loesche die Apps fuer 24h. Nur 24h. Beobachte, wie viel Zeit und mentale Energie du zurueckbekommst.`
+    ],
+    confidence: [
+      `👑 **Selbstbewusstsein ist kein Gefuehl — es ist eine Faehigkeit.**\n\n*"Echte Attraktivitaet kommt aus Verletzlichkeit und Authentizitaet."* — Mark Manson\n\nDu wirst nicht selbstbewusst durch Nachdenken. Du wirst es durch:\n- Unbequeme Gespraeche fuehren\n- Fehler machen und ueberleben\n- Dir selbst beweisen, dass du es kannst\n\nWas ist EINE Sache, die dir Angst macht? Mach sie heute.`,
+      `🌟 *"Lebe an deiner Kante — dort wo Angst und Wachstum sich treffen."* — David Deida\n\nAngst ist nicht dein Feind. Angst ist dein **Kompass**. Sie zeigt dir genau, wo du wachsen musst.\n\nHeute: Sage einer Person etwas Ehrliches. Kein Smalltalk. Eine echte Meinung.`
+    ],
+    relationships: [
+      `💬 *"Investiere nicht in Menschen, die nicht in dich investieren."* — Mark Manson\n\n**Drei Regeln fuer bessere Beziehungen:**\n1. Sei ehrlich — auch wenn es polarisiert\n2. Hoere aktiv zu (Spiegeln & Labeling — Chris Voss)\n3. Fuehre. Unentschlossenheit ist unattraktiver als falsche Entscheidungen.\n\nDein Move heute: Fuehre ein Gespraech, in dem du NICHTS von dir erzaehlst. Nur Fragen stellen und zuhoeren.`,
+      `❤️ *"Du kannst andere nicht wirklich lieben, wenn du dich selbst nicht liebst."* — Kamal Ravikant\n\nBevor du an Beziehungen arbeitest: Arbeitest du an DIR?\n\nDie attraktivste Version von dir entsteht nicht durch Techniken, sondern durch ein Leben, das du selbst bewunderst.`
+    ],
+    finance: [
+      `💰 *"Spezifisches Wissen + Leverage + Verantwortung = Reichtum."* — Naval Ravikant\n\n**Dein Finanz-Check:**\n- Hast du spezifisches Wissen, das schwer zu kopieren ist?\n- Nutzt du Leverage (Code, Content, Kapital, Menschen)?\n- Uebernimmst du Verantwortung fuer Ergebnisse?\n\nWenn eine der Antworten 'Nein' ist — da ist dein naechster Schritt.\n\n*"Geld ist Freiheit."* — Andrew Tate. Arbeite HEUTE 1h an einer Einkommensquelle.`
+    ],
+    fitness: [
+      `💪 *"Dein Koerper ist dein erstes Werkzeug — trainiere ihn taeglich."* — Sean Wayne\n\n**Minimum heute:**\n- 50 Liegestuetze (egal in wie vielen Saetzen)\n- 2 Min kalte Dusche\n- 30 Min Bewegung\n\nKein Gym noetig. Keine Ausreden. Dein Koerper formt dein Selbstbild.\n\n*"Haerte kommt aus freiwilligem Leiden."* — Andrew Tate`
+    ],
+    purpose: [
+      `🧭 *"Dein Lebenszweck muss immer an erster Stelle stehen."* — David Deida\n\n**Die Purpose-Frage:** Was wuerdest du tun, wenn du 10 Millionen auf dem Konto haettest?\n\nWenn die Antwort sich von dem unterscheidet, was du jetzt tust — warum tust du es nicht jetzt (in kleinen Schritten)?\n\n*"Suche dir Arbeit, die sich wie Spielen anfuehlt."* — Naval Ravikant`
+    ],
+    mood: [
+      `🫂 *"Jeder Gedanke ist eine Wahl — waehle den, der dich staerkt."* — Kamal Ravikant\n\nSchlechte Tage gehoeren dazu. Aber bleib nicht dort sitzen.\n\n**Sofort-Hilfe:**\n1. Sag laut: "Ich liebe mich." 10x. Auch wenn es sich komisch anfuehlt.\n2. Geh raus. 10 Min spazieren. Sonnenlicht.\n3. Atme: 4 Sek ein, 7 Sek halten, 8 Sek aus. 5x.\n\n*"Leid ist unvermeidbar. Waehle ein Leid, das sich lohnt."* — Mark Manson`
+    ],
+    morning: [
+      `☀️ **Morgenroutine = Lebensqualitaet.**\n\n*"Steh gerade und zieh die Schultern zurueck."* — Jordan Peterson\n\n**Die ultimative Morgenroutine (aus 12 Buechern):**\n1. 5:30 aufstehen — kein Snooze\n2. Glas Wasser + 10x "Ich liebe mich"\n3. Kalte Dusche (2 Min)\n4. 30 Min Training\n5. 10 Min Meditation/Stille\n6. Deep Work ab 8:00\n\nStelle dir den Wecker 15 Min frueher als gestern. Jeden Tag 15 Min frueher.`
+    ],
+    books: [
+      `📚 **Deine 12 Buecher — und wann du welches brauchst:**\n\n🟡 Selbstbewusstsein → *Models* (Mark Manson)\n🔵 Lebensordnung → *12 Rules for Life* (Peterson)\n🔴 Verhandlung → *Kompromissloses Verhandeln* (Voss)\n💗 Selbstliebe → *Liebe dich selbst* (Ravikant)\n🟢 Emotionskontrolle → *Trading Psychologie* (Welz)\n💜 Reichtum → *Almanach von Naval*\n🟠 Maennlichkeit → *Lob des Sexismus* (Satana)\n🔴 Strategie → *Power* (Greene)\n💜 Fokus → *Subtile Kunst* (Manson)\n🟡 Action → *Alpha Mann Bibel* (Wayne)\n🔴 Disziplin → *Tate Bibel*\n🔵 Purpose → *Weg des wahren Mannes* (Deida)\n\nWelches Thema beschaeftigt dich gerade am meisten?`
+    ]
+  };
+
+  // Select response
+  if (detectedTopic && responses[detectedTopic]) {
+    const options = responses[detectedTopic];
+    const seed = Date.now();
+    return options[seed % options.length];
+  }
+
+  // Generic responses
+  const generic = [
+    `${ctx}\n\n💡 Interessanter Punkt. Lass mich dir eine Frage zurueckgeben:\n\n**Was ist die EINE Sache, die du heute tun kannst, die alles andere einfacher oder ueberfluessig macht?**\n\nSchreib sie auf. Mach sie. Alles andere ist Ablenkung.\n\n*"Plane bis zum Ende — die meisten scheitern im letzten Schritt."* — Robert Greene`,
+    `🔥 Du bist hier. Das zaehlt schon mehr als 90% der Menschen.\n\n${streak > 3 ? `Dein ${streak}-Tage-Streak zeigt: Du hast Disziplin. ` : ""}**Mein Tipp:** Schreib mir, was dich gerade am meisten beschaeftigt — Motivation, Disziplin, Beziehungen, Geld, Koerper, oder Purpose. Dann gebe ich dir einen konkreten Plan.\n\n*"Rede nicht ueber Plaene. Zeige Ergebnisse."* — Andrew Tate`,
+    `🧠 *"Lies viel. Denke klar. Handle entschlossen."* — Naval Ravikant\n\nDrei Fragen fuer jetzt:\n1. Was MUSST du heute noch tun?\n2. Was WILLST du heute noch tun?\n3. Welche Ausrede steht zwischen dir und der Antwort?\n\nSchick mir deine Antworten.`
+  ];
+
+  return generic[Date.now() % generic.length];
+}
+
+function renderCoach() {
+  chatMessages = loadChatHistory();
+
+  let messagesHtml = "";
+  if (chatMessages.length === 0) {
+    messagesHtml = `
+      <div class="chat-bubble ai fade-in">
+        <div class="coach-name">AI COACH</div>
+        <p>Willkommen. Ich bin dein Coach — trainiert mit den Prinzipien aller 12 Buecher.</p>
+        <p style="margin-top:8px">Frag mich zu: <b>Motivation</b>, <b>Disziplin</b>, <b>Selbstbewusstsein</b>, <b>Beziehungen</b>, <b>Finanzen</b>, <b>Training</b>, <b>Purpose</b>, oder erzaehl mir einfach, was dich beschaeftigt.</p>
+      </div>
+    `;
+  } else {
+    chatMessages.forEach(m => {
+      if (m.role === "user") {
+        messagesHtml += `<div class="chat-bubble user">${escapeHtml(m.text)}</div>`;
+      } else {
+        messagesHtml += `<div class="chat-bubble ai"><div class="coach-name">AI COACH</div>${formatCoachMsg(m.text)}</div>`;
+      }
+    });
+  }
+
+  // Quick topic buttons
+  const quickTopics = [
+    { label: "Motivation", icon: "🔥" },
+    { label: "Disziplin", icon: "🎯" },
+    { label: "Selbstbewusstsein", icon: "👑" },
+    { label: "Beziehungen", icon: "💬" },
+    { label: "Finanzen", icon: "💰" },
+    { label: "Buch-Tipps", icon: "📚" }
+  ];
+
+  const html = `
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-messages">
+        ${messagesHtml}
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding:4px 0">
+        ${quickTopics.map(t => `<button class="btn-sm btn-outline" onclick="sendQuickTopic('${t.label}')" style="font-size:11px;padding:6px 10px;border-radius:10px">${t.icon} ${t.label}</button>`).join("")}
+      </div>
+      <div class="chat-input-wrap">
+        <textarea class="chat-input" id="chat-input" placeholder="Schreib mir..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+        <button class="chat-send" onclick="sendChat()">
+          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+  document.getElementById("content").innerHTML = html;
+  scrollChatBottom();
+}
+
+function escapeHtml(text) {
+  const d = document.createElement("div");
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function formatCoachMsg(text) {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*(.+?)\*/g, '<i>$1</i>')
+    .replace(/\n/g, '<br>');
+}
+
+function sendQuickTopic(topic) {
+  document.getElementById("chat-input").value = topic;
+  sendChat();
+}
+
+function sendChat() {
+  const input = document.getElementById("chat-input");
+  const text = input.value.trim();
+  if (!text) return;
+
+  chatMessages.push({ role: "user", text, ts: Date.now() });
+  input.value = "";
+
+  const messagesDiv = document.getElementById("chat-messages");
+  messagesDiv.innerHTML += `<div class="chat-bubble user fade-in">${escapeHtml(text)}</div>`;
+  messagesDiv.innerHTML += `<div id="typing-indicator" class="chat-bubble ai fade-in"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  scrollChatBottom();
+
+  // Simulate thinking delay
+  setTimeout(() => {
+    const response = generateCoachResponse(text);
+    chatMessages.push({ role: "ai", text: response, ts: Date.now() });
+    saveChatHistory(chatMessages);
+
+    const typingEl = document.getElementById("typing-indicator");
+    if (typingEl) typingEl.remove();
+
+    messagesDiv.innerHTML += `<div class="chat-bubble ai fade-in"><div class="coach-name">AI COACH</div>${formatCoachMsg(response)}</div>`;
+    scrollChatBottom();
+  }, 800 + Math.random() * 1200);
+}
+
+function scrollChatBottom() {
+  setTimeout(() => {
+    const el = document.getElementById("chat-messages");
+    if (el) el.scrollTop = el.scrollHeight;
+  }, 50);
+}
+
+// =========================================================
+// CHALLENGES SYSTEM
+// =========================================================
+const WEEKLY_CHALLENGES = [
+  {
+    id: "cold_week",
+    title: "Eiserne Woche",
+    desc: "7 Tage hintereinander kalte Dusche",
+    book: "Alpha Mann Bibel",
+    icon: "🧊",
+    target: 7,
+    habitId: "cold_shower",
+    reward: "Kryokrieger Badge",
+    points: 100
+  },
+  {
+    id: "reader_week",
+    title: "Wissensmaschine",
+    desc: "7 Tage hintereinander 20+ Seiten lesen",
+    book: "Almanach von Naval",
+    icon: "📚",
+    target: 7,
+    habitId: "reading",
+    reward: "Buecherwurm Badge",
+    points: 100
+  },
+  {
+    id: "workout_week",
+    title: "Beast Mode",
+    desc: "7 Tage Training ohne Ausrede",
+    book: "Tate Bibel",
+    icon: "💪",
+    target: 7,
+    habitId: "workout",
+    reward: "Beast Badge",
+    points: 100
+  },
+  {
+    id: "no_excuses",
+    title: "Null Ausreden",
+    desc: "5 Tage alle Habits geschafft",
+    book: "12 Rules for Life",
+    icon: "🔥",
+    target: 5,
+    habitId: "_all",
+    reward: "Maschine Badge",
+    points: 200
+  },
+  {
+    id: "deep_focus",
+    title: "Deep Focus",
+    desc: "5 Tage Deep Work + Social Media Limit",
+    book: "Trading Psychologie",
+    icon: "🎯",
+    target: 5,
+    habitId: "deep_work",
+    reward: "Fokusmeister Badge",
+    points: 100
+  },
+  {
+    id: "love_week",
+    title: "Selbstliebe Woche",
+    desc: "7 Tage 'Ich liebe mich' Praxis",
+    book: "Liebe dich selbst",
+    icon: "❤️",
+    target: 7,
+    habitId: "self_love",
+    reward: "Innere Staerke Badge",
+    points: 100
+  },
+  {
+    id: "early_bird",
+    title: "Fruehaufsteher",
+    desc: "5 Tage vor 6:30 aufgestanden",
+    book: "Tate Bibel",
+    icon: "☀️",
+    target: 5,
+    habitId: "wake_early",
+    reward: "Early Bird Badge",
+    points: 100
+  },
+  {
+    id: "social_risk",
+    title: "Soziales Risiko",
+    desc: "5 Tage etwas Ehrliches/Verletzliches gesagt",
+    book: "Models",
+    icon: "⚡",
+    target: 5,
+    habitId: "honest_talk",
+    reward: "Authentisch Badge",
+    points: 100
+  }
+];
+
+function getChallengeProgress(challenge) {
+  const data = getHabitsData();
+  let count = 0;
+  for (let i = 0; i < challenge.target; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dStr = d.toISOString().split("T")[0];
+    const dayHabits = data.habits[dStr] || [];
+    if (challenge.habitId === "_all") {
+      if (dayHabits.length >= DAILY_HABITS.length) count++;
+    } else {
+      if (dayHabits.includes(challenge.habitId)) count++;
+    }
+  }
+  return count;
+}
+
+function getActiveChallenges() {
+  const data = loadData();
+  if (!data.activeChallenges) {
+    // Auto-assign 3 random challenges
+    const shuffled = [...WEEKLY_CHALLENGES].sort(() => Math.random() - 0.5);
+    data.activeChallenges = shuffled.slice(0, 3).map(c => ({
+      id: c.id,
+      startDate: todayStr(),
+      completed: false
+    }));
+    saveData(data);
+  }
+  return data.activeChallenges;
+}
+
+function renderChallengesSection() {
+  const active = getActiveChallenges();
+  let html = `<div class="card fade-in"><h2>Aktive Challenges</h2><p class="small">Woechentlich wechselnde Herausforderungen</p><div class="hr"></div>`;
+
+  active.forEach(ac => {
+    const ch = WEEKLY_CHALLENGES.find(c => c.id === ac.id);
+    if (!ch) return;
+    const progress = getChallengeProgress(ch);
+    const pct = Math.round(progress / ch.target * 100);
+    const isComplete = progress >= ch.target;
+
+    if (isComplete && !ac.completed) {
+      ac.completed = true;
+      const data = loadData();
+      if (!data.completedChallenges) data.completedChallenges = [];
+      if (!data.completedChallenges.includes(ch.id)) {
+        data.completedChallenges.push(ch.id);
+        data.totalPoints = (data.totalPoints || 0) + ch.points;
+      }
+      data.activeChallenges = active;
+      saveData(data);
+    }
+
+    html += `
+      <div class="challenge-card ${isComplete ? 'completed' : 'active'}">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:28px">${ch.icon}</span>
+          <div style="flex:1">
+            <p style="font-weight:700;font-size:15px;color:var(--text)">${ch.title}</p>
+            <p class="small">${ch.desc}</p>
+            <span class="tag tag-blue" style="font-size:10px">${ch.book}</span>
+          </div>
+          <div style="text-align:right">
+            <span style="font-size:18px;font-weight:700;color:${isComplete ? 'var(--green)' : 'var(--accent)'}">${progress}/${ch.target}</span>
+            ${isComplete ? '<p style="font-size:11px;color:var(--green)">✓ Geschafft!</p>' : ''}
+          </div>
+        </div>
+        <div class="progress-bar" style="margin-top:10px"><div class="progress-fill" style="width:${pct}%;background:${isComplete ? 'var(--green)' : 'var(--accent)'}"></div></div>
+        <span class="challenge-reward">${ch.reward} · ${ch.points} Punkte</span>
+      </div>
+    `;
+  });
+
+  html += `<button class="btn-outline" onclick="refreshChallenges()" style="width:100%;margin-top:8px;font-size:13px">🔄 Neue Challenges</button></div>`;
+  return html;
+}
+
+function refreshChallenges() {
+  const data = loadData();
+  const shuffled = [...WEEKLY_CHALLENGES].sort(() => Math.random() - 0.5);
+  data.activeChallenges = shuffled.slice(0, 3).map(c => ({
+    id: c.id,
+    startDate: todayStr(),
+    completed: false
+  }));
+  saveData(data);
+  renderProgress();
+}
+
+// =========================================================
+// ACHIEVEMENTS / BADGES
+// =========================================================
+const BADGES = [
+  { id: "first_day", icon: "🌱", name: "Erster Tag", desc: "Ersten Check-in gemacht", check: d => d.entries.filter(e=>e.completed).length >= 1 },
+  { id: "week_streak", icon: "🔥", name: "7-Tage-Streak", desc: "7 Tage am Stueck", check: () => getStreak() >= 7 },
+  { id: "month_streak", icon: "💎", name: "30-Tage-Streak", desc: "30 Tage am Stueck", check: () => getStreak() >= 30 },
+  { id: "century", icon: "🏆", name: "100 Tage", desc: "100 Check-ins", check: d => d.entries.filter(e=>e.completed).length >= 100 },
+  { id: "perfect_score", icon: "⭐", name: "Perfekter Tag", desc: "Score von 90+", check: d => d.entries.some(e => e.score >= 90) },
+  { id: "habit_master", icon: "✅", name: "Habit Master", desc: "Alle 12 Habits an einem Tag", check: d => { if(!d.habits) return false; return Object.values(d.habits).some(h => h.length >= 12); } },
+  { id: "early_bird", icon: "☀️", name: "Early Bird", desc: "Early Bird Challenge geschafft", check: d => (d.completedChallenges||[]).includes("early_bird") },
+  { id: "beast", icon: "💪", name: "Beast Mode", desc: "Beast Mode Challenge geschafft", check: d => (d.completedChallenges||[]).includes("workout_week") },
+  { id: "cryo", icon: "🧊", name: "Kryokrieger", desc: "Eiserne Woche Challenge geschafft", check: d => (d.completedChallenges||[]).includes("cold_week") },
+  { id: "reader", icon: "📚", name: "Buecherwurm", desc: "Wissensmaschine Challenge geschafft", check: d => (d.completedChallenges||[]).includes("reader_week") },
+  { id: "machine", icon: "🤖", name: "Maschine", desc: "Null Ausreden Challenge geschafft", check: d => (d.completedChallenges||[]).includes("no_excuses") },
+  { id: "focus_master", icon: "🎯", name: "Fokusmeister", desc: "Deep Focus Challenge geschafft", check: d => (d.completedChallenges||[]).includes("deep_focus") },
+  { id: "ten_days", icon: "🌟", name: "10 Tage", desc: "10 Check-ins geschafft", check: d => d.entries.filter(e=>e.completed).length >= 10 },
+  { id: "fifty_days", icon: "👑", name: "Krieger", desc: "50 Check-ins geschafft", check: d => d.entries.filter(e=>e.completed).length >= 50 },
+  { id: "authentic", icon: "💬", name: "Authentisch", desc: "Soziales Risiko Challenge geschafft", check: d => (d.completedChallenges||[]).includes("social_risk") },
+  { id: "self_love", icon: "❤️", name: "Innere Staerke", desc: "Selbstliebe Challenge geschafft", check: d => (d.completedChallenges||[]).includes("love_week") }
+];
+
+function renderBadgesSection() {
+  const data = loadData();
+  const earned = BADGES.filter(b => b.check(data));
+  const locked = BADGES.filter(b => !b.check(data));
+  const totalPoints = data.totalPoints || 0;
+
+  let html = `<div class="card fade-in">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>Badges</h2>
+      <div class="pill" style="color:var(--accent);border-color:var(--accent)">${totalPoints} Punkte</div>
+    </div>
+    <p class="small">${earned.length}/${BADGES.length} freigeschaltet</p>
+    <div class="hr"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center">`;
+
+  earned.forEach(b => {
+    html += `<div class="badge earned"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span><span class="badge-desc">${b.desc}</span></div>`;
+  });
+  locked.forEach(b => {
+    html += `<div class="badge locked"><span class="badge-icon">${b.icon}</span><span class="badge-name">${b.name}</span><span class="badge-desc">${b.desc}</span></div>`;
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+// =========================================================
+// THEME TOGGLE (Dark/Light)
+// =========================================================
+function initTheme() {
+  const saved = localStorage.getItem("coaching_theme");
+  if (saved === "light") {
+    document.body.classList.add("light");
+    document.getElementById("theme-btn").textContent = "☀️";
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle("light");
+  localStorage.setItem("coaching_theme", isLight ? "light" : "dark");
+  document.getElementById("theme-btn").textContent = isLight ? "☀️" : "🌙";
+}
+
+// =========================================================
+// PWA INSTALL PROMPT
+// =========================================================
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallBanner();
+});
+
+function showInstallBanner() {
+  const dismissed = localStorage.getItem("coaching_install_dismissed");
+  if (dismissed) return;
+
+  const slot = document.getElementById("install-banner-slot");
+  if (!slot) return;
+  slot.innerHTML = `
+    <div class="install-banner fade-in" onclick="installApp()">
+      <span class="ib-icon">📲</span>
+      <div class="ib-text">
+        <b>App installieren</b>
+        <span>Coaching Engine auf deinem Homescreen</span>
+      </div>
+      <span class="ib-close" onclick="event.stopPropagation();dismissInstall()">✕</span>
+    </div>
+  `;
+}
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  }
+  document.getElementById("install-banner-slot").innerHTML = "";
+}
+
+function dismissInstall() {
+  localStorage.setItem("coaching_install_dismissed", "1");
+  document.getElementById("install-banner-slot").innerHTML = "";
+}
+
+// Register service worker for offline support
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+
+// =========================================================
 // INIT
 // =========================================================
+initTheme();
 showScreen("daily");
 </script>
 </body>
