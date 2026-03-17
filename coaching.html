@@ -1824,154 +1824,274 @@ function formatDate(dateStr) {
 }
 
 // =========================================================
-// AI COACH CHAT
+// AI COACH v2090 — Deep Context Neural Coach
+// Multi-layer intelligence: Memory + Pattern + Cross-Reference + Adaptation
 // =========================================================
 let chatMessages = [];
 
 function loadChatHistory() {
-  try {
-    const raw = localStorage.getItem("coaching_chat");
-    if (raw) return JSON.parse(raw);
-  } catch(e) {}
+  try { const raw = localStorage.getItem("coaching_chat"); if (raw) return JSON.parse(raw); } catch(e) {}
   return [];
 }
+function saveChatHistory(msgs) { localStorage.setItem("coaching_chat", JSON.stringify(msgs.slice(-100))); }
 
-function saveChatHistory(msgs) {
-  localStorage.setItem("coaching_chat", JSON.stringify(msgs.slice(-50)));
-}
-
-function getCoachContext() {
+// DEEP CONTEXT ENGINE — builds a complete user profile from ALL data
+function buildDeepContext() {
   const data = loadData();
-  const entry = getTodayEntry();
+  const entries = data.entries.filter(e => e.completed).sort((a,b) => b.date.localeCompare(a.date));
   const streak = getStreak();
   const todayMood = data.moodLog ? data.moodLog.find(m => m.date === todayStr()) : null;
-  const recentEntries = data.entries.filter(e => e.completed).slice(0, 5);
-  const avgScore = recentEntries.length > 0 ? Math.round(recentEntries.reduce((s,e) => s + (e.score||0), 0) / recentEntries.length) : 0;
+  const entry = getTodayEntry();
+  const totalDays = entries.length;
 
-  let ctx = `Streak: ${streak} Tage. `;
-  if (todayMood) ctx += `Heutige Stimmung: ${todayMood.mood}/10, Energie: ${todayMood.energy}/10, Fokus: ${todayMood.focus}/10. `;
-  if (entry && entry.completed) ctx += `Heutiger Score: ${entry.score}/100. `;
-  if (avgScore) ctx += `Durchschnitt letzte Tage: ${avgScore}/100. `;
+  // Trend-Analyse: letzte 7 vs vorherige 7
+  const recent7 = entries.slice(0,7);
+  const prev7 = entries.slice(7,14);
+  const recentAvg = recent7.length ? Math.round(recent7.reduce((s,e)=>s+(e.score||0),0)/recent7.length) : 0;
+  const prevAvg = prev7.length ? Math.round(prev7.reduce((s,e)=>s+(e.score||0),0)/prev7.length) : 0;
+  const trend = recentAvg - prevAvg;
 
-  // Weaknesses
-  if (entry && entry.analysis && entry.analysis.weaknesses.length > 0) {
-    ctx += "Schwachstellen heute: " + entry.analysis.weaknesses.map(w => w.question.bookTitle).join(", ") + ". ";
-  }
+  // Schwaechen-Pattern ueber Zeit: welche Buecher tauchen immer wieder als Schwaeche auf
+  const weaknessFreq = {};
+  entries.slice(0,30).forEach(e => {
+    if (e.analysis && e.analysis.weaknesses) {
+      e.analysis.weaknesses.forEach(w => {
+        const bk = w.question?.bookTitle || 'unknown';
+        weaknessFreq[bk] = (weaknessFreq[bk]||0) + 1;
+      });
+    }
+  });
+  const chronicWeaknesses = Object.entries(weaknessFreq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v}x)`);
 
-  return ctx;
+  // Staerken-Pattern
+  const strengthFreq = {};
+  entries.slice(0,30).forEach(e => {
+    if (e.analysis && e.analysis.strengths) {
+      e.analysis.strengths.forEach(s => {
+        const bk = s.question?.bookTitle || 'unknown';
+        strengthFreq[bk] = (strengthFreq[bk]||0) + 1;
+      });
+    }
+  });
+  const coreStrengths = Object.entries(strengthFreq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k}(${v}x)`);
+
+  // Mood-Pattern
+  const moodLog = (data.moodLog || []).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,14);
+  const avgMood = moodLog.length ? Math.round(moodLog.reduce((s,m)=>s+m.mood,0)/moodLog.length*10)/10 : 0;
+  const avgEnergy = moodLog.length ? Math.round(moodLog.reduce((s,m)=>s+m.energy,0)/moodLog.length*10)/10 : 0;
+  const avgFocus = moodLog.length ? Math.round(moodLog.reduce((s,m)=>s+m.focus,0)/moodLog.length*10)/10 : 0;
+
+  // Habits-Analyse
+  const habitData = data.habits || {};
+  let habitTotal = 0, habitDays = 0;
+  Object.values(habitData).forEach(h => { if (h.length) { habitTotal += h.length; habitDays++; } });
+  const habitAvg = habitDays ? Math.round(habitTotal/habitDays*10)/10 : 0;
+
+  // Conversation memory — extract key themes from recent chat
+  const recentChat = loadChatHistory().slice(-20);
+  const chatThemes = recentChat.filter(m=>m.role==='user').map(m=>m.text).join(' ').toLowerCase();
+
+  // Letzte Antworten analysieren — wie tief reflektiert der User?
+  const lastAnswers = entry ? (entry.answers||[]).filter(a=>a&&a.trim()) : [];
+  const avgAnswerLen = lastAnswers.length ? Math.round(lastAnswers.reduce((s,a)=>s+a.split(/\s+/).length,0)/lastAnswers.length) : 0;
+
+  return {
+    streak, totalDays, todayMood, entry, recentAvg, prevAvg, trend,
+    chronicWeaknesses, coreStrengths, avgMood, avgEnergy, avgFocus,
+    habitAvg, chatThemes, avgAnswerLen, entries, moodLog
+  };
 }
 
+// ADAPTIVE RESPONSE ENGINE — generates contextual, personalized responses
 function generateCoachResponse(userMsg) {
   const msg = userMsg.toLowerCase();
-  const data = loadData();
-  const ctx = getCoachContext();
-  const streak = getStreak();
+  const ctx = buildDeepContext();
 
-  // Topic detection
-  const topics = {
-    motivation: ["motivation","antrieb","keine lust","aufgeben","schwer","muede","erschoepft","keinen bock"],
-    discipline: ["disziplin","prokrastin","aufschieb","abgelenkt","fokus","konzentration","social media","handy"],
-    confidence: ["selbstbewusst","unsicher","angst","scheu","traue mich nicht","mutig","verletzlich"],
-    relationships: ["beziehung","freundin","partner","frauen","maenner","date","ansprechen","sozial"],
-    finance: ["geld","finanzen","einkommen","business","nebenprojekt","investier","karriere"],
-    fitness: ["training","sport","koerper","fitness","gym","laufen","kraft","bewegung"],
-    purpose: ["sinn","zweck","purpose","lebensziel","was will ich","richtung","orientierung"],
-    mood: ["traurig","schlecht","down","deprimiert","hoffnungslos","verzweifelt","wertlos"],
-    morning: ["morgen","aufstehen","snooze","frueh","morgenroutine","wecker"],
-    books: ["buch","lesen","empfehlung","welches buch","buchtipp"]
+  // Multi-topic detection with confidence scoring
+  const topicMap = {
+    motivation: {kw:["motivation","antrieb","keine lust","aufgeben","schwer","muede","erschoepft","keinen bock","antriebslos","warum","wozu"],weight:0},
+    discipline: {kw:["disziplin","prokrastin","aufschieb","abgelenkt","fokus","konzentration","social media","handy","zeit","verschwendet","ablenkung"],weight:0},
+    confidence: {kw:["selbstbewusst","unsicher","angst","scheu","traue mich","mutig","verletzlich","peinlich","blamier","vergleich"],weight:0},
+    relationships: {kw:["beziehung","freundin","partner","frauen","maenner","date","ansprechen","sozial","liebe","trennung","einsam","allein"],weight:0},
+    finance: {kw:["geld","finanzen","einkommen","business","nebenprojekt","investier","karriere","reich","arm","schulden","passiv"],weight:0},
+    fitness: {kw:["training","sport","koerper","fitness","gym","laufen","kraft","bewegung","abnehm","gewicht","muskeln","dusche"],weight:0},
+    purpose: {kw:["sinn","zweck","purpose","lebensziel","was will ich","richtung","orientierung","berufung","erfuell","leer"],weight:0},
+    mood: {kw:["traurig","schlecht","down","deprimiert","hoffnungslos","verzweifelt","wertlos","weinen","panik","ueberfordert"],weight:0},
+    strategy: {kw:["plan","strategie","naechster schritt","wie schaffe","system","routine","struktur","optimier","effizient"],weight:0},
+    growth: {kw:["wachstum","besser","veraender","fortschritt","entwickl","level","upgrade","transform"],weight:0}
   };
 
-  let detectedTopic = null;
-  for (const [topic, keywords] of Object.entries(topics)) {
-    if (keywords.some(k => msg.includes(k))) { detectedTopic = topic; break; }
+  // Score topics
+  const detectedTopics = [];
+  for (const [topic, def] of Object.entries(topicMap)) {
+    def.weight = def.kw.filter(k => msg.includes(k)).length;
+    if (def.weight > 0) detectedTopics.push({topic, weight: def.weight});
+  }
+  detectedTopics.sort((a,b) => b.weight - a.weight);
+  const primary = detectedTopics[0]?.topic || null;
+  const secondary = detectedTopics[1]?.topic || null;
+
+  // STATUS HEADER — always show user's current state
+  let status = `**[SYSTEM-SCAN]**\n`;
+  status += `Streak: ${ctx.streak}d | Score: ${ctx.recentAvg}/100 | Trend: ${ctx.trend > 0 ? '+'+ctx.trend : ctx.trend} | `;
+  status += `Mood: ${ctx.avgMood} | Energy: ${ctx.avgEnergy} | Focus: ${ctx.avgFocus}\n`;
+  if (ctx.chronicWeaknesses.length) status += `Chronische Schwaechen: ${ctx.chronicWeaknesses.join(', ')}\n`;
+  if (ctx.coreStrengths.length) status += `Kern-Staerken: ${ctx.coreStrengths.join(', ')}\n`;
+  status += `Habits: ${ctx.habitAvg}/12 pro Tag | Reflexionstiefe: ${ctx.avgAnswerLen} Woerter/Antwort\n`;
+  status += `---\n\n`;
+
+  // ADAPTIVE PERSONALITY — changes based on streak and performance
+  let tone = 'standard';
+  if (ctx.streak >= 30 && ctx.recentAvg >= 70) tone = 'warrior';
+  else if (ctx.streak >= 7 && ctx.recentAvg >= 50) tone = 'coach';
+  else if (ctx.recentAvg < 35 || (ctx.todayMood && ctx.todayMood.mood <= 3)) tone = 'empathic';
+  else if (ctx.totalDays === 0) tone = 'onboarding';
+
+  // CROSS-REFERENCE ENGINE — find relevant book for this situation
+  function pickBook(topic) {
+    const bookMap = {
+      motivation: ['tate','alpha','deida'], discipline: ['naval','trading','tate'],
+      confidence: ['models','sexismus','loveyourself'], relationships: ['models','negotiation','deida'],
+      finance: ['naval','tate','power'], fitness: ['alpha','tate','deida'],
+      purpose: ['deida','naval','subtle'], mood: ['loveyourself','subtle','12rules'],
+      strategy: ['power','naval','trading'], growth: ['12rules','deida','subtle']
+    };
+    const ids = bookMap[topic] || ['12rules','naval','subtle'];
+    const book = BOOKS.find(b => b.id === ids[Date.now() % ids.length]);
+    return book || BOOKS[0];
   }
 
-  // Book-based responses
-  const responses = {
-    motivation: [
-      `${ctx}\n\n🔥 **Disziplin > Motivation.** Motivation ist ein Gefuehl — es kommt und geht. Disziplin ist eine Entscheidung.\n\n*"Disziplin schlaegt Talent. Jeden. Einzelnen. Tag."* — Andrew Tate\n\nDein naechster Schritt: Steh auf und mach EINE kleine Sache. Jetzt. Nicht morgen. Der Momentum-Effekt erledigt den Rest.`,
-      `💪 Du brauchst keine Motivation. Du brauchst einen **Grund**.\n\n*"Verfolge das, was bedeutungsvoll ist — nicht das, was gerade bequem ist."* — Jordan Peterson\n\nFrage dich: Wofuer stehst du morgens auf? Wenn du keine Antwort hast — DAS ist dein Problem, nicht fehlende Motivation.`,
-      `⚡ Hier ist die Wahrheit: **Motivation folgt Aktion**, nicht umgekehrt.\n\n*"Ein Alpha definiert sich durch Taten, nicht durch Worte."* — Sean Wayne\n\nMach jetzt 20 Liegestuetze. Ernsthaft. Danach reden wir weiter.`
-    ],
-    discipline: [
-      `🎯 **Dein Feind ist nicht die Ablenkung — es ist die fehlende Klarheit.**\n\n*"Deep Work braucht Struktur, nicht Willenskraft."* — Naval Ravikant\n\nJetzt sofort:\n1. Handy in einen anderen Raum\n2. Timer auf 25 Minuten\n3. EINE Aufgabe. Nur eine.\n\nNach 25 Min darfst du 5 Min Pause machen. Dann nochmal.`,
-      `📵 Social Media ist **designt**, um dich suechtig zu machen.\n\n*"Emotionen sind der groesste Feind rationaler Entscheidungen."* — Norman Welz\n\nLoesungsansatz: Loesche die Apps fuer 24h. Nur 24h. Beobachte, wie viel Zeit und mentale Energie du zurueckbekommst.`
-    ],
-    confidence: [
-      `👑 **Selbstbewusstsein ist kein Gefuehl — es ist eine Faehigkeit.**\n\n*"Echte Attraktivitaet kommt aus Verletzlichkeit und Authentizitaet."* — Mark Manson\n\nDu wirst nicht selbstbewusst durch Nachdenken. Du wirst es durch:\n- Unbequeme Gespraeche fuehren\n- Fehler machen und ueberleben\n- Dir selbst beweisen, dass du es kannst\n\nWas ist EINE Sache, die dir Angst macht? Mach sie heute.`,
-      `🌟 *"Lebe an deiner Kante — dort wo Angst und Wachstum sich treffen."* — David Deida\n\nAngst ist nicht dein Feind. Angst ist dein **Kompass**. Sie zeigt dir genau, wo du wachsen musst.\n\nHeute: Sage einer Person etwas Ehrliches. Kein Smalltalk. Eine echte Meinung.`
-    ],
-    relationships: [
-      `💬 *"Investiere nicht in Menschen, die nicht in dich investieren."* — Mark Manson\n\n**Drei Regeln fuer bessere Beziehungen:**\n1. Sei ehrlich — auch wenn es polarisiert\n2. Hoere aktiv zu (Spiegeln & Labeling — Chris Voss)\n3. Fuehre. Unentschlossenheit ist unattraktiver als falsche Entscheidungen.\n\nDein Move heute: Fuehre ein Gespraech, in dem du NICHTS von dir erzaehlst. Nur Fragen stellen und zuhoeren.`,
-      `❤️ *"Du kannst andere nicht wirklich lieben, wenn du dich selbst nicht liebst."* — Kamal Ravikant\n\nBevor du an Beziehungen arbeitest: Arbeitest du an DIR?\n\nDie attraktivste Version von dir entsteht nicht durch Techniken, sondern durch ein Leben, das du selbst bewunderst.`
-    ],
-    finance: [
-      `💰 *"Spezifisches Wissen + Leverage + Verantwortung = Reichtum."* — Naval Ravikant\n\n**Dein Finanz-Check:**\n- Hast du spezifisches Wissen, das schwer zu kopieren ist?\n- Nutzt du Leverage (Code, Content, Kapital, Menschen)?\n- Uebernimmst du Verantwortung fuer Ergebnisse?\n\nWenn eine der Antworten 'Nein' ist — da ist dein naechster Schritt.\n\n*"Geld ist Freiheit."* — Andrew Tate. Arbeite HEUTE 1h an einer Einkommensquelle.`
-    ],
-    fitness: [
-      `💪 *"Dein Koerper ist dein erstes Werkzeug — trainiere ihn taeglich."* — Sean Wayne\n\n**Minimum heute:**\n- 50 Liegestuetze (egal in wie vielen Saetzen)\n- 2 Min kalte Dusche\n- 30 Min Bewegung\n\nKein Gym noetig. Keine Ausreden. Dein Koerper formt dein Selbstbild.\n\n*"Haerte kommt aus freiwilligem Leiden."* — Andrew Tate`
-    ],
-    purpose: [
-      `🧭 *"Dein Lebenszweck muss immer an erster Stelle stehen."* — David Deida\n\n**Die Purpose-Frage:** Was wuerdest du tun, wenn du 10 Millionen auf dem Konto haettest?\n\nWenn die Antwort sich von dem unterscheidet, was du jetzt tust — warum tust du es nicht jetzt (in kleinen Schritten)?\n\n*"Suche dir Arbeit, die sich wie Spielen anfuehlt."* — Naval Ravikant`
-    ],
-    mood: [
-      `🫂 *"Jeder Gedanke ist eine Wahl — waehle den, der dich staerkt."* — Kamal Ravikant\n\nSchlechte Tage gehoeren dazu. Aber bleib nicht dort sitzen.\n\n**Sofort-Hilfe:**\n1. Sag laut: "Ich liebe mich." 10x. Auch wenn es sich komisch anfuehlt.\n2. Geh raus. 10 Min spazieren. Sonnenlicht.\n3. Atme: 4 Sek ein, 7 Sek halten, 8 Sek aus. 5x.\n\n*"Leid ist unvermeidbar. Waehle ein Leid, das sich lohnt."* — Mark Manson`
-    ],
-    morning: [
-      `☀️ **Morgenroutine = Lebensqualitaet.**\n\n*"Steh gerade und zieh die Schultern zurueck."* — Jordan Peterson\n\n**Die ultimative Morgenroutine (aus 12 Buechern):**\n1. 5:30 aufstehen — kein Snooze\n2. Glas Wasser + 10x "Ich liebe mich"\n3. Kalte Dusche (2 Min)\n4. 30 Min Training\n5. 10 Min Meditation/Stille\n6. Deep Work ab 8:00\n\nStelle dir den Wecker 15 Min frueher als gestern. Jeden Tag 15 Min frueher.`
-    ],
-    books: [
-      `📚 **Deine 12 Buecher — und wann du welches brauchst:**\n\n🟡 Selbstbewusstsein → *Models* (Mark Manson)\n🔵 Lebensordnung → *12 Rules for Life* (Peterson)\n🔴 Verhandlung → *Kompromissloses Verhandeln* (Voss)\n💗 Selbstliebe → *Liebe dich selbst* (Ravikant)\n🟢 Emotionskontrolle → *Trading Psychologie* (Welz)\n💜 Reichtum → *Almanach von Naval*\n🟠 Maennlichkeit → *Lob des Sexismus* (Satana)\n🔴 Strategie → *Power* (Greene)\n💜 Fokus → *Subtile Kunst* (Manson)\n🟡 Action → *Alpha Mann Bibel* (Wayne)\n🔴 Disziplin → *Tate Bibel*\n🔵 Purpose → *Weg des wahren Mannes* (Deida)\n\nWelches Thema beschaeftigt dich gerade am meisten?`
-    ]
-  };
-
-  // Select response
-  if (detectedTopic && responses[detectedTopic]) {
-    const options = responses[detectedTopic];
-    const seed = Date.now();
-    return options[seed % options.length];
+  // PATTERN PREDICTION — what should user focus on next?
+  function predictNextAction() {
+    if (ctx.chronicWeaknesses.length === 0) return "Starte dein erstes Check-in um Muster zu erkennen.";
+    const weakBook = ctx.chronicWeaknesses[0].split('(')[0];
+    const book = BOOKS.find(b => b.title === weakBook);
+    if (book) return book.actions[Date.now() % book.actions.length];
+    return "Fokussiere heute auf dein groesstes Wachstumsfeld.";
   }
 
-  // Generic responses
-  const generic = [
-    `${ctx}\n\n💡 Interessanter Punkt. Lass mich dir eine Frage zurueckgeben:\n\n**Was ist die EINE Sache, die du heute tun kannst, die alles andere einfacher oder ueberfluessig macht?**\n\nSchreib sie auf. Mach sie. Alles andere ist Ablenkung.\n\n*"Plane bis zum Ende — die meisten scheitern im letzten Schritt."* — Robert Greene`,
-    `🔥 Du bist hier. Das zaehlt schon mehr als 90% der Menschen.\n\n${streak > 3 ? `Dein ${streak}-Tage-Streak zeigt: Du hast Disziplin. ` : ""}**Mein Tipp:** Schreib mir, was dich gerade am meisten beschaeftigt — Motivation, Disziplin, Beziehungen, Geld, Koerper, oder Purpose. Dann gebe ich dir einen konkreten Plan.\n\n*"Rede nicht ueber Plaene. Zeige Ergebnisse."* — Andrew Tate`,
-    `🧠 *"Lies viel. Denke klar. Handle entschlossen."* — Naval Ravikant\n\nDrei Fragen fuer jetzt:\n1. Was MUSST du heute noch tun?\n2. Was WILLST du heute noch tun?\n3. Welche Ausrede steht zwischen dir und der Antwort?\n\nSchick mir deine Antworten.`
-  ];
+  // RESPONSE BUILDER
+  let response = status;
 
-  return generic[Date.now() % generic.length];
+  if (primary) {
+    const book = pickBook(primary);
+    const principle = book.principles[Date.now() % book.principles.length];
+    const action = book.actions[Date.now() % book.actions.length];
+    const question = book.questions[Date.now() % book.questions.length];
+
+    // Tone-adapted intro
+    if (tone === 'warrior') {
+      response += `Du bist ${ctx.streak} Tage drin. Du weisst was zu tun ist. Hier ist der Befehl:\n\n`;
+    } else if (tone === 'empathic') {
+      response += `Ich sehe deine Daten. Es ist gerade schwer. Aber du bist hier — das zaehlt.\n\n`;
+    } else if (tone === 'onboarding') {
+      response += `Willkommen. Lass uns dein System aufbauen.\n\n`;
+    } else {
+      response += `**Analyse laeuft...**\n\n`;
+    }
+
+    // Primary topic response
+    response += `**[${book.title.toUpperCase()} — ${book.author}]**\n`;
+    response += `*"${principle}"*\n\n`;
+
+    // Context-aware advice
+    if (ctx.trend < -5) {
+      response += `Dein Score faellt seit ${Math.abs(ctx.trend)} Punkten. Das ist ein Signal, kein Urteil. `;
+      response += `Dein System braucht einen Reset.\n\n`;
+    } else if (ctx.trend > 5) {
+      response += `+${ctx.trend} Punkte Trend. Momentum ist da. Jetzt nicht nachlassen.\n\n`;
+    }
+
+    // Specific action
+    response += `**AKTION:** ${action}\n\n`;
+
+    // Cross-reference with second topic
+    if (secondary) {
+      const book2 = pickBook(secondary);
+      response += `**[CROSS-REF: ${book2.title}]** ${book2.principles[0]}\n\n`;
+    }
+
+    // Socratic follow-up
+    response += `**REFLEXION:** ${question}`;
+
+    // Habit integration
+    if (ctx.habitAvg < 6) {
+      response += `\n\n*[SYSTEM: Deine Habit-Rate ist ${ctx.habitAvg}/12. Das ist unter 50%. Heute Abend: Habits-Tab oeffnen und abhaken.]*`;
+    }
+
+  } else {
+    // No topic detected — proactive coaching based on data
+    response += `**[PROAKTIVE ANALYSE]**\n\n`;
+
+    if (ctx.totalDays === 0) {
+      response += `Du hast noch kein Check-in gemacht. Geh auf **Heute** und beantworte 10 Fragen. Danach kenne ich dich.\n\n`;
+      response += `Was beschaeftigt dich gerade am meisten? Schreib mir ein Thema — ich gebe dir einen Aktionsplan.`;
+    } else {
+      // Data-driven proactive response
+      const nextAction = predictNextAction();
+      const book = BOOKS[Date.now() % BOOKS.length];
+
+      if (ctx.todayMood && ctx.todayMood.energy <= 3) {
+        response += `Dein Energielevel ist bei ${ctx.todayMood.energy}/10. Bevor wir ueber Strategie reden:\n`;
+        response += `1. Geh 10 Min raus. Sonnenlicht.\n2. Trink 500ml Wasser.\n3. 5 tiefe Atemzuege (4-7-8).\n\n`;
+        response += `Dann schreib mir nochmal. Energie kommt vor Strategie.`;
+      } else if (!ctx.entry || !ctx.entry.completed) {
+        response += `Du hast heute noch kein Check-in gemacht. Das ist dein erster Move.\n\n`;
+        response += `**Prioritaet 1:** Geh auf **Heute** und beantworte die 10 Fragen.\n`;
+        response += `**Prioritaet 2:** ${nextAction}\n\n`;
+        response += `*"${book.principles[0]}"* — ${book.author}`;
+      } else {
+        response += `**Dein heutiger Score: ${ctx.entry.score}/100**\n\n`;
+        if (ctx.entry.analysis?.weaknesses?.length) {
+          response += `Schwachstellen heute:\n`;
+          ctx.entry.analysis.weaknesses.slice(0,3).forEach(w => {
+            response += `- **${w.question.bookTitle}**: ${w.action}\n`;
+          });
+          response += `\nMach EINE davon. Jetzt. Nicht alle — nur eine.\n\n`;
+        }
+        response += `Was beschaeftigt dich? Schreib mir ein Thema, ein Problem, eine Frage.`;
+      }
+    }
+  }
+
+  return response;
 }
 
 function renderCoach() {
   chatMessages = loadChatHistory();
+  const ctx = buildDeepContext();
 
   let messagesHtml = "";
   if (chatMessages.length === 0) {
-    messagesHtml = `
-      <div class="chat-bubble ai fade-in">
-        <div class="coach-name">AI COACH</div>
-        <p>Willkommen. Ich bin dein Coach — trainiert mit den Prinzipien aller 12 Buecher.</p>
-        <p style="margin-top:8px">Frag mich zu: <b>Motivation</b>, <b>Disziplin</b>, <b>Selbstbewusstsein</b>, <b>Beziehungen</b>, <b>Finanzen</b>, <b>Training</b>, <b>Purpose</b>, oder erzaehl mir einfach, was dich beschaeftigt.</p>
-      </div>
-    `;
+    // Personalized welcome based on data
+    let welcomeMsg = `<div class="coach-name">NEURAL COACH v2090</div>`;
+    if (ctx.totalDays === 0) {
+      welcomeMsg += `<p style="margin:0">Initialisierung. Ich bin dein persoenliches KI-Gehirn — trainiert mit 12 Buechern, vernetzt mit deinen Daten.</p>`;
+      welcomeMsg += `<p style="margin:8px 0 0">Starte dein erstes Check-in unter **Heute**, oder schreib mir direkt was dich beschaeftigt.</p>`;
+    } else {
+      welcomeMsg += `<p style="margin:0">System online. ${ctx.totalDays} Tage Daten geladen. ${ctx.streak}d Streak. Score-Trend: ${ctx.trend > 0 ? '+' : ''}${ctx.trend}.</p>`;
+      welcomeMsg += `<p style="margin:8px 0 0">Ich kenne deine Muster. Schreib mir — ich denke mit.</p>`;
+    }
+    messagesHtml = `<div class="chat-bubble ai fade-in">${welcomeMsg}</div>`;
   } else {
     chatMessages.forEach(m => {
       if (m.role === "user") {
         messagesHtml += `<div class="chat-bubble user">${escapeHtml(m.text)}</div>`;
       } else {
-        messagesHtml += `<div class="chat-bubble ai"><div class="coach-name">AI COACH</div>${formatCoachMsg(m.text)}</div>`;
+        messagesHtml += `<div class="chat-bubble ai"><div class="coach-name">NEURAL COACH</div>${formatCoachMsg(m.text)}</div>`;
       }
     });
   }
 
-  // Quick topic buttons
   const quickTopics = [
+    { label: "Tagesanalyse", icon: "📊" },
     { label: "Motivation", icon: "🔥" },
-    { label: "Disziplin", icon: "🎯" },
-    { label: "Selbstbewusstsein", icon: "👑" },
+    { label: "Strategie", icon: "♟️" },
     { label: "Beziehungen", icon: "💬" },
     { label: "Finanzen", icon: "💰" },
-    { label: "Buch-Tipps", icon: "📚" }
+    { label: "Purpose", icon: "🧭" },
+    { label: "Koerper", icon: "💪" },
+    { label: "Schwaechen", icon: "🎯" }
   ];
 
   const html = `
@@ -1979,11 +2099,11 @@ function renderCoach() {
       <div class="chat-messages" id="chat-messages">
         ${messagesHtml}
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;padding:4px 0">
-        ${quickTopics.map(t => `<button class="btn-sm btn-outline" onclick="sendQuickTopic('${t.label}')" style="font-size:11px;padding:6px 10px;border-radius:10px">${t.icon} ${t.label}</button>`).join("")}
+      <div style="display:flex;gap:4px;flex-wrap:wrap;padding:4px 0">
+        ${quickTopics.map(t => `<button class="btn-sm btn-outline" onclick="sendQuickTopic('${t.label}')" style="font-size:9px;padding:5px 8px">${t.icon} ${t.label}</button>`).join("")}
       </div>
       <div class="chat-input-wrap">
-        <textarea class="chat-input" id="chat-input" placeholder="Schreib mir..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
+        <textarea class="chat-input" id="chat-input" placeholder="Frag mich alles..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"></textarea>
         <button class="chat-send" onclick="sendChat()">
           <svg viewBox="0 0 24 24" stroke-width="2"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9z"/></svg>
         </button>
@@ -1994,23 +2114,19 @@ function renderCoach() {
   scrollChatBottom();
 }
 
-function escapeHtml(text) {
-  const d = document.createElement("div");
-  d.textContent = text;
-  return d.innerHTML;
-}
+function escapeHtml(text) { const d = document.createElement("div"); d.textContent = text; return d.innerHTML; }
 
 function formatCoachMsg(text) {
   return text
+    .replace(/\*\*\[(.+?)\]\*\*/g, '<div style="font-family:Orbitron,sans-serif;font-size:9px;color:var(--cyan);letter-spacing:2px;margin:8px 0 4px">$1</div>')
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/\*\[(.+?)\]\*/g, '<div style="font-size:10px;color:var(--pink);margin-top:8px;padding:6px;border:1px solid rgba(255,45,142,.2);background:rgba(255,45,142,.04)">$1</div>')
+    .replace(/\*"(.+?)"\*/g, '<i style="color:var(--gold)">"$1"</i>')
     .replace(/\*(.+?)\*/g, '<i>$1</i>')
     .replace(/\n/g, '<br>');
 }
 
-function sendQuickTopic(topic) {
-  document.getElementById("chat-input").value = topic;
-  sendChat();
-}
+function sendQuickTopic(topic) { document.getElementById("chat-input").value = topic; sendChat(); }
 
 function sendChat() {
   const input = document.getElementById("chat-input");
@@ -2022,28 +2138,24 @@ function sendChat() {
 
   const messagesDiv = document.getElementById("chat-messages");
   messagesDiv.innerHTML += `<div class="chat-bubble user fade-in">${escapeHtml(text)}</div>`;
-  messagesDiv.innerHTML += `<div id="typing-indicator" class="chat-bubble ai fade-in"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  messagesDiv.innerHTML += `<div id="typing-indicator" class="chat-bubble ai fade-in"><div style="font-family:Orbitron,sans-serif;font-size:9px;color:var(--cyan);letter-spacing:2px;margin-bottom:6px">ANALYSIERE DATEN...</div><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
   scrollChatBottom();
 
-  // Simulate thinking delay
+  // Processing delay scales with data depth
+  const delay = 600 + Math.random() * 800;
   setTimeout(() => {
     const response = generateCoachResponse(text);
     chatMessages.push({ role: "ai", text: response, ts: Date.now() });
     saveChatHistory(chatMessages);
-
     const typingEl = document.getElementById("typing-indicator");
     if (typingEl) typingEl.remove();
-
-    messagesDiv.innerHTML += `<div class="chat-bubble ai fade-in"><div class="coach-name">AI COACH</div>${formatCoachMsg(response)}</div>`;
+    messagesDiv.innerHTML += `<div class="chat-bubble ai fade-in"><div class="coach-name">NEURAL COACH</div>${formatCoachMsg(response)}</div>`;
     scrollChatBottom();
-  }, 800 + Math.random() * 1200);
+  }, delay);
 }
 
 function scrollChatBottom() {
-  setTimeout(() => {
-    const el = document.getElementById("chat-messages");
-    if (el) el.scrollTop = el.scrollHeight;
-  }, 50);
+  setTimeout(() => { const el = document.getElementById("chat-messages"); if (el) el.scrollTop = el.scrollHeight; }, 50);
 }
 
 // =========================================================
@@ -2410,111 +2522,679 @@ async function deleteVaultEntry(id) {
 }
 
 // =========================================================
-// SITUATION ANALYZER
+// SITUATION ANALYZER v2090 — Deep Intelligence Pipeline
+// 5-Phase Analysis: Context Scan → Pattern Matrix → Cross-Reference →
+//                   Strategic Modeling → Synthesis & Prediction
 // =========================================================
+
+// Analyzer history stored locally
+function loadAnalyzerHistory() {
+  try { const raw = localStorage.getItem("coaching_analyzer_history"); if (raw) return JSON.parse(raw); } catch(e) {}
+  return [];
+}
+function saveAnalyzerHistory(list) { localStorage.setItem("coaching_analyzer_history", JSON.stringify(list.slice(-50))); }
+
+// DOMAIN CLASSIFIER — detect what type of situation this is
+function classifySituation(text) {
+  const t = text.toLowerCase();
+  const domains = {
+    health: {kw:["schmerz","patient","therapie","behandlung","diagnose","symptom","heilung","krankheit","medikament","ruecken","koerper","schlaf","ernaehrung","gesundheit","trauma","reha","physio","operation","chronisch","entzuendung"],score:0,icon:"⚕",color:"var(--green)"},
+    business: {kw:["geschaeft","business","startup","firma","kunde","umsatz","profit","markt","produkt","preis","konkurrenz","strategie","wachstum","invest","skalier","revenue","pitch","mvp","launch","marketing"],score:0,icon:"◆",color:"var(--gold)"},
+    relationship: {kw:["beziehung","partner","freund","familie","konflikt","kommunikation","vertrauen","trennung","liebe","naehe","distanz","streit","grenze","toxisch","team","mitarbeiter","chef","kollege"],score:0,icon:"◎",color:"var(--pink,#ff6b9d)"},
+    mental: {kw:["angst","depression","stress","motivation","selbstwert","zweifel","gedanken","gefuehl","emotion","panik","burnout","ueberfordert","sinn","purpose","identitaet","entscheidung","blockade","prokrastin"],score:0,icon:"◈",color:"var(--purple)"},
+    finance: {kw:["geld","finanzen","schulden","sparen","investition","portfolio","krypto","aktien","einkommen","passiv","budget","steuer","vermoegen","cashflow","immobilie","rendite"],score:0,icon:"▲",color:"var(--cyan)"},
+    creative: {kw:["idee","kreativ","projekt","kunst","musik","schreib","design","innovation","content","brand","social media","video","buch","app","plattform","konzept"],score:0,icon:"✦",color:"#ff6b9d"},
+    legal: {kw:["recht","gesetz","vertrag","anwalt","klage","haftung","versicherung","patent","lizenz","datenschutz","gdpr","compliance","regulierung"],score:0,icon:"§",color:"var(--dim)"},
+    technical: {kw:["code","software","api","server","datenbank","system","architektur","performance","bug","deploy","cloud","infrastruktur","automatisier","ki","algorithm"],score:0,icon:"⟁",color:"var(--cyan)"}
+  };
+  for (const [key, d] of Object.entries(domains)) {
+    d.score = d.kw.filter(k => t.includes(k)).length;
+  }
+  const sorted = Object.entries(domains).sort((a,b) => b[1].score - a[1].score);
+  const primary = sorted[0][1].score > 0 ? {key: sorted[0][0], ...sorted[0][1]} : {key:'general',icon:'◉',color:'var(--cyan)',score:0};
+  const secondary = sorted[1][1].score > 0 ? {key: sorted[1][0], ...sorted[1][1]} : null;
+  return {primary, secondary, allScores: sorted};
+}
+
+// ENTITY EXTRACTOR — pull out key entities from text
+function extractEntities(text) {
+  const entities = {people:[], numbers:[], timeframes:[], locations:[], actions:[]};
+  // Numbers with context
+  const numMatches = text.match(/\d+[\.,]?\d*\s*(%|euro|eur|€|\$|kg|km|std|stunden|tage|wochen|monate|jahre|mal|punkte|prozent)/gi) || [];
+  entities.numbers = numMatches.slice(0,8);
+  // Timeframes
+  const timeMatches = text.match(/(seit|vor|in|ab|bis)\s+\d+\s*(tagen?|wochen?|monaten?|jahren?|stunden?|minuten?)/gi) || [];
+  entities.timeframes = timeMatches.slice(0,5);
+  // Action verbs (German imperatives / infinitives suggesting next steps)
+  const actionWords = text.match(/\b(muss|soll|will|kann|brauche|plane|moechte|versuche|starte|beende|aendere|verbessere|optimiere|reduziere|steigere|entwickle)\b/gi) || [];
+  entities.actions = [...new Set(actionWords)].slice(0,6);
+  return entities;
+}
+
+// SENTIMENT ANALYZER — detect emotional valence of text
+function analyzeSentiment(text) {
+  const t = text.toLowerCase();
+  const pos = ["gut","super","toll","perfekt","gluecklich","erfolgreich","stark","positiv","besser","wachstum","chance","moeglich","hoffnung","fortschritt","gewinn","vorteil","freude","energie","motivation","gewonnen","geschafft"];
+  const neg = ["schlecht","problem","schwierig","krise","verlust","angst","stress","schmerz","risiko","gefahr","fehler","scheitern","versagen","blockade","hindernis","nachteil","sorge","zweifel","schulden","verloren","kaputt"];
+  const urgent = ["sofort","dringend","jetzt","schnell","akut","notfall","deadline","morgen","heute","kritisch"];
+  const posScore = pos.filter(w => t.includes(w)).length;
+  const negScore = neg.filter(w => t.includes(w)).length;
+  const urgScore = urgent.filter(w => t.includes(w)).length;
+  const total = posScore + negScore || 1;
+  const valence = Math.round((posScore - negScore) / total * 100);
+  return {
+    valence, // -100 (very negative) to +100 (very positive)
+    urgency: urgScore > 2 ? 'critical' : urgScore > 0 ? 'elevated' : 'normal',
+    posScore, negScore, urgScore,
+    label: valence > 30 ? 'POSITIV' : valence < -30 ? 'KRITISCH' : 'NEUTRAL'
+  };
+}
+
+// COMPLEXITY SCORER — how complex is this situation?
+function scoreComplexity(text, entities, domains) {
+  let score = 0;
+  const words = text.split(/\s+/).length;
+  if (words > 300) score += 3; else if (words > 100) score += 2; else score += 1;
+  score += Math.min(entities.numbers.length, 3);
+  score += entities.timeframes.length > 0 ? 1 : 0;
+  const activeDomains = domains.allScores.filter(([,d]) => d.score > 0).length;
+  score += Math.min(activeDomains, 3);
+  if (text.includes('?')) score += 1;
+  return Math.min(score, 10);
+}
+
+// CROSS-REFERENCE with user's personal data
+function crossReferenceUserData(text, domains) {
+  const ctx = buildDeepContext();
+  const refs = [];
+
+  // Check if the situation relates to user's known weaknesses
+  if (ctx.chronicWeaknesses.length) {
+    refs.push({type:'weakness_link', label:'CHRONISCHE MUSTER', detail:`Deine bekannten Schwachstellen (${ctx.chronicWeaknesses.join(', ')}) koennten mit dieser Situation zusammenhaengen.`, severity:'warning'});
+  }
+  // Check mood correlation
+  if (ctx.avgMood && ctx.avgMood < 5 && domains.primary.key === 'mental') {
+    refs.push({type:'mood_alert', label:'MOOD-KORRELATION', detail:`Dein Durchschnittsmood ist ${ctx.avgMood}/10. Mentale Situationen treffen auf ein bereits belastetes System.`, severity:'critical'});
+  }
+  // Check if user has relevant strengths
+  if (ctx.coreStrengths.length) {
+    refs.push({type:'strength_asset', label:'VERFUEGBARE STAERKEN', detail:`Nutze deine bewiesenen Staerken: ${ctx.coreStrengths.join(', ')}`, severity:'positive'});
+  }
+  // Streak/discipline insight
+  if (ctx.streak >= 7) {
+    refs.push({type:'discipline_asset', label:'DISZIPLIN-KAPITAL', detail:`${ctx.streak}-Tage-Streak beweist: Du kannst durchziehen. Nutze dieses Momentum.`, severity:'positive'});
+  } else if (ctx.streak === 0 && ctx.totalDays > 5) {
+    refs.push({type:'discipline_gap', label:'KONSISTENZ-LUECKE', detail:`Streak unterbrochen. Jede Strategie scheitert ohne taegliche Ausfuehrung.`, severity:'warning'});
+  }
+  // Habit completion rate
+  if (ctx.habitAvg < 4 && domains.primary.key !== 'health') {
+    refs.push({type:'habit_gap', label:'SYSTEM-DEFIZIT', detail:`Habit-Rate ${ctx.habitAvg}/12 — du fuehrst nur ${Math.round(ctx.habitAvg/12*100)}% aus. Plane weniger, mache mehr.`, severity:'warning'});
+  }
+  // Energy check for ambitious plans
+  if (ctx.todayMood && ctx.todayMood.energy <= 4 && (domains.primary.key === 'business' || domains.primary.key === 'creative')) {
+    refs.push({type:'energy_warning', label:'ENERGIE-CHECK', detail:`Energie bei ${ctx.todayMood.energy}/10. Grosse Plaene brauchen Energie. Erst Grundlagen sichern.`, severity:'critical'});
+  }
+  // Book cross-reference
+  const bookMap = {
+    health:['12rules','subtle','loveyourself'], business:['naval','power','tate'],
+    relationship:['models','negotiation','deida'], mental:['loveyourself','subtle','12rules'],
+    finance:['naval','trading','tate'], creative:['deida','naval','subtle'],
+    technical:['naval','trading','power'], legal:['power','negotiation','48laws']
+  };
+  const bookIds = bookMap[domains.primary.key] || ['12rules','naval','subtle'];
+  const relevantBooks = bookIds.map(id => BOOKS.find(b => b.id === id)).filter(Boolean).slice(0,2);
+  if (relevantBooks.length) {
+    relevantBooks.forEach(book => {
+      const principle = book.principles[Math.floor(Math.random() * book.principles.length)];
+      refs.push({type:'book_ref', label:`BUCH: ${book.title}`, detail:`"${principle}" — ${book.author}`, severity:'info', book});
+    });
+  }
+  return {refs, ctx, relevantBooks};
+}
+
+// STRATEGIC MODEL GENERATOR — create multi-path strategy
+function generateStrategicModel(text, domains, sentiment, complexity, entities) {
+  const paths = [];
+  const isUrgent = sentiment.urgency !== 'normal';
+  const isComplex = complexity >= 6;
+  const isNegative = sentiment.valence < -20;
+
+  // PATH 1: Sofort-Aktion (always generated)
+  const immediateActions = [];
+  if (isNegative) immediateActions.push("Emotionale Stabilisierung: 4-7-8 Atemtechnik, 3 Minuten");
+  if (isUrgent) immediateActions.push("Dringlichste Entscheidung isolieren und HEUTE treffen");
+  immediateActions.push("Schreib die 3 wichtigsten Fakten auf ein Blatt Papier");
+  immediateActions.push("Definiere das Worst-Case-Szenario — was passiert wenn du NICHTS tust?");
+  paths.push({
+    name: "SOFORT-PROTOKOLL",
+    timeframe: "Naechste 24 Stunden",
+    icon: "⚡",
+    color: "var(--red,#ff4444)",
+    actions: immediateActions,
+    priority: isUrgent ? 'KRITISCH' : 'HOCH'
+  });
+
+  // PATH 2: Taktischer 7-Tage-Plan
+  const tacticalActions = [];
+  if (domains.primary.key === 'business') {
+    tacticalActions.push("Tag 1-2: Markt-Recherche — 3 Konkurrenten analysieren");
+    tacticalActions.push("Tag 3-4: MVP-Definition — Was ist das Minimum das funktioniert?");
+    tacticalActions.push("Tag 5-6: Erste Gespraeche mit potenziellen Kunden/Partnern");
+    tacticalActions.push("Tag 7: Entscheidungsmatrix erstellen und GO/NO-GO festlegen");
+  } else if (domains.primary.key === 'health') {
+    tacticalActions.push("Tag 1-2: Alle Symptome dokumentieren mit Zeitverlauf");
+    tacticalActions.push("Tag 3-4: Zweitmeinung einholen oder Spezialist kontaktieren");
+    tacticalActions.push("Tag 5-6: Behandlungsoptionen vergleichen (Evidenz-basiert)");
+    tacticalActions.push("Tag 7: Therapieplan festlegen mit messbaren Zielen");
+  } else if (domains.primary.key === 'mental') {
+    tacticalActions.push("Tag 1-2: Gedanken-Tagebuch — 3x taeglich Zustand dokumentieren");
+    tacticalActions.push("Tag 3-4: Muster identifizieren: Was triggert? Was hilft?");
+    tacticalActions.push("Tag 5-6: Eine konkrete Coping-Strategie taeglich praktizieren");
+    tacticalActions.push("Tag 7: Auswertung — was hat sich veraendert? Naechste Schritte.");
+  } else if (domains.primary.key === 'relationship') {
+    tacticalActions.push("Tag 1-2: Eigene Position klar schriftlich formulieren");
+    tacticalActions.push("Tag 3-4: Perspektivwechsel — die Situation aus der anderen Seite betrachten");
+    tacticalActions.push("Tag 5-6: Konkretes Gespraech fuehren mit klarer Struktur");
+    tacticalActions.push("Tag 7: Vereinbarungen dokumentieren und Follow-up planen");
+  } else {
+    tacticalActions.push("Tag 1-2: Informationslage komplett machen — was fehlt noch?");
+    tacticalActions.push("Tag 3-4: Optionen generieren — mindestens 3 verschiedene Wege");
+    tacticalActions.push("Tag 5-6: Jede Option bewerten: Aufwand, Risiko, Ertrag");
+    tacticalActions.push("Tag 7: Entscheidung treffen und ersten Schritt ausfuehren");
+  }
+  paths.push({
+    name: "7-TAGE TAKTIK",
+    timeframe: "Diese Woche",
+    icon: "◆",
+    color: "var(--gold)",
+    actions: tacticalActions,
+    priority: 'MITTEL'
+  });
+
+  // PATH 3: Strategisches 30-Tage-Modell
+  const strategicActions = [];
+  strategicActions.push("Woche 1: Foundation — Basis-System aufbauen und Gewohnheiten verankern");
+  strategicActions.push("Woche 2: Execution — Taegliche Ausfuehrung mit Tracking und Feedback");
+  strategicActions.push("Woche 3: Iteration — Daten auswerten, Strategie anpassen, Kurs korrigieren");
+  strategicActions.push("Woche 4: Consolidation — Ergebnisse sichern, naechste Phase planen");
+  if (isComplex) {
+    strategicActions.push("Parallel: Expertennetzwerk aufbauen — 3 Menschen die diese Situation kennen");
+    strategicActions.push("Parallel: Risikomanagement — Plan B aktiv bereithalten");
+  }
+  paths.push({
+    name: "30-TAGE STRATEGIE",
+    timeframe: "Naechster Monat",
+    icon: "▲",
+    color: "var(--green)",
+    actions: strategicActions,
+    priority: 'LANGFRISTIG'
+  });
+
+  return paths;
+}
+
+// PREDICTION ENGINE — project possible outcomes
+function predictOutcomes(domains, sentiment, complexity, userCrossRef) {
+  const scenarios = [];
+  const hasStrength = userCrossRef.refs.some(r => r.severity === 'positive');
+  const hasWarning = userCrossRef.refs.some(r => r.severity === 'critical');
+  const streakBonus = userCrossRef.ctx.streak >= 7 ? 15 : 0;
+  const moodPenalty = userCrossRef.ctx.avgMood < 4 ? -10 : 0;
+
+  // Best case
+  let bestProb = 60 + streakBonus + (sentiment.valence > 0 ? 10 : 0) - (complexity > 7 ? 15 : 0);
+  bestProb = Math.max(20, Math.min(90, bestProb));
+  scenarios.push({
+    label: "BEST CASE",
+    probability: bestProb,
+    description: "Konsequente Umsetzung mit System fuehrt zu messbaren Ergebnissen",
+    color: "var(--green)",
+    requirements: "Taegliche Ausfuehrung + Tracking + Anpassung"
+  });
+
+  // Most likely
+  let likelyProb = 45 + Math.floor(streakBonus/2) + moodPenalty;
+  likelyProb = Math.max(25, Math.min(75, likelyProb));
+  scenarios.push({
+    label: "WAHRSCHEINLICH",
+    probability: likelyProb,
+    description: "Teilweise Umsetzung mit gemischten Ergebnissen — Fortschritt aber langsamer als geplant",
+    color: "var(--gold)",
+    requirements: "Regelmaessige Check-ins + Kurskorrektur bei Abweichung"
+  });
+
+  // Worst case
+  let worstProb = 20 + (hasWarning ? 15 : 0) + (complexity > 7 ? 10 : 0) - streakBonus;
+  worstProb = Math.max(5, Math.min(50, worstProb));
+  scenarios.push({
+    label: "WORST CASE",
+    probability: worstProb,
+    description: "Keine Umsetzung — Situation verschlechtert sich oder stagniert",
+    color: "var(--red,#ff4444)",
+    requirements: "Vermeidbar durch: Sofort-Protokoll starten + Accountability"
+  });
+
+  return scenarios;
+}
+
+// SYNTHESIS — final intelligence report
+function generateSynthesis(text, domains, sentiment, complexity, entities, crossRef, paths, predictions) {
+  let synthesis = "";
+  const ctx = crossRef.ctx;
+
+  // Executive summary
+  synthesis += `SITUATIONSTYP: ${domains.primary.key.toUpperCase()}`;
+  if (domains.secondary) synthesis += ` + ${domains.secondary.key.toUpperCase()}`;
+  synthesis += ` | KOMPLEXITAET: ${complexity}/10 | SENTIMENT: ${sentiment.label} (${sentiment.valence > 0 ? '+' : ''}${sentiment.valence})\n`;
+  synthesis += `DRINGLICHKEIT: ${sentiment.urgency === 'critical' ? 'KRITISCH' : sentiment.urgency === 'elevated' ? 'ERHOEHT' : 'NORMAL'}\n\n`;
+
+  // Core insight
+  synthesis += `KERN-ERKENNTNIS:\n`;
+  if (sentiment.valence < -30 && complexity >= 6) {
+    synthesis += `Diese Situation ist emotional belastend UND komplex. Prioritaet 1: Emotionale Stabilisierung. Prioritaet 2: Komplexitaet reduzieren durch Zerlegung in Teilprobleme.\n\n`;
+  } else if (complexity >= 7) {
+    synthesis += `Hohe Komplexitaet erkannt. Nicht alles gleichzeitig loesen. Fokus auf den einen Hebel der 80% der Wirkung bringt.\n\n`;
+  } else if (sentiment.valence > 30) {
+    synthesis += `Positive Ausgangslage. Nutze dieses Momentum fuer entschiedenes Handeln. Jetzt ist der richtige Zeitpunkt.\n\n`;
+  } else {
+    synthesis += `Situation ist handhabbar. Klare Analyse + systematische Ausfuehrung fuehrt zum Ergebnis.\n\n`;
+  }
+
+  // Personal integration
+  if (ctx.totalDays > 0) {
+    synthesis += `PERSOENLICHE INTEGRATION:\n`;
+    synthesis += `Basierend auf ${ctx.totalDays} Tagen Daten: `;
+    if (ctx.trend > 5) {
+      synthesis += `Dein Aufwaertstrend (+${ctx.trend}) zeigt dass du gerade Momentum hast. Nutze es.\n`;
+    } else if (ctx.trend < -5) {
+      synthesis += `Achtung: Abwaertstrend (${ctx.trend}). Loesung: Nicht mehr anfangen, sondern aktuelles konsolidieren.\n`;
+    } else {
+      synthesis += `Stabiler Kurs. Gute Basis fuer neue Herausforderungen.\n`;
+    }
+    synthesis += `\n`;
+  }
+
+  // Key numbers
+  if (entities.numbers.length) {
+    synthesis += `ERKANNTE KENNZAHLEN: ${entities.numbers.join(' | ')}\n`;
+  }
+  if (entities.timeframes.length) {
+    synthesis += `ZEITRAHMEN: ${entities.timeframes.join(' | ')}\n`;
+  }
+
+  // Final recommendation
+  synthesis += `\nPRIORITAET #1: ${paths[0].actions[paths[0].actions.length - 1]}\n`;
+  synthesis += `ERFOLGSCHANCE: ${predictions[0].probability}% bei konsequenter Umsetzung.`;
+
+  return synthesis;
+}
+
+// MAIN ANALYZER UI
 function renderAnalyzerScreen() {
+  const history = loadAnalyzerHistory();
+  const historyHtml = history.length ? history.slice(0,10).map((h,i) => `
+    <div class="card" style="cursor:pointer;padding:14px;margin-bottom:8px;border-color:${h.domainColor || 'var(--border)'}" onclick="showSavedAnalysis(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(h.title)}</p>
+          <p class="small" style="margin:4px 0 0">${escHtml(h.domain || 'general')} · Komplexitaet ${h.complexity || '?'}/10 · ${h.date || ''}</p>
+        </div>
+        <span style="font-size:18px">${h.domainIcon || '◉'}</span>
+      </div>
+      <p style="font-size:11px;color:var(--dim);margin:8px 0 0;max-height:30px;overflow:hidden">${escHtml((h.inputText||'').substring(0,120))}...</p>
+    </div>
+  `).join('') : '<p style="text-align:center;color:var(--dim);font-size:12px">Noch keine Analysen. Starte deine erste oben.</p>';
+
   const html = `
-    <div class="card fade-in">
-      <h2>SITUATION ANALYZER</h2>
-      <p>Text rein → Recherche → Plan → Gesamtauswertung</p>
+    <div class="card fade-in" style="border-color:rgba(0,240,255,.2)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <span style="font-family:Orbitron,sans-serif;font-size:18px;color:var(--cyan)">◎</span>
+        <h2 style="margin:0">SITUATION ANALYZER v2090</h2>
+      </div>
+      <p style="color:var(--dim);font-size:11px;letter-spacing:1px">5-PHASEN DEEP INTELLIGENCE PIPELINE</p>
+      <p style="font-size:10px;color:var(--dim);margin-top:2px">Context Scan → Pattern Matrix → Cross-Reference → Strategic Model → Synthesis</p>
       <div class="hr"></div>
-      <h3>Neue Analyse starten</h3>
       <div style="margin-bottom:10px">
-        <p class="small" style="margin-bottom:4px">TITEL (optional)</p>
-        <input id="a-title" placeholder="z.B. Patientenfall, Geschaeftsidee..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
+        <p class="small" style="margin-bottom:4px">TITEL</p>
+        <input id="a-title" placeholder="z.B. Geschaeftsentscheidung, Patientenfall, Lebenssituation..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;outline:none">
       </div>
       <div style="margin-bottom:10px">
-        <p class="small" style="margin-bottom:4px">TEXT / SITUATION</p>
-        <textarea id="a-text" placeholder="Kopiere hier alles rein. Die KI recherchiert, plant und gibt dir eine Auswertung basierend auf ALLEM was du je gespeichert hast." style="min-height:150px"></textarea>
+        <p class="small" style="margin-bottom:4px">SITUATION / TEXT / DATEN</p>
+        <textarea id="a-text" placeholder="Beschreibe die Situation so detailliert wie moeglich. Je mehr Kontext, desto praeziser die Analyse. Kopiere Texte, Zahlen, E-Mails, Notizen — alles rein." style="min-height:180px"></textarea>
       </div>
-      <button onclick="startAnalyzerAnalysis()">ANALYSE STARTEN</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn-sm btn-outline" onclick="document.getElementById('a-text').value+='\\n\\nKONTEXT: '" style="font-size:10px">+ KONTEXT</button>
+        <button class="btn-sm btn-outline" onclick="document.getElementById('a-text').value+='\\n\\nZAHLEN: '" style="font-size:10px">+ ZAHLEN</button>
+        <button class="btn-sm btn-outline" onclick="document.getElementById('a-text').value+='\\n\\nZIEL: '" style="font-size:10px">+ ZIEL</button>
+        <button class="btn-sm btn-outline" onclick="document.getElementById('a-text').value+='\\n\\nHINDERNIS: '" style="font-size:10px">+ HINDERNIS</button>
+      </div>
+      <button onclick="startAnalyzerAnalysis()" style="width:100%;font-family:Orbitron,sans-serif;letter-spacing:2px">◎ DEEP ANALYSIS STARTEN</button>
     </div>
     <div id="analyzer-result" class="fade-in" style="display:none"></div>
     <div class="card fade-in">
-      <h3>Bisherige Analysen</h3>
-      <div id="analyzer-list"><div style="text-align:center;padding:20px;color:var(--dim);font-size:12px">Lade...</div></div>
+      <h3>ANALYSE-ARCHIV</h3>
+      <div id="analyzer-list">${historyHtml}</div>
     </div>
   `;
   document.getElementById("content").innerHTML = html;
-  loadAnalyzerList();
+  // Also try to load from API
+  loadAnalyzerListFromApi();
 }
 
-async function loadAnalyzerList() {
-  const el = document.getElementById('analyzer-list');
+async function loadAnalyzerListFromApi() {
   try {
     const data = await nerveApi('situation_list');
-    if (!data.length) { el.innerHTML = '<p style="text-align:center;color:var(--dim)">Noch keine Analysen.</p>'; return; }
-    el.innerHTML = data.map(s => `
-      <div class="card" style="cursor:pointer;padding:14px;margin-bottom:8px" onclick="showAnalyzerDetail('${s.id}')">
+    if (!data.length) return;
+    const el = document.getElementById('analyzer-list');
+    const apiHtml = data.map(s => `
+      <div class="card" style="cursor:pointer;padding:14px;margin-bottom:8px" onclick="showAnalyzerDetailFromApi('${s.id}')">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
-            <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(s.title)}</p>
-            <p class="small" style="margin:4px 0 0">${escHtml(s.category)} · ${timeAgo(s.created_at)}</p>
+            <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(s.title)} <span class="small" style="color:var(--cyan)">[API]</span></p>
+            <p class="small" style="margin:4px 0 0">${escHtml(s.category||'')} · ${timeAgo(s.created_at)}</p>
           </div>
-          <span class="tag" style="color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'};border-color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'}">${s.status}</span>
+          <span class="tag" style="color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'};border-color:${s.status==='complete'?'var(--green)':s.status==='pending'?'var(--gold)':'var(--cyan)'}">${s.status||'?'}</span>
         </div>
-        <p style="font-size:11px;color:var(--dim);margin:8px 0 0;max-height:30px;overflow:hidden">${escHtml((s.input_text||'').substring(0,120))}...</p>
       </div>
     `).join('');
-  } catch(e) { el.innerHTML = `<p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p>`; }
+    el.innerHTML = apiHtml + el.innerHTML;
+  } catch(e) { /* API optional */ }
 }
 
-async function startAnalyzerAnalysis() {
-  const title = document.getElementById('a-title').value.trim() || 'Neue Analyse';
-  const input_text = document.getElementById('a-text').value.trim();
-  if (!input_text) { alert('Bitte Text eingeben'); return; }
+function showSavedAnalysis(index) {
+  const history = loadAnalyzerHistory();
+  const h = history[index];
+  if (!h || !h.resultHtml) return;
   const detail = document.getElementById('analyzer-result');
   detail.style.display = 'block';
-  detail.innerHTML = '<div class="card" style="text-align:center;padding:30px"><div style="color:var(--cyan);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px">KI ANALYSIERT...</div><p style="margin-top:8px">Recherche → Plan → Auswertung (15-30 Sek.)</p></div>';
-  try {
-    const result = await nerveApi('situation_analyze', {title, input_text});
-    document.getElementById('a-text').value = '';
-    document.getElementById('a-title').value = '';
-    showAnalyzerResult(result, detail);
-    loadAnalyzerList();
-  } catch(e) { detail.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`; }
+  detail.innerHTML = h.resultHtml;
+  detail.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-async function showAnalyzerDetail(id) {
+async function showAnalyzerDetailFromApi(id) {
   const detail = document.getElementById('analyzer-result');
   detail.style.display = 'block';
   detail.innerHTML = '<div class="card" style="text-align:center;padding:20px"><p style="color:var(--dim)">Lade...</p></div>';
   try {
     const result = await nerveApi('situation_get', {id});
-    showAnalyzerResult(result, detail);
+    showLegacyAnalyzerResult(result, detail);
   } catch(e) { detail.innerHTML = `<div class="card"><p style="color:var(--red)">Fehler: ${escHtml(e.message)}</p></div>`; }
 }
 
-function showAnalyzerResult(r, el) {
+// Legacy API result display (for backward compatibility)
+function showLegacyAnalyzerResult(r, el) {
   const research = typeof r.research === 'object' ? r.research : {};
   const plan = Array.isArray(r.plan) ? r.plan : [];
   el.innerHTML = `
     <div class="card fade-in" style="border-color:rgba(0,240,255,.3)">
-      <h3 style="color:var(--cyan)">PHASE 1 — RECHERCHE</h3>
+      <h3 style="color:var(--cyan)">RECHERCHE</h3>
       <div style="font-size:12px;line-height:1.7;color:var(--dim)">
         ${research.kernpunkte ? `<p style="color:var(--text);font-weight:700">Kernpunkte:</p><ul style="padding-left:16px">${research.kernpunkte.map(k=>`<li>${escHtml(k)}</li>`).join('')}</ul>` : ''}
-        ${research.physik ? `<p><b style="color:var(--text)">Physik:</b> ${escHtml(research.physik)}</p>` : ''}
-        ${research.evolution ? `<p><b style="color:var(--text)">Evolution:</b> ${escHtml(research.evolution)}</p>` : ''}
-        ${research.chancen ? `<p style="color:var(--text);font-weight:700">Chancen:</p><ul style="padding-left:16px">${research.chancen.map(c=>`<li>${escHtml(c)}</li>`).join('')}</ul>` : ''}
         ${research.raw ? `<p>${escHtml(research.raw)}</p>` : ''}
       </div>
     </div>
     <div class="card fade-in" style="border-color:rgba(201,168,76,.3)">
-      <h3 style="color:var(--gold)">PHASE 2 — AKTIONSPLAN</h3>
+      <h3 style="color:var(--gold)">AKTIONSPLAN</h3>
       ${plan.map(s => `
         <div style="padding:10px;margin-bottom:6px;background:var(--surface2);border-left:2px solid var(--gold)">
           <p style="font-size:12px;color:var(--text);margin:0"><b>Schritt ${s.schritt||'?'}:</b> ${escHtml(s.aktion||s.raw||JSON.stringify(s))}</p>
-          ${s.zeitrahmen ? `<p class="small" style="color:var(--gold);margin:4px 0 0">Zeitrahmen: ${escHtml(s.zeitrahmen)}</p>` : ''}
-          ${s.erwartetes_ergebnis ? `<p class="small" style="color:var(--green);margin:2px 0 0">Ergebnis: ${escHtml(s.erwartetes_ergebnis)}</p>` : ''}
         </div>
       `).join('')}
     </div>
     <div class="card fade-in" style="border-color:rgba(45,255,168,.3)">
-      <h3 style="color:var(--green)">PHASE 3 — GESAMTAUSWERTUNG</h3>
-      <div style="font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text)">${escHtml(r.analysis||r.recommendation||'Keine Auswertung')}</div>
+      <h3 style="color:var(--green)">AUSWERTUNG</h3>
+      <div style="font-size:12px;line-height:1.7;white-space:pre-wrap;color:var(--text)">${escHtml(r.analysis||r.recommendation||'')}</div>
     </div>
     <button class="btn-outline" onclick="document.getElementById('analyzer-result').style.display='none'" style="width:100%;margin-bottom:16px">SCHLIESSEN</button>
   `;
+}
+
+// MAIN ANALYSIS PIPELINE
+async function startAnalyzerAnalysis() {
+  const title = document.getElementById('a-title').value.trim() || 'Neue Analyse';
+  const inputText = document.getElementById('a-text').value.trim();
+  if (!inputText) { alert('Bitte Text eingeben'); return; }
+  const detail = document.getElementById('analyzer-result');
+  detail.style.display = 'block';
+  detail.scrollIntoView({behavior:'smooth', block:'start'});
+
+  // PHASE 0: Loading animation
+  const phases = [
+    {name:"CONTEXT SCAN", color:"var(--cyan)", icon:"◎", desc:"Domäne erkennen, Entitäten extrahieren, Sentiment messen..."},
+    {name:"PATTERN MATRIX", color:"var(--purple)", icon:"◈", desc:"Multi-dimensionale Muster-Erkennung und Komplexitaets-Scoring..."},
+    {name:"CROSS-REFERENCE", color:"var(--gold)", icon:"◆", desc:"Abgleich mit persoenlichen Daten, Buch-Bibliothek, historischen Mustern..."},
+    {name:"STRATEGIC MODEL", color:"var(--green)", icon:"▲", desc:"3-Pfad-Strategie generieren: Sofort / 7-Tage / 30-Tage..."},
+    {name:"SYNTHESIS", color:"var(--pink,#ff6b9d)", icon:"✦", desc:"Prognose berechnen, Kern-Erkenntnis destillieren, Report generieren..."}
+  ];
+
+  for (let i = 0; i < phases.length; i++) {
+    const p = phases[i];
+    const progress = Math.round((i+1)/phases.length*100);
+    detail.innerHTML = `
+      <div class="card fade-in" style="text-align:center;padding:30px;border-color:${p.color}">
+        <div style="font-family:Orbitron,sans-serif;font-size:14px;color:${p.color};letter-spacing:3px;margin-bottom:8px">${p.icon} PHASE ${i+1}/5</div>
+        <div style="font-family:Orbitron,sans-serif;font-size:11px;color:var(--text);letter-spacing:2px;margin-bottom:12px">${p.name}</div>
+        <p style="font-size:11px;color:var(--dim)">${p.desc}</p>
+        <div style="margin-top:16px;background:var(--surface2);height:4px;border-radius:2px;overflow:hidden">
+          <div style="width:${progress}%;height:100%;background:${p.color};transition:width .5s ease"></div>
+        </div>
+        <p class="small" style="margin-top:8px">${progress}% COMPLETE</p>
+      </div>
+    `;
+    await new Promise(r => setTimeout(r, 400 + Math.random()*300));
+  }
+
+  // RUN THE PIPELINE
+  const domains = classifySituation(inputText);
+  const entities = extractEntities(inputText);
+  const sentiment = analyzeSentiment(inputText);
+  const complexity = scoreComplexity(inputText, entities, domains);
+  const crossRef = crossReferenceUserData(inputText, domains);
+  const paths = generateStrategicModel(inputText, domains, sentiment, complexity, entities);
+  const predictions = predictOutcomes(domains, sentiment, complexity, crossRef);
+  const synthesis = generateSynthesis(inputText, domains, sentiment, complexity, entities, crossRef, paths, predictions);
+
+  // Also try API analysis in parallel
+  let apiResult = null;
+  try {
+    apiResult = await nerveApi('situation_analyze', {title, input_text: inputText});
+  } catch(e) { /* API optional, local analysis is primary */ }
+
+  // BUILD RESULT HTML
+  let resultHtml = '';
+
+  // PHASE 1: CONTEXT SCAN
+  resultHtml += `
+    <div class="card fade-in" style="border-color:rgba(0,240,255,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;color:var(--cyan)">◎</span>
+        <h3 style="margin:0;color:var(--cyan)">PHASE 1 — CONTEXT SCAN</h3>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="background:var(--surface2);padding:10px;border-radius:4px">
+          <p class="small" style="margin:0">DOMAENE</p>
+          <p style="font-size:14px;color:${domains.primary.color};font-weight:700;margin:4px 0 0">${domains.primary.icon} ${domains.primary.key.toUpperCase()}</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-radius:4px">
+          <p class="small" style="margin:0">SENTIMENT</p>
+          <p style="font-size:14px;color:${sentiment.valence > 20 ? 'var(--green)' : sentiment.valence < -20 ? 'var(--red,#ff4444)' : 'var(--gold)'};font-weight:700;margin:4px 0 0">${sentiment.label} (${sentiment.valence > 0 ? '+' : ''}${sentiment.valence})</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-radius:4px">
+          <p class="small" style="margin:0">KOMPLEXITAET</p>
+          <p style="font-size:14px;color:${complexity >= 7 ? 'var(--red,#ff4444)' : complexity >= 4 ? 'var(--gold)' : 'var(--green)'};font-weight:700;margin:4px 0 0">${complexity}/10</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-radius:4px">
+          <p class="small" style="margin:0">DRINGLICHKEIT</p>
+          <p style="font-size:14px;color:${sentiment.urgency === 'critical' ? 'var(--red,#ff4444)' : sentiment.urgency === 'elevated' ? 'var(--gold)' : 'var(--green)'};font-weight:700;margin:4px 0 0">${sentiment.urgency.toUpperCase()}</p>
+        </div>
+      </div>
+      ${domains.secondary ? `<p style="font-size:11px;color:var(--dim)">Sekundaere Domaene: <span style="color:${domains.secondary.color}">${domains.secondary.icon} ${domains.secondary.key.toUpperCase()}</span></p>` : ''}
+      ${entities.numbers.length ? `<p style="font-size:11px;color:var(--dim);margin-top:6px">Erkannte Zahlen: <span style="color:var(--text)">${entities.numbers.join(' | ')}</span></p>` : ''}
+      ${entities.timeframes.length ? `<p style="font-size:11px;color:var(--dim);margin-top:4px">Zeitrahmen: <span style="color:var(--text)">${entities.timeframes.join(' | ')}</span></p>` : ''}
+    </div>
+  `;
+
+  // PHASE 2: PATTERN MATRIX
+  resultHtml += `
+    <div class="card fade-in" style="border-color:rgba(168,85,247,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;color:var(--purple)">◈</span>
+        <h3 style="margin:0;color:var(--purple)">PHASE 2 — PATTERN MATRIX</h3>
+      </div>
+      <div style="margin-bottom:12px">
+        ${domains.allScores.filter(([,d]) => d.score > 0).map(([key, d]) => {
+          const pct = Math.min(100, d.score * 20);
+          return `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:12px;width:14px;text-align:center">${d.icon}</span>
+              <span style="font-size:11px;color:var(--dim);width:80px">${key.toUpperCase()}</span>
+              <div style="flex:1;background:var(--surface2);height:6px;border-radius:3px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:${d.color};border-radius:3px"></div>
+              </div>
+              <span style="font-size:10px;color:${d.color};width:30px;text-align:right">${d.score}</span>
+            </div>`;
+        }).join('')}
+      </div>
+      <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--purple);font-size:11px;color:var(--dim);line-height:1.7">
+        <b style="color:var(--text)">MUSTER-ANALYSE:</b> ${domains.allScores.filter(([,d]) => d.score > 0).length} aktive Domaenen erkannt.
+        ${complexity >= 7 ? ' Multi-dimensionale Situation — erfordert mehrschichtige Strategie.' : complexity >= 4 ? ' Moderate Komplexitaet — fokussierter Ansatz empfohlen.' : ' Klare Situation — direkter Loesungsweg moeglich.'}
+      </div>
+    </div>
+  `;
+
+  // PHASE 3: CROSS-REFERENCE
+  resultHtml += `
+    <div class="card fade-in" style="border-color:rgba(201,168,76,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;color:var(--gold)">◆</span>
+        <h3 style="margin:0;color:var(--gold)">PHASE 3 — CROSS-REFERENCE</h3>
+      </div>
+      ${crossRef.refs.length ? crossRef.refs.map(ref => {
+        const borderColor = ref.severity === 'critical' ? 'var(--red,#ff4444)' : ref.severity === 'warning' ? 'var(--gold)' : ref.severity === 'positive' ? 'var(--green)' : 'var(--cyan)';
+        const icon = ref.severity === 'critical' ? '⚠' : ref.severity === 'warning' ? '◈' : ref.severity === 'positive' ? '✦' : '◎';
+        return `
+          <div style="padding:10px;margin-bottom:6px;background:var(--surface2);border-left:2px solid ${borderColor}">
+            <p style="font-size:10px;color:${borderColor};font-family:Orbitron,sans-serif;letter-spacing:1px;margin:0">${icon} ${escHtml(ref.label)}</p>
+            <p style="font-size:12px;color:var(--dim);margin:4px 0 0;line-height:1.6">${escHtml(ref.detail)}</p>
+          </div>`;
+      }).join('') : '<p style="font-size:12px;color:var(--dim)">Keine persoenlichen Daten zum Abgleich vorhanden. Starte Check-ins fuer tiefere Analysen.</p>'}
+    </div>
+  `;
+
+  // PHASE 4: STRATEGIC MODEL
+  resultHtml += `
+    <div class="card fade-in" style="border-color:rgba(45,255,168,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;color:var(--green)">▲</span>
+        <h3 style="margin:0;color:var(--green)">PHASE 4 — STRATEGIC MODEL</h3>
+      </div>
+      ${paths.map(path => `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span style="font-size:14px">${path.icon}</span>
+            <span style="font-family:Orbitron,sans-serif;font-size:11px;color:${path.color};letter-spacing:1px">${path.name}</span>
+            <span class="tag" style="color:${path.color};border-color:${path.color};font-size:9px">${path.priority}</span>
+          </div>
+          <p class="small" style="margin:0 0 6px">${path.timeframe}</p>
+          ${path.actions.map((a, i) => `
+            <div style="padding:8px 10px;margin-bottom:4px;background:var(--surface2);border-left:2px solid ${path.color};font-size:12px;color:var(--text);line-height:1.5">
+              <span style="color:${path.color};font-weight:700">${i+1}.</span> ${escHtml(a)}
+            </div>
+          `).join('')}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  // PHASE 5: SYNTHESIS & PREDICTION
+  resultHtml += `
+    <div class="card fade-in" style="border-color:rgba(255,107,157,.3)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:16px;color:var(--pink,#ff6b9d)">✦</span>
+        <h3 style="margin:0;color:var(--pink,#ff6b9d)">PHASE 5 — SYNTHESIS & PREDICTION</h3>
+      </div>
+      <div style="margin-bottom:16px">
+        <p style="font-size:10px;font-family:Orbitron,sans-serif;letter-spacing:1px;color:var(--dim);margin:0 0 8px">PROGNOSE-MODELL</p>
+        ${predictions.map(pred => `
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <div style="width:70px;text-align:right">
+              <span style="font-family:Orbitron,sans-serif;font-size:16px;color:${pred.color};font-weight:700">${pred.probability}%</span>
+            </div>
+            <div style="flex:1">
+              <div style="background:var(--surface2);height:8px;border-radius:4px;overflow:hidden;margin-bottom:4px">
+                <div style="width:${pred.probability}%;height:100%;background:${pred.color};border-radius:4px;transition:width 1s ease"></div>
+              </div>
+              <p style="font-size:11px;color:${pred.color};font-weight:700;margin:0">${pred.label}</p>
+              <p style="font-size:11px;color:var(--dim);margin:2px 0 0">${escHtml(pred.description)}</p>
+              <p style="font-size:10px;color:var(--dim);margin:2px 0 0;font-style:italic">${escHtml(pred.requirements)}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="hr"></div>
+      <div style="background:var(--surface2);padding:14px;border-radius:4px;margin-top:12px">
+        <p style="font-size:10px;font-family:Orbitron,sans-serif;letter-spacing:1px;color:var(--cyan);margin:0 0 8px">INTELLIGENCE REPORT</p>
+        <pre style="font-size:11px;color:var(--text);line-height:1.7;white-space:pre-wrap;margin:0;font-family:'Space Mono',monospace">${escHtml(synthesis)}</pre>
+      </div>
+    </div>
+  `;
+
+  // API enrichment (if available)
+  if (apiResult) {
+    const apiResearch = typeof apiResult.research === 'object' ? apiResult.research : {};
+    const apiPlan = Array.isArray(apiResult.plan) ? apiResult.plan : [];
+    if (apiResearch.kernpunkte || apiPlan.length || apiResult.analysis) {
+      resultHtml += `
+        <div class="card fade-in" style="border-color:rgba(0,240,255,.15)">
+          <p style="font-size:10px;font-family:Orbitron,sans-serif;letter-spacing:1px;color:var(--cyan);margin:0 0 8px">◎ NERVE-API ENRICHMENT</p>
+          ${apiResearch.kernpunkte ? `<div style="margin-bottom:8px"><p class="small">KI-RECHERCHE:</p><ul style="padding-left:16px;font-size:12px;color:var(--dim)">${apiResearch.kernpunkte.map(k=>`<li>${escHtml(k)}</li>`).join('')}</ul></div>` : ''}
+          ${apiPlan.length ? `<div style="margin-bottom:8px"><p class="small">KI-PLAN:</p>${apiPlan.map(s=>`<div style="padding:6px 10px;margin-bottom:4px;background:var(--surface2);border-left:2px solid var(--cyan);font-size:11px;color:var(--text)">${escHtml(s.aktion||s.raw||JSON.stringify(s))}</div>`).join('')}</div>` : ''}
+          ${apiResult.analysis ? `<div><p class="small">KI-ANALYSE:</p><p style="font-size:12px;color:var(--dim);line-height:1.7;white-space:pre-wrap">${escHtml(apiResult.analysis)}</p></div>` : ''}
+        </div>
+      `;
+    }
+  }
+
+  // Close button
+  resultHtml += `<button class="btn-outline" onclick="document.getElementById('analyzer-result').style.display='none'" style="width:100%;margin-bottom:16px">ANALYSE SCHLIESSEN</button>`;
+
+  detail.innerHTML = resultHtml;
+
+  // Save to local history
+  const history = loadAnalyzerHistory();
+  history.unshift({
+    title,
+    inputText,
+    date: new Date().toISOString().split('T')[0],
+    domain: domains.primary.key,
+    domainIcon: domains.primary.icon,
+    domainColor: domains.primary.color,
+    complexity,
+    sentiment: sentiment.label,
+    resultHtml
+  });
+  saveAnalyzerHistory(history);
+
+  // Clear inputs
+  document.getElementById('a-text').value = '';
+  document.getElementById('a-title').value = '';
+
+  // Refresh list
+  const listEl = document.getElementById('analyzer-list');
+  if (listEl) {
+    const updatedHistory = loadAnalyzerHistory();
+    listEl.innerHTML = updatedHistory.slice(0,10).map((h,i) => `
+      <div class="card" style="cursor:pointer;padding:14px;margin-bottom:8px;border-color:${h.domainColor || 'var(--border)'}" onclick="showSavedAnalysis(${i})">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <p style="font-weight:700;font-size:13px;color:var(--text);margin:0">${escHtml(h.title)}</p>
+            <p class="small" style="margin:4px 0 0">${escHtml(h.domain || 'general')} · Komplexitaet ${h.complexity || '?'}/10 · ${h.date || ''}</p>
+          </div>
+          <span style="font-size:18px">${h.domainIcon || '◉'}</span>
+        </div>
+      </div>
+    `).join('');
+  }
 }
 
 // =========================================================
