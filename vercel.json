@@ -12,6 +12,7 @@
     { "source": "/setup-supabase", "destination": "/setup-supabase.html" },
     { "source": "/live", "destination": "/live.html" },
     { "source": "/bot-admin", "destination": "/bot-admin.html" },
+    { "source": "/nerve", "destination": "/nerve.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [
