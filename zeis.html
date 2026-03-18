@@ -4,268 +4,561 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZEIS Protocol — 18 Schmerzverzerrungen</title>
-<meta name="description" content="ZEIS Protocol von Alexander Zeis. 18 Schmerzverzerrungen erkennen und mit Self-Treatment Protokollen auflösen.">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="description" content="ZEIS Protocol von Alexander Zeis. 18 Schmerzverzerrungen erkennen und auflösen.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0a;--surface:#111;--border:#1e1e1e;--accent:#f59e0b;--white:#f5f5f5;--muted:#888;--green:#22c55e;--red:#ef4444}
+:root{
+  --bg:#141414;--surface:#1a1a1a;--card:#222;--border:#333;
+  --accent:#f59e0b;--white:#e5e5e5;--muted:#808080;
+  --red:#e50914;--green:#46d369;--blue:#0071eb;
+}
 html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--white);font-family:'Inter',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--white);font-family:'Inter',system-ui,-apple-system,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{height:0;width:0}
 
-.wrap{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+/* ========== NAV ========== */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 4%;display:flex;align-items:center;gap:24px;transition:background .3s}
+.nav.scrolled{background:rgba(20,20,20,.95);backdrop-filter:blur(12px)}
+.nav-logo{font-weight:900;font-size:22px;letter-spacing:-.02em;color:var(--accent);cursor:pointer}
+.nav-links{display:flex;gap:18px;flex:1}
+.nav-links a{color:var(--muted);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--white)}
+.nav-scan{background:var(--accent);color:#000;font-weight:700;font-size:12px;padding:8px 18px;border-radius:4px;cursor:pointer;border:none;font-family:inherit;transition:background .2s}
+.nav-scan:hover{background:#d97706}
 
-/* Header */
-.header{text-align:center;padding:48px 0 32px}
-.header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,8vw,56px);letter-spacing:.04em;line-height:1}
-.header h1 span{color:var(--accent)}
-.header p{color:var(--muted);font-size:13px;margin-top:8px}
+/* ========== HERO ========== */
+.hero{position:relative;height:85vh;min-height:500px;display:flex;align-items:flex-end;padding:0 4% 8%;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(245,158,11,.15),transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(229,9,20,.08),transparent 50%),var(--bg)}
+.hero-gradient{position:absolute;inset:0;background:linear-gradient(0deg,var(--bg) 0%,transparent 50%,rgba(20,20,20,.4) 100%)}
+.hero-content{position:relative;z-index:2;max-width:620px}
+.hero-tag{display:inline-block;background:var(--accent);color:#000;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:3px;margin-bottom:16px}
+.hero h1{font-size:clamp(36px,6vw,64px);font-weight:900;line-height:1.05;letter-spacing:-.03em;margin-bottom:12px}
+.hero h1 span{color:var(--accent)}
+.hero-desc{font-size:15px;color:var(--muted);line-height:1.7;max-width:500px;margin-bottom:24px}
+.hero-btns{display:flex;gap:10px;flex-wrap:wrap}
+.hero-btn{display:flex;align-items:center;gap:8px;padding:12px 28px;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .2s}
+.hero-btn-primary{background:var(--white);color:#000}
+.hero-btn-primary:hover{background:#bbb}
+.hero-btn-secondary{background:rgba(255,255,255,.15);color:var(--white);backdrop-filter:blur(4px)}
+.hero-btn-secondary:hover{background:rgba(255,255,255,.25)}
+.hero-meta{display:flex;gap:16px;margin-top:16px;font-size:12px;color:var(--muted)}
+.hero-meta span{display:flex;align-items:center;gap:4px}
+.hero-badge{background:rgba(245,158,11,.15);color:var(--accent);padding:2px 8px;border-radius:3px;font-weight:700}
 
-/* Buttons */
-.btn{display:inline-block;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;text-align:center;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:var(--surface);color:var(--white);font-family:inherit}
-.btn:hover{border-color:var(--accent);color:var(--accent)}
-.btn-primary{background:var(--accent);color:#000;border-color:var(--accent)}
-.btn-primary:hover{background:#d97706;color:#000}
-.btn-block{display:block;width:100%}
-.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0}
+/* ========== ROWS ========== */
+.row{padding:0 4%;margin-bottom:32px}
+.row-title{font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.row-title .count{font-size:12px;color:var(--muted);font-weight:500}
+.slider{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:8px;scroll-padding:0 4%}
+.slider::-webkit-scrollbar{display:none}
 
-/* Divider */
-.divider{height:1px;background:var(--border);margin:28px 0}
+/* ========== CARDS ========== */
+.card{flex:0 0 auto;width:260px;scroll-snap-align:start;background:var(--card);border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s;position:relative}
+.card:hover{transform:scale(1.05);z-index:10;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.card-visual{height:148px;position:relative;overflow:hidden}
+.card-gradient{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.9) 100%)}
+.card-nr{position:absolute;top:10px;left:12px;background:rgba(0,0,0,.6);color:var(--accent);font-size:11px;font-weight:800;padding:3px 8px;border-radius:4px;backdrop-filter:blur(4px)}
+.card-zone-tags{position:absolute;bottom:10px;left:12px;right:12px;display:flex;gap:4px;flex-wrap:wrap}
+.card-zone{font-size:9px;background:rgba(255,255,255,.12);color:var(--white);padding:2px 6px;border-radius:3px;backdrop-filter:blur(4px)}
+.card-body{padding:14px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:3px;line-height:1.3}
+.card-short{font-size:11px;color:var(--muted);line-height:1.5}
+.card-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06)}
+.card-steps{font-size:10px;color:var(--muted)}
+.card-play{width:28px;height:28px;border-radius:50%;border:2px solid var(--white);display:flex;align-items:center;justify-content:center;transition:all .2s}
+.card:hover .card-play{border-color:var(--accent);background:var(--accent)}
+.card-play svg{width:10px;height:10px;fill:var(--white)}
+.card:hover .card-play svg{fill:#000}
 
-/* Label */
-.label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+/* Masterclass cards */
+.mc-card{flex:0 0 auto;width:320px;scroll-snap-align:start;background:var(--card);border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .25s,box-shadow .25s}
+.mc-card:hover{transform:scale(1.05);z-index:10;box-shadow:0 8px 40px rgba(0,0,0,.6)}
+.mc-visual{height:100px;position:relative;display:flex;align-items:center;padding:0 20px;gap:16px}
+.mc-nr{font-size:48px;font-weight:900;color:var(--accent);opacity:.3;line-height:1}
+.mc-info{flex:1}
+.mc-info h3{font-size:15px;font-weight:700;line-height:1.3}
+.mc-info p{font-size:11px;color:var(--accent);margin-top:2px}
+.mc-body{padding:14px;border-top:1px solid rgba(255,255,255,.06)}
+.mc-body p{font-size:12px;color:var(--muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
-.card:hover{border-color:rgba(245,158,11,.4)}
-.card-nr{color:var(--accent);font-weight:700;font-size:12px}
-.card-title{font-weight:700;font-size:14px;margin:2px 0}
-.card-desc{font-size:12px;color:var(--muted);margin-top:2px}
-.tag{display:inline-block;background:rgba(245,158,11,.1);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:99px;margin:2px 2px 2px 0}
+/* ========== MODAL ========== */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:2vh 4%;overflow-y:auto;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;max-width:700px;width:100%;margin:4vh auto;position:relative;overflow:hidden;animation:modalIn .35s cubic-bezier(.16,1,.3,1)}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-close{position:absolute;top:14px;right:14px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:var(--white);font-size:18px;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);transition:background .2s}
+.modal-close:hover{background:rgba(255,255,255,.2)}
+.modal-hero{height:200px;position:relative;overflow:hidden}
+.modal-hero-gradient{position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,var(--surface) 100%)}
+.modal-content{padding:0 28px 28px}
+.modal-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.modal h2{font-size:28px;font-weight:800;line-height:1.15;margin-bottom:6px}
+.modal-short{font-size:14px;color:var(--muted);margin-bottom:16px}
+.modal-desc{font-size:14px;color:var(--muted);line-height:1.8;margin-bottom:20px}
+.modal-zones{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.modal-zone{font-size:11px;background:rgba(245,158,11,.1);color:var(--accent);padding:4px 10px;border-radius:99px;font-weight:600}
+.modal-reframe{background:rgba(70,211,105,.08);border:1px solid rgba(70,211,105,.2);border-radius:8px;padding:14px;margin-bottom:20px}
+.modal-reframe p{font-size:13px;color:var(--green);line-height:1.6}
+.modal-reframe b{color:var(--green)}
+.modal-signal{background:rgba(255,255,255,.04);border-radius:8px;padding:14px;margin-bottom:20px}
+.modal-signal p{font-size:13px;color:var(--muted);line-height:1.6}
+.modal-signal b{color:var(--white)}
+.modal-divider{height:1px;background:rgba(255,255,255,.08);margin:20px 0}
 
-/* Views */
-.view{display:none}.view.active{display:block}
+/* Protocol in modal */
+.proto-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.proto-counter{font-size:13px;color:var(--muted)}
+.proto-timer{font-size:22px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+.proto-progress{height:3px;background:rgba(255,255,255,.08);border-radius:99px;margin-bottom:16px}
+.proto-bar{height:3px;background:var(--accent);border-radius:99px;transition:width .3s}
+.proto-step{background:rgba(255,255,255,.04);border-radius:10px;padding:18px;display:none}
+.proto-step.active{display:block;animation:fadeUp .4s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.proto-step .smin{color:var(--accent);font-size:12px;font-weight:700;margin-bottom:6px}
+.proto-step .stxt{font-size:16px;line-height:1.7}
+.proto-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.proto-btn{padding:12px;border-radius:8px;font-size:13px;font-weight:700;text-align:center;cursor:pointer;border:none;font-family:inherit;transition:all .2s}
+.proto-prev{background:rgba(255,255,255,.08);color:var(--white)}
+.proto-prev:hover{background:rgba(255,255,255,.15)}
+.proto-next{background:var(--accent);color:#000}
+.proto-next:hover{background:#d97706}
+.proto-done{display:none;text-align:center;padding:20px 0}
+.proto-done h3{font-size:20px;font-weight:700;margin:12px 0 6px}
+.proto-done p{font-size:13px;color:var(--muted)}
 
-/* Scan */
-.scan-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
-.scan-row label{font-size:13px;font-weight:600;display:block}
-.scan-row .hint{font-size:11px;color:var(--muted);margin:2px 0 8px}
-input[type=range]{width:100%;accent-color:var(--accent);height:6px}
-.scan-val{text-align:right;font-size:12px;color:var(--accent);font-weight:700;margin-top:2px}
+/* Scan modal */
+.scan-grid{display:grid;gap:8px}
+.scan-item{background:rgba(255,255,255,.04);border-radius:8px;padding:14px}
+.scan-item label{font-size:13px;font-weight:600;display:block;margin-bottom:2px}
+.scan-item .shint{font-size:11px;color:var(--muted);margin-bottom:8px}
+.scan-item input[type=range]{width:100%;accent-color:var(--accent)}
+.scan-item .sval{text-align:right;font-size:12px;font-weight:700;color:var(--accent);margin-top:2px}
+.scan-eval{margin-top:16px;padding:14px;border-radius:8px;font-size:14px;font-weight:700;text-align:center;cursor:pointer;border:none;font-family:inherit;background:var(--accent);color:#000;width:100%;transition:background .2s}
+.scan-eval:hover{background:#d97706}
 
-/* Result bars */
-.bar-bg{height:4px;background:#1f2937;border-radius:99px;margin:6px 0}
-.bar{height:4px;border-radius:99px;transition:width .5s}
+/* Scan result inside modal */
+.sr-score{text-align:center;padding:20px 0}
+.sr-score .num{font-size:56px;font-weight:900;line-height:1}
+.sr-score .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.sr-item{display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,.04);border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .2s}
+.sr-item:hover{background:rgba(255,255,255,.08)}
+.sr-val{font-size:20px;font-weight:800;min-width:48px}
+.sr-name{font-size:13px;font-weight:600;flex:1}
+.sr-arrow{color:var(--accent);font-size:16px}
+.sr-bar-bg{height:3px;background:rgba(255,255,255,.08);border-radius:99px;margin-top:4px;width:100%}
+.sr-bar{height:3px;border-radius:99px}
 
-/* Protocol steps */
-.step{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:none}
-.step.active{display:block;animation:fadeUp .4s}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.step-min{color:var(--accent);font-size:12px;font-weight:700;margin-bottom:4px}
-.step-text{font-size:15px;line-height:1.7}
-.progress{height:3px;background:var(--border);border-radius:99px;margin:12px 0}
-.progress-fill{height:3px;background:var(--accent);border-radius:99px;transition:width .3s}
+/* Masterclass modal content */
+.mc-modal-content{font-size:14px;color:var(--muted);line-height:1.9}
+.mc-modal-content b{color:var(--white)}
+.mc-modal-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px}
 
-/* Reframe box */
-.reframe{padding:12px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:8px;margin:12px 0}
-.reframe span{color:var(--green);font-size:12px}
+/* ========== FOOTER ========== */
+.site-footer{padding:40px 4%;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+.site-footer p{font-size:11px;color:var(--muted)}
+.footer-links{display:flex;justify-content:center;gap:16px;margin-top:10px}
+.footer-links a{font-size:11px;color:var(--muted);text-decoration:none;cursor:pointer;transition:color .2s}
+.footer-links a:hover{color:var(--white)}
 
-/* Footer */
-.footer{text-align:center;font-size:11px;color:var(--muted);opacity:.5;margin-top:40px}
+/* ========== RESPONSIVE ========== */
+@media(max-width:600px){
+  .nav{padding:12px 4%}
+  .nav-links{display:none}
+  .hero{height:70vh;min-height:400px;padding-bottom:6%}
+  .hero h1{font-size:28px}
+  .card{width:200px}
+  .mc-card{width:260px}
+  .modal-content{padding:0 16px 20px}
+  .modal h2{font-size:22px}
+}
+
+/* Color accents per category */
+.bg-mind{background:linear-gradient(135deg,#1a1040,#2d1b69)}
+.bg-body{background:linear-gradient(135deg,#0f2027,#203a43)}
+.bg-emotion{background:linear-gradient(135deg,#1a0a00,#4a1c00)}
+.bg-social{background:linear-gradient(135deg,#0a1628,#1a3a5c)}
+.bg-thinking{background:linear-gradient(135deg,#1a0020,#3b0764)}
+.bg-behavior{background:linear-gradient(135deg,#0a1a0a,#1a3a1a)}
+.bg-mc{background:linear-gradient(135deg,#1a1000,#3d2800)}
+.bg-hero-modal{background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(229,9,20,.1),rgba(20,20,20,1))}
 </style>
 </head>
 <body>
 
-<!-- ===== LANDING ===== -->
-<div id="v-home" class="view active">
-<div class="wrap">
-  <div class="header">
-    <h1>ZEIS <span>Protocol</span></h1>
-    <p>18 Schmerzverzerrungen erkennen & auflösen</p>
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-logo" onclick="scrollTop()">ZEIS</div>
+  <div class="nav-links">
+    <a onclick="scrollTo('#sec-mind')" class="active">Kopf</a>
+    <a onclick="scrollTo('#sec-body')">Körper</a>
+    <a onclick="scrollTo('#sec-emotion')">Emotion</a>
+    <a onclick="scrollTo('#sec-mc')">Masterclass</a>
   </div>
+  <button class="nav-scan" onclick="openScan()">Scan starten</button>
+</nav>
 
-  <a class="btn btn-primary btn-block" onclick="startScan()">ZEIS Scan starten</a>
-
-  <div class="divider"></div>
-  <div class="label">Die 18 Verzerrungen</div>
-  <div id="home-list"></div>
-
-  <div class="divider"></div>
-  <a href="/" class="btn btn-block">← Startseite</a>
-  <div class="footer">ZEIS Protocol — Alexander Zeis</div>
-</div>
-</div>
-
-<!-- ===== SCAN ===== -->
-<div id="v-scan" class="view">
-<div class="wrap">
-  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:4px;">ZEIS Scan</h2>
-  <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Wie stark trifft jede Verzerrung auf dich zu? (0 = gar nicht, 10 = extrem)</p>
-  <div id="scan-items"></div>
-  <a class="btn btn-primary btn-block" style="margin-top:12px;" onclick="evalScan()">Auswerten →</a>
-  <a class="btn btn-block" style="margin-top:8px;" onclick="go('home')">← Zurück</a>
-</div>
-</div>
-
-<!-- ===== SCAN RESULT ===== -->
-<div id="v-result" class="view">
-<div class="wrap">
-  <div id="result-out"></div>
-  <div class="btn-grid">
-    <a class="btn btn-primary" id="result-go">Top-Protokoll starten</a>
-    <a class="btn" onclick="startScan()">Scan wiederholen</a>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-gradient"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Neu bei ZEIS</div>
+    <h1>Dein Schmerz ist real.<br><span>Dein Gehirn verstärkt ihn.</span></h1>
+    <p class="hero-desc">Das ZEIS Protocol identifiziert 18 Schmerzverzerrungen — kognitive Muster, die deinen Schmerz aufrechterhalten. Erkenne sie. Verstehe sie. Löse sie auf.</p>
+    <div class="hero-btns">
+      <button class="hero-btn hero-btn-primary" onclick="openScan()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Scan starten
+      </button>
+      <button class="hero-btn hero-btn-secondary" onclick="openModal('info')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        Mehr erfahren
+      </button>
+    </div>
+    <div class="hero-meta">
+      <span><span class="hero-badge">18</span> Verzerrungen</span>
+      <span><span class="hero-badge">8</span> Masterclass-Module</span>
+      <span>by Alexander Zeis</span>
+    </div>
   </div>
-  <a class="btn btn-block" style="margin-top:8px;" onclick="go('home')">← Zurück</a>
-</div>
+</section>
+
+<!-- CONTENT ROWS -->
+<div id="rows"></div>
+
+<!-- FOOTER -->
+<div class="site-footer">
+  <p>ZEIS Protocol — by Alexander Zeis</p>
+  <div class="footer-links">
+    <a href="/">Startseite</a>
+    <a href="/heal">PTGO Method</a>
+    <a href="/impressum">Impressum</a>
+  </div>
 </div>
 
-<!-- ===== PROTOCOL DETAIL ===== -->
-<div id="v-proto" class="view">
-<div class="wrap" id="proto-out"></div>
+<!-- MODAL -->
+<div class="modal-overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
 </div>
 
 <script>
-// === DATA ===
-const T={
-katastrophisieren:{nr:1,name:"Katastrophisieren",short:"Schmerz wird zur Katastrophe aufgeblasen",desc:"Du erwartest immer das Schlimmste. Ein leichtes Ziehen wird zum Bandscheibenvorfall.",zones:["Kopf","Nacken","Unterer Rücken"],signal:"'Das wird nie aufhören', 'Da ist bestimmt was Schlimmes'",reframe:"Schmerz ist ein Signal, keine Diagnose. Die meisten Schmerzen sind vorübergehend.",steps:[{m:0,t:"Setz dich hin. Atme 3× tief. Benenne den Schmerz auf einer Skala 1–10."},{m:2,t:"Frage dich: Was ist die wahrscheinlichste Erklärung? Nicht die schlimmste."},{m:4,t:"Wie oft hattest du diesen Schmerz schon — und er ging weg?"},{m:6,t:"Lege eine Hand auf die Stelle. Sage: 'Ich bin sicher. Das geht vorbei.'"},{m:8,t:"Steh auf, gehe 10 Schritte. Dein Körper ist belastbar."}]},
-hypervigilanz:{nr:2,name:"Hypervigilanz",short:"Ständige Körperbeobachtung verstärkt Schmerz",desc:"Du scannst deinen Körper permanent. Jedes Zwicken wird analysiert. Alarmmodus.",zones:["Kopf","Brust","Bauch"],signal:"Ständiges 'Reinspüren', Angst vor neuen Symptomen",reframe:"Weniger Beobachten = weniger Schmerz.",steps:[{m:0,t:"Erkenne: 'Ich beobachte gerade meinen Körper zu stark.'"},{m:2,t:"Benenne 5 Dinge die du siehst."},{m:4,t:"4 Dinge die du hörst. 3 die du fühlst (Oberfläche)."},{m:6,t:"Gib dir eine Aufgabe: Aufräumen, Nachricht schreiben, kochen."},{m:8,t:"Nächster Body-Check erst in 2 Stunden. Timer stellen."}]},
-bewegungsangst:{nr:3,name:"Bewegungsangst",short:"Angst vor Bewegung führt zu mehr Schmerz",desc:"Inaktivität schwächt Muskeln und macht dich empfindlicher.",zones:["Unterer Rücken","Knie","Schultern"],signal:"Vermeidung von Sport, Treppen, Heben",reframe:"Bewegung ist Medizin. Dein Körper ist für Bewegung gebaut.",steps:[{m:0,t:"Steh auf. Jetzt. Keine Diskussion."},{m:1,t:"Arme über den Kopf. 10 Sekunden halten."},{m:3,t:"5 sanfte Kniebeugen. Langsam."},{m:5,t:"2 Minuten durch den Raum gehen."},{m:8,t:"Was war so schlimm? Meistens: nichts."}]},
-schmerz_identitaet:{nr:4,name:"Schmerzidentität",short:"Schmerz wird Teil deiner Identität",desc:"'Ich bin Schmerzpatient' zementiert neuronale Muster.",zones:["Kopf","Unterer Rücken","Ganzer Körper"],signal:"'Ich habe schon immer...', 'Bei mir ist das chronisch'",reframe:"Du HAST Schmerz, du BIST nicht dein Schmerz.",steps:[{m:0,t:"Wie beschreibst du dich selbst? Welche Rolle spielt Schmerz?"},{m:3,t:"Streiche 'immer', 'nie', 'chronisch'. Ersetze durch 'gerade', 'aktuell'."},{m:5,t:"Schreibe 3 Sätze über dich OHNE Schmerz."},{m:7,t:"'Ich bin jemand, der lernt, anders mit Empfindungen umzugehen.'"},{m:9,t:"Lies dir alle 3 Sätze laut vor."}]},
-emotionale_unterdrueckung:{nr:5,name:"Emotionale Unterdrückung",short:"Unterdrückte Emotionen werden zu Körperschmerz",desc:"Wut, Trauer, Scham suchen sich einen Ausweg — als Schmerz.",zones:["Nacken","Unterer Rücken","Bauch","Schultern"],signal:"Schmerz ohne klare Ursache, verstärkt bei Stress",reframe:"Fühlen ist der Weg zur Auflösung.",steps:[{m:0,t:"Schließe die Augen. Was fühle ich WIRKLICH gerade?"},{m:2,t:"Benenne die Emotion dahinter. Wut? Trauer? Angst?"},{m:4,t:"Wo sitzt sie im Körper? Hand dorthin legen."},{m:6,t:"'Ich erlaube mir, das zu fühlen. Es ist sicher.'"},{m:8,t:"5× tief in diese Stelle atmen. Lass zu, was kommt."}]},
-schwarz_weiss:{nr:6,name:"Schwarz-Weiß-Denken",short:"Entweder schmerzfrei oder kaputt",desc:"Nuancen gehen verloren — und damit die Fähigkeit, Fortschritt zu sehen.",zones:["Kopf","Ganzer Körper"],signal:"'Es bringt nichts', Aufgeben bei Rückschlägen",reframe:"10% besser ist besser. Jeder kleine Schritt zählt.",steps:[{m:0,t:"Gib eine Zahl: 1–10. Nicht 'gut' oder 'schlecht'."},{m:2,t:"Vergleiche mit letzter Woche. Gibt es einen Unterschied?"},{m:4,t:"3 Dinge die heute besser sind als vor einem Monat."},{m:6,t:"'Gut genug' ist das Ziel."},{m:8,t:"'Ich bin auf dem Weg. Nicht am Ziel — und das ist okay.'"}]},
-nocebo:{nr:7,name:"Nocebo-Effekt",short:"Negative Erwartung erzeugt echten Schmerz",desc:"Dein Gehirn produziert Schmerz auf Basis von Erwartung.",zones:["Kopf","Unterer Rücken","Nacken"],signal:"Angst vor bestimmten Bewegungen, MRT-Befund",reframe:"Ändere die Erwartung — ändere den Schmerz.",steps:[{m:0,t:"Welche Bewegung erwartest du als schmerzhaft?"},{m:2,t:"Woher kommt diese Erwartung? Arzt? Google?"},{m:4,t:"Führe die Bewegung langsam aus. Beobachte ohne Urteil."},{m:6,t:"War es so schlimm wie erwartet?"},{m:8,t:"'Es könnte auch leicht gehen.'"}]},
-hilflosigkeit:{nr:8,name:"Erlernte Hilflosigkeit",short:"Nichts hilft — also tust du nichts",desc:"Dein Nervensystem ist plastisch. Es kann umlernen.",zones:["Ganzer Körper"],signal:"'Nichts hilft', 'Ich habe alles versucht'",reframe:"Du hast nur noch nicht den richtigen Hebel gefunden.",steps:[{m:0,t:"Was hast du alles schon versucht? Liste schreiben."},{m:3,t:"Was davon hast du wirklich >4 Wochen durchgezogen?"},{m:5,t:"Wähle EINE Sache für 21 Tage. Nur eine."},{m:7,t:"Wann? Wo? Wie lange? Aufschreiben."},{m:9,t:"Starte JETZT. Die erste Minute zählt am meisten."}]},
-soziale_isolation:{nr:9,name:"Soziale Isolation",short:"Rückzug verstärkt Schmerz",desc:"Isolation verstärkt Schmerz — soziale Verbindung lindert ihn.",zones:["Brust","Bauch","Kopf"],signal:"Absagen, Rückzug, Einsamkeit",reframe:"Verbindung ist ein Schmerzmittel.",steps:[{m:0,t:"Wem hast du zuletzt abgesagt?"},{m:2,t:"Schreibe dieser Person JETZT eine kurze Nachricht."},{m:4,t:"Plane ein Treffen diese Woche. 30 Min Kaffee."},{m:6,t:"'Mir geht es nicht so gut, aber ich bin froh, hier zu sein.'"},{m:8,t:"Einfach DA sein ist genug."}]},
-perfektionismus:{nr:10,name:"Schmerz-Perfektionismus",short:"Perfektionismus ist Vermeidung in Verkleidung",desc:"Du willst alles perfekt — Therapeut, Übung, Protokoll.",zones:["Nacken","Schultern","Kopf"],signal:"Endloses Recherchieren, nie anfangen",reframe:"Unperfektes Handeln schlägt perfektes Planen.",steps:[{m:0,t:"Was schiebst du auf, weil es 'noch nicht perfekt' ist?"},{m:2,t:"Mache es jetzt — aber nur zu 70%."},{m:4,t:"Passiert etwas Schlimmes? Meistens: Nein."},{m:6,t:"'Done is better than perfect.'"},{m:8,t:"Wiederhole morgen."}]},
-gedankenkreisen:{nr:11,name:"Gedankenkreisen",short:"Endlosschleife von Schmerzgedanken",desc:"Rumination hält dein Nervensystem im Schmerzmodus.",zones:["Kopf","Nacken","Brust"],signal:"Grübeln, 'Was wenn...', Schlafprobleme",reframe:"Gedanken sind keine Fakten.",steps:[{m:0,t:"'Ich grüble gerade.' Sage es laut."},{m:1,t:"Steh auf. Kaltes Wasser über die Hände."},{m:3,t:"Zähle rückwärts von 100 in 7er-Schritten."},{m:5,t:"Dein Gehirn kann nicht rechnen UND grübeln."},{m:7,t:"Schreibe den Gedanken auf Papier. Einmal. Dann weg."}]},
-vergleich:{nr:12,name:"Sozialer Vergleich",short:"Andere haben es leichter",desc:"Vergleich stiehlt Energie, die du für Heilung brauchst.",zones:["Brust","Kopf"],signal:"'Warum ich?', Neid auf Gesunde",reframe:"Dein Weg ist deiner.",steps:[{m:0,t:"Mit wem hast du dich zuletzt verglichen?"},{m:2,t:"Was genau hast du verglichen?"},{m:4,t:"Du siehst 5% von deren Leben."},{m:6,t:"3 Dinge die DU kannst oder hast."},{m:8,t:"'Ich vergleiche mich nur mit meinem gestrigen Ich.'"}]},
-uebergeneralisierung:{nr:13,name:"Übergeneralisierung",short:"Ein schlechter Tag = alles ist schlecht",desc:"Ein Rückschlag wird zum Gesamturteil.",zones:["Ganzer Körper"],signal:"'Immer', 'nie', 'jedes Mal'",reframe:"Ein schlechter Tag ist ein Tag. Nicht ein schlechtes Leben.",steps:[{m:0,t:"Was zieht dich heute runter?"},{m:2,t:"Ist es WIRKLICH 'immer' so?"},{m:4,t:"Ersetze 'immer' durch 'heute'."},{m:6,t:"1 guter Moment der letzten 7 Tage."},{m:8,t:"Morgen ist ein neuer Tag."}]},
-kontrollzwang:{nr:14,name:"Kontrollzwang",short:"Überkontrolle erzeugt Anspannung",desc:"Überkontrolle ist Stress — und Stress ist Schmerz.",zones:["Nacken","Schultern","Kiefer"],signal:"Rigide Routinen, Panik bei Abweichung",reframe:"Loslassen ist die wahre Stärke.",steps:[{m:0,t:"Was versuchst du zu kontrollieren?"},{m:2,t:"Liegt das in deiner Kontrolle?"},{m:4,t:"Wenn Nein: Fäuste öffnen, ausatmen."},{m:6,t:"Wenn Ja: Was ist die EINE Sache?"},{m:8,t:"Alles andere? Nicht jetzt. Atme."}]},
-somatisierung:{nr:15,name:"Somatisierung",short:"Psychischer Stress wird zu Körperschmerz",desc:"Dein Körper spricht, was dein Mund nicht sagt.",zones:["Unterer Rücken","Kopf","Bauch","Brust"],signal:"Schmerz bei Stress, keine organische Ursache",reframe:"Höre auf die Botschaft, nicht nur auf den Schmerz.",steps:[{m:0,t:"Was stresst dich am meisten? Konkret benennen."},{m:2,t:"Wo spürst du den Stress im Körper?"},{m:4,t:"'Ich höre dich. Was willst du mir sagen?'"},{m:6,t:"Schreibe die Antwort auf. Ohne Zensur."},{m:8,t:"Was müsstest du ändern, damit dein Körper aufhört zu schreien?"}]},
-opferrolle:{nr:16,name:"Opferrolle",short:"Du gibst alle Macht ab",desc:"Solange du in der Opferrolle bleibst, ändert sich nichts.",zones:["Ganzer Körper"],signal:"Schuldzuweisung, Passivität",reframe:"Du bist verantwortlich für deine Reaktion.",steps:[{m:0,t:"Wem gibst du die Schuld?"},{m:2,t:"Was könntest DU anders machen?"},{m:4,t:"EINE kleine Handlung in deiner Macht."},{m:6,t:"'Ich übernehme Verantwortung für ___.'"},{m:8,t:"Tu es. Jetzt."}]},
-zukunftsangst:{nr:17,name:"Zukunftsangst",short:"Angst vor schmerzhafter Zukunft",desc:"Die Zukunft existiert noch nicht — nur dieser Moment.",zones:["Brust","Bauch","Kopf"],signal:"'Was wenn es schlimmer wird?', Panikattacken",reframe:"Du bist nur für JETZT zuständig.",steps:[{m:0,t:"Welches Zukunftsszenario macht dir Angst?"},{m:2,t:"Wie wahrscheinlich ist es? (1–10)"},{m:4,t:"Was kannst du HEUTE tun?"},{m:6,t:"Spüre deine Füße auf dem Boden. Du bist hier."},{m:8,t:"'Ich handle heute.'"}]},
-sekundaerer_gewinn:{nr:18,name:"Sekundärer Krankheitsgewinn",short:"Schmerz hat unbewusste Vorteile",desc:"Aufmerksamkeit, Verantwortung abnehmen, Konflikte vermeiden.",zones:["Ganzer Körper"],signal:"Schmerz 'passt' immer wenn Anforderungen da sind",reframe:"Was verlierst du, wenn der Schmerz geht?",steps:[{m:0,t:"Der Schmerz wäre morgen weg. Was ändert sich?"},{m:3,t:"Was müsstest du dann tun?"},{m:5,t:"Gibt es etwas, das der Schmerz dir 'erspart'?"},{m:7,t:"Das ist Neurobiologie. Dein Gehirn schützt dich."},{m:9,t:"'Ich finde andere Wege, meine Bedürfnisse zu erfüllen.'"}]}
+// ================================================================
+// DATA
+// ================================================================
+const TYPES = {
+katastrophisieren:{nr:1,name:"Katastrophisieren",short:"Schmerz wird zur Katastrophe",desc:"Du erwartest immer das Schlimmste. Ein leichtes Ziehen wird in deinem Kopf zum Bandscheibenvorfall. Dein Nervensystem lernt: Gefahr ist überall.",zones:["Kopf","Nacken","Unterer Rücken"],signal:"Gedanken wie: 'Das wird nie aufhören', 'Da ist bestimmt was Schlimmes'",reframe:"Schmerz ist ein Signal, keine Diagnose. Die meisten Schmerzen sind vorübergehend und ungefährlich.",cat:"mind",color:"#6366f1",steps:[{m:0,t:"Setz dich hin. Atme 3× tief. Benenne den Schmerz auf einer Skala 1–10."},{m:2,t:"Frage dich: Was ist die wahrscheinlichste Erklärung? Nicht die schlimmste."},{m:4,t:"Erinnere dich: Wie oft hattest du diesen Schmerz schon — und er ging weg?"},{m:6,t:"Lege eine Hand auf die schmerzende Stelle. Sage: 'Ich bin sicher. Das geht vorbei.'"},{m:8,t:"Bewege dich sanft. Steh auf, gehe 10 Schritte. Dein Körper ist belastbar."}]},
+hypervigilanz:{nr:2,name:"Hypervigilanz",short:"Ständige Körperbeobachtung",desc:"Du scannst deinen Körper permanent nach Signalen. Jedes Zwicken wird registriert, analysiert, bewertet. Das Nervensystem bleibt im Alarmmodus.",zones:["Kopf","Brust","Bauch"],signal:"Ständiges 'Reinspüren', Angst vor neuen Symptomen, Gesundheits-Googlen",reframe:"Aufmerksamkeit verstärkt Empfindung. Weniger Beobachten = weniger Schmerz.",cat:"mind",color:"#6366f1",steps:[{m:0,t:"Erkenne den Scan-Modus: 'Ich beobachte gerade meinen Körper zu stark.'"},{m:2,t:"Lenke die Aufmerksamkeit nach außen: Benenne 5 Dinge die du siehst."},{m:4,t:"4 Dinge die du hörst. 3 die du fühlst (Oberfläche, nicht innen)."},{m:6,t:"Gib dir eine Aufgabe: Räume etwas auf, schreibe eine Nachricht, koche."},{m:8,t:"Vereinbare mit dir: Nächster Body-Check erst in 2 Stunden. Timer stellen."}]},
+nocebo:{nr:7,name:"Nocebo-Effekt",short:"Negative Erwartung = echter Schmerz",desc:"Wenn du erwartest, dass etwas wehtut, tut es weh. Dein Gehirn produziert Schmerz auf Basis von Erwartung, nicht von Gewebeschaden.",zones:["Kopf","Unterer Rücken","Nacken"],signal:"Schmerz bei bestimmten Bewegungen die 'angeblich' gefährlich sind, Angst vor dem MRT-Befund",reframe:"Erwartung formt Erfahrung. Ändere die Erwartung — ändere den Schmerz.",cat:"mind",color:"#6366f1",steps:[{m:0,t:"Welche Bewegung oder Situation erwartest du als schmerzhaft? Benenne sie."},{m:2,t:"Frage: Woher kommt diese Erwartung? Arzt? Google? Eigene Erfahrung?"},{m:4,t:"Neues Experiment: Führe die Bewegung langsam aus. Beobachte ohne Urteil."},{m:6,t:"War es so schlimm wie erwartet? Meistens: Nein."},{m:8,t:"Wiederhole morgen. Erwartung umschreiben: 'Es könnte auch leicht gehen.'"}]},
+gedankenkreisen:{nr:11,name:"Gedankenkreisen",short:"Endlosschleife im Kopf",desc:"Dein Kopf dreht sich im Kreis: Warum ich? Was wenn? Was habe ich falsch gemacht? Rumination hält dein Nervensystem im Schmerzmodus.",zones:["Kopf","Nacken","Brust"],signal:"Grübeln, Schlafprobleme, gleiche Gedanken immer wieder, 'Was wenn...'",reframe:"Gedanken sind keine Fakten. Du kannst die Schleife unterbrechen.",cat:"mind",color:"#6366f1",steps:[{m:0,t:"Erkenne die Schleife: 'Ich grüble gerade.' Sage es laut."},{m:1,t:"Steh auf. Bewege dich. Wasche dir die Hände mit kaltem Wasser."},{m:3,t:"Zähle rückwärts von 100 in 7er-Schritten: 100, 93, 86..."},{m:5,t:"Dein Gehirn kann nicht gleichzeitig rechnen UND grübeln."},{m:7,t:"Schreibe den Grübel-Gedanken auf Papier. Einmal. Dann weg damit. Er ist raus."}]},
+bewegungsangst:{nr:3,name:"Bewegungsangst",short:"Angst vor Bewegung",desc:"Du vermeidest Bewegung aus Angst, dir zu schaden. Aber Inaktivität schwächt Muskeln, versteift Gelenke und macht dich empfindlicher.",zones:["Unterer Rücken","Knie","Schultern"],signal:"Vermeidung von Sport, Treppen, Heben. Gedanken: 'Das macht es schlimmer'",reframe:"Bewegung ist Medizin. Dein Körper ist für Bewegung gebaut, nicht für Stillstand.",cat:"body",color:"#0ea5e9",steps:[{m:0,t:"Steh auf. Jetzt. Keine Diskussion mit dem Kopf."},{m:1,t:"Hebe die Arme über den Kopf. Halte 10 Sekunden. Spüre die Kraft."},{m:3,t:"Mache 5 sanfte Kniebeugen. Langsam. Dein Körper hält das aus."},{m:5,t:"Gehe 2 Minuten durch den Raum. Spüre den Boden unter den Füßen."},{m:8,t:"Notiere: Was war so schlimm? Meistens: nichts. Bewegung = Sicherheit."}]},
+somatisierung:{nr:15,name:"Somatisierung",short:"Stress wird Körperschmerz",desc:"Dein Körper spricht, was dein Mund nicht sagt. Stress bei der Arbeit? Rückenschmerz. Beziehungsprobleme? Migräne. Das ist keine Einbildung — es ist Neurobiologie.",zones:["Unterer Rücken","Kopf","Bauch","Brust"],signal:"Schmerz bei Stress, keine organische Ursache, wechselnde Symptome",reframe:"Dein Körper ist ehrlicher als dein Kopf. Höre auf die Botschaft, nicht nur auf den Schmerz.",cat:"body",color:"#0ea5e9",steps:[{m:0,t:"Was stresst dich gerade am meisten? Benenne es konkret."},{m:2,t:"Wo spürst du diesen Stress im Körper? Zeige mit der Hand hin."},{m:4,t:"Sage zum Schmerz: 'Ich höre dich. Was willst du mir sagen?'"},{m:6,t:"Schreibe die Antwort auf, die kommt. Ohne Zensur."},{m:8,t:"Was müsstest du im Leben ändern, damit dein Körper aufhört zu schreien?"}]},
+kontrollzwang:{nr:14,name:"Kontrollzwang",short:"Überkontrolle = Anspannung",desc:"Du willst jede Variable kontrollieren: Ernährung, Schlaf, Haltung, Temperatur. Aber Überkontrolle ist Stress — und Stress ist Schmerz.",zones:["Nacken","Schultern","Kiefer"],signal:"Rigide Routinen, Panik bei Abweichung, ständiges Optimieren",reframe:"Kontrolle ist eine Illusion. Loslassen ist die wahre Stärke.",cat:"body",color:"#0ea5e9",steps:[{m:0,t:"Was versuchst du gerade zu kontrollieren? Schreibe es auf."},{m:2,t:"Frage: Liegt das in meiner Kontrolle? Ja oder Nein?"},{m:4,t:"Wenn Nein: Lass es los. Buchstäblich — öffne die Fäuste, atme aus."},{m:6,t:"Wenn Ja: Was ist die EINE Sache, die du tun kannst? Nur eine."},{m:8,t:"Alles andere? Nicht dein Problem. Nicht jetzt. Atme."}]},
+emotionale_unterdrueckung:{nr:5,name:"Emotionale Unterdrückung",short:"Unterdrückte Gefühle = Schmerz",desc:"Was du nicht fühlen willst, fühlt dein Körper. Wut, Trauer, Scham — sie suchen sich einen Ausweg. Oft als Rücken-, Nacken- oder Bauchschmerz.",zones:["Nacken","Unterer Rücken","Bauch","Schultern"],signal:"Schmerz ohne klare Ursache, verstärkt bei Stress, nach Konflikten",reframe:"Dein Körper speichert, was du nicht aussprichst. Fühlen ist der Weg zur Auflösung.",cat:"emotion",color:"#f43f5e",steps:[{m:0,t:"Setz dich still hin. Schließe die Augen. Frage: Was fühle ich WIRKLICH gerade?"},{m:2,t:"Benenne die Emotion. Nicht den Schmerz — die Emotion dahinter. Wut? Trauer? Angst?"},{m:4,t:"Wo sitzt diese Emotion im Körper? Lege die Hand dorthin."},{m:6,t:"Sage laut: 'Ich erlaube mir, das zu fühlen. Es ist sicher.'"},{m:8,t:"Atme 5× tief in diese Stelle. Lass zu, was kommt. Auch Tränen."}]},
+zukunftsangst:{nr:17,name:"Zukunftsangst",short:"Angst vor der schmerzhaften Zukunft",desc:"Du malst dir eine Zukunft voller Schmerz aus. Rollstuhl, Pflegefall, Arbeitsunfähigkeit. Aber die Zukunft existiert noch nicht — nur dieser Moment.",zones:["Brust","Bauch","Kopf"],signal:"'Was wenn es schlimmer wird?', Schlafstörungen, Panikattacken, Zukunftsszenarien",reframe:"Die Zukunft ist nicht geschrieben. Du bist nur für JETZT zuständig.",cat:"emotion",color:"#f43f5e",steps:[{m:0,t:"Welches Zukunftsszenario macht dir am meisten Angst? Schreibe es auf."},{m:2,t:"Wie wahrscheinlich ist es wirklich? Auf einer Skala 1–10."},{m:4,t:"Was kannst du HEUTE tun, damit es weniger wahrscheinlich wird?"},{m:6,t:"Komm zurück ins Jetzt: Spüre deine Füße auf dem Boden. Du bist hier. Jetzt."},{m:8,t:"Neuer Satz: 'Ich handle heute. Die Zukunft kümmere ich mich, wenn sie da ist.'"}]},
+schwarz_weiss:{nr:6,name:"Schwarz-Weiß-Denken",short:"Entweder schmerzfrei oder kaputt",desc:"Du kennst nur 0 oder 100. Entweder geht es dir gut oder du bist 'am Ende'. Nuancen gehen verloren — und damit die Fähigkeit, Fortschritt zu sehen.",zones:["Kopf","Ganzer Körper"],signal:"'Es bringt nichts', 'Entweder ganz oder gar nicht', Aufgeben bei Rückschlägen",reframe:"Heilung ist ein Spektrum. 10% besser ist besser. Jeder kleine Schritt zählt.",cat:"thinking",color:"#a855f7",steps:[{m:0,t:"Wie geht es dir gerade? Nicht 'gut' oder 'schlecht'. Gib eine Zahl: 1–10."},{m:2,t:"Vergleiche mit letzter Woche. Gibt es einen Unterschied — egal wie klein?"},{m:4,t:"Schreibe 3 Dinge auf, die heute besser sind als vor einem Monat."},{m:6,t:"Erkenne: Perfekt gibt es nicht. 'Gut genug' ist das Ziel."},{m:8,t:"Neuer Satz: 'Ich bin auf dem Weg. Nicht am Ziel — und das ist okay.'"}]},
+uebergeneralisierung:{nr:13,name:"Übergeneralisierung",short:"Ein schlechter Tag = alles schlecht",desc:"Ein Rückfall, ein schlechter Tag — und du schließt: 'Es wird nie besser.' Ein einzelnes Ereignis wird zum Gesamturteil.",zones:["Ganzer Körper"],signal:"'Immer', 'nie', 'jedes Mal', Rückschlag = Beweis für Hoffnungslosigkeit",reframe:"Ein schlechter Tag ist ein schlechter Tag. Nicht ein schlechtes Leben.",cat:"thinking",color:"#a855f7",steps:[{m:0,t:"Was ist heute passiert, das dich runterzieht?"},{m:2,t:"Ist es WIRKLICH 'immer' so? Oder gab es auch gute Tage letzte Woche?"},{m:4,t:"Ersetze 'immer' durch 'heute'. Ersetze 'nie' durch 'gerade nicht'."},{m:6,t:"Schreibe 1 guten Moment der letzten 7 Tage auf. Er existiert."},{m:8,t:"Morgen ist ein neuer Tag. Dieser hier definiert nicht alle anderen."}]},
+perfektionismus:{nr:10,name:"Schmerz-Perfektionismus",short:"Perfektionismus = Vermeidung",desc:"Du willst den perfekten Therapeuten, die perfekte Übung, das perfekte Protokoll. Aber Perfektionismus ist Vermeidung in Verkleidung.",zones:["Nacken","Schultern","Kopf"],signal:"'Erst wenn ich den richtigen Arzt finde', endloses Recherchieren, nie anfangen",reframe:"Unperfektes Handeln schlägt perfektes Planen. Starte mit 'gut genug'.",cat:"thinking",color:"#a855f7",steps:[{m:0,t:"Was schiebst du auf, weil es 'noch nicht perfekt' ist?"},{m:2,t:"Mache es jetzt — aber nur zu 70%. Bewusst unperfekt."},{m:4,t:"Beobachte: Passiert etwas Schlimmes? Meistens: Nein."},{m:6,t:"Schreibe auf: 'Done is better than perfect.'"},{m:8,t:"Wiederhole morgen. Perfektionismus ist ein Muskel, der durch Nicht-Benutzen schrumpft."}]},
+schmerz_identitaet:{nr:4,name:"Schmerzidentität",short:"Schmerz wird deine Identität",desc:"Du definierst dich über deinen Schmerz: 'Ich bin Schmerzpatient.' Das zementiert neuronale Muster und macht Heilung schwerer.",zones:["Kopf","Unterer Rücken","Ganzer Körper"],signal:"'Ich habe schon immer...', 'Bei mir ist das chronisch', Diagnosen als Identität",reframe:"Du HAST Schmerz, du BIST nicht dein Schmerz. Dein Gehirn kann umlernen.",cat:"identity",color:"#ec4899",steps:[{m:0,t:"Schreibe auf: Wie beschreibst du dich selbst? Welche Rolle spielt Schmerz darin?"},{m:3,t:"Streiche Sätze mit 'immer', 'nie', 'chronisch'. Ersetze durch 'gerade', 'aktuell'."},{m:5,t:"Schreibe 3 Sätze über dich OHNE Schmerz. Wer bist du sonst noch?"},{m:7,t:"Neuer Satz: 'Ich bin jemand, der lernt, anders mit Empfindungen umzugehen.'"},{m:9,t:"Lies dir alle 3 Sätze laut vor. Das ist der neue Grundton."}]},
+hilflosigkeit:{nr:8,name:"Erlernte Hilflosigkeit",short:"Nichts hilft — also tust du nichts",desc:"Du hast so oft gehört 'damit müssen Sie leben', dass du es glaubst. Aber dein Nervensystem ist plastisch. Es kann umlernen.",zones:["Ganzer Körper"],signal:"'Nichts hilft', 'Ich habe alles versucht', passive Haltung, Therapie-Hopping",reframe:"Du bist nicht hilflos. Du hast nur noch nicht den richtigen Hebel gefunden.",cat:"identity",color:"#ec4899",steps:[{m:0,t:"Schreibe eine Liste: Was hast du alles schon versucht?"},{m:3,t:"Markiere ehrlich: Was davon hast du wirklich konsequent durchgezogen (>4 Wochen)?"},{m:5,t:"Wähle EINE Sache, die du ab heute 21 Tage durchziehst. Nur eine."},{m:7,t:"Plane konkret: Wann? Wo? Wie lange? Schreibe es auf."},{m:9,t:"Starte JETZT. Nicht morgen. Die erste Minute zählt am meisten."}]},
+opferrolle:{nr:16,name:"Opferrolle",short:"Du gibst alle Macht ab",desc:"Du fühlst dich als Opfer deines Körpers, der Ärzte, des Systems. Aber solange du in der Opferrolle bleibst, gibst du alle Macht ab.",zones:["Ganzer Körper"],signal:"'Mir passiert immer alles', Schuldzuweisung an andere, Passivität",reframe:"Du bist nicht verantwortlich für den Schmerz. Aber für deine Reaktion darauf.",cat:"identity",color:"#ec4899",steps:[{m:0,t:"Wem oder was gibst du gerade die Schuld? Schreibe es auf."},{m:2,t:"Jetzt die harte Frage: Was könntest DU anders machen?"},{m:4,t:"Nicht alles — nur EINE Sache. Eine kleine Handlung, die in deiner Macht liegt."},{m:6,t:"Schreibe: 'Ich übernehme Verantwortung für ___.'"},{m:8,t:"Tu es. Jetzt. Nicht morgen. Verantwortung beginnt mit Handlung."}]},
+soziale_isolation:{nr:9,name:"Soziale Isolation",short:"Rückzug verstärkt alles",desc:"Schmerz macht einsam. Du sagst Treffen ab, bleibst zuhause, ziehst dich zurück. Aber Isolation verstärkt Schmerz — soziale Verbindung lindert ihn.",zones:["Brust","Bauch","Kopf"],signal:"Absagen, Rückzug, 'Die verstehen das nicht', Einsamkeitsgefühl",reframe:"Verbindung ist ein Schmerzmittel. Menschen in deiner Nähe aktivieren dein Sicherheitssystem.",cat:"social",color:"#14b8a6",steps:[{m:0,t:"Wem hast du zuletzt abgesagt? Schreibe den Namen auf."},{m:2,t:"Schreibe dieser Person JETZT eine kurze Nachricht. Nur ein 'Hey, wie geht's?'"},{m:4,t:"Plane ein Treffen diese Woche. Kurz reicht. 30 Minuten Kaffee."},{m:6,t:"Bereite einen Satz vor: 'Mir geht es gerade nicht so gut, aber ich bin froh, hier zu sein.'"},{m:8,t:"Erlaube dir, nicht zu funktionieren. Einfach DA sein ist genug."}]},
+vergleich:{nr:12,name:"Sozialer Vergleich",short:"Andere haben es leichter",desc:"Du vergleichst dich mit Gesunden und fühlst dich benachteiligt. Oder mit anderen Schmerzpatienten — und dir geht es 'noch schlimmer'.",zones:["Brust","Kopf"],signal:"'Warum ich?', Neid auf Gesunde, Social-Media-Vermeidung oder -Sucht",reframe:"Dein Weg ist deiner. Vergleich stiehlt Energie, die du für Heilung brauchst.",cat:"social",color:"#14b8a6",steps:[{m:0,t:"Wann hast du dich zuletzt mit jemandem verglichen? Wer war es?"},{m:2,t:"Was genau hast du verglichen? Gesundheit? Erfolg? Lebensfreude?"},{m:4,t:"Du siehst 5% von deren Leben. Die anderen 95% kennst du nicht."},{m:6,t:"Schreibe 3 Dinge auf, die DU kannst oder hast, trotz allem."},{m:8,t:"Neuer Fokus: 'Ich vergleiche mich nur mit meinem gestrigen Ich.'"}]},
+sekundaerer_gewinn:{nr:18,name:"Sekundärer Krankheitsgewinn",short:"Schmerz hat unbewusste Vorteile",desc:"Schmerz kann Aufmerksamkeit bringen, Verantwortung abnehmen, Konflikte vermeiden. Solange der Gewinn bleibt, bleibt der Schmerz.",zones:["Ganzer Körper"],signal:"Schmerz 'passt' immer, wenn Anforderungen da sind. Besserung macht Angst.",reframe:"Ehrlichkeit mit dir selbst ist der erste Schritt. Was verlierst du, wenn der Schmerz geht?",cat:"social",color:"#14b8a6",steps:[{m:0,t:"Stell dir vor, der Schmerz wäre morgen weg. Komplett. Was ändert sich?"},{m:3,t:"Was müsstest du dann tun, was du jetzt nicht tun musst?"},{m:5,t:"Sei ehrlich: Gibt es etwas, das der Schmerz dir 'erspart'?"},{m:7,t:"Das ist kein Vorwurf. Es ist Neurobiologie. Dein Gehirn schützt dich."},{m:9,t:"Neuer Deal mit dir selbst: 'Ich finde andere Wege, meine Bedürfnisse zu erfüllen.'"}]}
 };
 
-const keys=Object.keys(T);
+const MC = [
+{nr:1,title:"Was Schmerz wirklich ist",sub:"Neurowissenschaft für Nicht-Nerds",content:"Schmerz entsteht im Gehirn, nicht im Gewebe. Das ist keine Meinung — das ist Neurowissenschaft.\n\nDein Gehirn bewertet ständig: Ist diese Empfindung gefährlich? Wenn ja, produziert es Schmerz. Wenn nein, ignoriert es das Signal.\n\n<b>Die 3 Schlüssel-Erkenntnisse:</b>\n\n1. <b>Schmerz ≠ Schaden.</b> 85% aller Rückenschmerzen haben keine strukturelle Ursache.\n2. <b>Dein Nervensystem lernt Schmerz.</b> Wie ein Musiker sein Instrument — durch Wiederholung.\n3. <b>Was gelernt wurde, kann umgelernt werden.</b> Neuroplastizität ist real."},
+{nr:2,title:"Die 18 Schmerzverzerrungen",sub:"Warum dein Kopf den Schmerz verstärkt",content:"Kognitive Verzerrungen sind Denkfehler, die Schmerz verstärken. Sie sind nicht deine Schuld — sie sind evolutionär.\n\n<b>Die 5 häufigsten:</b>\n• <b>Katastrophisieren:</b> Das Schlimmste erwarten\n• <b>Hypervigilanz:</b> Ständig den Körper scannen\n• <b>Schwarz-Weiß:</b> Entweder gesund oder kaputt\n• <b>Hilflosigkeit:</b> Glauben, dass nichts hilft\n• <b>Nocebo:</b> Negative Erwartung erzeugt echten Schmerz"},
+{nr:3,title:"Der Body-Mind-Loop",sub:"Wie Körper und Geist sich gegenseitig triggern",content:"<b>Gedanke</b> → Stress → Muskelspannung → <b>Schmerz</b> → Angst → mehr Stress → <b>mehr Schmerz</b>\n\nDer Loop läuft automatisch. Aber du kannst ihn an JEDER Stelle unterbrechen:\n\n1. <b>Am Gedanken:</b> Reframing\n2. <b>Am Stress:</b> Atemtechniken, Vagusnerv\n3. <b>An der Spannung:</b> Bewegung\n4. <b>Am Schmerz:</b> Graded Exposure\n5. <b>An der Angst:</b> Sicherheitssignale\n\nDu brauchst nur EINEN Hebel, der für dich funktioniert."},
+{nr:4,title:"Dein Nervensystem verstehen",sub:"Sympathikus, Parasympathikus & Vagusnerv",content:"<b>Sympathikus (Gas):</b> Kampf, Flucht, Anspannung. Schmerz verstärkt.\n<b>Parasympathikus (Bremse):</b> Ruhe, Heilung. Schmerz gelindert.\n\nDer <b>Vagusnerv</b> ist dein direkter Zugang zum Parasympathikus.\n\n<b>Vagusnerv aktivieren:</b>\n• Kaltes Wasser ins Gesicht\n• Langes Ausatmen\n• Summen oder Singen\n• Soziale Verbindung (Blickkontakt, Umarmung)"},
+{nr:5,title:"Graded Exposure",sub:"Schrittweise zurück ins Leben",content:"Vermeidung macht Schmerz stärker. Graded Exposure ist das Gegenmittel.\n\n<b>Beispiel Rückenschmerz:</b>\n1. Woche 1: 5 Min spazieren\n2. Woche 2: 10 Min + 5 Kniebeugen\n3. Woche 3: 15 Min + leichtes Heben\n4. Woche 4: 20 Min + normales Heben\n\n<b>Regeln:</b>\n• Starte unter der Schmerzgrenze\n• Steigere max 10-20% pro Woche\n• Am Plan orientieren, nicht am Schmerz"},
+{nr:6,title:"Schlaf & Schmerz",sub:"Warum schlechter Schlaf alles schlimmer macht",content:"Schlechter Schlaf senkt deine Schmerzschwelle um bis zu 40%.\n\n<b>Die ZEIS-Schlafregeln:</b>\n1. <b>Gleiche Zeit</b> — jeden Tag gleich aufstehen\n2. <b>Kein Koffein</b> nach 14 Uhr\n3. <b>Bildschirm-Stopp</b> 60 Min vor dem Schlafen\n4. <b>Kühles Zimmer</b> — 16-18°C\n5. <b>Nicht im Bett grübeln</b>\n\nEine Nacht guter Schlaf kann mehr bewirken als jede Tablette."},
+{nr:7,title:"Stress als Schmerzverstärker",sub:"Cortisol, Adrenalin und ihre Rolle",content:"<b>Stress-Signale erkennen:</b>\n• Kiefer zusammengebissen\n• Schultern hochgezogen\n• Flache Atmung\n• Reizbarkeit\n\n<b>Sofort-Interventionen:</b>\n1. <b>Physiological Sigh:</b> 2× kurz ein, 1× lang aus\n2. <b>Kälte:</b> 30 Sek kaltes Wasser über die Unterarme\n3. <b>Schütteln:</b> 2 Min den ganzen Körper schütteln"},
+{nr:8,title:"Selbstmitgefühl statt Selbstkritik",sub:"Warum du aufhören musst, dich fertigzumachen",content:"Selbstkritik aktiviert das Bedrohungssystem — und damit Schmerz.\nSelbstmitgefühl aktiviert das Beruhigungssystem — und damit Heilung.\n\n<b>Die 3 Komponenten (Kristin Neff):</b>\n1. <b>Achtsamkeit:</b> Wahrnehmen ohne Übertreibung\n2. <b>Gemeinsames Menschsein:</b> Du bist nicht allein\n3. <b>Freundlichkeit:</b> Behandle dich wie einen guten Freund\n\n<b>Übung:</b> Hand aufs Herz: 'Das ist gerade schwer. Ich darf freundlich zu mir sein.'"}
+];
 
-// === NAV ===
-function go(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');window.scrollTo(0,0)}
+const CATS = [
+  {id:"mind",title:"Kopf & Denkmuster",emoji:"🧠",bg:"bg-mind",desc:"Verzerrungen, die in deinen Gedanken leben"},
+  {id:"body",title:"Körper & Verhalten",emoji:"🫁",bg:"bg-body",desc:"Wie dein Körper auf Schmerz reagiert"},
+  {id:"emotion",title:"Emotionen & Angst",emoji:"💔",bg:"bg-emotion",desc:"Gefühle die Schmerz verstärken"},
+  {id:"thinking",title:"Denkmuster & Bewertung",emoji:"⚡",bg:"bg-thinking",desc:"Wie du Schmerz bewertest"},
+  {id:"identity",title:"Identität & Selbstbild",emoji:"🪞",bg:"bg-identity",desc:"Wer du durch den Schmerz geworden bist"},
+  {id:"social",title:"Soziales & Verhalten",emoji:"👥",bg:"bg-social",desc:"Wie Schmerz dein Umfeld beeinflusst"}
+];
 
-// === HOME LIST ===
-!function(){
-  let h='';
-  for(const k of keys){const t=T[k];
-    h+=`<div class="card" onclick="openProto('${k}')">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><span class="card-nr">#${t.nr}</span>
-        <div class="card-title">${t.name}</div>
-        <div class="card-desc">${t.short}</div></div>
-        <span style="color:var(--accent);font-size:18px">→</span>
-      </div></div>`;
+const keys = Object.keys(TYPES);
+
+// ================================================================
+// RENDER ROWS
+// ================================================================
+function renderRows(){
+  const container = document.getElementById('rows');
+  let html = '';
+
+  // Category rows
+  for(const cat of CATS){
+    const items = keys.filter(k=>TYPES[k].cat===cat.id);
+    if(!items.length) continue;
+    html += `<div class="row" id="sec-${cat.id}">
+      <div class="row-title">${cat.emoji} ${cat.title} <span class="count">${items.length}</span></div>
+      <div class="slider">`;
+    for(const k of items){
+      const t = TYPES[k];
+      html += renderCard(k, t, cat.bg);
+    }
+    html += `</div></div>`;
   }
-  document.getElementById('home-list').innerHTML=h;
-}();
 
-// === SCAN ===
-function startScan(){
-  let h='';
-  for(const k of keys){const t=T[k];
-    h+=`<div class="scan-row">
+  // Masterclass row
+  html += `<div class="row" id="sec-mc">
+    <div class="row-title">🎓 Masterclass <span class="count">8 Module</span></div>
+    <div class="slider">`;
+  for(const m of MC){
+    const preview = m.content.replace(/<b>/g,'').replace(/<\/b>/g,'').substring(0,100)+'...';
+    html += `<div class="mc-card" onclick="openMC(${m.nr})">
+      <div class="mc-visual bg-mc">
+        <div class="mc-nr">${m.nr}</div>
+        <div class="mc-info"><h3>${m.title}</h3><p>${m.sub}</p></div>
+      </div>
+      <div class="mc-body"><p>${preview}</p></div>
+    </div>`;
+  }
+  html += `</div></div>`;
+
+  container.innerHTML = html;
+}
+
+function renderCard(k, t, bgClass){
+  return `<div class="card" onclick="openProto('${k}')">
+    <div class="card-visual ${bgClass}">
+      <div class="card-gradient"></div>
+      <div class="card-nr">#${t.nr}</div>
+      <div class="card-zone-tags">${t.zones.map(z=>`<span class="card-zone">${z}</span>`).join('')}</div>
+    </div>
+    <div class="card-body">
+      <div class="card-title">${t.name}</div>
+      <div class="card-short">${t.short}</div>
+      <div class="card-bottom">
+        <span class="card-steps">${t.steps.length} Schritte · ${t.steps[t.steps.length-1].m} Min</span>
+        <div class="card-play"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ================================================================
+// MODAL SYSTEM
+// ================================================================
+let _timer=null, _sec=0, _step=0, _total=0;
+
+function openModal(type, content){
+  document.getElementById('modal').innerHTML = content;
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow='';
+  if(_timer){clearInterval(_timer);_timer=null}
+}
+
+// Protocol modal
+function openProto(k){
+  const t=TYPES[k];if(!t)return;
+  _step=0;_total=t.steps.length;_sec=0;
+
+  let stepsH='';
+  for(let i=0;i<t.steps.length;i++){
+    stepsH+=`<div class="proto-step${i===0?' active':''}" id="ps-${i}">
+      <div class="smin">Minute ${t.steps[i].m}</div>
+      <div class="stxt">${t.steps[i].t}</div></div>`;
+  }
+
+  openModal('proto',`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero bg-hero-modal"><div class="modal-hero-gradient"></div></div>
+    <div class="modal-content">
+      <div class="modal-tag">Self-Treatment #${t.nr}</div>
+      <h2>${t.name}</h2>
+      <div class="modal-short">${t.short}</div>
+      <div class="modal-desc">${t.desc}</div>
+      <div class="modal-zones">${t.zones.map(z=>`<span class="modal-zone">${z}</span>`).join('')}</div>
+      <div class="modal-signal"><p><b>Erkennst du das?</b> ${t.signal}</p></div>
+      <div class="modal-reframe"><p><b>Reframe:</b> ${t.reframe}</p></div>
+      <div class="modal-divider"></div>
+      <div class="proto-header">
+        <span class="proto-counter">Schritt <span id="pc">1</span> / ${_total}</span>
+        <span class="proto-timer" id="pt">00:00</span>
+      </div>
+      <div class="proto-progress"><div class="proto-bar" id="pp" style="width:${100/_total}%"></div></div>
+      ${stepsH}
+      <div class="proto-nav" id="pnav">
+        <button class="proto-btn proto-prev" id="pb" onclick="pPrev()" disabled style="opacity:.4">← Zurück</button>
+        <button class="proto-btn proto-next" id="pn" onclick="pNext()">Weiter →</button>
+      </div>
+      <div class="proto-done" id="pdone">
+        <div style="font-size:48px">✅</div>
+        <h3>Protokoll abgeschlossen</h3>
+        <p>Wiederhole das Protokoll für <b>${t.name}</b> morgen.</p>
+        <button class="proto-btn proto-next" style="margin-top:16px;width:100%" onclick="closeModal()">Schließen</button>
+      </div>
+    </div>`);
+
+  if(_timer)clearInterval(_timer);
+  _timer=setInterval(()=>{_sec++;const m=String(Math.floor(_sec/60)).padStart(2,'0'),s=String(_sec%60).padStart(2,'0');const e=document.getElementById('pt');if(e)e.textContent=m+':'+s},1000);
+}
+
+function pNext(){
+  if(_step>=_total-1){document.getElementById('pnav').style.display='none';document.getElementById('pdone').style.display='block';if(_timer)clearInterval(_timer);return}
+  document.getElementById('ps-'+_step).classList.remove('active');document.getElementById('ps-'+_step).style.display='none';
+  _step++;
+  const el=document.getElementById('ps-'+_step);el.style.display='block';el.classList.add('active');
+  document.getElementById('pc').textContent=_step+1;
+  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
+  document.getElementById('pb').disabled=false;document.getElementById('pb').style.opacity='1';
+  if(_step>=_total-1)document.getElementById('pn').textContent='Abschließen ✓';
+}
+function pPrev(){
+  if(_step<=0)return;
+  document.getElementById('ps-'+_step).classList.remove('active');document.getElementById('ps-'+_step).style.display='none';
+  _step--;
+  document.getElementById('ps-'+_step).style.display='block';document.getElementById('ps-'+_step).classList.add('active');
+  document.getElementById('pc').textContent=_step+1;
+  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
+  document.getElementById('pn').textContent='Weiter →';
+  if(_step===0){document.getElementById('pb').disabled=true;document.getElementById('pb').style.opacity='.4'}
+}
+
+// Scan modal
+function openScan(){
+  let items='';
+  for(const k of keys){const t=TYPES[k];
+    items+=`<div class="scan-item">
       <label>${t.name}</label>
-      <div class="hint">${t.signal}</div>
-      <input type="range" id="s-${k}" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value">
-      <div class="scan-val">0</div></div>`;
-  }
-  document.getElementById('scan-items').innerHTML=h;
-  go('scan');
+      <div class="shint">${t.signal}</div>
+      <input type="range" id="sc-${k}" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value+'/10'">
+      <div class="sval">0/10</div></div>`}
+
+  openModal('scan',`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero bg-hero-modal"><div class="modal-hero-gradient"></div></div>
+    <div class="modal-content">
+      <div class="modal-tag">Body-Mind Scan</div>
+      <h2>ZEIS Scan</h2>
+      <div class="modal-short">Bewerte ehrlich, wie stark jede Verzerrung auf dich zutrifft.</div>
+      <div class="modal-divider"></div>
+      <div class="scan-grid">${items}</div>
+      <button class="scan-eval" onclick="evalScan()">Scan auswerten →</button>
+    </div>`);
 }
 
 function evalScan(){
   let res=[];
-  for(const k of keys){const v=+document.getElementById('s-'+k).value;if(v>0)res.push({k,v,t:T[k]})}
+  for(const k of keys){const v=+document.getElementById('sc-'+k).value;if(v>0)res.push({k,v,t:TYPES[k]})}
   res.sort((a,b)=>b.v-a.v);
   if(!res.length){alert('Bewerte mindestens eine Verzerrung.');return}
   const top=res.slice(0,5);
   const avg=(res.reduce((s,r)=>s+r.v,0)/res.length).toFixed(1);
   const col=avg>=6?'var(--red)':avg>=3?'var(--accent)':'var(--green)';
-  let h=`<div style="text-align:center;padding:32px 0 16px">
-    <div style="font-size:48px;font-weight:800;color:${col}">${avg}</div>
-    <div style="font-size:12px;color:var(--muted)">Durchschnittliche Stärke</div></div><div class="divider"></div><div class="label">Deine stärksten Verzerrungen</div>`;
+
+  let items='';
   for(const r of top){
     const c=r.v>=7?'var(--red)':r.v>=4?'var(--accent)':'var(--green)';
-    h+=`<div class="card" onclick="openProto('${r.k}')">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="color:${c};font-weight:700;font-size:20px">${r.v}/10</span>
-          <span style="font-weight:600;font-size:13px">${r.t.name}</span></div>
-        <span style="color:var(--accent)">→</span></div>
-      <div class="bar-bg"><div class="bar" style="width:${r.v*10}%;background:${c}"></div></div></div>`;
-  }
-  document.getElementById('result-out').innerHTML=h;
-  document.getElementById('result-go').onclick=()=>openProto(top[0].k);
-  go('result');
+    items+=`<div class="sr-item" onclick="closeModal();setTimeout(()=>openProto('${r.k}'),300)">
+      <div class="sr-val" style="color:${c}">${r.v}</div>
+      <div style="flex:1"><div class="sr-name">${r.t.name}</div>
+        <div class="sr-bar-bg"><div class="sr-bar" style="width:${r.v*10}%;background:${c}"></div></div></div>
+      <div class="sr-arrow">→</div></div>`}
+
+  openModal('result',`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero bg-hero-modal"><div class="modal-hero-gradient"></div></div>
+    <div class="modal-content">
+      <div class="modal-tag">Scan-Ergebnis</div>
+      <h2>Dein ZEIS-Profil</h2>
+      <div class="sr-score"><div class="num" style="color:${col}">${avg}</div><div class="lbl">Durchschnittliche Verzerrungsstärke</div></div>
+      <div class="modal-divider"></div>
+      <div class="modal-tag">Deine Top-Verzerrungen</div>
+      ${items}
+      <div class="modal-divider"></div>
+      <button class="scan-eval" onclick="closeModal();setTimeout(()=>openProto('${top[0].k}'),300)">Stärkstes Protokoll starten →</button>
+    </div>`);
 }
 
-// === PROTOCOL ===
-let _step=0,_total=0,_timer=null,_sec=0;
+// Masterclass modal
+function openMC(nr){
+  const m=MC.find(x=>x.nr===nr);if(!m)return;
+  const formatted=m.content.replace(/\n\n/g,'</p><p style="margin-top:12px">').replace(/\n•/g,'<br>•').replace(/\n(\d\.)/g,'<br>$1');
 
-function openProto(k){
-  const t=T[k];if(!t)return;
-  _step=0;_total=t.steps.length;_sec=0;
-  const tags=t.zones.map(z=>`<span class="tag">${z}</span>`).join('');
-  let stepsH='';
-  for(let i=0;i<t.steps.length;i++){
-    stepsH+=`<div class="step" id="ps-${i}" ${i===0?'style="display:block"':''}>
-      <div class="step-min">Minute ${t.steps[i].m}</div>
-      <div class="step-text">${t.steps[i].t}</div></div>`;
-  }
-  document.getElementById('proto-out').innerHTML=`
-    <div class="label">Self-Treatment</div>
-    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:28px">${t.name}</h2>
-    <p style="font-size:13px;color:var(--muted);margin:6px 0 10px">${t.desc}</p>
-    <div>${tags}</div>
-    <div class="reframe"><span><b>Reframe:</b> ${t.reframe}</span></div>
-    <div class="divider"></div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <span style="font-size:12px;color:var(--muted)">Schritt <span id="pc">1</span>/${_total}</span>
-      <span id="pt" style="font-size:18px;font-weight:700;color:var(--accent)">00:00</span></div>
-    <div class="progress"><div class="progress-fill" id="pp" style="width:${100/_total}%"></div></div>
-    ${stepsH}
-    <div class="btn-grid" style="margin-top:14px" id="proto-nav">
-      <a class="btn" id="pb" onclick="pPrev()" style="opacity:.3;pointer-events:none">← Zurück</a>
-      <a class="btn btn-primary" id="pn" onclick="pNext()">Weiter →</a></div>
-    <div id="pdone" style="display:none;text-align:center;padding:24px 0">
-      <div style="font-size:40px">✅</div>
-      <h3 style="margin:12px 0">Protokoll abgeschlossen</h3>
-      <p style="font-size:13px;color:var(--muted)">Wiederhole es morgen.</p>
-      <a class="btn btn-primary" style="margin-top:16px" onclick="go('home')">← Zurück</a></div>
-    <div class="divider"></div>
-    <a class="btn btn-block" onclick="go('home')">← Alle Verzerrungen</a>`;
-  if(_timer)clearInterval(_timer);
-  _timer=setInterval(()=>{_sec++;const m=String(Math.floor(_sec/60)).padStart(2,'0'),s=String(_sec%60).padStart(2,'0');const e=document.getElementById('pt');if(e)e.textContent=m+':'+s},1000);
-  go('proto');
+  let nav='';
+  if(nr>1)nav+=`<button class="proto-btn proto-prev" onclick="openMC(${nr-1})">← Modul ${nr-1}</button>`;else nav+='<span></span>';
+  if(nr<MC.length)nav+=`<button class="proto-btn proto-next" onclick="openMC(${nr+1})">Modul ${nr+1} →</button>`;else nav+='<span></span>';
+
+  openModal('mc',`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero bg-mc"><div class="modal-hero-gradient"></div></div>
+    <div class="modal-content">
+      <div class="modal-tag">Masterclass · Modul ${m.nr} von ${MC.length}</div>
+      <h2>${m.title}</h2>
+      <div class="modal-short">${m.sub}</div>
+      <div class="modal-divider"></div>
+      <div class="mc-modal-content"><p>${formatted}</p></div>
+      <div class="mc-modal-nav">${nav}</div>
+    </div>`);
 }
 
-function pNext(){
-  if(_step>=_total-1){document.getElementById('proto-nav').style.display='none';document.getElementById('pdone').style.display='block';if(_timer)clearInterval(_timer);return}
-  document.getElementById('ps-'+_step).style.display='none';
-  _step++;
-  const el=document.getElementById('ps-'+_step);el.style.display='block';el.classList.add('active');
-  document.getElementById('pc').textContent=_step+1;
-  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
-  document.getElementById('pb').style.opacity='1';document.getElementById('pb').style.pointerEvents='auto';
-  if(_step>=_total-1)document.getElementById('pn').textContent='Abschließen ✓';
+// Info modal
+function openInfoModal(){
+  openModal('info',`
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-hero bg-hero-modal"><div class="modal-hero-gradient"></div></div>
+    <div class="modal-content">
+      <div class="modal-tag">Über das Protokoll</div>
+      <h2>Was ist das ZEIS Protocol?</h2>
+      <div class="modal-desc">Dein Schmerz ist real — aber dein Gehirn verstärkt ihn durch kognitive Verzerrungen. Das ZEIS Protocol identifiziert 18 spezifische Verzerrungsmuster und bietet für jedes ein evidenzbasiertes Self-Treatment Protokoll.</div>
+      <div class="modal-divider"></div>
+      <div class="modal-signal"><p><b>So funktioniert es:</b><br><br>1. <b>ZEIS Scan</b> — Finde heraus, welche Verzerrungen bei dir am stärksten sind<br>2. <b>Verstehen</b> — Lerne in der Masterclass, warum dein Gehirn so reagiert<br>3. <b>Self-Treatment</b> — Führe die geführten Protokolle durch (5-10 Min)<br>4. <b>Wiederholen</b> — Tägliche Wiederholung verändert neuronale Pfade</p></div>
+      <div class="modal-reframe"><p><b>Wissenschaftliche Basis:</b> Das ZEIS Protocol basiert auf Erkenntnissen aus Neurowissenschaft, kognitiver Verhaltenstherapie, Graded Exposure und Polyvagal-Theorie.</p></div>
+      <button class="scan-eval" onclick="closeModal();openScan()">Scan starten →</button>
+    </div>`);
 }
-function pPrev(){
-  if(_step<=0)return;
-  document.getElementById('ps-'+_step).style.display='none';
-  _step--;
-  document.getElementById('ps-'+_step).style.display='block';
-  document.getElementById('pc').textContent=_step+1;
-  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
-  document.getElementById('pn').textContent='Weiter →';
-  if(_step===0){document.getElementById('pb').style.opacity='.3';document.getElementById('pb').style.pointerEvents='none'}
-}
+
+// ================================================================
+// NAV
+// ================================================================
+window.addEventListener('scroll',()=>{
+  document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50);
+});
+function scrollTop(){window.scrollTo({top:0,behavior:'smooth'})}
+window.scrollTo = window.scrollTo; // keep native
+function scrollToEl(sel){const el=document.querySelector(sel);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
+
+// Override scrollTo for nav links
+document.querySelectorAll('.nav-links a').forEach(a=>{
+  a.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-links a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+  });
+});
+
+// Keyboard
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+
+// Alias for info button
+function openModalInfo(){openInfoModal()}
+// Fix: the hero button calls openModal('info')
+window.openModalOrig = openModal;
+const _openModal = openModal;
+openModal = function(type, content){
+  if(type==='info' && !content){openInfoModal();return}
+  _openModal(type, content);
+};
+
+// ================================================================
+// INIT
+// ================================================================
+renderRows();
 </script>
 </body>
 </html>
