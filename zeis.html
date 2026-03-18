@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZEIS Protocol — 18 Schmerzverzerrungen</title>
+<meta name="description" content="ZEIS Protocol von Alexander Zeis. 18 Schmerzverzerrungen erkennen und mit Self-Treatment Protokollen auflösen.">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#111;--border:#1e1e1e;--accent:#f59e0b;--white:#f5f5f5;--muted:#888;--green:#22c55e;--red:#ef4444}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:'Inter',system-ui,sans-serif;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+
+/* Header */
+.header{text-align:center;padding:48px 0 32px}
+.header h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,8vw,56px);letter-spacing:.04em;line-height:1}
+.header h1 span{color:var(--accent)}
+.header p{color:var(--muted);font-size:13px;margin-top:8px}
+
+/* Buttons */
+.btn{display:inline-block;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;text-align:center;cursor:pointer;transition:all .2s;border:1px solid var(--border);background:var(--surface);color:var(--white);font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn-primary{background:var(--accent);color:#000;border-color:var(--accent)}
+.btn-primary:hover{background:#d97706;color:#000}
+.btn-block{display:block;width:100%}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:28px 0}
+
+/* Label */
+.label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.card:hover{border-color:rgba(245,158,11,.4)}
+.card-nr{color:var(--accent);font-weight:700;font-size:12px}
+.card-title{font-weight:700;font-size:14px;margin:2px 0}
+.card-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.tag{display:inline-block;background:rgba(245,158,11,.1);color:var(--accent);font-size:10px;padding:3px 8px;border-radius:99px;margin:2px 2px 2px 0}
+
+/* Views */
+.view{display:none}.view.active{display:block}
+
+/* Scan */
+.scan-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px}
+.scan-row label{font-size:13px;font-weight:600;display:block}
+.scan-row .hint{font-size:11px;color:var(--muted);margin:2px 0 8px}
+input[type=range]{width:100%;accent-color:var(--accent);height:6px}
+.scan-val{text-align:right;font-size:12px;color:var(--accent);font-weight:700;margin-top:2px}
+
+/* Result bars */
+.bar-bg{height:4px;background:#1f2937;border-radius:99px;margin:6px 0}
+.bar{height:4px;border-radius:99px;transition:width .5s}
+
+/* Protocol steps */
+.step{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;display:none}
+.step.active{display:block;animation:fadeUp .4s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.step-min{color:var(--accent);font-size:12px;font-weight:700;margin-bottom:4px}
+.step-text{font-size:15px;line-height:1.7}
+.progress{height:3px;background:var(--border);border-radius:99px;margin:12px 0}
+.progress-fill{height:3px;background:var(--accent);border-radius:99px;transition:width .3s}
+
+/* Reframe box */
+.reframe{padding:12px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);border-radius:8px;margin:12px 0}
+.reframe span{color:var(--green);font-size:12px}
+
+/* Footer */
+.footer{text-align:center;font-size:11px;color:var(--muted);opacity:.5;margin-top:40px}
+</style>
+</head>
+<body>
+
+<!-- ===== LANDING ===== -->
+<div id="v-home" class="view active">
+<div class="wrap">
+  <div class="header">
+    <h1>ZEIS <span>Protocol</span></h1>
+    <p>18 Schmerzverzerrungen erkennen & auflösen</p>
+  </div>
+
+  <a class="btn btn-primary btn-block" onclick="startScan()">ZEIS Scan starten</a>
+
+  <div class="divider"></div>
+  <div class="label">Die 18 Verzerrungen</div>
+  <div id="home-list"></div>
+
+  <div class="divider"></div>
+  <a href="/" class="btn btn-block">← Startseite</a>
+  <div class="footer">ZEIS Protocol — Alexander Zeis</div>
+</div>
+</div>
+
+<!-- ===== SCAN ===== -->
+<div id="v-scan" class="view">
+<div class="wrap">
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:28px;margin-bottom:4px;">ZEIS Scan</h2>
+  <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Wie stark trifft jede Verzerrung auf dich zu? (0 = gar nicht, 10 = extrem)</p>
+  <div id="scan-items"></div>
+  <a class="btn btn-primary btn-block" style="margin-top:12px;" onclick="evalScan()">Auswerten →</a>
+  <a class="btn btn-block" style="margin-top:8px;" onclick="go('home')">← Zurück</a>
+</div>
+</div>
+
+<!-- ===== SCAN RESULT ===== -->
+<div id="v-result" class="view">
+<div class="wrap">
+  <div id="result-out"></div>
+  <div class="btn-grid">
+    <a class="btn btn-primary" id="result-go">Top-Protokoll starten</a>
+    <a class="btn" onclick="startScan()">Scan wiederholen</a>
+  </div>
+  <a class="btn btn-block" style="margin-top:8px;" onclick="go('home')">← Zurück</a>
+</div>
+</div>
+
+<!-- ===== PROTOCOL DETAIL ===== -->
+<div id="v-proto" class="view">
+<div class="wrap" id="proto-out"></div>
+</div>
+
+<script>
+// === DATA ===
+const T={
+katastrophisieren:{nr:1,name:"Katastrophisieren",short:"Schmerz wird zur Katastrophe aufgeblasen",desc:"Du erwartest immer das Schlimmste. Ein leichtes Ziehen wird zum Bandscheibenvorfall.",zones:["Kopf","Nacken","Unterer Rücken"],signal:"'Das wird nie aufhören', 'Da ist bestimmt was Schlimmes'",reframe:"Schmerz ist ein Signal, keine Diagnose. Die meisten Schmerzen sind vorübergehend.",steps:[{m:0,t:"Setz dich hin. Atme 3× tief. Benenne den Schmerz auf einer Skala 1–10."},{m:2,t:"Frage dich: Was ist die wahrscheinlichste Erklärung? Nicht die schlimmste."},{m:4,t:"Wie oft hattest du diesen Schmerz schon — und er ging weg?"},{m:6,t:"Lege eine Hand auf die Stelle. Sage: 'Ich bin sicher. Das geht vorbei.'"},{m:8,t:"Steh auf, gehe 10 Schritte. Dein Körper ist belastbar."}]},
+hypervigilanz:{nr:2,name:"Hypervigilanz",short:"Ständige Körperbeobachtung verstärkt Schmerz",desc:"Du scannst deinen Körper permanent. Jedes Zwicken wird analysiert. Alarmmodus.",zones:["Kopf","Brust","Bauch"],signal:"Ständiges 'Reinspüren', Angst vor neuen Symptomen",reframe:"Weniger Beobachten = weniger Schmerz.",steps:[{m:0,t:"Erkenne: 'Ich beobachte gerade meinen Körper zu stark.'"},{m:2,t:"Benenne 5 Dinge die du siehst."},{m:4,t:"4 Dinge die du hörst. 3 die du fühlst (Oberfläche)."},{m:6,t:"Gib dir eine Aufgabe: Aufräumen, Nachricht schreiben, kochen."},{m:8,t:"Nächster Body-Check erst in 2 Stunden. Timer stellen."}]},
+bewegungsangst:{nr:3,name:"Bewegungsangst",short:"Angst vor Bewegung führt zu mehr Schmerz",desc:"Inaktivität schwächt Muskeln und macht dich empfindlicher.",zones:["Unterer Rücken","Knie","Schultern"],signal:"Vermeidung von Sport, Treppen, Heben",reframe:"Bewegung ist Medizin. Dein Körper ist für Bewegung gebaut.",steps:[{m:0,t:"Steh auf. Jetzt. Keine Diskussion."},{m:1,t:"Arme über den Kopf. 10 Sekunden halten."},{m:3,t:"5 sanfte Kniebeugen. Langsam."},{m:5,t:"2 Minuten durch den Raum gehen."},{m:8,t:"Was war so schlimm? Meistens: nichts."}]},
+schmerz_identitaet:{nr:4,name:"Schmerzidentität",short:"Schmerz wird Teil deiner Identität",desc:"'Ich bin Schmerzpatient' zementiert neuronale Muster.",zones:["Kopf","Unterer Rücken","Ganzer Körper"],signal:"'Ich habe schon immer...', 'Bei mir ist das chronisch'",reframe:"Du HAST Schmerz, du BIST nicht dein Schmerz.",steps:[{m:0,t:"Wie beschreibst du dich selbst? Welche Rolle spielt Schmerz?"},{m:3,t:"Streiche 'immer', 'nie', 'chronisch'. Ersetze durch 'gerade', 'aktuell'."},{m:5,t:"Schreibe 3 Sätze über dich OHNE Schmerz."},{m:7,t:"'Ich bin jemand, der lernt, anders mit Empfindungen umzugehen.'"},{m:9,t:"Lies dir alle 3 Sätze laut vor."}]},
+emotionale_unterdrueckung:{nr:5,name:"Emotionale Unterdrückung",short:"Unterdrückte Emotionen werden zu Körperschmerz",desc:"Wut, Trauer, Scham suchen sich einen Ausweg — als Schmerz.",zones:["Nacken","Unterer Rücken","Bauch","Schultern"],signal:"Schmerz ohne klare Ursache, verstärkt bei Stress",reframe:"Fühlen ist der Weg zur Auflösung.",steps:[{m:0,t:"Schließe die Augen. Was fühle ich WIRKLICH gerade?"},{m:2,t:"Benenne die Emotion dahinter. Wut? Trauer? Angst?"},{m:4,t:"Wo sitzt sie im Körper? Hand dorthin legen."},{m:6,t:"'Ich erlaube mir, das zu fühlen. Es ist sicher.'"},{m:8,t:"5× tief in diese Stelle atmen. Lass zu, was kommt."}]},
+schwarz_weiss:{nr:6,name:"Schwarz-Weiß-Denken",short:"Entweder schmerzfrei oder kaputt",desc:"Nuancen gehen verloren — und damit die Fähigkeit, Fortschritt zu sehen.",zones:["Kopf","Ganzer Körper"],signal:"'Es bringt nichts', Aufgeben bei Rückschlägen",reframe:"10% besser ist besser. Jeder kleine Schritt zählt.",steps:[{m:0,t:"Gib eine Zahl: 1–10. Nicht 'gut' oder 'schlecht'."},{m:2,t:"Vergleiche mit letzter Woche. Gibt es einen Unterschied?"},{m:4,t:"3 Dinge die heute besser sind als vor einem Monat."},{m:6,t:"'Gut genug' ist das Ziel."},{m:8,t:"'Ich bin auf dem Weg. Nicht am Ziel — und das ist okay.'"}]},
+nocebo:{nr:7,name:"Nocebo-Effekt",short:"Negative Erwartung erzeugt echten Schmerz",desc:"Dein Gehirn produziert Schmerz auf Basis von Erwartung.",zones:["Kopf","Unterer Rücken","Nacken"],signal:"Angst vor bestimmten Bewegungen, MRT-Befund",reframe:"Ändere die Erwartung — ändere den Schmerz.",steps:[{m:0,t:"Welche Bewegung erwartest du als schmerzhaft?"},{m:2,t:"Woher kommt diese Erwartung? Arzt? Google?"},{m:4,t:"Führe die Bewegung langsam aus. Beobachte ohne Urteil."},{m:6,t:"War es so schlimm wie erwartet?"},{m:8,t:"'Es könnte auch leicht gehen.'"}]},
+hilflosigkeit:{nr:8,name:"Erlernte Hilflosigkeit",short:"Nichts hilft — also tust du nichts",desc:"Dein Nervensystem ist plastisch. Es kann umlernen.",zones:["Ganzer Körper"],signal:"'Nichts hilft', 'Ich habe alles versucht'",reframe:"Du hast nur noch nicht den richtigen Hebel gefunden.",steps:[{m:0,t:"Was hast du alles schon versucht? Liste schreiben."},{m:3,t:"Was davon hast du wirklich >4 Wochen durchgezogen?"},{m:5,t:"Wähle EINE Sache für 21 Tage. Nur eine."},{m:7,t:"Wann? Wo? Wie lange? Aufschreiben."},{m:9,t:"Starte JETZT. Die erste Minute zählt am meisten."}]},
+soziale_isolation:{nr:9,name:"Soziale Isolation",short:"Rückzug verstärkt Schmerz",desc:"Isolation verstärkt Schmerz — soziale Verbindung lindert ihn.",zones:["Brust","Bauch","Kopf"],signal:"Absagen, Rückzug, Einsamkeit",reframe:"Verbindung ist ein Schmerzmittel.",steps:[{m:0,t:"Wem hast du zuletzt abgesagt?"},{m:2,t:"Schreibe dieser Person JETZT eine kurze Nachricht."},{m:4,t:"Plane ein Treffen diese Woche. 30 Min Kaffee."},{m:6,t:"'Mir geht es nicht so gut, aber ich bin froh, hier zu sein.'"},{m:8,t:"Einfach DA sein ist genug."}]},
+perfektionismus:{nr:10,name:"Schmerz-Perfektionismus",short:"Perfektionismus ist Vermeidung in Verkleidung",desc:"Du willst alles perfekt — Therapeut, Übung, Protokoll.",zones:["Nacken","Schultern","Kopf"],signal:"Endloses Recherchieren, nie anfangen",reframe:"Unperfektes Handeln schlägt perfektes Planen.",steps:[{m:0,t:"Was schiebst du auf, weil es 'noch nicht perfekt' ist?"},{m:2,t:"Mache es jetzt — aber nur zu 70%."},{m:4,t:"Passiert etwas Schlimmes? Meistens: Nein."},{m:6,t:"'Done is better than perfect.'"},{m:8,t:"Wiederhole morgen."}]},
+gedankenkreisen:{nr:11,name:"Gedankenkreisen",short:"Endlosschleife von Schmerzgedanken",desc:"Rumination hält dein Nervensystem im Schmerzmodus.",zones:["Kopf","Nacken","Brust"],signal:"Grübeln, 'Was wenn...', Schlafprobleme",reframe:"Gedanken sind keine Fakten.",steps:[{m:0,t:"'Ich grüble gerade.' Sage es laut."},{m:1,t:"Steh auf. Kaltes Wasser über die Hände."},{m:3,t:"Zähle rückwärts von 100 in 7er-Schritten."},{m:5,t:"Dein Gehirn kann nicht rechnen UND grübeln."},{m:7,t:"Schreibe den Gedanken auf Papier. Einmal. Dann weg."}]},
+vergleich:{nr:12,name:"Sozialer Vergleich",short:"Andere haben es leichter",desc:"Vergleich stiehlt Energie, die du für Heilung brauchst.",zones:["Brust","Kopf"],signal:"'Warum ich?', Neid auf Gesunde",reframe:"Dein Weg ist deiner.",steps:[{m:0,t:"Mit wem hast du dich zuletzt verglichen?"},{m:2,t:"Was genau hast du verglichen?"},{m:4,t:"Du siehst 5% von deren Leben."},{m:6,t:"3 Dinge die DU kannst oder hast."},{m:8,t:"'Ich vergleiche mich nur mit meinem gestrigen Ich.'"}]},
+uebergeneralisierung:{nr:13,name:"Übergeneralisierung",short:"Ein schlechter Tag = alles ist schlecht",desc:"Ein Rückschlag wird zum Gesamturteil.",zones:["Ganzer Körper"],signal:"'Immer', 'nie', 'jedes Mal'",reframe:"Ein schlechter Tag ist ein Tag. Nicht ein schlechtes Leben.",steps:[{m:0,t:"Was zieht dich heute runter?"},{m:2,t:"Ist es WIRKLICH 'immer' so?"},{m:4,t:"Ersetze 'immer' durch 'heute'."},{m:6,t:"1 guter Moment der letzten 7 Tage."},{m:8,t:"Morgen ist ein neuer Tag."}]},
+kontrollzwang:{nr:14,name:"Kontrollzwang",short:"Überkontrolle erzeugt Anspannung",desc:"Überkontrolle ist Stress — und Stress ist Schmerz.",zones:["Nacken","Schultern","Kiefer"],signal:"Rigide Routinen, Panik bei Abweichung",reframe:"Loslassen ist die wahre Stärke.",steps:[{m:0,t:"Was versuchst du zu kontrollieren?"},{m:2,t:"Liegt das in deiner Kontrolle?"},{m:4,t:"Wenn Nein: Fäuste öffnen, ausatmen."},{m:6,t:"Wenn Ja: Was ist die EINE Sache?"},{m:8,t:"Alles andere? Nicht jetzt. Atme."}]},
+somatisierung:{nr:15,name:"Somatisierung",short:"Psychischer Stress wird zu Körperschmerz",desc:"Dein Körper spricht, was dein Mund nicht sagt.",zones:["Unterer Rücken","Kopf","Bauch","Brust"],signal:"Schmerz bei Stress, keine organische Ursache",reframe:"Höre auf die Botschaft, nicht nur auf den Schmerz.",steps:[{m:0,t:"Was stresst dich am meisten? Konkret benennen."},{m:2,t:"Wo spürst du den Stress im Körper?"},{m:4,t:"'Ich höre dich. Was willst du mir sagen?'"},{m:6,t:"Schreibe die Antwort auf. Ohne Zensur."},{m:8,t:"Was müsstest du ändern, damit dein Körper aufhört zu schreien?"}]},
+opferrolle:{nr:16,name:"Opferrolle",short:"Du gibst alle Macht ab",desc:"Solange du in der Opferrolle bleibst, ändert sich nichts.",zones:["Ganzer Körper"],signal:"Schuldzuweisung, Passivität",reframe:"Du bist verantwortlich für deine Reaktion.",steps:[{m:0,t:"Wem gibst du die Schuld?"},{m:2,t:"Was könntest DU anders machen?"},{m:4,t:"EINE kleine Handlung in deiner Macht."},{m:6,t:"'Ich übernehme Verantwortung für ___.'"},{m:8,t:"Tu es. Jetzt."}]},
+zukunftsangst:{nr:17,name:"Zukunftsangst",short:"Angst vor schmerzhafter Zukunft",desc:"Die Zukunft existiert noch nicht — nur dieser Moment.",zones:["Brust","Bauch","Kopf"],signal:"'Was wenn es schlimmer wird?', Panikattacken",reframe:"Du bist nur für JETZT zuständig.",steps:[{m:0,t:"Welches Zukunftsszenario macht dir Angst?"},{m:2,t:"Wie wahrscheinlich ist es? (1–10)"},{m:4,t:"Was kannst du HEUTE tun?"},{m:6,t:"Spüre deine Füße auf dem Boden. Du bist hier."},{m:8,t:"'Ich handle heute.'"}]},
+sekundaerer_gewinn:{nr:18,name:"Sekundärer Krankheitsgewinn",short:"Schmerz hat unbewusste Vorteile",desc:"Aufmerksamkeit, Verantwortung abnehmen, Konflikte vermeiden.",zones:["Ganzer Körper"],signal:"Schmerz 'passt' immer wenn Anforderungen da sind",reframe:"Was verlierst du, wenn der Schmerz geht?",steps:[{m:0,t:"Der Schmerz wäre morgen weg. Was ändert sich?"},{m:3,t:"Was müsstest du dann tun?"},{m:5,t:"Gibt es etwas, das der Schmerz dir 'erspart'?"},{m:7,t:"Das ist Neurobiologie. Dein Gehirn schützt dich."},{m:9,t:"'Ich finde andere Wege, meine Bedürfnisse zu erfüllen.'"}]}
+};
+
+const keys=Object.keys(T);
+
+// === NAV ===
+function go(v){document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));document.getElementById('v-'+v).classList.add('active');window.scrollTo(0,0)}
+
+// === HOME LIST ===
+!function(){
+  let h='';
+  for(const k of keys){const t=T[k];
+    h+=`<div class="card" onclick="openProto('${k}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span class="card-nr">#${t.nr}</span>
+        <div class="card-title">${t.name}</div>
+        <div class="card-desc">${t.short}</div></div>
+        <span style="color:var(--accent);font-size:18px">→</span>
+      </div></div>`;
+  }
+  document.getElementById('home-list').innerHTML=h;
+}();
+
+// === SCAN ===
+function startScan(){
+  let h='';
+  for(const k of keys){const t=T[k];
+    h+=`<div class="scan-row">
+      <label>${t.name}</label>
+      <div class="hint">${t.signal}</div>
+      <input type="range" id="s-${k}" min="0" max="10" value="0" oninput="this.nextElementSibling.textContent=this.value">
+      <div class="scan-val">0</div></div>`;
+  }
+  document.getElementById('scan-items').innerHTML=h;
+  go('scan');
+}
+
+function evalScan(){
+  let res=[];
+  for(const k of keys){const v=+document.getElementById('s-'+k).value;if(v>0)res.push({k,v,t:T[k]})}
+  res.sort((a,b)=>b.v-a.v);
+  if(!res.length){alert('Bewerte mindestens eine Verzerrung.');return}
+  const top=res.slice(0,5);
+  const avg=(res.reduce((s,r)=>s+r.v,0)/res.length).toFixed(1);
+  const col=avg>=6?'var(--red)':avg>=3?'var(--accent)':'var(--green)';
+  let h=`<div style="text-align:center;padding:32px 0 16px">
+    <div style="font-size:48px;font-weight:800;color:${col}">${avg}</div>
+    <div style="font-size:12px;color:var(--muted)">Durchschnittliche Stärke</div></div><div class="divider"></div><div class="label">Deine stärksten Verzerrungen</div>`;
+  for(const r of top){
+    const c=r.v>=7?'var(--red)':r.v>=4?'var(--accent)':'var(--green)';
+    h+=`<div class="card" onclick="openProto('${r.k}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:${c};font-weight:700;font-size:20px">${r.v}/10</span>
+          <span style="font-weight:600;font-size:13px">${r.t.name}</span></div>
+        <span style="color:var(--accent)">→</span></div>
+      <div class="bar-bg"><div class="bar" style="width:${r.v*10}%;background:${c}"></div></div></div>`;
+  }
+  document.getElementById('result-out').innerHTML=h;
+  document.getElementById('result-go').onclick=()=>openProto(top[0].k);
+  go('result');
+}
+
+// === PROTOCOL ===
+let _step=0,_total=0,_timer=null,_sec=0;
+
+function openProto(k){
+  const t=T[k];if(!t)return;
+  _step=0;_total=t.steps.length;_sec=0;
+  const tags=t.zones.map(z=>`<span class="tag">${z}</span>`).join('');
+  let stepsH='';
+  for(let i=0;i<t.steps.length;i++){
+    stepsH+=`<div class="step" id="ps-${i}" ${i===0?'style="display:block"':''}>
+      <div class="step-min">Minute ${t.steps[i].m}</div>
+      <div class="step-text">${t.steps[i].t}</div></div>`;
+  }
+  document.getElementById('proto-out').innerHTML=`
+    <div class="label">Self-Treatment</div>
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:28px">${t.name}</h2>
+    <p style="font-size:13px;color:var(--muted);margin:6px 0 10px">${t.desc}</p>
+    <div>${tags}</div>
+    <div class="reframe"><span><b>Reframe:</b> ${t.reframe}</span></div>
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-size:12px;color:var(--muted)">Schritt <span id="pc">1</span>/${_total}</span>
+      <span id="pt" style="font-size:18px;font-weight:700;color:var(--accent)">00:00</span></div>
+    <div class="progress"><div class="progress-fill" id="pp" style="width:${100/_total}%"></div></div>
+    ${stepsH}
+    <div class="btn-grid" style="margin-top:14px" id="proto-nav">
+      <a class="btn" id="pb" onclick="pPrev()" style="opacity:.3;pointer-events:none">← Zurück</a>
+      <a class="btn btn-primary" id="pn" onclick="pNext()">Weiter →</a></div>
+    <div id="pdone" style="display:none;text-align:center;padding:24px 0">
+      <div style="font-size:40px">✅</div>
+      <h3 style="margin:12px 0">Protokoll abgeschlossen</h3>
+      <p style="font-size:13px;color:var(--muted)">Wiederhole es morgen.</p>
+      <a class="btn btn-primary" style="margin-top:16px" onclick="go('home')">← Zurück</a></div>
+    <div class="divider"></div>
+    <a class="btn btn-block" onclick="go('home')">← Alle Verzerrungen</a>`;
+  if(_timer)clearInterval(_timer);
+  _timer=setInterval(()=>{_sec++;const m=String(Math.floor(_sec/60)).padStart(2,'0'),s=String(_sec%60).padStart(2,'0');const e=document.getElementById('pt');if(e)e.textContent=m+':'+s},1000);
+  go('proto');
+}
+
+function pNext(){
+  if(_step>=_total-1){document.getElementById('proto-nav').style.display='none';document.getElementById('pdone').style.display='block';if(_timer)clearInterval(_timer);return}
+  document.getElementById('ps-'+_step).style.display='none';
+  _step++;
+  const el=document.getElementById('ps-'+_step);el.style.display='block';el.classList.add('active');
+  document.getElementById('pc').textContent=_step+1;
+  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
+  document.getElementById('pb').style.opacity='1';document.getElementById('pb').style.pointerEvents='auto';
+  if(_step>=_total-1)document.getElementById('pn').textContent='Abschließen ✓';
+}
+function pPrev(){
+  if(_step<=0)return;
+  document.getElementById('ps-'+_step).style.display='none';
+  _step--;
+  document.getElementById('ps-'+_step).style.display='block';
+  document.getElementById('pc').textContent=_step+1;
+  document.getElementById('pp').style.width=((_step+1)/_total*100)+'%';
+  document.getElementById('pn').textContent='Weiter →';
+  if(_step===0){document.getElementById('pb').style.opacity='.3';document.getElementById('pb').style.pointerEvents='none'}
+}
+</script>
+</body>
+</html>
