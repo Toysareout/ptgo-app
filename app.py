@@ -3900,3 +3900,353 @@ def mastery_today(request: Request, db=Depends(get_db)):
       </p>
     """
     return _page("PTGO • Heute", body, request=request)
+
+
+# =========================================================
+# MUSIC ANALYZER — 80er Rock Style Fusion Engine
+# =========================================================
+
+EIGHTIES_BANDS = {
+    "guns_n_roses": {
+        "name": "Guns N' Roses",
+        "era": "1985–1993",
+        "style": "Hard Rock / Blues Rock / Punk-infused Rock",
+        "traits": [
+            "Aggressive Riffs mit Blues-Bending (Slash)",
+            "Raw, emotionale Vocals mit großem Stimmumfang (Axl Rose)",
+            "Epische Song-Strukturen (November Rain, Estranged)",
+            "Punk-Energie trifft klassischen Rock",
+            "Storytelling-Texte über Straßenleben und Liebe",
+            "Doppel-Gitarren-Harmonien",
+            "Dynamik von leise/akustisch zu laut/verzerrrt",
+        ],
+        "key_songs": ["Welcome to the Jungle", "Sweet Child O' Mine", "Paradise City", "November Rain", "Patience"],
+    },
+    "def_leppard": {
+        "name": "Def Leppard",
+        "era": "1980–1992",
+        "style": "Arena Rock / Pop Metal / Glam Rock",
+        "traits": [
+            "Multi-layered Vocal-Harmonien",
+            "Hochglanz-Produktion (Mutt Lange)",
+            "Eingängige Hooks und Refrains",
+            "Gitarren-Riffs mit Pop-Sensibilität",
+            "Backing-Vocal-Walls",
+        ],
+        "key_songs": ["Pour Some Sugar on Me", "Hysteria", "Photograph", "Love Bites", "Rock of Ages"],
+    },
+    "bon_jovi": {
+        "name": "Bon Jovi",
+        "era": "1984–1992",
+        "style": "Arena Rock / Pop Rock / Heartland Rock",
+        "traits": [
+            "Anthemische Refrains zum Mitsingen",
+            "Motivierende, positive Texte",
+            "Akustik-Elemente in Hard Rock",
+            "Talk-Box-Gitarre (Richie Sambora)",
+            "Brücke zwischen Pop und Rock",
+        ],
+        "key_songs": ["Livin' on a Prayer", "You Give Love a Bad Name", "Wanted Dead or Alive", "Bad Medicine"],
+    },
+    "motley_crue": {
+        "name": "Mötley Crüe",
+        "era": "1981–1989",
+        "style": "Glam Metal / Heavy Metal / Sleaze Rock",
+        "traits": [
+            "Party-Rock-Attitude",
+            "Schwere, down-tuned Riffs",
+            "Provokante Texte und Image",
+            "Groovige Drum-Patterns (Tommy Lee)",
+            "Mischung aus Punk-Schnelligkeit und Metal-Schwere",
+        ],
+        "key_songs": ["Dr. Feelgood", "Girls, Girls, Girls", "Kickstart My Heart", "Home Sweet Home"],
+    },
+    "van_halen": {
+        "name": "Van Halen",
+        "era": "1978–1988",
+        "style": "Hard Rock / Heavy Metal / Pop Rock",
+        "traits": [
+            "Revolutionäres Tapping-Gitarrenspiel (Eddie Van Halen)",
+            "Virtuose Instrumentalpassagen",
+            "Fun-Rock mit Party-Vibes",
+            "Keyboard-Integration ab 1984",
+            "Energetische Live-Performance",
+        ],
+        "key_songs": ["Jump", "Panama", "Hot for Teacher", "Eruption", "Ain't Talkin' 'Bout Love"],
+    },
+    "ac_dc": {
+        "name": "AC/DC",
+        "era": "1973–heute",
+        "style": "Hard Rock / Blues Rock",
+        "traits": [
+            "Kompromisslos einfache, kraftvolle Riffs",
+            "Roh und direkt — keine Überproduktion",
+            "Boogie-Blues-Grundlage",
+            "Ikonische Gitarren-Sounds (Angus Young)",
+            "Call-and-Response Strukturen",
+        ],
+        "key_songs": ["Back in Black", "Highway to Hell", "Thunderstruck", "T.N.T.", "You Shook Me All Night Long"],
+    },
+    "metallica": {
+        "name": "Metallica",
+        "era": "1983–heute",
+        "style": "Thrash Metal / Heavy Metal",
+        "traits": [
+            "Komplexe Song-Strukturen",
+            "Down-Picking Technik (James Hetfield)",
+            "Progressive Arrangements",
+            "Dynamik von clean zu brutal heavy",
+            "Sozialkritische und introspektive Texte",
+        ],
+        "key_songs": ["Master of Puppets", "One", "Enter Sandman", "Fade to Black", "Nothing Else Matters"],
+    },
+    "iron_maiden": {
+        "name": "Iron Maiden",
+        "era": "1980–heute",
+        "style": "Heavy Metal / New Wave of British Heavy Metal",
+        "traits": [
+            "Galoppierende Bass-Lines (Steve Harris)",
+            "Doppel-Gitarren-Harmonien",
+            "Epische, literarische Texte",
+            "Operatische Vocals (Bruce Dickinson)",
+            "Progessive Song-Längen",
+        ],
+        "key_songs": ["The Trooper", "Run to the Hills", "Hallowed Be Thy Name", "Fear of the Dark", "Aces High"],
+    },
+}
+
+
+def _analyze_music_with_ai(song_links: List[str], selected_bands: List[str]) -> Dict[str, Any]:
+    """Use Claude AI to analyze songs and create a fusion with 80s rock styles."""
+    if not ANTHROPIC_API_KEY:
+        return {
+            "error": "Kein ANTHROPIC_API_KEY konfiguriert. AI-Analyse nicht verfügbar.",
+            "fusion_name": "",
+            "fusion_description": "",
+            "style_analysis": "",
+            "songwriting_tips": [],
+            "influences": [],
+        }
+
+    band_descriptions = []
+    for band_key in selected_bands:
+        band = EIGHTIES_BANDS.get(band_key)
+        if band:
+            band_descriptions.append(
+                f"**{band['name']}** ({band['era']}) — {band['style']}\n"
+                f"Traits: {', '.join(band['traits'])}\n"
+                f"Key Songs: {', '.join(band['key_songs'])}"
+            )
+
+    bands_text = "\n\n".join(band_descriptions) if band_descriptions else "Alle 80er Bands als Referenz."
+
+    links_text = "\n".join(f"- {link}" for link in song_links)
+
+    prompt = f"""Du bist ein Musikproduzent und Songwriter-Coach, spezialisiert auf Rock-Musik der 80er Jahre.
+
+Der Nutzer hat folgende Song-Links geteilt:
+{links_text}
+
+Er möchte seinen Sound mit folgenden 80er-Bands fusionieren:
+{bands_text}
+
+Bitte analysiere die Songs anhand der Links (Titel, Künstler, vermuteter Stil basierend auf den URLs/Titeln) und erstelle:
+
+1. **STYLE-ANALYSE**: Analysiere den vermuteten Stil der geteilten Songs (basierend auf Songtitel, Künstlername aus den URLs). Beschreibe Tempo, Energie, mögliche Instrumente, Stimmung.
+
+2. **FUSION-NAME**: Erfinde einen einzigartigen Genre-Namen für die Fusion des Nutzer-Stils mit den gewählten 80er-Bands (z.B. "Neon Thunder Rock", "Sunset Rebellion Metal").
+
+3. **FUSION-BESCHREIBUNG**: Beschreibe in 3-4 Sätzen wie dieser neue Fusion-Sound klingen würde. Sei kreativ und konkret.
+
+4. **SONGWRITING-TIPPS**: Gib 5 konkrete, umsetzbare Songwriting-Tipps, wie der Nutzer seinen Sound in Richtung dieser Fusion weiterentwickeln kann. Jeder Tipp soll eine konkrete Technik oder Übung enthalten.
+
+5. **EINFLUSS-MAP**: Liste die Top-3 spezifischen Elemente auf, die der Nutzer von jeder gewählten Band übernehmen sollte.
+
+Antworte NUR mit validem JSON (keine Erklärung davor/danach):
+{{
+  "style_analysis": "...",
+  "fusion_name": "...",
+  "fusion_description": "...",
+  "songwriting_tips": ["Tipp 1", "Tipp 2", "Tipp 3", "Tipp 4", "Tipp 5"],
+  "influences": [
+    {{"band": "Bandname", "elements": ["Element 1", "Element 2", "Element 3"]}}
+  ]
+}}
+"""
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-haiku-4-5",
+                "max_tokens": 2000,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        text = resp.json()["content"][0]["text"].strip()
+        text = text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
+    except Exception as e:
+        print(f"[WARN] Music AI analysis failed: {e}")
+        return {
+            "error": f"AI-Analyse fehlgeschlagen: {e}",
+            "fusion_name": "",
+            "fusion_description": "",
+            "style_analysis": "",
+            "songwriting_tips": [],
+            "influences": [],
+        }
+
+
+@app.get("/music", response_class=HTMLResponse)
+async def music_analyzer_page(request: Request):
+    """Music Analyzer — Hauptseite mit Link-Eingabe und Band-Auswahl."""
+    band_cards = ""
+    for key, band in EIGHTIES_BANDS.items():
+        songs = ", ".join(band["key_songs"][:3])
+        band_cards += f"""
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer;background:rgba(255,255,255,.02);">
+          <input type="checkbox" name="bands" value="{key}" style="width:auto;margin-top:4px;"
+                 {"checked" if key == "guns_n_roses" else ""}>
+          <div>
+            <b style="color:#f3f4f6">{band['name']}</b>
+            <span class="small"> — {band['style']}</span><br>
+            <span class="small">{songs}</span>
+          </div>
+        </label>
+        """
+
+    body = f"""
+      <h1>🎸 Music Analyzer</h1>
+      <p>Lade deine Songs (Spotify/YouTube Links) und lass deinen Sound mit den größten 80er-Bands fusionieren.</p>
+      <div class="hr"></div>
+
+      <form method="post" action="/music/analyze">
+        <h2>Deine Songs</h2>
+        <p class="small">Füge Spotify- oder YouTube-Links ein (ein Link pro Zeile)</p>
+        <textarea name="song_links" rows="6" placeholder="https://open.spotify.com/track/...&#10;https://www.youtube.com/watch?v=...&#10;https://open.spotify.com/track/..." style="font-size:14px;"></textarea>
+
+        <div class="hr"></div>
+
+        <h2>80er Bands für Fusion</h2>
+        <p class="small">Wähle die Bands aus, mit denen dein Sound fusioniert werden soll</p>
+        {band_cards}
+
+        <div style="height:12px"></div>
+        <button type="submit">🔥 Sound analysieren & fusionieren</button>
+      </form>
+
+      <div style="height:20px"></div>
+      <p class="small" style="text-align:center">Powered by PTGO • AI Music Engine</p>
+    """
+    return _page("Music Analyzer — 80er Rock Fusion", body, request=request)
+
+
+@app.post("/music/analyze", response_class=HTMLResponse)
+async def music_analyze(request: Request, song_links: str = Form(""), bands: List[str] = Form([])):
+    """Analyze submitted songs and generate fusion results."""
+    links = [l.strip() for l in song_links.strip().split("\n") if l.strip()]
+
+    if not links:
+        body = """
+          <h1>⚠️ Keine Songs</h1>
+          <p>Bitte füge mindestens einen Spotify- oder YouTube-Link ein.</p>
+          <a href="/music" class="btn" style="display:inline-block;margin-top:16px;">← Zurück</a>
+        """
+        return _page("Music Analyzer", body, request=request)
+
+    if not bands:
+        bands = list(EIGHTIES_BANDS.keys())
+
+    result = _analyze_music_with_ai(links, bands)
+
+    if result.get("error"):
+        error_body = f"""
+          <h1>⚠️ Analyse-Fehler</h1>
+          <p>{result['error']}</p>
+          <a href="/music" class="btn" style="display:inline-block;margin-top:16px;">← Zurück</a>
+        """
+        return _page("Music Analyzer", error_body, request=request)
+
+    # Build influence map HTML
+    influences_html = ""
+    for inf in result.get("influences", []):
+        elements = "".join(f"<li>{e}</li>" for e in inf.get("elements", []))
+        influences_html += f"""
+        <div style="border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.02);">
+          <b style="color:#f59e0b">{inf.get('band', '')}</b>
+          <ul style="margin:8px 0 0;padding-left:20px;color:var(--muted)">{elements}</ul>
+        </div>
+        """
+
+    # Build tips HTML
+    tips_html = ""
+    for i, tip in enumerate(result.get("songwriting_tips", []), 1):
+        tips_html += f"""
+        <div style="border:1px solid rgba(245,158,11,.3);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(245,158,11,.05);">
+          <b style="color:#f59e0b">Tipp {i}</b>
+          <p style="margin:6px 0 0">{tip}</p>
+        </div>
+        """
+
+    # Build links display
+    links_display = "".join(
+        f'<div class="tag" style="margin-bottom:4px;word-break:break-all;">{l[:60]}{"..." if len(l) > 60 else ""}</div><br>'
+        for l in links
+    )
+
+    # Selected bands display
+    selected_bands_display = " ".join(
+        f'<span class="pattern-tag">{EIGHTIES_BANDS[b]["name"]}</span>'
+        for b in bands if b in EIGHTIES_BANDS
+    )
+
+    body = f"""
+      <h1>🎸 {result.get('fusion_name', 'Dein neuer Sound')}</h1>
+      <p style="color:#f59e0b;font-size:18px;font-weight:600">{result.get('fusion_description', '')}</p>
+
+      <div class="hr"></div>
+
+      <div style="margin-bottom:12px">
+        <span class="small">Analysierte Songs:</span><br>
+        {links_display}
+      </div>
+      <div style="margin-bottom:12px">
+        <span class="small">Fusioniert mit:</span><br>
+        {selected_bands_display}
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>🎵 Style-Analyse</h2>
+      <div class="card" style="margin-bottom:16px;">
+        <p>{result.get('style_analysis', 'Keine Analyse verfügbar.')}</p>
+      </div>
+
+      <h2>🔥 Songwriting-Tipps</h2>
+      {tips_html}
+
+      <div class="hr"></div>
+
+      <h2>🎯 Einfluss-Map</h2>
+      <p class="small">Übernimm diese Elemente von jeder Band:</p>
+      {influences_html}
+
+      <div class="hr"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <a href="/music" class="btn btn-outline" style="text-align:center;">← Neue Analyse</a>
+        <a href="/" class="btn btn-outline" style="text-align:center;">Home</a>
+      </div>
+
+      <div style="height:20px"></div>
+      <p class="small" style="text-align:center">Powered by PTGO • AI Music Engine</p>
+    """
+    return _page(f"Music Fusion — {result.get('fusion_name', 'Ergebnis')}", body, request=request)
