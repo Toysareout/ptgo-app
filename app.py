@@ -4250,3 +4250,1106 @@ async def music_analyze(request: Request, song_links: str = Form(""), bands: Lis
       <p class="small" style="text-align:center">Powered by PTGO • AI Music Engine</p>
     """
     return _page(f"Music Fusion — {result.get('fusion_name', 'Ergebnis')}", body, request=request)
+
+
+# =========================================================
+# ZEIS PROTOCOL — 18 Schmerzverzerrungen & Self-Treatment
+# =========================================================
+
+ZEIS_TYPES = {
+    "katastrophisieren": {
+        "nr": 1,
+        "name": "Katastrophisieren",
+        "short": "Schmerz wird zur Katastrophe aufgeblasen",
+        "desc": "Du erwartest immer das Schlimmste. Ein leichtes Ziehen wird in deinem Kopf zum Bandscheibenvorfall. Dein Nervensystem lernt: Gefahr ist überall.",
+        "body_zones": ["kopf", "nacken", "unterer_ruecken"],
+        "signal": "Gedanken wie: 'Das wird nie aufhören', 'Da ist bestimmt was Schlimmes'",
+        "reframe": "Schmerz ist ein Signal, keine Diagnose. Die meisten Schmerzen sind vorübergehend und ungefährlich.",
+        "protocol": [
+            {"min": 0, "text": "Setz dich hin. Atme 3× tief. Benenne den Schmerz auf einer Skala 1–10."},
+            {"min": 2, "text": "Frage dich: Was ist die wahrscheinlichste Erklärung? Nicht die schlimmste."},
+            {"min": 4, "text": "Erinnere dich: Wie oft hattest du diesen Schmerz schon — und er ging weg?"},
+            {"min": 6, "text": "Lege eine Hand auf die schmerzende Stelle. Sage: 'Ich bin sicher. Das geht vorbei.'"},
+            {"min": 8, "text": "Bewege dich sanft. Steh auf, gehe 10 Schritte. Dein Körper ist belastbar."},
+        ],
+    },
+    "hypervigilanz": {
+        "nr": 2,
+        "name": "Hypervigilanz",
+        "short": "Ständige Körperbeobachtung verstärkt Schmerz",
+        "desc": "Du scannst deinen Körper permanent nach Signalen. Jedes Zwicken wird registriert, analysiert, bewertet. Das Nervensystem bleibt im Alarmmodus.",
+        "body_zones": ["kopf", "brust", "bauch"],
+        "signal": "Ständiges 'Reinspüren', Angst vor neuen Symptomen, Gesundheits-Googlen",
+        "reframe": "Aufmerksamkeit verstärkt Empfindung. Weniger Beobachten = weniger Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Erkenne den Scan-Modus: 'Ich beobachte gerade meinen Körper zu stark.'"},
+            {"min": 2, "text": "Lenke die Aufmerksamkeit nach außen: Benenne 5 Dinge die du siehst."},
+            {"min": 4, "text": "4 Dinge die du hörst. 3 die du fühlst (Oberfläche, nicht innen)."},
+            {"min": 6, "text": "Gib dir eine Aufgabe: Räume etwas auf, schreibe eine Nachricht, koche."},
+            {"min": 8, "text": "Vereinbare mit dir: Nächster Body-Check erst in 2 Stunden. Timer stellen."},
+        ],
+    },
+    "bewegungsangst": {
+        "nr": 3,
+        "name": "Bewegungsangst (Kinesiophobie)",
+        "short": "Angst vor Bewegung führt zu mehr Schmerz",
+        "desc": "Du vermeidest Bewegung aus Angst, dir zu schaden. Aber Inaktivität schwächt Muskeln, versteift Gelenke und macht dich empfindlicher.",
+        "body_zones": ["unterer_ruecken", "knie", "schulter"],
+        "signal": "Vermeidung von Sport, Treppen, Heben. Gedanken: 'Das macht es schlimmer'",
+        "reframe": "Bewegung ist Medizin. Dein Körper ist für Bewegung gebaut, nicht für Stillstand.",
+        "protocol": [
+            {"min": 0, "text": "Steh auf. Jetzt. Keine Diskussion mit dem Kopf."},
+            {"min": 1, "text": "Hebe die Arme über den Kopf. Halte 10 Sekunden. Spüre die Kraft."},
+            {"min": 3, "text": "Mache 5 sanfte Kniebeugen. Langsam. Dein Körper hält das aus."},
+            {"min": 5, "text": "Gehe 2 Minuten durch den Raum. Spüre den Boden unter den Füßen."},
+            {"min": 8, "text": "Notiere: Was war so schlimm? Meistens: nichts. Bewegung = Sicherheit."},
+        ],
+    },
+    "schmerz_identitaet": {
+        "nr": 4,
+        "name": "Schmerzidentität",
+        "short": "Schmerz wird Teil deiner Identität",
+        "desc": "Du definierst dich über deinen Schmerz: 'Ich bin Schmerzpatient.' Das zementiert neuronale Muster und macht Heilung schwerer.",
+        "body_zones": ["kopf", "unterer_ruecken", "ganzer_koerper"],
+        "signal": "'Ich habe schon immer...', 'Bei mir ist das chronisch', Diagnosen als Identität",
+        "reframe": "Du HAST Schmerz, du BIST nicht dein Schmerz. Dein Gehirn kann umlernen.",
+        "protocol": [
+            {"min": 0, "text": "Schreibe auf: Wie beschreibst du dich selbst? Welche Rolle spielt Schmerz darin?"},
+            {"min": 3, "text": "Streiche Sätze mit 'immer', 'nie', 'chronisch'. Ersetze durch 'gerade', 'aktuell'."},
+            {"min": 5, "text": "Schreibe 3 Sätze über dich OHNE Schmerz. Wer bist du sonst noch?"},
+            {"min": 7, "text": "Neuer Satz: 'Ich bin jemand, der lernt, anders mit Empfindungen umzugehen.'"},
+            {"min": 9, "text": "Lies dir alle 3 Sätze laut vor. Das ist der neue Grundton."},
+        ],
+    },
+    "emotionale_unterdrückung": {
+        "nr": 5,
+        "name": "Emotionale Unterdrückung",
+        "short": "Unterdrückte Emotionen werden zu Körperschmerz",
+        "desc": "Was du nicht fühlen willst, fühlt dein Körper. Wut, Trauer, Scham — sie suchen sich einen Ausweg. Oft als Rücken-, Nacken- oder Bauchschmerz.",
+        "body_zones": ["nacken", "unterer_ruecken", "bauch", "schulter"],
+        "signal": "Schmerz ohne klare Ursache, verstärkt bei Stress, nach Konflikten",
+        "reframe": "Dein Körper speichert, was du nicht aussprichst. Fühlen ist der Weg zur Auflösung.",
+        "protocol": [
+            {"min": 0, "text": "Setz dich still hin. Schließe die Augen. Frage: Was fühle ich WIRKLICH gerade?"},
+            {"min": 2, "text": "Benenne die Emotion. Nicht den Schmerz — die Emotion dahinter. Wut? Trauer? Angst?"},
+            {"min": 4, "text": "Wo sitzt diese Emotion im Körper? Lege die Hand dorthin."},
+            {"min": 6, "text": "Sage laut: 'Ich erlaube mir, das zu fühlen. Es ist sicher.'"},
+            {"min": 8, "text": "Atme 5× tief in diese Stelle. Lass zu, was kommt. Auch Tränen."},
+        ],
+    },
+    "schwarz_weiss": {
+        "nr": 6,
+        "name": "Schwarz-Weiß-Denken",
+        "short": "Entweder schmerzfrei oder kaputt — kein Dazwischen",
+        "desc": "Du kennst nur 0 oder 100. Entweder geht es dir gut oder du bist 'am Ende'. Nuancen gehen verloren — und damit die Fähigkeit, Fortschritt zu sehen.",
+        "body_zones": ["kopf", "ganzer_koerper"],
+        "signal": "'Es bringt nichts', 'Entweder ganz oder gar nicht', Aufgeben bei Rückschlägen",
+        "reframe": "Heilung ist ein Spektrum. 10% besser ist besser. Jeder kleine Schritt zählt.",
+        "protocol": [
+            {"min": 0, "text": "Wie geht es dir gerade? Nicht 'gut' oder 'schlecht'. Gib eine Zahl: 1–10."},
+            {"min": 2, "text": "Vergleiche mit letzter Woche. Gibt es einen Unterschied — egal wie klein?"},
+            {"min": 4, "text": "Schreibe 3 Dinge auf, die heute besser sind als vor einem Monat."},
+            {"min": 6, "text": "Erkenne: Perfekt gibt es nicht. 'Gut genug' ist das Ziel."},
+            {"min": 8, "text": "Neuer Satz: 'Ich bin auf dem Weg. Nicht am Ziel — und das ist okay.'"},
+        ],
+    },
+    "nocebo": {
+        "nr": 7,
+        "name": "Nocebo-Effekt",
+        "short": "Negative Erwartung erzeugt echten Schmerz",
+        "desc": "Wenn du erwartest, dass etwas wehtut, tut es weh. Dein Gehirn produziert Schmerz auf Basis von Erwartung, nicht von Gewebeschaden.",
+        "body_zones": ["kopf", "unterer_ruecken", "nacken"],
+        "signal": "Schmerz bei bestimmten Bewegungen die 'angeblich' gefährlich sind, Angst vor dem MRT-Befund",
+        "reframe": "Erwartung formt Erfahrung. Ändere die Erwartung — ändere den Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Welche Bewegung oder Situation erwartest du als schmerzhaft? Benenne sie."},
+            {"min": 2, "text": "Frage: Woher kommt diese Erwartung? Arzt? Google? Eigene Erfahrung?"},
+            {"min": 4, "text": "Neues Experiment: Führe die Bewegung langsam aus. Beobachte ohne Urteil."},
+            {"min": 6, "text": "War es so schlimm wie erwartet? Meistens: Nein."},
+            {"min": 8, "text": "Wiederhole morgen. Erwartung umschreiben: 'Es könnte auch leicht gehen.'"},
+        ],
+    },
+    "hilflosigkeit": {
+        "nr": 8,
+        "name": "Erlernte Hilflosigkeit",
+        "short": "Glaube, dass nichts hilft — also tust du nichts",
+        "desc": "Du hast so oft gehört 'damit müssen Sie leben', dass du es glaubst. Aber dein Nervensystem ist plastisch. Es kann umlernen.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Nichts hilft', 'Ich habe alles versucht', passive Haltung, Therapie-Hopping",
+        "reframe": "Du bist nicht hilflos. Du hast nur noch nicht den richtigen Hebel gefunden.",
+        "protocol": [
+            {"min": 0, "text": "Schreibe eine Liste: Was hast du alles schon versucht?"},
+            {"min": 3, "text": "Markiere ehrlich: Was davon hast du wirklich konsequent durchgezogen (>4 Wochen)?"},
+            {"min": 5, "text": "Wähle EINE Sache, die du ab heute 21 Tage durchziehst. Nur eine."},
+            {"min": 7, "text": "Plane konkret: Wann? Wo? Wie lange? Schreibe es auf."},
+            {"min": 9, "text": "Starte JETZT. Nicht morgen. Die erste Minute zählt am meisten."},
+        ],
+    },
+    "soziale_isolation": {
+        "nr": 9,
+        "name": "Soziale Isolation",
+        "short": "Rückzug verstärkt Schmerz und Depression",
+        "desc": "Schmerz macht einsam. Du sagst Treffen ab, bleibst zuhause, ziehst dich zurück. Aber Isolation verstärkt Schmerz — soziale Verbindung lindert ihn.",
+        "body_zones": ["brust", "bauch", "kopf"],
+        "signal": "Absagen, Rückzug, 'Die verstehen das nicht', Einsamkeitsgefühl",
+        "reframe": "Verbindung ist ein Schmerzmittel. Menschen in deiner Nähe aktivieren dein Sicherheitssystem.",
+        "protocol": [
+            {"min": 0, "text": "Wem hast du zuletzt abgesagt? Schreibe den Namen auf."},
+            {"min": 2, "text": "Schreibe dieser Person JETZT eine kurze Nachricht. Nur ein 'Hey, wie geht's?'"},
+            {"min": 4, "text": "Plane ein Treffen diese Woche. Kurz reicht. 30 Minuten Kaffee."},
+            {"min": 6, "text": "Bereite einen Satz vor: 'Mir geht es gerade nicht so gut, aber ich bin froh, hier zu sein.'"},
+            {"min": 8, "text": "Erlaube dir, nicht zu funktionieren. Einfach DA sein ist genug."},
+        ],
+    },
+    "perfektionismus": {
+        "nr": 10,
+        "name": "Schmerz-Perfektionismus",
+        "short": "Alles muss perfekt sein — auch die Heilung",
+        "desc": "Du willst den perfekten Therapeuten, die perfekte Übung, das perfekte Protokoll. Aber Perfektionismus ist Vermeidung in Verkleidung.",
+        "body_zones": ["nacken", "schulter", "kopf"],
+        "signal": "'Erst wenn ich den richtigen Arzt finde', endloses Recherchieren, nie anfangen",
+        "reframe": "Unperfektes Handeln schlägt perfektes Planen. Starte mit 'gut genug'.",
+        "protocol": [
+            {"min": 0, "text": "Was schiebst du auf, weil es 'noch nicht perfekt' ist?"},
+            {"min": 2, "text": "Mache es jetzt — aber nur zu 70%. Bewusst unperfekt."},
+            {"min": 4, "text": "Beobachte: Passiert etwas Schlimmes? Meistens: Nein."},
+            {"min": 6, "text": "Schreibe auf: 'Done is better than perfect.'"},
+            {"min": 8, "text": "Wiederhole morgen. Perfektionismus ist ein Muskel, der durch Nicht-Benutzen schrumpft."},
+        ],
+    },
+    "gedankenkreisen": {
+        "nr": 11,
+        "name": "Gedankenkreisen (Rumination)",
+        "short": "Endlosschleife von Schmerzgedanken",
+        "desc": "Dein Kopf dreht sich im Kreis: Warum ich? Was wenn? Was habe ich falsch gemacht? Rumination hält dein Nervensystem im Schmerzmodus.",
+        "body_zones": ["kopf", "nacken", "brust"],
+        "signal": "Grübeln, Schlafprobleme, gleiche Gedanken immer wieder, 'Was wenn...'",
+        "reframe": "Gedanken sind keine Fakten. Du kannst die Schleife unterbrechen.",
+        "protocol": [
+            {"min": 0, "text": "Erkenne die Schleife: 'Ich grüble gerade.' Sage es laut."},
+            {"min": 1, "text": "Steh auf. Bewege dich. Wasche dir die Hände mit kaltem Wasser."},
+            {"min": 3, "text": "Zähle rückwärts von 100 in 7er-Schritten: 100, 93, 86..."},
+            {"min": 5, "text": "Dein Gehirn kann nicht gleichzeitig rechnen UND grübeln."},
+            {"min": 7, "text": "Schreibe den Grübel-Gedanken auf Papier. Einmal. Dann weg damit. Er ist raus."},
+        ],
+    },
+    "vergleich": {
+        "nr": 12,
+        "name": "Sozialer Vergleich",
+        "short": "Andere haben es leichter — du hast Pech",
+        "desc": "Du vergleichst dich mit Gesunden und fühlst dich benachteiligt. Oder mit anderen Schmerzpatienten — und dir geht es 'noch schlimmer'.",
+        "body_zones": ["brust", "kopf"],
+        "signal": "'Warum ich?', Neid auf Gesunde, Social-Media-Vermeidung oder -Sucht",
+        "reframe": "Dein Weg ist deiner. Vergleich stiehlt Energie, die du für Heilung brauchst.",
+        "protocol": [
+            {"min": 0, "text": "Wann hast du dich zuletzt mit jemandem verglichen? Wer war es?"},
+            {"min": 2, "text": "Was genau hast du verglichen? Gesundheit? Erfolg? Lebensfreude?"},
+            {"min": 4, "text": "Du siehst 5% von deren Leben. Die anderen 95% kennst du nicht."},
+            {"min": 6, "text": "Schreibe 3 Dinge auf, die DU kannst oder hast, trotz allem."},
+            {"min": 8, "text": "Neuer Fokus: 'Ich vergleiche mich nur mit meinem gestrigen Ich.'"},
+        ],
+    },
+    "uebergeneralisierung": {
+        "nr": 13,
+        "name": "Übergeneralisierung",
+        "short": "Ein schlechter Tag = alles ist schlecht",
+        "desc": "Ein Rückfall, ein schlechter Tag — und du schließt: 'Es wird nie besser.' Ein einzelnes Ereignis wird zum Gesamturteil.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Immer', 'nie', 'jedes Mal', Rückschlag = Beweis für Hoffnungslosigkeit",
+        "reframe": "Ein schlechter Tag ist ein schlechter Tag. Nicht ein schlechtes Leben.",
+        "protocol": [
+            {"min": 0, "text": "Was ist heute passiert, das dich runterzieht?"},
+            {"min": 2, "text": "Ist es WIRKLICH 'immer' so? Oder gab es auch gute Tage letzte Woche?"},
+            {"min": 4, "text": "Ersetze 'immer' durch 'heute'. Ersetze 'nie' durch 'gerade nicht'."},
+            {"min": 6, "text": "Schreibe 1 guten Moment der letzten 7 Tage auf. Er existiert."},
+            {"min": 8, "text": "Morgen ist ein neuer Tag. Dieser hier definiert nicht alle anderen."},
+        ],
+    },
+    "kontrollzwang": {
+        "nr": 14,
+        "name": "Kontrollzwang",
+        "short": "Der Versuch, alles zu kontrollieren, erzeugt Anspannung",
+        "desc": "Du willst jede Variable kontrollieren: Ernährung, Schlaf, Haltung, Temperatur. Aber Überkontrolle ist Stress — und Stress ist Schmerz.",
+        "body_zones": ["nacken", "schulter", "kiefer"],
+        "signal": "Rigide Routinen, Panik bei Abweichung, ständiges Optimieren",
+        "reframe": "Kontrolle ist eine Illusion. Loslassen ist die wahre Stärke.",
+        "protocol": [
+            {"min": 0, "text": "Was versuchst du gerade zu kontrollieren? Schreibe es auf."},
+            {"min": 2, "text": "Frage: Liegt das in meiner Kontrolle? Ja oder Nein?"},
+            {"min": 4, "text": "Wenn Nein: Lass es los. Buchstäblich — öffne die Fäuste, atme aus."},
+            {"min": 6, "text": "Wenn Ja: Was ist die EINE Sache, die du tun kannst? Nur eine."},
+            {"min": 8, "text": "Alles andere? Nicht dein Problem. Nicht jetzt. Atme."},
+        ],
+    },
+    "somatisierung": {
+        "nr": 15,
+        "name": "Somatisierung",
+        "short": "Psychischer Stress wird zu körperlichem Schmerz",
+        "desc": "Dein Körper spricht, was dein Mund nicht sagt. Stress bei der Arbeit? Rückenschmerz. Beziehungsprobleme? Migräne. Das ist kein Einbildung — es ist Neurobiologie.",
+        "body_zones": ["unterer_ruecken", "kopf", "bauch", "brust"],
+        "signal": "Schmerz bei Stress, keine organische Ursache, wechselnde Symptome",
+        "reframe": "Dein Körper ist ehrlicher als dein Kopf. Höre auf die Botschaft, nicht nur auf den Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Was stresst dich gerade am meisten? Benenne es konkret."},
+            {"min": 2, "text": "Wo spürst du diesen Stress im Körper? Zeige mit der Hand hin."},
+            {"min": 4, "text": "Sage zum Schmerz: 'Ich höre dich. Was willst du mir sagen?'"},
+            {"min": 6, "text": "Schreibe die Antwort auf, die kommt. Ohne Zensur."},
+            {"min": 8, "text": "Was müsstest du im Leben ändern, damit dein Körper aufhört zu schreien?"},
+        ],
+    },
+    "opferrolle": {
+        "nr": 16,
+        "name": "Opferrolle",
+        "short": "Das Schicksal ist schuld — du kannst nichts tun",
+        "desc": "Du fühlst dich als Opfer deines Körpers, der Ärzte, des Systems. Aber solange du in der Opferrolle bleibst, gibst du alle Macht ab.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Mir passiert immer alles', Schuldzuweisung an andere, Passivität",
+        "reframe": "Du bist nicht verantwortlich für den Schmerz. Aber für deine Reaktion darauf.",
+        "protocol": [
+            {"min": 0, "text": "Wem oder was gibst du gerade die Schuld? Schreibe es auf."},
+            {"min": 2, "text": "Jetzt die harte Frage: Was könntest DU anders machen?"},
+            {"min": 4, "text": "Nicht alles — nur EINE Sache. Eine kleine Handlung, die in deiner Macht liegt."},
+            {"min": 6, "text": "Schreibe: 'Ich übernehme Verantwortung für ___.'"},
+            {"min": 8, "text": "Tu es. Jetzt. Nicht morgen. Verantwortung beginnt mit Handlung."},
+        ],
+    },
+    "zukunftsangst": {
+        "nr": 17,
+        "name": "Zukunftsangst",
+        "short": "Angst vor einer schmerzhaften Zukunft",
+        "desc": "Du malst dir eine Zukunft voller Schmerz aus. Rollstuhl, Pflegefall, Arbeitsunfähigkeit. Aber die Zukunft existiert noch nicht — nur dieser Moment.",
+        "body_zones": ["brust", "bauch", "kopf"],
+        "signal": "'Was wenn es schlimmer wird?', Schlafstörungen, Panikattacken, Zukunftsszenarien",
+        "reframe": "Die Zukunft ist nicht geschrieben. Du bist nur für JETZT zuständig.",
+        "protocol": [
+            {"min": 0, "text": "Welches Zukunftsszenario macht dir am meisten Angst? Schreibe es auf."},
+            {"min": 2, "text": "Wie wahrscheinlich ist es wirklich? Auf einer Skala 1–10."},
+            {"min": 4, "text": "Was kannst du HEUTE tun, damit es weniger wahrscheinlich wird?"},
+            {"min": 6, "text": "Komm zurück ins Jetzt: Spüre deine Füße auf dem Boden. Du bist hier. Jetzt."},
+            {"min": 8, "text": "Neuer Satz: 'Ich handle heute. Die Zukunft kümmere ich mich, wenn sie da ist.'"},
+        ],
+    },
+    "sekundaerer_gewinn": {
+        "nr": 18,
+        "name": "Sekundärer Krankheitsgewinn",
+        "short": "Schmerz hat auch Vorteile — unbewusst",
+        "desc": "Schmerz kann Aufmerksamkeit bringen, Verantwortung abnehmen, Konflikte vermeiden. Solange der Gewinn bleibt, bleibt der Schmerz.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "Schmerz 'passt' immer, wenn Anforderungen da sind. Besserung macht Angst.",
+        "reframe": "Ehrlichkeit mit dir selbst ist der erste Schritt. Was verlierst du, wenn der Schmerz geht?",
+        "protocol": [
+            {"min": 0, "text": "Stell dir vor, der Schmerz wäre morgen weg. Komplett. Was ändert sich?"},
+            {"min": 3, "text": "Was müsstest du dann tun, was du jetzt nicht tun musst?"},
+            {"min": 5, "text": "Sei ehrlich: Gibt es etwas, das der Schmerz dir 'erspart'?"},
+            {"min": 7, "text": "Das ist kein Vorwurf. Es ist Neurobiologie. Dein Gehirn schützt dich."},
+            {"min": 9, "text": "Neuer Deal mit dir selbst: 'Ich finde andere Wege, meine Bedürfnisse zu erfüllen.'"},
+        ],
+    },
+}
+
+ZEIS_MASTERCLASS = [
+    {
+        "nr": 1,
+        "title": "Was Schmerz wirklich ist",
+        "subtitle": "Neurowissenschaft für Nicht-Nerds",
+        "content": """Schmerz entsteht im Gehirn, nicht im Gewebe. Das ist keine Meinung — das ist Neurowissenschaft.
+
+Dein Gehirn bewertet ständig: Ist diese Empfindung gefährlich? Wenn ja, produziert es Schmerz. Wenn nein, ignoriert es das Signal. Deshalb kann ein Soldat im Krieg mit gebrochenem Bein weiterlaufen — und du vor Rückenschmerz nicht mehr aufstehen kannst, obwohl dein MRT normal ist.
+
+**Die 3 Schlüssel-Erkenntnisse:**
+
+1. **Schmerz ≠ Schaden.** 85% aller Rückenschmerzen haben keine strukturelle Ursache.
+2. **Dein Nervensystem lernt Schmerz.** Wie ein Musiker sein Instrument — durch Wiederholung. Je öfter du Schmerz erlebst, desto besser wird dein Gehirn darin.
+3. **Was gelernt wurde, kann umgelernt werden.** Neuroplastizität ist real. Dein Gehirn kann neue Pfade bilden.""",
+    },
+    {
+        "nr": 2,
+        "title": "Die 18 Schmerzverzerrungen",
+        "subtitle": "Warum dein Kopf den Schmerz verstärkt",
+        "content": """Kognitive Verzerrungen sind Denkfehler, die Schmerz verstärken. Sie sind nicht deine Schuld — sie sind evolutionär. Aber du kannst sie erkennen und entschärfen.
+
+**Die 5 häufigsten:**
+- **Katastrophisieren:** Das Schlimmste erwarten
+- **Hypervigilanz:** Ständig den Körper scannen
+- **Schwarz-Weiß:** Entweder gesund oder kaputt
+- **Hilflosigkeit:** Glauben, dass nichts hilft
+- **Nocebo:** Negative Erwartung erzeugt echten Schmerz
+
+Im ZEIS-Scan findest du heraus, welche Verzerrungen bei DIR am stärksten sind. Erst wenn du den Feind kennst, kannst du ihn besiegen.""",
+    },
+    {
+        "nr": 3,
+        "title": "Der Body-Mind-Loop",
+        "subtitle": "Wie Körper und Geist sich gegenseitig triggern",
+        "content": """Schmerz ist nie nur körperlich oder nur psychisch. Er ist ein Loop:
+
+**Gedanke** → Stress → Muskelspannung → **Schmerz** → Angst → mehr Stress → mehr Spannung → **mehr Schmerz**
+
+Der Loop läuft automatisch. Aber du kannst ihn an JEDER Stelle unterbrechen:
+
+1. **Am Gedanken:** Reframing (Verzerrung erkennen und umdeuten)
+2. **Am Stress:** Atemtechniken, Vagusnerv-Stimulation
+3. **An der Spannung:** Bewegung, progressive Muskelrelaxation
+4. **Am Schmerz:** Graded Exposure, Desensibilisierung
+5. **An der Angst:** Sicherheitssignale, soziale Verbindung
+
+Du brauchst nicht alle 5. Du brauchst nur EINEN Hebel, der für dich funktioniert.""",
+    },
+    {
+        "nr": 4,
+        "title": "Dein Nervensystem verstehen",
+        "subtitle": "Sympathikus, Parasympathikus und der Vagusnerv",
+        "content": """Dein autonomes Nervensystem hat zwei Modi:
+
+**Sympathikus (Gas):** Kampf, Flucht, Anspannung. Schmerz verstärkt.
+**Parasympathikus (Bremse):** Ruhe, Verdauung, Heilung. Schmerz gelindert.
+
+Der **Vagusnerv** ist dein direkter Zugang zum Parasympathikus. Er verläuft vom Hirnstamm durch Hals und Brust bis in den Bauch.
+
+**Vagusnerv aktivieren — sofort:**
+- Kaltes Wasser ins Gesicht (Tauchreflex)
+- Langes Ausatmen (länger als Einatmen)
+- Summen oder Singen (Vibration am Kehlkopf)
+- Soziale Verbindung (Blickkontakt, Umarmung)
+
+Wenn dein Vagus aktiv ist, kann dein Körper heilen. Wenn nicht, bleibt er im Alarmmodus.""",
+    },
+    {
+        "nr": 5,
+        "title": "Graded Exposure",
+        "subtitle": "Schrittweise zurück ins Leben",
+        "content": """Vermeidung macht Schmerz stärker. Graded Exposure ist das Gegenmittel.
+
+**Prinzip:** Du setzt dich den gefürchteten Bewegungen/Situationen schrittweise aus. Nicht alles auf einmal. Nicht heroisch. Systematisch.
+
+**Beispiel Rückenschmerz:**
+1. Woche 1: 5 Minuten spazieren (auch wenn es zieht)
+2. Woche 2: 10 Minuten spazieren + 5 Kniebeugen
+3. Woche 3: 15 Minuten + leichtes Heben (2 kg)
+4. Woche 4: 20 Minuten + normales Heben
+
+**Die Regeln:**
+- Starte unter deiner Schmerzgrenze
+- Steigere um maximal 10-20% pro Woche
+- NICHT am Schmerz orientieren, sondern am Plan
+- Rückschläge sind normal — kein Grund aufzuhören""",
+    },
+    {
+        "nr": 6,
+        "title": "Schlaf & Schmerz",
+        "subtitle": "Warum schlechter Schlaf alles schlimmer macht",
+        "content": """Schlechter Schlaf senkt deine Schmerzschwelle um bis zu 40%. Das ist keine Metapher — das sind Messwerte.
+
+**Der Teufelskreis:** Schmerz → schlechter Schlaf → niedrigere Schwelle → mehr Schmerz → noch schlechterer Schlaf.
+
+**Die ZEIS-Schlafregeln:**
+1. **Gleiche Zeit** — jeden Tag gleich aufstehen (auch am Wochenende)
+2. **Kein Koffein** nach 14 Uhr
+3. **Bildschirm-Stopp** 60 Minuten vor dem Schlafen
+4. **Kühles Zimmer** — 16-18°C optimal
+5. **Nicht im Bett liegen und grübeln** — nach 20 Minuten aufstehen, lesen, zurückkommen
+6. **Schmerz-Tagebuch** nicht abends führen — das aktiviert das Schmerznetzwerk
+
+Eine Nacht guter Schlaf kann mehr bewirken als jede Tablette.""",
+    },
+    {
+        "nr": 7,
+        "title": "Stress als Schmerzverstärker",
+        "subtitle": "Cortisol, Adrenalin und ihre Rolle",
+        "content": """Chronischer Stress hält dein Nervensystem im Alarmmodus. Cortisol und Adrenalin halten die Schmerzempfindlichkeit hoch.
+
+**Stress-Signale erkennen:**
+- Kiefer zusammengebissen
+- Schultern hochgezogen
+- Flache Atmung
+- Konzentrationsprobleme
+- Reizbarkeit
+
+**Sofort-Interventionen:**
+1. **Physiological Sigh:** 2× kurz einatmen durch die Nase, 1× lang aus durch den Mund
+2. **Kälte-Exposition:** 30 Sekunden kaltes Wasser über die Unterarme
+3. **Schütteln:** 2 Minuten den ganzen Körper schütteln — wie ein Hund nach dem Schwimmen
+
+Stress ist nicht der Feind. Chronischer Stress ohne Erholung ist der Feind.""",
+    },
+    {
+        "nr": 8,
+        "title": "Selbstmitgefühl statt Selbstkritik",
+        "subtitle": "Warum du aufhören musst, dich selbst fertigzumachen",
+        "content": """Die härteste Stimme in deinem Kopf ist deine eigene. 'Du bist schwach', 'Stell dich nicht an', 'Andere schaffen das doch auch.'
+
+Selbstkritik aktiviert das Bedrohungssystem — und damit Schmerz. Selbstmitgefühl aktiviert das Beruhigungssystem — und damit Heilung.
+
+**Die 3 Komponenten (nach Kristin Neff):**
+1. **Achtsamkeit:** Wahrnehmen, dass es dir schlecht geht (ohne Übertreibung)
+2. **Gemeinsames Menschsein:** Andere leiden auch. Du bist nicht allein.
+3. **Freundlichkeit:** Behandle dich wie einen guten Freund.
+
+**Übung:** Lege die Hand aufs Herz und sage: 'Das ist gerade schwer. Anderen geht es auch so. Ich darf freundlich zu mir sein.'
+
+Das ist nicht weich. Das ist Neurowissenschaft.""",
+    },
+]
+
+ZEIS_BODY_ZONES = {
+    "kopf": {"name": "Kopf", "x": 148, "y": 30, "w": 55, "h": 55},
+    "nacken": {"name": "Nacken", "x": 148, "y": 85, "w": 45, "h": 30},
+    "schulter": {"name": "Schultern", "x": 100, "y": 110, "w": 150, "h": 30},
+    "brust": {"name": "Brust", "x": 125, "y": 140, "w": 100, "h": 50},
+    "bauch": {"name": "Bauch", "x": 130, "y": 195, "w": 90, "h": 55},
+    "unterer_ruecken": {"name": "Unterer Rücken", "x": 130, "y": 250, "w": 90, "h": 45},
+    "knie": {"name": "Knie", "x": 120, "y": 340, "w": 110, "h": 30},
+    "kiefer": {"name": "Kiefer", "x": 130, "y": 60, "w": 90, "h": 25},
+    "ganzer_koerper": {"name": "Ganzer Körper", "x": 110, "y": 150, "w": 130, "h": 200},
+}
+
+
+# ---- ZEIS ROUTES ----
+
+@app.get("/zeis", response_class=HTMLResponse)
+async def zeis_landing(request: Request):
+    types_grid = ""
+    for key, t in ZEIS_TYPES.items():
+        types_grid += f"""
+        <a href="/zeis/protocol/{key}" style="text-decoration:none;color:inherit;">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#f59e0b;font-weight:700;">#{t['nr']}</span>
+              <span class="small">→</span>
+            </div>
+            <div style="font-weight:600;margin:6px 0 4px;color:#f3f4f6;">{t['name']}</div>
+            <div class="small">{t['short']}</div>
+          </div>
+        </a>"""
+
+    body = f"""
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:48px;margin-bottom:8px;">🧠</div>
+        <h1 style="margin:0;">ZEIS Protocol</h1>
+        <p style="color:#f59e0b;font-size:14px;margin-top:4px;">18 Schmerzverzerrungen erkennen & auflösen</p>
+      </div>
+
+      <p>Dein Schmerz ist real — aber dein Gehirn verstärkt ihn. Das ZEIS Protocol hilft dir, die 18 häufigsten Schmerzverzerrungen zu erkennen und mit gezielten Self-Treatment Protokollen aufzulösen.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;">
+        <a href="/zeis/scan" class="btn" style="text-align:center;">🔍 ZEIS Scan starten</a>
+        <a href="/zeis/method" class="btn btn-outline" style="text-align:center;color:#f59e0b;">📖 Die Methode</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <a href="/zeis/masterclass" class="btn btn-outline" style="text-align:center;">🎓 Masterclass</a>
+        <a href="/zeis/daily" class="btn btn-outline" style="text-align:center;">📋 Tägliches Protokoll</a>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Die 18 Schmerzverzerrungen</h2>
+      {types_grid}
+
+      <div class="hr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/book/preview" class="btn btn-outline" style="text-align:center;">📖 Buch-Vorschau</a>
+        <a href="/zeis/book/export" class="btn btn-outline" style="text-align:center;">⬇ Buch-Export (.md)</a>
+      </div>
+
+      <div style="height:16px;"></div>
+      <a href="/" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Protocol — Schmerzverzerrungen", body, request=request)
+
+
+@app.get("/zeis/method", response_class=HTMLResponse)
+async def zeis_method(request: Request):
+    types_list = ""
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        types_list += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <span style="color:#f59e0b;font-weight:700;font-size:13px;">Typ #{t['nr']}</span>
+              <h2 style="margin:4px 0 6px;font-size:16px;">{t['name']}</h2>
+            </div>
+            <a href="/zeis/protocol/{key}" class="btn btn-outline" style="font-size:12px;padding:6px 12px;margin:0;width:auto;">Protokoll →</a>
+          </div>
+          <p style="margin:0 0 8px;font-size:14px;">{t['desc']}</p>
+          <div class="small" style="margin-bottom:4px;"><b>Körperzonen:</b> {zones}</div>
+          <div class="small" style="margin-bottom:4px;"><b>Signale:</b> {t['signal']}</div>
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;margin-top:8px;">
+            <div class="small" style="color:#f59e0b;font-weight:600;">Reframe:</div>
+            <div style="font-size:13px;color:#e5e7eb;">{t['reframe']}</div>
+          </div>
+        </div>"""
+
+    body = f"""
+      <h1>📖 Die ZEIS-Methode</h1>
+      <p style="color:#f59e0b;">18 Schmerzverzerrungen — erklärt, erkannt, aufgelöst</p>
+
+      <div class="hr"></div>
+
+      <h2>Was sind Schmerzverzerrungen?</h2>
+      <p>Kognitive Verzerrungen sind systematische Denkfehler, die deinen Schmerz verstärken. Sie sind nicht deine Schuld — sie sind evolutionär programmiert. Aber du kannst sie erkennen und umprogrammieren.</p>
+      <p>Das ZEIS Protocol identifiziert 18 spezifische Verzerrungsmuster, die bei Schmerzpatienten am häufigsten auftreten. Jede Verzerrung hat ein eigenes Self-Treatment Protokoll.</p>
+
+      <div class="hr"></div>
+
+      <h2>Alle 18 Typen im Detail</h2>
+      {types_list}
+
+      <div class="hr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/scan" class="btn" style="text-align:center;">🔍 Scan starten</a>
+        <a href="/zeis" class="btn btn-outline" style="text-align:center;">← Zurück</a>
+      </div>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Methode — 18 Typen", body, request=request)
+
+
+@app.get("/zeis/scan", response_class=HTMLResponse)
+async def zeis_scan(request: Request):
+    questions = []
+    for key, t in ZEIS_TYPES.items():
+        questions.append({"key": key, "name": t["name"], "signal": t["signal"]})
+
+    q_html = ""
+    for i, q in enumerate(questions):
+        q_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+          <label style="font-size:14px;color:#f3f4f6;margin:0 0 8px;">
+            <b>#{i+1}.</b> {q['name']}
+          </label>
+          <p class="small" style="margin:0 0 10px;">{q['signal']}</p>
+          <div class="slider-wrap">
+            <input type="range" name="{q['key']}" min="0" max="10" value="0"
+                   oninput="document.getElementById('val_{q['key']}').textContent=this.value"
+                   style="width:100%;">
+            <div style="display:flex;justify-content:space-between;margin-top:4px;">
+              <span class="small">Trifft nicht zu</span>
+              <span class="slider-val" id="val_{q['key']}">0</span>
+              <span class="small">Trifft voll zu</span>
+            </div>
+          </div>
+        </div>"""
+
+    body = f"""
+      <h1>🔍 ZEIS Body-Mind Scan</h1>
+      <p>Bewerte ehrlich, wie stark jede Verzerrung bei dir zutrifft (0 = gar nicht, 10 = extrem stark).</p>
+
+      <div class="hr"></div>
+
+      <form action="/zeis/scan" method="post">
+        {q_html}
+        <button type="submit" class="btn" style="margin-top:16px;">Scan auswerten →</button>
+      </form>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("ZEIS Scan", body, request=request)
+
+
+@app.post("/zeis/scan", response_class=HTMLResponse)
+async def zeis_scan_result(request: Request):
+    form = await request.form()
+    results = []
+    for key in ZEIS_TYPES:
+        val = int(form.get(key, 0))
+        if val > 0:
+            results.append({"key": key, "val": val, "type": ZEIS_TYPES[key]})
+    results.sort(key=lambda r: r["val"], reverse=True)
+
+    top_types = results[:5]
+
+    if not top_types:
+        body = """
+          <h1>🔍 Scan-Ergebnis</h1>
+          <p>Du hast keine Verzerrung bewertet. Bitte fülle den Scan ehrlich aus.</p>
+          <a href="/zeis/scan" class="btn" style="text-align:center;display:block;">Nochmal versuchen</a>
+        """
+        return _page("ZEIS Scan — Kein Ergebnis", body, request=request)
+
+    total = sum(r["val"] for r in results)
+    avg = round(total / len(results), 1) if results else 0
+
+    result_html = ""
+    for r in top_types:
+        pct = int(r["val"] / 10 * 100)
+        color = "#ef4444" if r["val"] >= 7 else "#f59e0b" if r["val"] >= 4 else "#22c55e"
+        result_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="color:{color};font-weight:700;font-size:22px;">{r['val']}/10</span>
+              <span style="margin-left:8px;font-weight:600;color:#f3f4f6;">{r['type']['name']}</span>
+            </div>
+            <a href="/zeis/protocol/{r['key']}" class="btn btn-outline" style="font-size:12px;padding:6px 12px;margin:0;width:auto;">Protokoll →</a>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0;">
+            <div style="height:4px;background:{color};border-radius:999px;width:{pct}%;"></div>
+          </div>
+          <p class="small" style="margin:4px 0 0;">{r['type']['short']}</p>
+        </div>"""
+
+    severity = "hoch" if avg >= 6 else "mittel" if avg >= 3 else "niedrig"
+    sev_color = "#ef4444" if avg >= 6 else "#f59e0b" if avg >= 3 else "#22c55e"
+
+    body = f"""
+      <h1>🔍 Dein ZEIS-Profil</h1>
+
+      <div style="text-align:center;margin:16px 0;">
+        <div style="font-size:48px;font-weight:800;color:{sev_color};">{avg}</div>
+        <div style="font-size:14px;color:{sev_color};font-weight:600;">Verzerrungsindex: {severity}</div>
+        <p class="small">{len([r for r in results if r['val'] >= 5])} von 18 Verzerrungen aktiv (≥5)</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Deine Top-5 Verzerrungen</h2>
+      {result_html}
+
+      <div class="hr"></div>
+
+      <h2>Empfehlung</h2>
+      <div class="action-box">
+        <p style="margin:0;color:#f3f4f6;">Starte mit dem Protokoll für <b>{top_types[0]['type']['name']}</b> — deine stärkste Verzerrung. Führe es 7 Tage lang täglich durch.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+        <a href="/zeis/protocol/{top_types[0]['key']}" class="btn" style="text-align:center;">Protokoll starten</a>
+        <a href="/zeis/scan" class="btn btn-outline" style="text-align:center;">Scan wiederholen</a>
+      </div>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("ZEIS Scan-Ergebnis", body, request=request)
+
+
+@app.get("/zeis/masterclass", response_class=HTMLResponse)
+async def zeis_masterclass(request: Request):
+    modules_html = ""
+    for m in ZEIS_MASTERCLASS:
+        modules_html += f"""
+        <a href="/zeis/masterclass/{m['nr']}" style="text-decoration:none;color:inherit;">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">
+            <div style="min-width:44px;height:44px;background:rgba(245,158,11,.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#f59e0b;font-size:18px;">{m['nr']}</div>
+            <div>
+              <div style="font-weight:600;color:#f3f4f6;">{m['title']}</div>
+              <div class="small">{m['subtitle']}</div>
+            </div>
+          </div>
+        </a>"""
+
+    body = f"""
+      <h1>🎓 ZEIS Masterclass</h1>
+      <p>8 Module für ein tiefes Verständnis von Schmerz, Gehirn und Heilung.</p>
+
+      <div class="hr"></div>
+
+      {modules_html}
+
+      <div class="hr"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Masterclass — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Masterclass", body, request=request)
+
+
+@app.get("/zeis/masterclass/{nr}", response_class=HTMLResponse)
+async def zeis_masterclass_module(nr: int, request: Request):
+    module = None
+    for m in ZEIS_MASTERCLASS:
+        if m["nr"] == nr:
+            module = m
+            break
+    if not module:
+        return _page("Nicht gefunden", "<p>Modul nicht gefunden.</p><a href='/zeis/masterclass'>← Zurück</a>", request=request)
+
+    content_html = module["content"].replace("\n\n", "</p><p>").replace("**", "<b>").replace("**", "</b>")
+    # Simple markdown bold handling
+    import re
+    formatted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', module["content"])
+    formatted = formatted.replace("\n\n", "</p><p style='color:var(--muted);line-height:1.6;'>")
+    formatted = formatted.replace("\n- ", "<br>• ")
+    formatted = formatted.replace("\n1. ", "<br>1. ").replace("\n2. ", "<br>2. ").replace("\n3. ", "<br>3. ")
+    formatted = formatted.replace("\n4. ", "<br>4. ").replace("\n5. ", "<br>5. ").replace("\n6. ", "<br>6. ")
+
+    prev_link = f'<a href="/zeis/masterclass/{nr - 1}" class="btn btn-outline" style="text-align:center;">← Modul {nr - 1}</a>' if nr > 1 else '<span></span>'
+    next_link = f'<a href="/zeis/masterclass/{nr + 1}" class="btn" style="text-align:center;">Modul {nr + 1} →</a>' if nr < len(ZEIS_MASTERCLASS) else '<span></span>'
+
+    body = f"""
+      <div class="small" style="color:#f59e0b;margin-bottom:4px;">Modul {module['nr']} von {len(ZEIS_MASTERCLASS)}</div>
+      <h1>{module['title']}</h1>
+      <p style="color:#f59e0b;font-size:14px;margin-top:-8px;">{module['subtitle']}</p>
+
+      <div class="hr"></div>
+
+      <div style="line-height:1.8;">
+        <p style="color:var(--muted);line-height:1.6;">{formatted}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        {prev_link}
+        {next_link}
+      </div>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis/masterclass" class="btn btn-outline" style="text-align:center;display:block;">← Alle Module</a>
+    """
+    return _page(f"ZEIS Masterclass — {module['title']}", body, request=request)
+
+
+@app.get("/zeis/protocol/{type_key}", response_class=HTMLResponse)
+async def zeis_protocol(type_key: str, request: Request):
+    t = ZEIS_TYPES.get(type_key)
+    if not t:
+        return _page("Nicht gefunden", "<p>Verzerrungstyp nicht gefunden.</p><a href='/zeis'>← Zurück</a>", request=request)
+
+    steps_html = ""
+    for i, step in enumerate(t["protocol"]):
+        steps_html += f"""
+        <div id="step_{i}" class="protocol-step" style="display:{'block' if i == 0 else 'none'};background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;margin-bottom:8px;">Minute {step['min']}</div>
+          <p style="font-size:16px;color:#f3f4f6;line-height:1.6;margin:0;">{step['text']}</p>
+        </div>"""
+
+    zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+    total_steps = len(t["protocol"])
+
+    body = f"""
+      <div class="small" style="color:#f59e0b;">Self-Treatment Protokoll</div>
+      <h1>#{t['nr']} {t['name']}</h1>
+      <p>{t['desc']}</p>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+        {"".join(f'<span class="pattern-tag">{ZEIS_BODY_ZONES[z]["name"]}</span>' for z in t["body_zones"] if z in ZEIS_BODY_ZONES)}
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="action-box">
+        <div class="small" style="color:#f59e0b;font-weight:600;">Erkennungssignal:</div>
+        <p style="margin:4px 0 0;color:#f3f4f6;">{t['signal']}</p>
+      </div>
+
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.3);border-radius:16px;padding:18px;margin:12px 0;">
+        <div class="small" style="color:#22c55e;font-weight:600;">Reframe:</div>
+        <p style="margin:4px 0 0;color:#f3f4f6;">{t['reframe']}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Protokoll starten</h2>
+      <p class="small">Klicke dich durch die {total_steps} Schritte. Nimm dir Zeit.</p>
+
+      <div id="timer_display" style="text-align:center;margin:16px 0;">
+        <span style="font-size:36px;font-weight:800;color:#f59e0b;" id="timer_val">00:00</span>
+        <div class="small">Timer</div>
+      </div>
+
+      {steps_html}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <button onclick="prevStep()" class="btn btn-outline" id="prev_btn" style="opacity:0.3;" disabled>← Zurück</button>
+        <button onclick="nextStep()" class="btn" id="next_btn">Weiter →</button>
+      </div>
+
+      <div id="done_section" style="display:none;text-align:center;margin-top:20px;">
+        <div style="font-size:48px;">✅</div>
+        <h2>Protokoll abgeschlossen</h2>
+        <p>Du hast das Self-Treatment für <b>{t['name']}</b> durchgeführt. Wiederhole es morgen.</p>
+        <a href="/zeis" class="btn" style="display:inline-block;margin-top:12px;">Zurück zum ZEIS Protocol</a>
+      </div>
+
+      <div class="hr"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+
+      <script>
+      let step = 0;
+      const total = {total_steps};
+      let seconds = 0;
+      let timerInterval = null;
+
+      function startTimer() {{
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {{
+          seconds++;
+          const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+          const s = String(seconds % 60).padStart(2, '0');
+          document.getElementById('timer_val').textContent = m + ':' + s;
+        }}, 1000);
+      }}
+
+      function nextStep() {{
+        startTimer();
+        if (step < total - 1) {{
+          document.getElementById('step_' + step).style.display = 'none';
+          step++;
+          document.getElementById('step_' + step).style.display = 'block';
+          document.getElementById('prev_btn').disabled = false;
+          document.getElementById('prev_btn').style.opacity = '1';
+          if (step === total - 1) {{
+            document.getElementById('next_btn').textContent = 'Abschließen ✓';
+          }}
+        }} else {{
+          document.getElementById('step_' + step).style.display = 'none';
+          document.getElementById('next_btn').style.display = 'none';
+          document.getElementById('prev_btn').style.display = 'none';
+          document.getElementById('done_section').style.display = 'block';
+          if (timerInterval) clearInterval(timerInterval);
+        }}
+      }}
+
+      function prevStep() {{
+        if (step > 0) {{
+          document.getElementById('step_' + step).style.display = 'none';
+          step--;
+          document.getElementById('step_' + step).style.display = 'block';
+          document.getElementById('next_btn').textContent = 'Weiter →';
+          if (step === 0) {{
+            document.getElementById('prev_btn').disabled = true;
+            document.getElementById('prev_btn').style.opacity = '0.3';
+          }}
+        }}
+      }}
+      </script>
+    """
+    return _page(f"ZEIS Protokoll — {t['name']}", body, request=request)
+
+
+@app.get("/zeis/daily", response_class=HTMLResponse)
+async def zeis_daily(request: Request):
+    options_html = ""
+    for key, t in ZEIS_TYPES.items():
+        options_html += f'<option value="{key}">{t["name"]}</option>'
+
+    body = f"""
+      <h1>📋 Tägliches ZEIS-Protokoll</h1>
+      <p>Tracke deine Verzerrungen und Fortschritte täglich.</p>
+
+      <div class="hr"></div>
+
+      <form action="/zeis/daily" method="post">
+        <label>Wie geht es dir gerade? (1–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="state" min="1" max="10" value="5"
+                 oninput="document.getElementById('state_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Schlecht</span>
+            <span class="slider-val" id="state_val">5</span>
+            <span class="small">Sehr gut</span>
+          </div>
+        </div>
+
+        <label>Schmerz-Level (0–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="pain" min="0" max="10" value="3"
+                 oninput="document.getElementById('pain_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Kein Schmerz</span>
+            <span class="slider-val" id="pain_val">3</span>
+            <span class="small">Maximal</span>
+          </div>
+        </div>
+
+        <label>Welche Verzerrung war heute am stärksten?</label>
+        <select name="distortion">
+          <option value="">— Wähle —</option>
+          {options_html}
+        </select>
+
+        <label>Verzerrungsstärke (0–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="intensity" min="0" max="10" value="5"
+                 oninput="document.getElementById('int_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Schwach</span>
+            <span class="slider-val" id="int_val">5</span>
+            <span class="small">Extrem</span>
+          </div>
+        </div>
+
+        <label>Hast du ein Protokoll durchgeführt?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="radio" name="protocol_done" value="ja" style="width:auto;"> Ja
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="radio" name="protocol_done" value="nein" checked style="width:auto;"> Nein
+          </label>
+        </div>
+
+        <label>Was hast du heute gelernt / erkannt?</label>
+        <textarea name="insight" rows="3" placeholder="Deine Erkenntnis des Tages..."></textarea>
+
+        <button type="submit" class="btn" style="margin-top:16px;">Eintrag speichern ✓</button>
+      </form>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("Tägliches ZEIS-Protokoll", body, request=request)
+
+
+@app.post("/zeis/daily", response_class=HTMLResponse)
+async def zeis_daily_save(request: Request):
+    form = await request.form()
+    state = form.get("state", "5")
+    pain = form.get("pain", "3")
+    distortion = form.get("distortion", "")
+    intensity = form.get("intensity", "5")
+    protocol_done = form.get("protocol_done", "nein")
+    insight = form.get("insight", "")
+
+    dist_name = ZEIS_TYPES[distortion]["name"] if distortion in ZEIS_TYPES else "Keine gewählt"
+
+    body = f"""
+      <div style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">✅</div>
+        <h1>Eintrag gespeichert</h1>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid3" style="margin-bottom:16px;">
+        <div class="kpi"><span class="small">Zustand</span><b>{state}/10</b></div>
+        <div class="kpi"><span class="small">Schmerz</span><b>{pain}/10</b></div>
+        <div class="kpi"><span class="small">Verzerrung</span><b>{intensity}/10</b></div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div class="small">Hauptverzerrung:</div>
+        <div style="font-weight:600;color:#f3f4f6;">{dist_name}</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div class="small">Protokoll durchgeführt:</div>
+        <div style="font-weight:600;color:{'#22c55e' if protocol_done == 'ja' else '#ef4444'};">{'Ja ✓' if protocol_done == 'ja' else 'Nein ✗'}</div>
+      </div>
+
+      {"<div style='background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;'><div class=small>Erkenntnis:</div><p style=margin:4px_0_0;color:#f3f4f6;>" + insight + "</p></div>" if insight else ""}
+
+      <div class="hr"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/daily" class="btn" style="text-align:center;">Neuer Eintrag</a>
+        <a href="/zeis" class="btn btn-outline" style="text-align:center;">← ZEIS Home</a>
+      </div>
+    """
+    return _page("ZEIS — Eintrag gespeichert", body, request=request)
+
+
+@app.get("/zeis/book/export")
+async def zeis_book_export(request: Request):
+    md = "# ZEIS Protocol — 18 Schmerzverzerrungen erkennen & auflösen\n\n"
+    md += "**Von Alexander Zeis**\n\n"
+    md += "---\n\n"
+
+    # Part 1: Masterclass
+    md += "# Teil 1: Masterclass\n\n"
+    for m in ZEIS_MASTERCLASS:
+        md += f"## Kapitel {m['nr']}: {m['title']}\n\n"
+        md += f"*{m['subtitle']}*\n\n"
+        md += m["content"] + "\n\n"
+        md += "---\n\n"
+
+    # Part 2: Die 18 Typen
+    md += "# Teil 2: Die 18 Schmerzverzerrungen\n\n"
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        md += f"## Typ #{t['nr']}: {t['name']}\n\n"
+        md += f"**{t['short']}**\n\n"
+        md += f"{t['desc']}\n\n"
+        md += f"**Körperzonen:** {zones}\n\n"
+        md += f"**Erkennungssignal:** {t['signal']}\n\n"
+        md += f"**Reframe:** {t['reframe']}\n\n"
+        md += "### Self-Treatment Protokoll\n\n"
+        for step in t["protocol"]:
+            md += f"- **Minute {step['min']}:** {step['text']}\n"
+        md += "\n---\n\n"
+
+    # Part 3: Tägliches Protokoll Vorlage
+    md += "# Teil 3: Tägliches Protokoll (Vorlage)\n\n"
+    md += "| Datum | Zustand (1-10) | Schmerz (0-10) | Hauptverzerrung | Stärke (0-10) | Protokoll? | Erkenntnis |\n"
+    md += "|-------|---------------|----------------|-----------------|---------------|------------|------------|\n"
+    md += "| ___ | ___ | ___ | ___ | ___ | ___ | ___ |\n" * 7
+    md += "\n---\n\n"
+    md += "*ZEIS Protocol — by Alexander Zeis — Generiert am " + datetime.now().strftime("%d.%m.%Y") + "*\n"
+
+    from starlette.responses import Response
+    return Response(
+        content=md.encode("utf-8"),
+        media_type="text/markdown",
+        headers={"Content-Disposition": "attachment; filename=ZEIS-Protocol-Buch.md"},
+    )
+
+
+@app.get("/zeis/book/preview", response_class=HTMLResponse)
+async def zeis_book_preview(request: Request):
+    import re
+
+    chapters_html = ""
+
+    # Masterclass chapters
+    chapters_html += '<h2 style="color:#f59e0b;margin-top:24px;">Teil 1: Masterclass</h2>'
+    for m in ZEIS_MASTERCLASS:
+        formatted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', m["content"])
+        formatted = formatted.replace("\n\n", "</p><p style='color:var(--muted);line-height:1.6;font-size:14px;'>")
+        formatted = formatted.replace("\n- ", "<br>• ")
+        chapters_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;">Kapitel {m['nr']}</div>
+          <h2 style="font-size:16px;margin:4px 0;">{m['title']}</h2>
+          <div class="small" style="margin-bottom:8px;">{m['subtitle']}</div>
+          <p style="color:var(--muted);line-height:1.6;font-size:14px;">{formatted}</p>
+        </div>"""
+
+    # Type chapters
+    chapters_html += '<h2 style="color:#f59e0b;margin-top:24px;">Teil 2: Die 18 Schmerzverzerrungen</h2>'
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        steps = "".join(f"<li><b>Min {s['min']}:</b> {s['text']}</li>" for s in t["protocol"])
+        chapters_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;">Typ #{t['nr']}</div>
+          <h2 style="font-size:16px;margin:4px 0;">{t['name']}</h2>
+          <p style="font-size:13px;color:var(--muted);margin:4px 0 8px;">{t['desc']}</p>
+          <div class="small"><b>Zonen:</b> {zones}</div>
+          <div class="small"><b>Signal:</b> {t['signal']}</div>
+          <div style="background:rgba(245,158,11,.07);border-radius:10px;padding:10px;margin:8px 0;">
+            <div class="small" style="color:#22c55e;"><b>Reframe:</b></div>
+            <div style="font-size:13px;">{t['reframe']}</div>
+          </div>
+          <div class="small" style="margin-top:8px;"><b>Protokoll:</b></div>
+          <ol style="font-size:13px;color:var(--muted);padding-left:20px;">{steps}</ol>
+        </div>"""
+
+    total_chapters = len(ZEIS_MASTERCLASS) + len(ZEIS_TYPES)
+
+    body = f"""
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:48px;">📖</div>
+        <h1>ZEIS Protocol — Das Buch</h1>
+        <p style="color:#f59e0b;">Von Alexander Zeis</p>
+        <p class="small">{total_chapters} Kapitel • 8 Masterclass-Module • 18 Protokolle</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <a href="/zeis/book/export" class="btn" style="text-align:center;display:block;margin-bottom:16px;">⬇ Als Markdown herunterladen</a>
+      <p class="small" style="text-align:center;margin-bottom:16px;">Lokal mit Pandoc → PDF/EPUB konvertierbar</p>
+
+      <div class="hr"></div>
+
+      {chapters_html}
+
+      <div class="hr"></div>
+      <a href="/zeis/book/export" class="btn" style="text-align:center;display:block;">⬇ Buch herunterladen (.md)</a>
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Protocol — Buch-Vorschau", body, request=request)
