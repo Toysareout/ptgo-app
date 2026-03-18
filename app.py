@@ -12,6 +12,7 @@
 import os
 import json
 import time
+import random
 import secrets
 import hashlib
 import threading
@@ -108,6 +109,7 @@ class Patient(Base):
     reminder_enabled = Column(Boolean, default=True)
     reminder_time_local = Column(String(5), default="08:00")
     last_reminder_sent_on = Column(String(10), nullable=True)
+    last_evening_sent_on = Column(String(10), nullable=True)
     therapist_id = Column(Integer, ForeignKey("therapists.id"), nullable=True)
     therapist = relationship("Therapist", back_populates="patients")
     checkins = relationship("CheckIn", back_populates="patient")
@@ -760,25 +762,38 @@ def reminder_loop():
             db = SessionLocal()
             patients = db.query(Patient).filter(Patient.reminder_enabled == True).all()
             for p in patients:
-                if not _should_send_reminder_now(p, now_local):
-                    continue
-                if _patient_checked_in_today(db, p):
-                    p.last_reminder_sent_on = now_local.date().isoformat()
-                    db.commit()
-                    continue
-                magic = issue_magic_link(db, p, ttl_minutes=60 * 24)
-                msg = (
-                    f"Guten Morgen {p.name} ☀️\n\n"
-                    f"Dein Daily Check wartet.\n"
-                    f"30 Sekunden → Pattern → 1 Action.\n\n"
-                    f"➡️ {magic}"
-                )
-                try:
-                    send_whatsapp_to_patient(p, msg)
-                    p.last_reminder_sent_on = now_local.date().isoformat()
-                    db.commit()
-                except Exception as e:
-                    print("[WARN] Reminder send failed:", e)
+                # Morning reminder
+                if _should_send_reminder_now(p, now_local):
+                    if _patient_checked_in_today(db, p):
+                        p.last_reminder_sent_on = now_local.date().isoformat()
+                        db.commit()
+                        continue
+                    magic = issue_magic_link(db, p, ttl_minutes=60 * 24)
+                    msg = (
+                        f"Guten Morgen {p.name} ☀️\n\n"
+                        f"Dein Daily Check wartet.\n"
+                        f"30 Sekunden → Pattern → 1 Action.\n\n"
+                        f"➡️ {magic}"
+                    )
+                    try:
+                        send_whatsapp_to_patient(p, msg)
+                        p.last_reminder_sent_on = now_local.date().isoformat()
+                        db.commit()
+                    except Exception as e:
+                        print("[WARN] Reminder send failed:", e)
+
+                # Evening reflection (2nd daily message)
+                if _should_send_evening_message(p, now_local):
+                    today = now_local.date().isoformat()
+                    if getattr(p, 'last_evening_sent_on', None) != today:
+                        try:
+                            evening_msg = _generate_evening_message(db, p)
+                            send_whatsapp_to_patient(p, evening_msg)
+                            p.last_evening_sent_on = today
+                            db.commit()
+                        except Exception as e:
+                            print("[WARN] Evening message failed:", e)
+
             db.close()
         except Exception as e:
             print("[WARN] Reminder loop error:", e)
@@ -1378,7 +1393,7 @@ def checkin_1(request: Request, db=Depends(get_db)):
           🎙️ Check starten
         </button>
         <div class="hr"></div>
-        <p class="small" style="text-align:center"><a href="/subscribe">⭐ Premium</a> · <a href="/profile">Body Profile</a> · <a href="/logout">Logout</a></p>
+        <p class="small" style="text-align:center"><a href="/mastery">⚡ Mastery</a> · <a href="/subscribe">⭐ Premium</a> · <a href="/profile">Body Profile</a> · <a href="/logout">Logout</a></p>
       </div>
 
       <!-- VOICE SCREEN -->
@@ -1462,93 +1477,6 @@ def checkin_1(request: Request, db=Depends(get_db)):
       </style>
     """
     return _page("PTGO • Voice Check", body, request=request)
-
-    body = voice_js + """
-
-      <!-- START SCREEN -->
-      <div id="start-screen">
-        <div style="text-align:center;margin:8px 0 16px">
-          <div id="avatar-start" style="font-size:60px;line-height:1">&#x1F9D8;</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">PTGO DAILY CHECK</div>
-        </div>
-        <h1 style="text-align:center">Wie geht es dir heute?</h1>
-        <p style="text-align:center">6 tiefe Fragen. Dein Koerper. Dein System. Deine Wahrheit.</p>
-        <div class="hr"></div>
-        <p class="small" style="text-align:center">Sprachgesteuert - laeuft im Browser - kein Download</p>
-        <div style="height:16px"></div>
-        <button onclick="startVoiceCheck()" style="font-size:18px;padding:18px;">
-          Check starten
-        </button>
-        <div class="hr"></div>
-        <p class="small" style="text-align:center"><a href="/subscribe">Premium</a> &middot; <a href="/profile">Body Profile</a> &middot; <a href="/logout">Logout</a></p>
-      </div>
-
-      <!-- VOICE SCREEN -->
-      <div id="voice-screen" style="display:none">
-        <div style="text-align:center;margin:4px 0 12px">
-          <div id="avatar" style="font-size:48px;line-height:1;transition:all .3s">&#x1F9D8;</div>
-        </div>
-        <div style="height:4px;background:#1f2937;border-radius:999px;margin-bottom:6px">
-          <div id="progress-bar" style="height:4px;background:#f59e0b;border-radius:999px;width:0%;transition:width .4s"></div>
-        </div>
-        <p class="small" id="progress-text" style="text-align:center">Frage 1 von 6</p>
-        <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:14px 16px;margin:10px 0">
-          <p style="color:#fbbf24;font-size:15px;margin:0;line-height:1.5" id="question-text">...</p>
-        </div>
-        <div id="body-map-section" style="display:none;margin:10px 0">
-          <p class="small" style="margin-bottom:6px;color:#a5b4fc">PTGO Body System</p>
-          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-            <button class="draw-mode-btn" data-mode="point" style="background:rgba(239,68,68,.15);border:1px solid #ef4444;color:#fca5a5;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Punkt</button>
-            <button class="draw-mode-btn" data-mode="line" style="background:rgba(245,158,11,.15);border:1px solid #374151;color:#fcd34d;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Linie</button>
-            <button class="draw-mode-btn" data-mode="area" style="background:rgba(99,102,241,.15);border:1px solid #374151;color:#a5b4fc;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Flaeche</button>
-            <button onclick="clearBodyMap()" style="background:transparent;border:1px solid #374151;color:#6b7280;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer">Loeschen</button>
-          </div>
-          <canvas id="body-canvas" width="280" height="220" style="width:100%;max-width:320px;border:1px solid #1f2937;border-radius:12px;display:block;margin:0 auto;touch-action:none;background:#0b1223"></canvas>
-          <p class="small" style="text-align:center;margin-top:6px">Tippe oder ziehe auf dem Koerper</p>
-        </div>
-        <div style="min-height:44px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px;margin:8px 0;font-size:14px;color:#e5e7eb" id="transcript">
-          Deine Antwort erscheint hier...
-        </div>
-        <div style="text-align:center;margin:12px 0">
-          <button id="mic-btn" class="mic-btn" style="background:rgba(245,158,11,.15);border:2px solid #f59e0b;border-radius:50%;width:72px;height:72px;font-size:28px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all .2s">
-            <span id="mic-icon">&#x1F399;</span>
-          </button>
-          <p class="small" id="status" style="margin-top:6px">Tippe um zu sprechen</p>
-          <button id="confirm-btn" onclick="confirmAnswer()" style="display:none;margin-top:8px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#22c55e;border-radius:10px;padding:8px 18px;font-size:13px;cursor:pointer;">
-            Antwort bestaetigen
-          </button>
-        </div>
-        <div id="answers-list"></div>
-      </div>
-
-      <form id="checkin-form" method="post" action="/checkin/voice" style="display:none">
-        <input type="hidden" id="f_overall_text" name="overall_text">
-        <input type="hidden" id="f_context_text" name="context_text">
-        <input type="hidden" id="f_body_text" name="body_text">
-        <input type="hidden" id="f_sleep_text" name="sleep_text">
-        <input type="hidden" id="f_mental_text" name="mental_text">
-        <input type="hidden" id="f_goal_text" name="goal_text">
-        <input type="hidden" id="f_pain_map" name="pain_map_json">
-      </form>
-
-      <style>
-        .mic-btn.listening {
-          background: rgba(239,68,68,0.2) !important;
-          border-color: #ef4444 !important;
-          box-shadow: 0px 0px 20px rgba(239,68,68,0.4);
-          animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.08); }
-        }
-        @keyframes avatarPulse {
-          0%, 100% { transform: scale(1); opacity:1; }
-          50% { transform: scale(1.15); opacity:0.8; }
-        }
-      </style>
-    """
-    return _page("PTGO Voice Check", body, request=request)
 
 
 # Keep old routes as redirects for backwards compatibility
@@ -1697,6 +1625,12 @@ def checkin_voice_submit(
     except Exception as e:
         print("[WARN] Therapist WhatsApp failed:", e)
 
+    # Emergency escalation for critical values
+    try:
+        _check_emergency_escalation(db, p, c)
+    except Exception as e:
+        print("[WARN] Emergency check failed:", e)
+
     return RedirectResponse(f"/result/{c.id}", status_code=303)
 
 
@@ -1787,6 +1721,13 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
       </div>
 
       {outcome_section}
+
+      <div class="hr"></div>
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:18px;margin:12px 0">
+        <h2 style="margin:0 0 8px;color:#a5b4fc;font-size:16px">AI Coaching</h2>
+        <p style="font-size:13px;color:#94a3b8;margin:0 0 10px">Dein personalisierter KI-Coach analysiert dein Pattern und gibt dir einen Impuls.</p>
+        <a href="/coaching/{c.id}" class="btn" style="background:linear-gradient(180deg,#818cf8,#6366f1);font-size:14px;padding:12px 16px">Coaching-Impuls erhalten</a>
+      </div>
 
       {premium_teaser}
 
@@ -1908,7 +1849,11 @@ def progress_page(request: Request, db=Depends(get_db)):
       <div class="hr"></div>
       {items if items else "<p class='small'>Noch keine Daten.</p>"}
       <div class="hr"></div>
-      <p class="small"><a href="/checkin/1">Neuer Check</a></p>
+      <p class="small">
+        <a href="/checkin/1">Neuer Check</a> •
+        <a href="/insights">AI Trends</a> •
+        <a href="/timeline">Timeline</a>
+      </p>
     """
     return _page("PTGO • Progress", body, request=request)
 
@@ -2810,6 +2755,1154 @@ def therapist_view_checkin(checkin_id: int, request: Request, db=Depends(get_db)
 
 
 # =========================================================
+# AI MICRO-COACHING
+# =========================================================
+
+def _generate_coaching_impulse(checkin: CheckIn, patient: Patient, recent_checkins: list) -> str:
+    """Generate a personalized AI coaching impulse based on check-in data and history."""
+    if not ANTHROPIC_API_KEY:
+        return ""
+
+    history = ""
+    if recent_checkins:
+        for rc in recent_checkins[:5]:
+            history += f"- {rc.local_day}: Score {rc.score}, Pattern: {rc.pattern_label}, Stress: {rc.stress}, Schlaf: {rc.sleep}\n"
+
+    prompt = (
+        f"Du bist ein empathischer, erfahrener Therapeut und Coach. "
+        f"Der Patient '{patient.name}' hat gerade einen Check-in gemacht.\n\n"
+        f"HEUTIGES ERGEBNIS:\n"
+        f"- Recovery Score: {checkin.score}/100\n"
+        f"- Risk Level: {checkin.risk_level}\n"
+        f"- Pattern: {checkin.pattern_label}\n"
+        f"- Stress: {checkin.stress}/10, Schlaf: {checkin.sleep}/10, Körper: {checkin.body}/10\n"
+        f"- Craving: {checkin.craving}/10, Vermeidung: {checkin.avoidance}/10\n"
+        f"- Stimmung: {checkin.overall_text or '–'}\n"
+        f"- Herausforderung: {checkin.context_text or '–'}\n"
+        f"- Gedanken: {checkin.mental_text or '–'}\n"
+        f"- Tagesziel: {checkin.goal_text or '–'}\n\n"
+        f"LETZTE TAGE:\n{history or 'Keine Historie.'}\n\n"
+        f"Schreibe einen kurzen, persönlichen Coaching-Impuls (3-5 Sätze) auf Deutsch. "
+        f"Sei warm aber direkt. Erkenne Muster. Gib EINEN konkreten Micro-Tipp für die nächsten 2 Stunden. "
+        f"Kein Gelaber, kein Therapeuten-Deutsch. Sprich wie ein weiser Freund."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 400, "messages": [{"role": "user", "content": prompt}]},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print("[WARN] Coaching impulse failed:", e)
+        return ""
+
+
+@app.get("/coaching/{checkin_id}", response_class=HTMLResponse)
+def coaching_page(checkin_id: int, request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    c = db.query(CheckIn).filter(CheckIn.id == checkin_id, CheckIn.patient_id == p.id).first()
+    if not c:
+        raise HTTPException(status_code=404)
+
+    recent = db.query(CheckIn).filter(
+        CheckIn.patient_id == p.id, CheckIn.id != c.id
+    ).order_by(CheckIn.created_at.desc()).limit(5).all()
+
+    impulse = _generate_coaching_impulse(c, p, recent)
+    if not impulse:
+        impulse = "KI-Coaching ist gerade nicht verfügbar. Deine heutige Action ist dein bester nächster Schritt."
+
+    action = ACTION_LIBRARY.get(c.action_code or "", None)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🧠</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">AI COACHING</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Dein Coaching-Impuls</h1>
+
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:20px;margin:16px 0">
+        <p style="font-size:15px;line-height:1.7;color:#e5e7eb;margin:0">{impulse}</p>
+      </div>
+
+      <div class="grid3" style="margin:16px 0">
+        <div class="kpi"><span class="small">Score</span><b>{c.score}</b></div>
+        <div class="kpi"><span class="small">Pattern</span><b style="font-size:14px">{c.pattern_label}</b></div>
+        <div class="kpi"><span class="small">Risk</span><b>{c.risk_level}</b></div>
+      </div>
+
+      <div class="action-box">
+        <p class="small" style="color:#f59e0b;margin:0 0 6px">DEINE ACTION</p>
+        <b style="font-size:16px">{c.action_label or '–'}</b>
+        <p style="font-size:13px;margin:8px 0 0">{action['instructions'] if action else c.action_text or ''}</p>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/result/{c.id}">← Ergebnis</a> •
+        <a href="/checkin/1">Neuer Check</a> •
+        <a href="/insights">Trends</a>
+      </p>
+    """
+    return _page("PTGO • AI Coaching", body, request=request)
+
+
+# =========================================================
+# SMART TREND INSIGHTS (AI-powered)
+# =========================================================
+
+def _generate_trend_insights(checkins: list, patient_name: str) -> str:
+    """Generate AI-powered trend analysis from recent check-ins."""
+    if not ANTHROPIC_API_KEY or len(checkins) < 3:
+        return ""
+
+    data_rows = []
+    for c in checkins:
+        data_rows.append(
+            f"{c.local_day}: Score={c.score}, Stress={c.stress}, Schlaf={c.sleep}, "
+            f"Körper={c.body}, Craving={c.craving}, Vermeidung={c.avoidance}, "
+            f"Pattern={c.pattern_label}, Risk={c.risk_level}"
+        )
+
+    prompt = (
+        f"Du analysierst die Check-in-Daten von {patient_name}.\n\n"
+        f"DATEN (neueste zuerst):\n" + "\n".join(data_rows) + "\n\n"
+        f"Erstelle eine kurze Trend-Analyse auf Deutsch (3-4 Sätze):\n"
+        f"1. Welcher Trend ist erkennbar? (besser/schlechter/stabil)\n"
+        f"2. Was ist der größte Risikofaktor?\n"
+        f"3. Was läuft gut?\n"
+        f"4. Ein konkreter Tipp für die nächste Woche.\n"
+        f"Sei direkt und konkret. Keine Floskeln."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 300, "messages": [{"role": "user", "content": prompt}]},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json()["content"][0]["text"].strip()
+    except Exception as e:
+        print("[WARN] Trend insights failed:", e)
+        return ""
+
+
+@app.get("/insights", response_class=HTMLResponse)
+def insights_page(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+    checkins = db.query(CheckIn).filter(
+        CheckIn.patient_id == p.id
+    ).order_by(CheckIn.created_at.desc()).limit(14).all()
+
+    if len(checkins) < 3:
+        body = """
+          <h1>Trend Insights</h1>
+          <p>Du brauchst mindestens 3 Check-ins für eine Trend-Analyse.</p>
+          <a class="btn" href="/checkin/1">Check-in starten</a>
+        """
+        return _page("PTGO • Insights", body, request=request)
+
+    insight = _generate_trend_insights(checkins, p.name)
+
+    scores = [c.score for c in reversed(checkins)]
+    max_s = max(scores) if scores else 100
+    min_s = min(scores) if scores else 0
+    range_s = max(max_s - min_s, 1)
+    bar_w = max(int(100 / len(scores)), 4)
+    sparkline = ""
+    for s in scores:
+        h = max(int((s - min_s) / range_s * 60), 4)
+        color = "#22c55e" if s >= 70 else ("#f59e0b" if s >= 40 else "#ef4444")
+        sparkline += f'<div style="width:{bar_w}%;height:{h}px;background:{color};border-radius:3px;flex-shrink:0" title="Score {s}"></div>'
+
+    avg_stress = sum(c.stress or 5 for c in checkins) / len(checkins)
+    avg_sleep = sum(c.sleep or 5 for c in checkins) / len(checkins)
+    avg_score = sum(c.score or 0 for c in checkins) / len(checkins)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">📊</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:1px">AI TREND INSIGHTS</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Deine Trends</h1>
+      <p class="small" style="text-align:center">Basierend auf {len(checkins)} Check-ins</p>
+
+      <div style="margin:16px 0;padding:14px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px">
+        <p style="font-size:14px;line-height:1.7;color:#e5e7eb;margin:0">{insight or 'KI-Analyse nicht verfügbar.'}</p>
+      </div>
+
+      <div style="margin:16px 0">
+        <p class="small" style="margin-bottom:6px">Recovery Score Verlauf</p>
+        <div style="display:flex;align-items:end;gap:2px;height:64px;padding:4px;background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px">
+          {sparkline}
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div class="kpi">
+          <span class="small">Ø Score</span>
+          <b style="color:{'#22c55e' if avg_score >= 70 else '#f59e0b' if avg_score >= 40 else '#ef4444'}">{int(avg_score)}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Ø Stress</span>
+          <b style="color:{'#ef4444' if avg_stress > 7 else '#f59e0b' if avg_stress > 5 else '#22c55e'}">{avg_stress:.1f}</b>
+        </div>
+        <div class="kpi">
+          <span class="small">Ø Schlaf</span>
+          <b style="color:{'#ef4444' if avg_sleep < 4 else '#f59e0b' if avg_sleep < 6 else '#22c55e'}">{avg_sleep:.1f}</b>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/progress">Progress</a> •
+        <a href="/timeline">Timeline</a> •
+        <a href="/profile">Body Profile</a> •
+        <a href="/checkin/1">Neuer Check</a>
+      </p>
+    """
+    return _page("PTGO • Trend Insights", body, request=request)
+
+
+# =========================================================
+# EMERGENCY ESCALATION
+# =========================================================
+
+def _check_emergency_escalation(db, patient: Patient, checkin: CheckIn):
+    """Check for critical patterns and escalate to therapist immediately."""
+    risk_triggers = []
+
+    if checkin.risk_level == "high":
+        risk_triggers.append("HIGH RISK Check-in")
+    if (checkin.craving or 0) >= 9:
+        risk_triggers.append(f"Extremes Craving: {checkin.craving}/10")
+    if (checkin.stress or 0) >= 9 and (checkin.sleep or 10) <= 2:
+        risk_triggers.append(f"Kritisch: Stress {checkin.stress} + Schlaf {checkin.sleep}")
+    if (checkin.daily_state or 10) <= 1:
+        risk_triggers.append(f"Minimale Stimmung: {checkin.daily_state}/10")
+
+    # Check for rapid decline
+    prev = db.query(CheckIn).filter(
+        CheckIn.patient_id == patient.id, CheckIn.id != checkin.id
+    ).order_by(CheckIn.created_at.desc()).first()
+    if prev and prev.score and checkin.score and (prev.score - checkin.score) >= 30:
+        risk_triggers.append(f"Rapider Abfall: {prev.score} → {checkin.score} (-{prev.score - checkin.score})")
+
+    if not risk_triggers:
+        return
+
+    alert_msg = (
+        f"🚨 EMERGENCY ALERT 🚨\n"
+        f"Patient: {patient.name}\n"
+        f"Score: {checkin.score}/100\n\n"
+        f"Auslöser:\n" + "\n".join(f"• {t}" for t in risk_triggers) + "\n\n"
+        f"Sofort prüfen: {BASE_URL}/therapist/checkin/{checkin.id}"
+    )
+
+    try:
+        therapist = db.query(Therapist).filter(Therapist.id == patient.therapist_id).first() if patient.therapist_id else None
+        send_whatsapp_to_therapist(patient, therapist, alert_msg)
+    except Exception as e:
+        print("[WARN] Emergency escalation failed:", e)
+
+    if SMTP_HOST and patient.therapist_id:
+        try:
+            therapist = db.query(Therapist).filter(Therapist.id == patient.therapist_id).first()
+            if therapist and therapist.email:
+                msg = EmailMessage()
+                msg["Subject"] = f"🚨 PTGO Emergency: {patient.name}"
+                msg["From"] = SMTP_FROM
+                msg["To"] = therapist.email
+                msg.set_content(alert_msg)
+                with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASS)
+                    server.send_message(msg)
+        except Exception as e:
+            print("[WARN] Emergency email failed:", e)
+
+
+# =========================================================
+# EVENING REFLECTION — 2x daily automated coaching
+# =========================================================
+
+EVENING_COACHING_PROMPTS = [
+    "Was war heute dein kleiner Sieg – auch wenn er winzig war?",
+    "Wofür bist du heute dankbar, auch wenn der Tag schwer war?",
+    "Was hast du heute über dich gelernt?",
+    "Wenn du deinem Körper eine Nachricht schicken könntest – was würdest du sagen?",
+    "Was brauchst du jetzt gerade in diesem Moment?",
+    "Welche Entscheidung hat dir heute am meisten Energie gegeben?",
+    "Was kannst du morgen anders machen als heute?",
+]
+
+def _generate_evening_message(db, patient: Patient) -> str:
+    """Generate personalized evening reflection message."""
+    today = _now_local().date().isoformat()
+    todays_checkin = db.query(CheckIn).filter(
+        CheckIn.patient_id == patient.id, CheckIn.local_day == today
+    ).order_by(CheckIn.created_at.desc()).first()
+
+    prompt_of_day = random.choice(EVENING_COACHING_PROMPTS)
+
+    if todays_checkin and ANTHROPIC_API_KEY:
+        try:
+            ai_prompt = (
+                f"Der Patient {patient.name} hatte heute folgendes Ergebnis:\n"
+                f"Score: {todays_checkin.score}/100, Pattern: {todays_checkin.pattern_label}\n"
+                f"Action: {todays_checkin.action_label}\n\n"
+                f"Schreibe eine kurze Abend-Reflexion (2 Sätze) auf Deutsch. "
+                f"Beziehe dich auf den heutigen Tag. Sei warm und ermutigend. "
+                f"Ende mit einer Reflexionsfrage."
+            )
+            resp = requests.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                json={"model": "claude-haiku-4-5", "max_tokens": 200, "messages": [{"role": "user", "content": ai_prompt}]},
+                timeout=15,
+            )
+            resp.raise_for_status()
+            return resp.json()["content"][0]["text"].strip()
+        except Exception as e:
+            print("[WARN] Evening AI message failed:", e)
+
+    if todays_checkin:
+        return (
+            f"Guten Abend {patient.name} 🌙\n\n"
+            f"Dein Score heute: {todays_checkin.score}/100\n"
+            f"Pattern: {todays_checkin.pattern_label}\n\n"
+            f"Abend-Reflexion:\n{prompt_of_day}\n\n"
+            f"Morgen geht's weiter. Schlaf gut."
+        )
+
+    return (
+        f"Guten Abend {patient.name} 🌙\n\n"
+        f"Du hast heute keinen Check-in gemacht. Kein Stress – morgen ist ein neuer Tag.\n\n"
+        f"Abend-Impuls:\n{prompt_of_day}\n\n"
+        f"Schlaf gut."
+    )
+
+
+def _should_send_evening_message(p: Patient, now_local: datetime) -> bool:
+    """Check if evening message should be sent (around 20:00)."""
+    if not p.reminder_enabled:
+        return False
+    today = now_local.date().isoformat()
+    # Use a simple marker: last_reminder_sent_on tracks morning, we track evening differently
+    # Evening window: 19:45 - 20:15
+    hour = now_local.hour
+    minute = now_local.minute
+    if hour == 20 and minute <= 15:
+        return True
+    if hour == 19 and minute >= 45:
+        return True
+    return False
+
+
+# =========================================================
+# MODUL 20 – ROLLO TOMASSI FRAMEWORK
+# =========================================================
+
+ROLLO_TOMASSI = {
+    "core_principles": {
+        "iron_rules": [
+            {
+                "rule": "Iron Rule #1: Frame ist alles",
+                "description": "Wer den Frame kontrolliert, kontrolliert die Dynamik. In jeder Interaktion gibt es einen Frame – deinen oder den des anderen.",
+                "daily_practice": "Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm bewusst die Führung in mindestens 3 Gesprächen.",
+                "metric": "frame_control",
+            },
+            {
+                "rule": "Iron Rule #2: Zeige niemals mehr Interesse als sie",
+                "description": "Investition muss immer proportional sein. Wer mehr investiert, hat weniger Macht.",
+                "daily_practice": "Spiegel heute das Engagement deines Gegenübers. Antworte nicht sofort. Setze deine Zeit bewusst ein.",
+                "metric": "investment_balance",
+            },
+            {
+                "rule": "Iron Rule #3: Jede Frau ist eine Option, keine Garantie",
+                "description": "Abundance Mentality. Nie alles auf eine Karte setzen. Du bist die Wahl, nicht der Wartende.",
+                "daily_practice": "Erweitere heute dein soziales Netzwerk. Sprich mit 3 neuen Menschen. Baue Optionen auf.",
+                "metric": "abundance_mindset",
+            },
+            {
+                "rule": "Iron Rule #4: Verdecke deine Absichten nie mit Freundschaft",
+                "description": "Sei direkt. Friendzone entsteht durch fehlende Polarisierung. Mache deine Intention klar.",
+                "daily_practice": "Kommuniziere heute eine unbequeme Wahrheit direkt. Keine Umwege. Keine Entschuldigung.",
+                "metric": "directness",
+            },
+            {
+                "rule": "Iron Rule #5: Dein Wert steigt, wenn du dich selbst priorisierst",
+                "description": "Sexual Market Value (SMV) ist real. Dein Wert wird durch dein Verhalten definiert, nicht durch deine Worte.",
+                "daily_practice": "Priorisiere heute DEIN Training, DEINE Karriere, DEINE Ziele. Sage mindestens einmal Nein.",
+                "metric": "self_priority",
+            },
+            {
+                "rule": "Iron Rule #6: Frauen sind keine Männer mit anderen Körpern",
+                "description": "Verstehe die fundamentalen Unterschiede in Kommunikation, Attraktion und Bindung.",
+                "daily_practice": "Beobachte heute Kommunikationsmuster. Höre auf das WAS nicht gesagt wird.",
+                "metric": "awareness",
+            },
+            {
+                "rule": "Iron Rule #7: Hypergamie ist Natur, nicht Moral",
+                "description": "Frauen optimieren instinktiv nach oben. Das ist keine Kritik, sondern Biologie. Deine Aufgabe: Werde die beste Version.",
+                "daily_practice": "Arbeite heute an einem Skill der deinen Marktwert steigert. Körper, Geld, oder Status.",
+                "metric": "smv_improvement",
+            },
+            {
+                "rule": "Iron Rule #8: Sei der Preis",
+                "description": "Wenn du dich als Preis verhältst, wirst du als Preis behandelt. Internalisiere deinen Wert.",
+                "daily_practice": "Handle heute so, als wärst du die wichtigste Person im Raum. Nicht arrogant – aber sicher.",
+                "metric": "prize_mentality",
+            },
+            {
+                "rule": "Iron Rule #9: Vertraue dem Verhalten, nicht den Worten",
+                "description": "Was Menschen TUN ist die Wahrheit. Was sie SAGEN ist oft Rationalisierung.",
+                "daily_practice": "Ignoriere heute was dir gesagt wird. Beobachte was getan wird. Entscheide basierend auf Handlungen.",
+                "metric": "behavioral_reading",
+            },
+        ],
+    },
+    "books": {
+        "rational_male_1": {
+            "title": "The Rational Male – Buch 1",
+            "key_concepts": [
+                "Hypergamie verstehen und akzeptieren",
+                "SMV (Sexual Market Value) Kurven – Männer peaken später",
+                "Blue Pill vs Red Pill Bewusstsein",
+                "Oneitis als größte Gefahr",
+                "Plate Theory – Optionen aufbauen",
+                "Frame Control als Lebensphilosophie",
+            ],
+        },
+        "rational_male_2": {
+            "title": "The Rational Male – Preventive Medicine",
+            "key_concepts": [
+                "Die 5 Phasen der Red Pill Entwicklung",
+                "Phase 1: Denial – Ablehnung der Realität",
+                "Phase 2: Anger – Wut über die Täuschung",
+                "Phase 3: Bargaining – Verhandlung mit dem alten Ich",
+                "Phase 4: Depression – Trauer über die Illusion",
+                "Phase 5: Acceptance – Integration und Neuaufbau",
+                "Feminine Imperative erkennen",
+                "Social Conventions die Männer klein halten",
+            ],
+        },
+        "rational_male_3": {
+            "title": "The Rational Male – Positive Masculinity",
+            "key_concepts": [
+                "Maskulinität ist kein Fehler",
+                "Konventionelle Attraktivität aufbauen",
+                "Mission vor Beziehung",
+                "Red Pill Parenting",
+                "Komplementäre Geschlechterrollen",
+                "Authentic vs Performance Masculinity",
+            ],
+        },
+        "rational_male_4": {
+            "title": "The Rational Male – Religion",
+            "key_concepts": [
+                "Spiritualität und Red Pill vereinen",
+                "Traditionelle Werte im modernen Kontext",
+                "Purpose-driven Leadership",
+                "Moralische Integrität ohne Blue Pill Conditioning",
+            ],
+        },
+    },
+    "smv_pillars": {
+        "physique": {
+            "label": "Körper / Physique",
+            "weight": 0.25,
+            "actions": [
+                "5x/Woche Krafttraining (Push/Pull/Legs)",
+                "Körperfett unter 15% halten",
+                "Kleidung die deinen Körperbau betont",
+                "Körpersprache: offen, breit, ruhig",
+            ],
+        },
+        "status": {
+            "label": "Status / Einfluss",
+            "weight": 0.30,
+            "actions": [
+                "Karriere als Mission behandeln",
+                "Social Proof aufbauen (Events, Netzwerk)",
+                "Führungsrollen übernehmen",
+                "Expertise in deinem Feld demonstrieren",
+            ],
+        },
+        "game": {
+            "label": "Game / Soziale Kompetenz",
+            "weight": 0.25,
+            "actions": [
+                "Täglich mit Fremden sprechen",
+                "Push/Pull Dynamik meistern",
+                "Kino Escalation verstehen",
+                "Storytelling und Humor entwickeln",
+            ],
+        },
+        "resources": {
+            "label": "Ressourcen / Vermögen",
+            "weight": 0.20,
+            "actions": [
+                "Einkommensströme diversifizieren",
+                "Investieren lernen und umsetzen",
+                "Lifestyle Design: wenig Kosten, hoher Impact",
+                "Finanzielle Unabhängigkeit als Ziel #1",
+            ],
+        },
+    },
+}
+
+
+# =========================================================
+# MODUL 21 – MILLIARDÄRS-TAGESPLAN
+# =========================================================
+
+BILLIONAIRE_DAILY_PLAN = {
+    "meta": {
+        "based_on": [
+            "Elon Musk (Tesla, SpaceX, X) – Time Blocking in 5-Minuten-Einheiten",
+            "Jeff Bezos (Amazon) – Regret Minimization Framework",
+            "Ray Dalio (Bridgewater) – Principles-based Decision Making",
+            "Naval Ravikant – Specific Knowledge + Leverage",
+            "Andrew Huberman – Neuroscience-optimierte Routinen",
+            "Alex Hormozi – $100M Offers Methodik",
+            "Sam Altman – Compound Growth Thinking",
+        ],
+        "core_philosophy": "Milliardäre optimieren nicht ihre Zeit – sie optimieren ihren IMPACT pro Stunde. "
+                          "Jede Stunde muss entweder Lernen, Bauen, oder Skalieren sein.",
+    },
+    "schedule": [
+        {"time": "05:00", "block": "WAKE PROTOCOL", "duration": "15min",
+         "action": "Kein Handy. Wasser (500ml). 2min Sonnenlicht oder helles Licht. Kalt duschen (30sec).",
+         "why": "Huberman: Cortisol-Peak durch Licht. Dopamin-Reset durch Kälte. Musk: 'I wake up and think about problems.'",
+         "category": "health"},
+        {"time": "05:15", "block": "DEEP WORK I – BUILD", "duration": "120min",
+         "action": "Die EINE Sache die am meisten Impact hat. Kein E-Mail, kein Social Media. Phone off. Timer auf 25min Pomodoro.",
+         "why": "Bezos: Die wichtigsten Entscheidungen morgens. Dein präfrontaler Cortex ist jetzt am schärfsten.",
+         "category": "build"},
+        {"time": "07:15", "block": "TRAINING", "duration": "45min",
+         "action": "Krafttraining (Push/Pull/Legs Rotation). Keine Ausdauer am Morgen. Heavy Compound Lifts.",
+         "why": "Musk trainiert 2-3x/Woche. Bezos macht es täglich. Testosteron + Disziplin + Körper = höherer SMV.",
+         "category": "health"},
+        {"time": "08:00", "block": "FUEL", "duration": "20min",
+         "action": "High-Protein Frühstück (40g+). Schwarzer Kaffee. Keine Kohlenhydrate vor 12:00.",
+         "why": "Hormozi: 'Your body is your first business.' Insulin-Kontrolle = Energie-Kontrolle.",
+         "category": "health"},
+        {"time": "08:20", "block": "REVIEW & PLAN", "duration": "10min",
+         "action": "PTGO Check-in machen. 3 MIT (Most Important Tasks) festlegen. Kalender checken.",
+         "why": "Dalio: 'Without data, you're just guessing.' Dein Check-in IST dein Daten-Dashboard.",
+         "category": "review"},
+        {"time": "08:30", "block": "DEEP WORK II – REVENUE", "duration": "150min",
+         "action": "Direkt umsatzgenerierende Arbeit. Verkaufen, Pitchen, Content erstellen, Produkte bauen.",
+         "why": "Hormozi: Die ersten 4 Stunden deines Tages gehören der Umsatzgenerierung. Alles andere ist Ablenkung.",
+         "category": "revenue"},
+        {"time": "11:00", "block": "COMMUNICATION BLOCK", "duration": "60min",
+         "action": "Alle E-Mails, Calls, Messages gebündelt. Batch Processing. Entscheidungen treffen, nicht aufschieben.",
+         "why": "Musk: Time-Boxing. Bezos: 'I do my email at 10am.' Nie reactive arbeiten.",
+         "category": "communication"},
+        {"time": "12:00", "block": "LUNCH + LEARNING", "duration": "45min",
+         "action": "Essen + Podcast/Audiobook. Themen: Business, Psychology, Finance. 30min Input pro Tag minimum.",
+         "why": "Naval: 'Read what you love until you love to read.' Compound Knowledge = Compound Wealth.",
+         "category": "learning"},
+        {"time": "12:45", "block": "DEEP WORK III – SCALE", "duration": "120min",
+         "action": "Systeme bauen. Automatisierung. Delegation. SOPs schreiben. Das Geschäft ohne dich möglich machen.",
+         "why": "Bezos: 'Your margin is my opportunity.' Skalierung = Marge = Freiheit. Arbeite AM Business, nicht IM Business.",
+         "category": "scale"},
+        {"time": "14:45", "block": "NETWORKING / SOCIAL", "duration": "60min",
+         "action": "2-3 strategische Gespräche. LinkedIn Outreach. Mastermind. Kontakte die 10x deinem Level sind.",
+         "why": "Naval: 'Your network is your net worth.' Du bist der Durchschnitt der 5 Menschen um dich.",
+         "category": "network"},
+        {"time": "15:45", "block": "CONTENT & BRAND", "duration": "75min",
+         "action": "1 Content Piece pro Tag. Video, Thread, oder Artikel. Dokumentiere was du lernst/baust.",
+         "why": "Hormozi: 'Content is the new cold call.' Musk kommuniziert direkt. Deine Brand IST dein Hebel.",
+         "category": "brand"},
+        {"time": "17:00", "block": "REVIEW & ITERATE", "duration": "30min",
+         "action": "KPIs checken. Was hat heute Impact gehabt? Was war Zeitverschwendung? Morgen anpassen.",
+         "why": "Dalio: 'Pain + Reflection = Progress.' Tägliche Iteration schlägt jährliche Planung.",
+         "category": "review"},
+        {"time": "17:30", "block": "RELATIONSHIPS & LIFE", "duration": "150min",
+         "action": "Frame-bewusste Quality Time. Rollo-Prinzipien leben. Sei der Preis. Führe Interaktionen.",
+         "why": "Tomassi: 'Your mission comes first.' Aber Beziehungen sind Teil der Mission. Balance durch Frame.",
+         "category": "relationships"},
+        {"time": "20:00", "block": "EVENING PROTOCOL", "duration": "60min",
+         "action": "PTGO Abend-Reflexion. Journaling. Lesen (30min). Screen-Time reduzieren. Schlaf vorbereiten.",
+         "why": "Huberman: Licht dimmen 2h vor Schlaf. Melatonin-Produktion. Schlaf = Recovery = Performance.",
+         "category": "wind_down"},
+        {"time": "21:00", "block": "SLEEP", "duration": "8h",
+         "action": "Zimmer kalt (18°C), dunkel, kein Handy. 7-8h durchschlafen. Nicht verhandelbar.",
+         "why": "Jeder Top-Performer sagt: Schlaf ist nicht optional. Walker: 'Sleep is the greatest legal performance enhancer.'",
+         "category": "sleep"},
+    ],
+}
+
+
+# =========================================================
+# MODUL 22 – HIGH-INCOME STRATEGIE & FAHRPLAN
+# =========================================================
+
+INCOME_STRATEGY = {
+    "reality_check": {
+        "title": "Reality Check – Die Wahrheit über 5000€/Tag",
+        "facts": [
+            "5.000€/Tag = 150.000€/Monat = 1.800.000€/Jahr",
+            "Das ist Top 0.1% in Deutschland",
+            "Es ist MÖGLICH – aber nicht in einer Woche, nicht passiv, nicht ohne extremen Einsatz",
+            "Elon Musk hat 12 Jahre gebraucht um seinen ersten großen Exit zu machen",
+            "Alex Hormozi hat 3 Jahre gebraucht für $100M Revenue",
+            "Naval Ravikant: 'You won't get rich renting out your time. You must own equity.'",
+        ],
+    },
+    "elon_prediction": {
+        "title": "Was Elon meint mit 'viele neue Milliardäre'",
+        "analysis": [
+            "AI-native Businesses: Wer KI als Hebel nutzt, kann mit 1-3 Leuten Firmen bauen die früher 100 brauchten",
+            "Robotik + Physical AI: Tesla Optimus, humanoide Roboter – neue Industrien entstehen",
+            "xAI + Grok: AI-Tools werden Produktivität 10-100x steigern",
+            "Musk's These: Arbeit wird durch AI so produktiv, dass Wertschöpfung pro Person explodiert",
+            "ABER: Du musst der BUILDER sein, nicht der Konsument. Builder profitieren, Konsumenten werden ersetzt.",
+        ],
+    },
+    "phases": [
+        {
+            "phase": "Phase 1: Foundation (Monat 1-3)",
+            "target": "500-2.000€/Tag",
+            "focus": "High-Value Skill + erstes Angebot",
+            "actions": [
+                "SKILL: Lerne AI-Tools (Claude, GPT, Midjourney) bis du schneller bist als 99% der Leute",
+                "ANGEBOT: Biete AI-Transformation für KMUs an (5.000-15.000€ pro Projekt)",
+                "KUNDEN: 100 kalte Nachrichten pro Tag auf LinkedIn. Ohne Ausnahme.",
+                "PREIS: Starte bei 3.000€/Projekt. Steigere auf 10.000€ nach 3 Kunden.",
+                "CONTENT: 1 LinkedIn Post pro Tag über deine AI-Ergebnisse",
+                "MINDSET: Du verkaufst nicht 'AI' – du verkaufst ERGEBNISSE. Zeitersparnis. Kostensenkung. Umsatzsteigerung.",
+            ],
+            "weekly_kpi": "Mindestens 3 Erstgespräche pro Woche, 1 Abschluss pro Woche",
+        },
+        {
+            "phase": "Phase 2: Scale (Monat 4-12)",
+            "target": "2.000-5.000€/Tag",
+            "focus": "Systeme + Team + Recurring Revenue",
+            "actions": [
+                "PRODUCTIZE: Mach dein Angebot wiederholbar. SOPs für alles.",
+                "TEAM: Stelle 2-3 Freelancer ein die die Delivery machen",
+                "RETAINER: Verkaufe monatliche AI-Betreuung (2.000-5.000€/Monat pro Kunde)",
+                "CONTENT: Skaliere auf YouTube + Newsletter. Zeige Case Studies.",
+                "LEVERAGE: Nutze AI um 10x so viel zu liefern bei gleicher Zeit",
+                "UPSELL: Biete Premium-Pakete an (25.000€+ für große Transformationen)",
+            ],
+            "weekly_kpi": "10+ aktive Kunden, 50.000€+ Monatsrevenue, 60%+ Marge",
+        },
+        {
+            "phase": "Phase 3: Compound (Jahr 2-3)",
+            "target": "5.000-50.000€/Tag",
+            "focus": "Equity + Software + Multiple Income Streams",
+            "actions": [
+                "SAAS: Baue ein AI-Tool das deine beste Dienstleistung automatisiert",
+                "EQUITY: Nimm Beteiligungen an statt Cash bei ausgewählten Kunden",
+                "FUND: Starte einen kleinen AI-Fonds oder Angel-Investing",
+                "BRAND: Du bist jetzt bekannt. Monetisiere die Audience (Kurse, Events, Consulting)",
+                "TEAM: 10-20 Leute. Du bist CEO, nicht Operator.",
+                "EXIT: Baue verkaufbare Assets (SaaS mit ARR, Content-Imperium, Kundenportfolio)",
+            ],
+            "weekly_kpi": "7-stelliger Monatsumsatz, multiple Revenue Streams, <20h/Woche operativ",
+        },
+    ],
+    "immediate_actions": {
+        "title": "Was du HEUTE tun kannst",
+        "today": [
+            "Erstelle ein LinkedIn Profil das dich als AI-Experte positioniert",
+            "Schreibe 20 personalisierte Nachrichten an Geschäftsführer von KMUs",
+            "Lerne ein AI-Tool bis du es besser kannst als 95% der Leute",
+            "Erstelle ein einfaches Angebot: 'Ich spare Ihrem Team 10h/Woche mit AI – oder Sie zahlen nichts'",
+            "Setze einen Preis fest (mind. 3.000€) und stehe dazu",
+        ],
+        "this_week": [
+            "30 Outreach-Nachrichten pro Tag (Mo-Fr = 150 Kontakte)",
+            "3 Discovery Calls buchen",
+            "1 Case Study erstellen (auch wenn es ein Eigenprojekt ist)",
+            "PTGO Daily Check-in JEDEN Tag – dein State bestimmt dein Income",
+            "Abends: 1h Skill-Development (AI, Sales, Marketing)",
+        ],
+    },
+    "leverage_types": {
+        "title": "Die 4 Hebel zum Reichtum (nach Naval Ravikant)",
+        "levers": [
+            {
+                "name": "Code (Software)",
+                "description": "Software arbeitet 24/7, skaliert unendlich, kostet fast nichts zu duplizieren.",
+                "action": "Baue ein SaaS-Tool, eine App, oder automatisiere Prozesse.",
+            },
+            {
+                "name": "Media (Content)",
+                "description": "Ein Video kann 10 Millionen Menschen erreichen. Ein Buch kann 50 Jahre verkaufen.",
+                "action": "Erstelle täglich Content. Baue eine Audience. Audience = Attention = Money.",
+            },
+            {
+                "name": "Capital (Geld)",
+                "description": "Geld arbeiten lassen. Investieren. Compound Interest. Aber du brauchst erst Capital.",
+                "action": "Investiere 20% von allem was reinkommt. Ab Tag 1. Auch wenn es 50€ sind.",
+            },
+            {
+                "name": "People (Team)",
+                "description": "Ein Team multipliziert deine Kapazität. Du kannst nur 16h/Tag arbeiten. 10 Leute = 160h.",
+                "action": "Stelle so früh wie möglich ein. Billige Freelancer zuerst, dann A-Player.",
+            },
+        ],
+    },
+}
+
+
+# =========================================================
+# DEV LOGIN (only works when APP_SECRET is default)
+# =========================================================
+
+@app.get("/dev-login", response_class=HTMLResponse)
+def dev_login(request: Request, db=Depends(get_db)):
+    if APP_SECRET != "dev-secret-change-me":
+        raise HTTPException(status_code=404)
+    patient = db.query(Patient).first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="No patients in DB")
+    request.session["patient_id"] = patient.id
+    return RedirectResponse("/mastery", status_code=302)
+
+
+# =========================================================
+# ROLLO TOMASSI + INCOME + TAGESPLAN – ROUTES
+# =========================================================
+
+@app.get("/mastery", response_class=HTMLResponse)
+def mastery_hub(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Get today's Rollo rule (rotate daily)
+    day_of_year = _now_local().timetuple().tm_yday
+    rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rules[day_of_year % len(rules)]
+
+    # Get current schedule block
+    now = _now_local()
+    current_block = None
+    for block in BILLIONAIRE_DAILY_PLAN["schedule"]:
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+        if now >= block_time:
+            current_block = block
+
+    streak = _get_patient_streak(db, p.id)
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">⚡</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">MASTERY HUB</div>
+      </div>
+      <h1 style="text-align:center;font-size:24px">Dein Weg zur Meisterschaft</h1>
+
+      <!-- Current Time Block -->
+      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:18px;margin:16px 0">
+        <div class="small" style="color:#f59e0b;margin-bottom:4px">JETZT – {current_block['time'] if current_block else '--:--'}</div>
+        <b style="font-size:18px;color:#fbbf24">{current_block['block'] if current_block else 'Schlaf-Modus'}</b>
+        <p style="font-size:13px;margin:8px 0 0">{current_block['action'] if current_block else 'Erhole dich. Morgen wird gebaut.'}</p>
+      </div>
+
+      <!-- Today's Iron Rule -->
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-radius:16px;padding:18px;margin:16px 0">
+        <div class="small" style="color:#f87171;margin-bottom:4px">IRON RULE DES TAGES</div>
+        <b style="font-size:16px;color:#fca5a5">{todays_rule['rule']}</b>
+        <p style="font-size:13px;margin:8px 0 4px">{todays_rule['description']}</p>
+        <p style="font-size:12px;color:#f59e0b;margin:4px 0 0">→ {todays_rule['daily_practice']}</p>
+      </div>
+
+      <!-- Streak -->
+      {"<div style='margin:12px 0;padding:12px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:12px;text-align:center'><span style='font-size:24px'>🔥</span> <span style='font-size:18px;font-weight:700;color:#f59e0b'>" + str(streak['current_streak']) + " Tage Streak</span></div>" if streak['current_streak'] >= 2 else ""}
+
+      <!-- Navigation -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0">
+        <a href="/mastery/rollo" style="display:block;padding:16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">🔴</div>
+          <div style="font-size:14px;font-weight:700;color:#fca5a5;margin-top:6px">Rollo Tomassi</div>
+          <div style="font-size:11px;color:#6b7280">Iron Rules & SMV</div>
+        </a>
+        <a href="/mastery/tagesplan" style="display:block;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">📋</div>
+          <div style="font-size:14px;font-weight:700;color:#fcd34d;margin-top:6px">Tagesplan</div>
+          <div style="font-size:11px;color:#6b7280">Milliardärs-Routine</div>
+        </a>
+        <a href="/mastery/income" style="display:block;padding:16px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">💰</div>
+          <div style="font-size:14px;font-weight:700;color:#86efac;margin-top:6px">Income Engine</div>
+          <div style="font-size:11px;color:#6b7280">5.000€/Tag Fahrplan</div>
+        </a>
+        <a href="/mastery/today" style="display:block;padding:16px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:14px;text-align:center;text-decoration:none">
+          <div style="font-size:28px">🎯</div>
+          <div style="font-size:14px;font-weight:700;color:#a5b4fc;margin-top:6px">Heute umsetzen</div>
+          <div style="font-size:11px;color:#6b7280">Sofort-Actions</div>
+        </a>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/checkin/1">Check-in</a> •
+        <a href="/insights">Trends</a> •
+        <a href="/progress">Progress</a>
+      </p>
+    """
+    return _page("PTGO • Mastery Hub", body, request=request)
+
+
+@app.get("/mastery/rollo", response_class=HTMLResponse)
+def mastery_rollo(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Iron Rules
+    rules_html = ""
+    for i, rule in enumerate(ROLLO_TOMASSI["core_principles"]["iron_rules"]):
+        rules_html += f"""
+        <div style="border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(239,68,68,.03)">
+          <b style="color:#fca5a5;font-size:15px">{rule['rule']}</b>
+          <p style="font-size:13px;margin:8px 0 6px">{rule['description']}</p>
+          <div style="background:rgba(245,158,11,.08);border-radius:10px;padding:10px;margin-top:8px">
+            <span style="font-size:11px;color:#f59e0b;font-weight:600">DAILY PRACTICE:</span>
+            <p style="font-size:12px;margin:4px 0 0;color:#fcd34d">{rule['daily_practice']}</p>
+          </div>
+        </div>
+        """
+
+    # Books
+    books_html = ""
+    for key, book in ROLLO_TOMASSI["books"].items():
+        concepts = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{c}</li>" for c in book["key_concepts"])
+        books_html += f"""
+        <div style="border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(255,255,255,.02)">
+          <b style="color:#e5e7eb;font-size:14px">{book['title']}</b>
+          <ul style="margin:8px 0 0;padding-left:18px">{concepts}</ul>
+        </div>
+        """
+
+    # SMV Pillars
+    smv_html = ""
+    for key, pillar in ROLLO_TOMASSI["smv_pillars"].items():
+        actions = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{a}</li>" for a in pillar["actions"])
+        pct = int(pillar["weight"] * 100)
+        smv_html += f"""
+        <div style="border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(99,102,241,.03)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b style="color:#a5b4fc;font-size:14px">{pillar['label']}</b>
+            <span style="font-size:12px;color:#f59e0b;font-weight:700">{pct}%</span>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0">
+            <div style="height:4px;background:#6366f1;border-radius:999px;width:{pct}%"></div>
+          </div>
+          <ul style="margin:6px 0 0;padding-left:18px">{actions}</ul>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🔴</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">THE RATIONAL MALE</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Rollo Tomassi Framework</h1>
+      <p class="small" style="text-align:center">Alle Iron Rules, alle Bücher, das komplette System</p>
+
+      <div class="hr"></div>
+      <h2 style="color:#fca5a5">Iron Rules of Tomassi</h2>
+      {rules_html}
+
+      <div class="hr"></div>
+      <h2 style="color:#a5b4fc">SMV Pillars – Dein Marktwert</h2>
+      <p class="small">Sexual Market Value = Summe aus 4 Bereichen. Optimiere alle parallel.</p>
+      {smv_html}
+
+      <div class="hr"></div>
+      <h2>Bücher & Key Concepts</h2>
+      {books_html}
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/tagesplan">Tagesplan</a> •
+        <a href="/mastery/income">Income</a>
+      </p>
+    """
+    return _page("PTGO • Rollo Tomassi", body, request=request)
+
+
+@app.get("/mastery/tagesplan", response_class=HTMLResponse)
+def mastery_tagesplan(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    now = _now_local()
+    schedule_html = ""
+    for block in BILLIONAIRE_DAILY_PLAN["schedule"]:
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+
+        # Determine if this block is current, past, or future
+        is_current = False
+        idx = BILLIONAIRE_DAILY_PLAN["schedule"].index(block)
+        next_block = BILLIONAIRE_DAILY_PLAN["schedule"][idx + 1] if idx + 1 < len(BILLIONAIRE_DAILY_PLAN["schedule"]) else None
+        if next_block:
+            nh, nm = next_block["time"].split(":")
+            next_time = now.replace(hour=int(nh), minute=int(nm), second=0)
+            is_current = block_time <= now < next_time
+        else:
+            is_current = now >= block_time
+
+        cat_colors = {
+            "health": "#22c55e", "build": "#f59e0b", "revenue": "#ef4444",
+            "review": "#6366f1", "communication": "#94a3b8", "learning": "#a855f7",
+            "scale": "#ec4899", "network": "#06b6d4", "brand": "#f97316",
+            "relationships": "#e879f9", "wind_down": "#6b7280", "sleep": "#334155",
+        }
+        color = cat_colors.get(block["category"], "#6b7280")
+        border = f"2px solid {color}" if is_current else "1px solid #1f2937"
+        bg = f"rgba({int(color[1:3],16)},{int(color[3:5],16)},{int(color[5:7],16)},.08)" if is_current else "rgba(255,255,255,.02)"
+
+        schedule_html += f"""
+        <div style="border:{border};border-radius:14px;padding:14px;margin-bottom:10px;background:{bg}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:13px;color:{color};font-weight:700">{block['time']}</span>
+              <b style="margin-left:10px;font-size:15px">{block['block']}</b>
+            </div>
+            <span style="font-size:11px;color:#6b7280">{block['duration']}</span>
+          </div>
+          <p style="font-size:13px;margin:8px 0 4px">{block['action']}</p>
+          <p style="font-size:11px;color:#6b7280;margin:0;font-style:italic">{block['why']}</p>
+          {'<div style="margin-top:6px;font-size:11px;color:' + color + ';font-weight:700">← DU BIST HIER</div>' if is_current else ''}
+        </div>
+        """
+
+    sources = "".join(f"<li style='font-size:11px;color:#6b7280;margin:2px 0'>{s}</li>" for s in BILLIONAIRE_DAILY_PLAN["meta"]["based_on"])
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">📋</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">MILLIARDÄRS-TAGESPLAN</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Der optimale Tag</h1>
+
+      <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:14px;margin:12px 0">
+        <p style="font-size:13px;color:#fcd34d;margin:0">{BILLIONAIRE_DAILY_PLAN['meta']['core_philosophy']}</p>
+      </div>
+
+      <div class="hr"></div>
+      {schedule_html}
+
+      <div class="hr"></div>
+      <h2>Quellen</h2>
+      <ul style="padding-left:18px">{sources}</ul>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/rollo">Rollo</a> •
+        <a href="/mastery/income">Income</a>
+      </p>
+    """
+    return _page("PTGO • Tagesplan", body, request=request)
+
+
+@app.get("/mastery/income", response_class=HTMLResponse)
+def mastery_income(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Reality Check
+    facts = "".join(f"<li style='font-size:13px;margin:4px 0;color:#94a3b8'>{f}</li>" for f in INCOME_STRATEGY["reality_check"]["facts"])
+
+    # Elon Analysis
+    elon = "".join(f"<li style='font-size:13px;margin:4px 0;color:#86efac'>{a}</li>" for a in INCOME_STRATEGY["elon_prediction"]["analysis"])
+
+    # Phases
+    phases_html = ""
+    phase_colors = ["#f59e0b", "#22c55e", "#6366f1"]
+    for i, phase in enumerate(INCOME_STRATEGY["phases"]):
+        color = phase_colors[i]
+        actions = "".join(f"<li style='font-size:12px;margin:4px 0;color:#94a3b8'>{a}</li>" for a in phase["actions"])
+        phases_html += f"""
+        <div style="border:1px solid {color}40;border-radius:16px;padding:18px;margin-bottom:14px;background:{color}08">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <b style="color:{color};font-size:16px">{phase['phase']}</b>
+            <span style="font-size:14px;font-weight:700;color:{color}">{phase['target']}</span>
+          </div>
+          <p style="font-size:13px;color:#e5e7eb;margin:8px 0 4px;font-weight:600">{phase['focus']}</p>
+          <ul style="padding-left:18px;margin:8px 0">{actions}</ul>
+          <div style="background:rgba(255,255,255,.03);border-radius:10px;padding:10px;margin-top:8px">
+            <span style="font-size:11px;color:{color};font-weight:600">WEEKLY KPI:</span>
+            <span style="font-size:12px;color:#94a3b8"> {phase['weekly_kpi']}</span>
+          </div>
+        </div>
+        """
+
+    # Leverage Types
+    levers_html = ""
+    lever_icons = ["💻", "📱", "💰", "👥"]
+    for i, lever in enumerate(INCOME_STRATEGY["leverage_types"]["levers"]):
+        levers_html += f"""
+        <div style="border:1px solid #1f2937;border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.02)">
+          <div style="font-size:20px;display:inline">{lever_icons[i]}</div>
+          <b style="margin-left:8px;color:#e5e7eb">{lever['name']}</b>
+          <p style="font-size:12px;margin:6px 0 4px">{lever['description']}</p>
+          <p style="font-size:12px;color:#f59e0b;margin:0">→ {lever['action']}</p>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">💰</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">INCOME ENGINE</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">5.000€/Tag Fahrplan</h1>
+
+      <!-- Reality Check -->
+      <div style="border:1px solid rgba(239,68,68,.3);border-radius:16px;padding:18px;margin:16px 0;background:rgba(239,68,68,.05)">
+        <h2 style="color:#fca5a5;margin:0 0 8px;font-size:16px">⚠️ {INCOME_STRATEGY['reality_check']['title']}</h2>
+        <ul style="padding-left:18px;margin:0">{facts}</ul>
+      </div>
+
+      <!-- Elon Prediction -->
+      <div style="border:1px solid rgba(34,197,94,.3);border-radius:16px;padding:18px;margin:16px 0;background:rgba(34,197,94,.05)">
+        <h2 style="color:#86efac;margin:0 0 8px;font-size:16px">🚀 {INCOME_STRATEGY['elon_prediction']['title']}</h2>
+        <ul style="padding-left:18px;margin:0">{elon}</ul>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Die 4 Hebel zum Reichtum</h2>
+      <p class="small">Nach Naval Ravikant – nutze mindestens 2 gleichzeitig</p>
+      {levers_html}
+
+      <div class="hr"></div>
+      <h2>Der 3-Phasen Fahrplan</h2>
+      {phases_html}
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/today">Sofort-Actions</a> •
+        <a href="/mastery/rollo">Rollo</a>
+      </p>
+    """
+    return _page("PTGO • Income Engine", body, request=request)
+
+
+@app.get("/mastery/today", response_class=HTMLResponse)
+def mastery_today(request: Request, db=Depends(get_db)):
+    p = require_patient_login(request, db)
+
+    # Today's actions
+    today_actions = "".join(
+        f"""<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid #1f2937;border-radius:12px;margin-bottom:8px;background:rgba(255,255,255,.02)">
+          <div style="font-size:18px;margin-top:2px">⬜</div>
+          <div style="font-size:13px;color:#e5e7eb">{a}</div>
+        </div>"""
+        for a in INCOME_STRATEGY["immediate_actions"]["today"]
+    )
+
+    week_actions = "".join(
+        f"""<div style="display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid rgba(245,158,11,.2);border-radius:12px;margin-bottom:8px;background:rgba(245,158,11,.03)">
+          <div style="font-size:18px;margin-top:2px">📌</div>
+          <div style="font-size:13px;color:#e5e7eb">{a}</div>
+        </div>"""
+        for a in INCOME_STRATEGY["immediate_actions"]["this_week"]
+    )
+
+    # Today's Rollo rule
+    day_of_year = _now_local().timetuple().tm_yday
+    rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rules[day_of_year % len(rules)]
+
+    # AI Coaching for today
+    coaching_prompt = ""
+    if ANTHROPIC_API_KEY:
+        last_checkin = db.query(CheckIn).filter(
+            CheckIn.patient_id == p.id
+        ).order_by(CheckIn.created_at.desc()).first()
+
+        if last_checkin:
+            try:
+                prompt = (
+                    f"Du bist ein Coach der Rollo Tomassi's Prinzipien kennt UND ein Business-Mentor ist.\n"
+                    f"Der Nutzer hat folgende Daten:\n"
+                    f"- Recovery Score: {last_checkin.score}/100\n"
+                    f"- Stress: {last_checkin.stress}/10\n"
+                    f"- Schlaf: {last_checkin.sleep}/10\n"
+                    f"- Pattern: {last_checkin.pattern_label}\n\n"
+                    f"Heute gilt Iron Rule: {todays_rule['rule']}\n\n"
+                    f"Gib ihm einen persönlichen Tages-Impuls (3 Sätze) der:\n"
+                    f"1. Seinen aktuellen State berücksichtigt\n"
+                    f"2. Die heutige Iron Rule integriert\n"
+                    f"3. Einen konkreten Business/Income Tipp gibt\n"
+                    f"Deutsch. Direkt. Kein Gelaber."
+                )
+                resp = requests.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+                    json={"model": "claude-haiku-4-5", "max_tokens": 250, "messages": [{"role": "user", "content": prompt}]},
+                    timeout=15,
+                )
+                resp.raise_for_status()
+                coaching_prompt = resp.json()["content"][0]["text"].strip()
+            except Exception as e:
+                print("[WARN] Today coaching failed:", e)
+
+    coaching_html = ""
+    if coaching_prompt:
+        coaching_html = f"""
+        <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:18px;margin:16px 0">
+          <div class="small" style="color:#a5b4fc;margin-bottom:4px">AI COACHING – DEIN TAGES-IMPULS</div>
+          <p style="font-size:14px;line-height:1.7;color:#e5e7eb;margin:0">{coaching_prompt}</p>
+        </div>
+        """
+
+    body = f"""
+      <div style="text-align:center;margin:8px 0 16px">
+        <div style="font-size:48px;line-height:1">🎯</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">HEUTE UMSETZEN</div>
+      </div>
+      <h1 style="text-align:center;font-size:22px">Dein Action Plan für heute</h1>
+
+      {coaching_html}
+
+      <!-- Today's Iron Rule -->
+      <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:14px;margin:12px 0">
+        <div class="small" style="color:#f87171;margin-bottom:4px">IRON RULE</div>
+        <b style="font-size:14px;color:#fca5a5">{todays_rule['rule']}</b>
+        <p style="font-size:12px;margin:4px 0 0;color:#f59e0b">→ {todays_rule['daily_practice']}</p>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Sofort-Actions für heute</h2>
+      {today_actions}
+
+      <div class="hr"></div>
+      <h2>Diese Woche</h2>
+      {week_actions}
+
+      <div class="hr"></div>
+      <div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:14px;text-align:center">
+        <p style="font-size:14px;color:#86efac;margin:0;font-weight:600">
+          "Specific knowledge + leverage + judgment = wealth"
+        </p>
+        <p class="small" style="margin:6px 0 0">— Naval Ravikant</p>
+      </div>
+
+      <div class="hr"></div>
+      <p class="small" style="text-align:center">
+        <a href="/mastery">← Hub</a> •
+        <a href="/mastery/income">Income</a> •
+        <a href="/checkin/1">Check-in</a>
+      </p>
+    """
+    return _page("PTGO • Heute", body, request=request)
+
+
+# =========================================================
 # MUSIC ANALYZER — 80er Rock Style Fusion Engine
 # =========================================================
 
@@ -3157,3 +4250,1106 @@ async def music_analyze(request: Request, song_links: str = Form(""), bands: Lis
       <p class="small" style="text-align:center">Powered by PTGO • AI Music Engine</p>
     """
     return _page(f"Music Fusion — {result.get('fusion_name', 'Ergebnis')}", body, request=request)
+
+
+# =========================================================
+# ZEIS PROTOCOL — 18 Schmerzverzerrungen & Self-Treatment
+# =========================================================
+
+ZEIS_TYPES = {
+    "katastrophisieren": {
+        "nr": 1,
+        "name": "Katastrophisieren",
+        "short": "Schmerz wird zur Katastrophe aufgeblasen",
+        "desc": "Du erwartest immer das Schlimmste. Ein leichtes Ziehen wird in deinem Kopf zum Bandscheibenvorfall. Dein Nervensystem lernt: Gefahr ist überall.",
+        "body_zones": ["kopf", "nacken", "unterer_ruecken"],
+        "signal": "Gedanken wie: 'Das wird nie aufhören', 'Da ist bestimmt was Schlimmes'",
+        "reframe": "Schmerz ist ein Signal, keine Diagnose. Die meisten Schmerzen sind vorübergehend und ungefährlich.",
+        "protocol": [
+            {"min": 0, "text": "Setz dich hin. Atme 3× tief. Benenne den Schmerz auf einer Skala 1–10."},
+            {"min": 2, "text": "Frage dich: Was ist die wahrscheinlichste Erklärung? Nicht die schlimmste."},
+            {"min": 4, "text": "Erinnere dich: Wie oft hattest du diesen Schmerz schon — und er ging weg?"},
+            {"min": 6, "text": "Lege eine Hand auf die schmerzende Stelle. Sage: 'Ich bin sicher. Das geht vorbei.'"},
+            {"min": 8, "text": "Bewege dich sanft. Steh auf, gehe 10 Schritte. Dein Körper ist belastbar."},
+        ],
+    },
+    "hypervigilanz": {
+        "nr": 2,
+        "name": "Hypervigilanz",
+        "short": "Ständige Körperbeobachtung verstärkt Schmerz",
+        "desc": "Du scannst deinen Körper permanent nach Signalen. Jedes Zwicken wird registriert, analysiert, bewertet. Das Nervensystem bleibt im Alarmmodus.",
+        "body_zones": ["kopf", "brust", "bauch"],
+        "signal": "Ständiges 'Reinspüren', Angst vor neuen Symptomen, Gesundheits-Googlen",
+        "reframe": "Aufmerksamkeit verstärkt Empfindung. Weniger Beobachten = weniger Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Erkenne den Scan-Modus: 'Ich beobachte gerade meinen Körper zu stark.'"},
+            {"min": 2, "text": "Lenke die Aufmerksamkeit nach außen: Benenne 5 Dinge die du siehst."},
+            {"min": 4, "text": "4 Dinge die du hörst. 3 die du fühlst (Oberfläche, nicht innen)."},
+            {"min": 6, "text": "Gib dir eine Aufgabe: Räume etwas auf, schreibe eine Nachricht, koche."},
+            {"min": 8, "text": "Vereinbare mit dir: Nächster Body-Check erst in 2 Stunden. Timer stellen."},
+        ],
+    },
+    "bewegungsangst": {
+        "nr": 3,
+        "name": "Bewegungsangst (Kinesiophobie)",
+        "short": "Angst vor Bewegung führt zu mehr Schmerz",
+        "desc": "Du vermeidest Bewegung aus Angst, dir zu schaden. Aber Inaktivität schwächt Muskeln, versteift Gelenke und macht dich empfindlicher.",
+        "body_zones": ["unterer_ruecken", "knie", "schulter"],
+        "signal": "Vermeidung von Sport, Treppen, Heben. Gedanken: 'Das macht es schlimmer'",
+        "reframe": "Bewegung ist Medizin. Dein Körper ist für Bewegung gebaut, nicht für Stillstand.",
+        "protocol": [
+            {"min": 0, "text": "Steh auf. Jetzt. Keine Diskussion mit dem Kopf."},
+            {"min": 1, "text": "Hebe die Arme über den Kopf. Halte 10 Sekunden. Spüre die Kraft."},
+            {"min": 3, "text": "Mache 5 sanfte Kniebeugen. Langsam. Dein Körper hält das aus."},
+            {"min": 5, "text": "Gehe 2 Minuten durch den Raum. Spüre den Boden unter den Füßen."},
+            {"min": 8, "text": "Notiere: Was war so schlimm? Meistens: nichts. Bewegung = Sicherheit."},
+        ],
+    },
+    "schmerz_identitaet": {
+        "nr": 4,
+        "name": "Schmerzidentität",
+        "short": "Schmerz wird Teil deiner Identität",
+        "desc": "Du definierst dich über deinen Schmerz: 'Ich bin Schmerzpatient.' Das zementiert neuronale Muster und macht Heilung schwerer.",
+        "body_zones": ["kopf", "unterer_ruecken", "ganzer_koerper"],
+        "signal": "'Ich habe schon immer...', 'Bei mir ist das chronisch', Diagnosen als Identität",
+        "reframe": "Du HAST Schmerz, du BIST nicht dein Schmerz. Dein Gehirn kann umlernen.",
+        "protocol": [
+            {"min": 0, "text": "Schreibe auf: Wie beschreibst du dich selbst? Welche Rolle spielt Schmerz darin?"},
+            {"min": 3, "text": "Streiche Sätze mit 'immer', 'nie', 'chronisch'. Ersetze durch 'gerade', 'aktuell'."},
+            {"min": 5, "text": "Schreibe 3 Sätze über dich OHNE Schmerz. Wer bist du sonst noch?"},
+            {"min": 7, "text": "Neuer Satz: 'Ich bin jemand, der lernt, anders mit Empfindungen umzugehen.'"},
+            {"min": 9, "text": "Lies dir alle 3 Sätze laut vor. Das ist der neue Grundton."},
+        ],
+    },
+    "emotionale_unterdrückung": {
+        "nr": 5,
+        "name": "Emotionale Unterdrückung",
+        "short": "Unterdrückte Emotionen werden zu Körperschmerz",
+        "desc": "Was du nicht fühlen willst, fühlt dein Körper. Wut, Trauer, Scham — sie suchen sich einen Ausweg. Oft als Rücken-, Nacken- oder Bauchschmerz.",
+        "body_zones": ["nacken", "unterer_ruecken", "bauch", "schulter"],
+        "signal": "Schmerz ohne klare Ursache, verstärkt bei Stress, nach Konflikten",
+        "reframe": "Dein Körper speichert, was du nicht aussprichst. Fühlen ist der Weg zur Auflösung.",
+        "protocol": [
+            {"min": 0, "text": "Setz dich still hin. Schließe die Augen. Frage: Was fühle ich WIRKLICH gerade?"},
+            {"min": 2, "text": "Benenne die Emotion. Nicht den Schmerz — die Emotion dahinter. Wut? Trauer? Angst?"},
+            {"min": 4, "text": "Wo sitzt diese Emotion im Körper? Lege die Hand dorthin."},
+            {"min": 6, "text": "Sage laut: 'Ich erlaube mir, das zu fühlen. Es ist sicher.'"},
+            {"min": 8, "text": "Atme 5× tief in diese Stelle. Lass zu, was kommt. Auch Tränen."},
+        ],
+    },
+    "schwarz_weiss": {
+        "nr": 6,
+        "name": "Schwarz-Weiß-Denken",
+        "short": "Entweder schmerzfrei oder kaputt — kein Dazwischen",
+        "desc": "Du kennst nur 0 oder 100. Entweder geht es dir gut oder du bist 'am Ende'. Nuancen gehen verloren — und damit die Fähigkeit, Fortschritt zu sehen.",
+        "body_zones": ["kopf", "ganzer_koerper"],
+        "signal": "'Es bringt nichts', 'Entweder ganz oder gar nicht', Aufgeben bei Rückschlägen",
+        "reframe": "Heilung ist ein Spektrum. 10% besser ist besser. Jeder kleine Schritt zählt.",
+        "protocol": [
+            {"min": 0, "text": "Wie geht es dir gerade? Nicht 'gut' oder 'schlecht'. Gib eine Zahl: 1–10."},
+            {"min": 2, "text": "Vergleiche mit letzter Woche. Gibt es einen Unterschied — egal wie klein?"},
+            {"min": 4, "text": "Schreibe 3 Dinge auf, die heute besser sind als vor einem Monat."},
+            {"min": 6, "text": "Erkenne: Perfekt gibt es nicht. 'Gut genug' ist das Ziel."},
+            {"min": 8, "text": "Neuer Satz: 'Ich bin auf dem Weg. Nicht am Ziel — und das ist okay.'"},
+        ],
+    },
+    "nocebo": {
+        "nr": 7,
+        "name": "Nocebo-Effekt",
+        "short": "Negative Erwartung erzeugt echten Schmerz",
+        "desc": "Wenn du erwartest, dass etwas wehtut, tut es weh. Dein Gehirn produziert Schmerz auf Basis von Erwartung, nicht von Gewebeschaden.",
+        "body_zones": ["kopf", "unterer_ruecken", "nacken"],
+        "signal": "Schmerz bei bestimmten Bewegungen die 'angeblich' gefährlich sind, Angst vor dem MRT-Befund",
+        "reframe": "Erwartung formt Erfahrung. Ändere die Erwartung — ändere den Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Welche Bewegung oder Situation erwartest du als schmerzhaft? Benenne sie."},
+            {"min": 2, "text": "Frage: Woher kommt diese Erwartung? Arzt? Google? Eigene Erfahrung?"},
+            {"min": 4, "text": "Neues Experiment: Führe die Bewegung langsam aus. Beobachte ohne Urteil."},
+            {"min": 6, "text": "War es so schlimm wie erwartet? Meistens: Nein."},
+            {"min": 8, "text": "Wiederhole morgen. Erwartung umschreiben: 'Es könnte auch leicht gehen.'"},
+        ],
+    },
+    "hilflosigkeit": {
+        "nr": 8,
+        "name": "Erlernte Hilflosigkeit",
+        "short": "Glaube, dass nichts hilft — also tust du nichts",
+        "desc": "Du hast so oft gehört 'damit müssen Sie leben', dass du es glaubst. Aber dein Nervensystem ist plastisch. Es kann umlernen.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Nichts hilft', 'Ich habe alles versucht', passive Haltung, Therapie-Hopping",
+        "reframe": "Du bist nicht hilflos. Du hast nur noch nicht den richtigen Hebel gefunden.",
+        "protocol": [
+            {"min": 0, "text": "Schreibe eine Liste: Was hast du alles schon versucht?"},
+            {"min": 3, "text": "Markiere ehrlich: Was davon hast du wirklich konsequent durchgezogen (>4 Wochen)?"},
+            {"min": 5, "text": "Wähle EINE Sache, die du ab heute 21 Tage durchziehst. Nur eine."},
+            {"min": 7, "text": "Plane konkret: Wann? Wo? Wie lange? Schreibe es auf."},
+            {"min": 9, "text": "Starte JETZT. Nicht morgen. Die erste Minute zählt am meisten."},
+        ],
+    },
+    "soziale_isolation": {
+        "nr": 9,
+        "name": "Soziale Isolation",
+        "short": "Rückzug verstärkt Schmerz und Depression",
+        "desc": "Schmerz macht einsam. Du sagst Treffen ab, bleibst zuhause, ziehst dich zurück. Aber Isolation verstärkt Schmerz — soziale Verbindung lindert ihn.",
+        "body_zones": ["brust", "bauch", "kopf"],
+        "signal": "Absagen, Rückzug, 'Die verstehen das nicht', Einsamkeitsgefühl",
+        "reframe": "Verbindung ist ein Schmerzmittel. Menschen in deiner Nähe aktivieren dein Sicherheitssystem.",
+        "protocol": [
+            {"min": 0, "text": "Wem hast du zuletzt abgesagt? Schreibe den Namen auf."},
+            {"min": 2, "text": "Schreibe dieser Person JETZT eine kurze Nachricht. Nur ein 'Hey, wie geht's?'"},
+            {"min": 4, "text": "Plane ein Treffen diese Woche. Kurz reicht. 30 Minuten Kaffee."},
+            {"min": 6, "text": "Bereite einen Satz vor: 'Mir geht es gerade nicht so gut, aber ich bin froh, hier zu sein.'"},
+            {"min": 8, "text": "Erlaube dir, nicht zu funktionieren. Einfach DA sein ist genug."},
+        ],
+    },
+    "perfektionismus": {
+        "nr": 10,
+        "name": "Schmerz-Perfektionismus",
+        "short": "Alles muss perfekt sein — auch die Heilung",
+        "desc": "Du willst den perfekten Therapeuten, die perfekte Übung, das perfekte Protokoll. Aber Perfektionismus ist Vermeidung in Verkleidung.",
+        "body_zones": ["nacken", "schulter", "kopf"],
+        "signal": "'Erst wenn ich den richtigen Arzt finde', endloses Recherchieren, nie anfangen",
+        "reframe": "Unperfektes Handeln schlägt perfektes Planen. Starte mit 'gut genug'.",
+        "protocol": [
+            {"min": 0, "text": "Was schiebst du auf, weil es 'noch nicht perfekt' ist?"},
+            {"min": 2, "text": "Mache es jetzt — aber nur zu 70%. Bewusst unperfekt."},
+            {"min": 4, "text": "Beobachte: Passiert etwas Schlimmes? Meistens: Nein."},
+            {"min": 6, "text": "Schreibe auf: 'Done is better than perfect.'"},
+            {"min": 8, "text": "Wiederhole morgen. Perfektionismus ist ein Muskel, der durch Nicht-Benutzen schrumpft."},
+        ],
+    },
+    "gedankenkreisen": {
+        "nr": 11,
+        "name": "Gedankenkreisen (Rumination)",
+        "short": "Endlosschleife von Schmerzgedanken",
+        "desc": "Dein Kopf dreht sich im Kreis: Warum ich? Was wenn? Was habe ich falsch gemacht? Rumination hält dein Nervensystem im Schmerzmodus.",
+        "body_zones": ["kopf", "nacken", "brust"],
+        "signal": "Grübeln, Schlafprobleme, gleiche Gedanken immer wieder, 'Was wenn...'",
+        "reframe": "Gedanken sind keine Fakten. Du kannst die Schleife unterbrechen.",
+        "protocol": [
+            {"min": 0, "text": "Erkenne die Schleife: 'Ich grüble gerade.' Sage es laut."},
+            {"min": 1, "text": "Steh auf. Bewege dich. Wasche dir die Hände mit kaltem Wasser."},
+            {"min": 3, "text": "Zähle rückwärts von 100 in 7er-Schritten: 100, 93, 86..."},
+            {"min": 5, "text": "Dein Gehirn kann nicht gleichzeitig rechnen UND grübeln."},
+            {"min": 7, "text": "Schreibe den Grübel-Gedanken auf Papier. Einmal. Dann weg damit. Er ist raus."},
+        ],
+    },
+    "vergleich": {
+        "nr": 12,
+        "name": "Sozialer Vergleich",
+        "short": "Andere haben es leichter — du hast Pech",
+        "desc": "Du vergleichst dich mit Gesunden und fühlst dich benachteiligt. Oder mit anderen Schmerzpatienten — und dir geht es 'noch schlimmer'.",
+        "body_zones": ["brust", "kopf"],
+        "signal": "'Warum ich?', Neid auf Gesunde, Social-Media-Vermeidung oder -Sucht",
+        "reframe": "Dein Weg ist deiner. Vergleich stiehlt Energie, die du für Heilung brauchst.",
+        "protocol": [
+            {"min": 0, "text": "Wann hast du dich zuletzt mit jemandem verglichen? Wer war es?"},
+            {"min": 2, "text": "Was genau hast du verglichen? Gesundheit? Erfolg? Lebensfreude?"},
+            {"min": 4, "text": "Du siehst 5% von deren Leben. Die anderen 95% kennst du nicht."},
+            {"min": 6, "text": "Schreibe 3 Dinge auf, die DU kannst oder hast, trotz allem."},
+            {"min": 8, "text": "Neuer Fokus: 'Ich vergleiche mich nur mit meinem gestrigen Ich.'"},
+        ],
+    },
+    "uebergeneralisierung": {
+        "nr": 13,
+        "name": "Übergeneralisierung",
+        "short": "Ein schlechter Tag = alles ist schlecht",
+        "desc": "Ein Rückfall, ein schlechter Tag — und du schließt: 'Es wird nie besser.' Ein einzelnes Ereignis wird zum Gesamturteil.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Immer', 'nie', 'jedes Mal', Rückschlag = Beweis für Hoffnungslosigkeit",
+        "reframe": "Ein schlechter Tag ist ein schlechter Tag. Nicht ein schlechtes Leben.",
+        "protocol": [
+            {"min": 0, "text": "Was ist heute passiert, das dich runterzieht?"},
+            {"min": 2, "text": "Ist es WIRKLICH 'immer' so? Oder gab es auch gute Tage letzte Woche?"},
+            {"min": 4, "text": "Ersetze 'immer' durch 'heute'. Ersetze 'nie' durch 'gerade nicht'."},
+            {"min": 6, "text": "Schreibe 1 guten Moment der letzten 7 Tage auf. Er existiert."},
+            {"min": 8, "text": "Morgen ist ein neuer Tag. Dieser hier definiert nicht alle anderen."},
+        ],
+    },
+    "kontrollzwang": {
+        "nr": 14,
+        "name": "Kontrollzwang",
+        "short": "Der Versuch, alles zu kontrollieren, erzeugt Anspannung",
+        "desc": "Du willst jede Variable kontrollieren: Ernährung, Schlaf, Haltung, Temperatur. Aber Überkontrolle ist Stress — und Stress ist Schmerz.",
+        "body_zones": ["nacken", "schulter", "kiefer"],
+        "signal": "Rigide Routinen, Panik bei Abweichung, ständiges Optimieren",
+        "reframe": "Kontrolle ist eine Illusion. Loslassen ist die wahre Stärke.",
+        "protocol": [
+            {"min": 0, "text": "Was versuchst du gerade zu kontrollieren? Schreibe es auf."},
+            {"min": 2, "text": "Frage: Liegt das in meiner Kontrolle? Ja oder Nein?"},
+            {"min": 4, "text": "Wenn Nein: Lass es los. Buchstäblich — öffne die Fäuste, atme aus."},
+            {"min": 6, "text": "Wenn Ja: Was ist die EINE Sache, die du tun kannst? Nur eine."},
+            {"min": 8, "text": "Alles andere? Nicht dein Problem. Nicht jetzt. Atme."},
+        ],
+    },
+    "somatisierung": {
+        "nr": 15,
+        "name": "Somatisierung",
+        "short": "Psychischer Stress wird zu körperlichem Schmerz",
+        "desc": "Dein Körper spricht, was dein Mund nicht sagt. Stress bei der Arbeit? Rückenschmerz. Beziehungsprobleme? Migräne. Das ist kein Einbildung — es ist Neurobiologie.",
+        "body_zones": ["unterer_ruecken", "kopf", "bauch", "brust"],
+        "signal": "Schmerz bei Stress, keine organische Ursache, wechselnde Symptome",
+        "reframe": "Dein Körper ist ehrlicher als dein Kopf. Höre auf die Botschaft, nicht nur auf den Schmerz.",
+        "protocol": [
+            {"min": 0, "text": "Was stresst dich gerade am meisten? Benenne es konkret."},
+            {"min": 2, "text": "Wo spürst du diesen Stress im Körper? Zeige mit der Hand hin."},
+            {"min": 4, "text": "Sage zum Schmerz: 'Ich höre dich. Was willst du mir sagen?'"},
+            {"min": 6, "text": "Schreibe die Antwort auf, die kommt. Ohne Zensur."},
+            {"min": 8, "text": "Was müsstest du im Leben ändern, damit dein Körper aufhört zu schreien?"},
+        ],
+    },
+    "opferrolle": {
+        "nr": 16,
+        "name": "Opferrolle",
+        "short": "Das Schicksal ist schuld — du kannst nichts tun",
+        "desc": "Du fühlst dich als Opfer deines Körpers, der Ärzte, des Systems. Aber solange du in der Opferrolle bleibst, gibst du alle Macht ab.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "'Mir passiert immer alles', Schuldzuweisung an andere, Passivität",
+        "reframe": "Du bist nicht verantwortlich für den Schmerz. Aber für deine Reaktion darauf.",
+        "protocol": [
+            {"min": 0, "text": "Wem oder was gibst du gerade die Schuld? Schreibe es auf."},
+            {"min": 2, "text": "Jetzt die harte Frage: Was könntest DU anders machen?"},
+            {"min": 4, "text": "Nicht alles — nur EINE Sache. Eine kleine Handlung, die in deiner Macht liegt."},
+            {"min": 6, "text": "Schreibe: 'Ich übernehme Verantwortung für ___.'"},
+            {"min": 8, "text": "Tu es. Jetzt. Nicht morgen. Verantwortung beginnt mit Handlung."},
+        ],
+    },
+    "zukunftsangst": {
+        "nr": 17,
+        "name": "Zukunftsangst",
+        "short": "Angst vor einer schmerzhaften Zukunft",
+        "desc": "Du malst dir eine Zukunft voller Schmerz aus. Rollstuhl, Pflegefall, Arbeitsunfähigkeit. Aber die Zukunft existiert noch nicht — nur dieser Moment.",
+        "body_zones": ["brust", "bauch", "kopf"],
+        "signal": "'Was wenn es schlimmer wird?', Schlafstörungen, Panikattacken, Zukunftsszenarien",
+        "reframe": "Die Zukunft ist nicht geschrieben. Du bist nur für JETZT zuständig.",
+        "protocol": [
+            {"min": 0, "text": "Welches Zukunftsszenario macht dir am meisten Angst? Schreibe es auf."},
+            {"min": 2, "text": "Wie wahrscheinlich ist es wirklich? Auf einer Skala 1–10."},
+            {"min": 4, "text": "Was kannst du HEUTE tun, damit es weniger wahrscheinlich wird?"},
+            {"min": 6, "text": "Komm zurück ins Jetzt: Spüre deine Füße auf dem Boden. Du bist hier. Jetzt."},
+            {"min": 8, "text": "Neuer Satz: 'Ich handle heute. Die Zukunft kümmere ich mich, wenn sie da ist.'"},
+        ],
+    },
+    "sekundaerer_gewinn": {
+        "nr": 18,
+        "name": "Sekundärer Krankheitsgewinn",
+        "short": "Schmerz hat auch Vorteile — unbewusst",
+        "desc": "Schmerz kann Aufmerksamkeit bringen, Verantwortung abnehmen, Konflikte vermeiden. Solange der Gewinn bleibt, bleibt der Schmerz.",
+        "body_zones": ["ganzer_koerper"],
+        "signal": "Schmerz 'passt' immer, wenn Anforderungen da sind. Besserung macht Angst.",
+        "reframe": "Ehrlichkeit mit dir selbst ist der erste Schritt. Was verlierst du, wenn der Schmerz geht?",
+        "protocol": [
+            {"min": 0, "text": "Stell dir vor, der Schmerz wäre morgen weg. Komplett. Was ändert sich?"},
+            {"min": 3, "text": "Was müsstest du dann tun, was du jetzt nicht tun musst?"},
+            {"min": 5, "text": "Sei ehrlich: Gibt es etwas, das der Schmerz dir 'erspart'?"},
+            {"min": 7, "text": "Das ist kein Vorwurf. Es ist Neurobiologie. Dein Gehirn schützt dich."},
+            {"min": 9, "text": "Neuer Deal mit dir selbst: 'Ich finde andere Wege, meine Bedürfnisse zu erfüllen.'"},
+        ],
+    },
+}
+
+ZEIS_MASTERCLASS = [
+    {
+        "nr": 1,
+        "title": "Was Schmerz wirklich ist",
+        "subtitle": "Neurowissenschaft für Nicht-Nerds",
+        "content": """Schmerz entsteht im Gehirn, nicht im Gewebe. Das ist keine Meinung — das ist Neurowissenschaft.
+
+Dein Gehirn bewertet ständig: Ist diese Empfindung gefährlich? Wenn ja, produziert es Schmerz. Wenn nein, ignoriert es das Signal. Deshalb kann ein Soldat im Krieg mit gebrochenem Bein weiterlaufen — und du vor Rückenschmerz nicht mehr aufstehen kannst, obwohl dein MRT normal ist.
+
+**Die 3 Schlüssel-Erkenntnisse:**
+
+1. **Schmerz ≠ Schaden.** 85% aller Rückenschmerzen haben keine strukturelle Ursache.
+2. **Dein Nervensystem lernt Schmerz.** Wie ein Musiker sein Instrument — durch Wiederholung. Je öfter du Schmerz erlebst, desto besser wird dein Gehirn darin.
+3. **Was gelernt wurde, kann umgelernt werden.** Neuroplastizität ist real. Dein Gehirn kann neue Pfade bilden.""",
+    },
+    {
+        "nr": 2,
+        "title": "Die 18 Schmerzverzerrungen",
+        "subtitle": "Warum dein Kopf den Schmerz verstärkt",
+        "content": """Kognitive Verzerrungen sind Denkfehler, die Schmerz verstärken. Sie sind nicht deine Schuld — sie sind evolutionär. Aber du kannst sie erkennen und entschärfen.
+
+**Die 5 häufigsten:**
+- **Katastrophisieren:** Das Schlimmste erwarten
+- **Hypervigilanz:** Ständig den Körper scannen
+- **Schwarz-Weiß:** Entweder gesund oder kaputt
+- **Hilflosigkeit:** Glauben, dass nichts hilft
+- **Nocebo:** Negative Erwartung erzeugt echten Schmerz
+
+Im ZEIS-Scan findest du heraus, welche Verzerrungen bei DIR am stärksten sind. Erst wenn du den Feind kennst, kannst du ihn besiegen.""",
+    },
+    {
+        "nr": 3,
+        "title": "Der Body-Mind-Loop",
+        "subtitle": "Wie Körper und Geist sich gegenseitig triggern",
+        "content": """Schmerz ist nie nur körperlich oder nur psychisch. Er ist ein Loop:
+
+**Gedanke** → Stress → Muskelspannung → **Schmerz** → Angst → mehr Stress → mehr Spannung → **mehr Schmerz**
+
+Der Loop läuft automatisch. Aber du kannst ihn an JEDER Stelle unterbrechen:
+
+1. **Am Gedanken:** Reframing (Verzerrung erkennen und umdeuten)
+2. **Am Stress:** Atemtechniken, Vagusnerv-Stimulation
+3. **An der Spannung:** Bewegung, progressive Muskelrelaxation
+4. **Am Schmerz:** Graded Exposure, Desensibilisierung
+5. **An der Angst:** Sicherheitssignale, soziale Verbindung
+
+Du brauchst nicht alle 5. Du brauchst nur EINEN Hebel, der für dich funktioniert.""",
+    },
+    {
+        "nr": 4,
+        "title": "Dein Nervensystem verstehen",
+        "subtitle": "Sympathikus, Parasympathikus und der Vagusnerv",
+        "content": """Dein autonomes Nervensystem hat zwei Modi:
+
+**Sympathikus (Gas):** Kampf, Flucht, Anspannung. Schmerz verstärkt.
+**Parasympathikus (Bremse):** Ruhe, Verdauung, Heilung. Schmerz gelindert.
+
+Der **Vagusnerv** ist dein direkter Zugang zum Parasympathikus. Er verläuft vom Hirnstamm durch Hals und Brust bis in den Bauch.
+
+**Vagusnerv aktivieren — sofort:**
+- Kaltes Wasser ins Gesicht (Tauchreflex)
+- Langes Ausatmen (länger als Einatmen)
+- Summen oder Singen (Vibration am Kehlkopf)
+- Soziale Verbindung (Blickkontakt, Umarmung)
+
+Wenn dein Vagus aktiv ist, kann dein Körper heilen. Wenn nicht, bleibt er im Alarmmodus.""",
+    },
+    {
+        "nr": 5,
+        "title": "Graded Exposure",
+        "subtitle": "Schrittweise zurück ins Leben",
+        "content": """Vermeidung macht Schmerz stärker. Graded Exposure ist das Gegenmittel.
+
+**Prinzip:** Du setzt dich den gefürchteten Bewegungen/Situationen schrittweise aus. Nicht alles auf einmal. Nicht heroisch. Systematisch.
+
+**Beispiel Rückenschmerz:**
+1. Woche 1: 5 Minuten spazieren (auch wenn es zieht)
+2. Woche 2: 10 Minuten spazieren + 5 Kniebeugen
+3. Woche 3: 15 Minuten + leichtes Heben (2 kg)
+4. Woche 4: 20 Minuten + normales Heben
+
+**Die Regeln:**
+- Starte unter deiner Schmerzgrenze
+- Steigere um maximal 10-20% pro Woche
+- NICHT am Schmerz orientieren, sondern am Plan
+- Rückschläge sind normal — kein Grund aufzuhören""",
+    },
+    {
+        "nr": 6,
+        "title": "Schlaf & Schmerz",
+        "subtitle": "Warum schlechter Schlaf alles schlimmer macht",
+        "content": """Schlechter Schlaf senkt deine Schmerzschwelle um bis zu 40%. Das ist keine Metapher — das sind Messwerte.
+
+**Der Teufelskreis:** Schmerz → schlechter Schlaf → niedrigere Schwelle → mehr Schmerz → noch schlechterer Schlaf.
+
+**Die ZEIS-Schlafregeln:**
+1. **Gleiche Zeit** — jeden Tag gleich aufstehen (auch am Wochenende)
+2. **Kein Koffein** nach 14 Uhr
+3. **Bildschirm-Stopp** 60 Minuten vor dem Schlafen
+4. **Kühles Zimmer** — 16-18°C optimal
+5. **Nicht im Bett liegen und grübeln** — nach 20 Minuten aufstehen, lesen, zurückkommen
+6. **Schmerz-Tagebuch** nicht abends führen — das aktiviert das Schmerznetzwerk
+
+Eine Nacht guter Schlaf kann mehr bewirken als jede Tablette.""",
+    },
+    {
+        "nr": 7,
+        "title": "Stress als Schmerzverstärker",
+        "subtitle": "Cortisol, Adrenalin und ihre Rolle",
+        "content": """Chronischer Stress hält dein Nervensystem im Alarmmodus. Cortisol und Adrenalin halten die Schmerzempfindlichkeit hoch.
+
+**Stress-Signale erkennen:**
+- Kiefer zusammengebissen
+- Schultern hochgezogen
+- Flache Atmung
+- Konzentrationsprobleme
+- Reizbarkeit
+
+**Sofort-Interventionen:**
+1. **Physiological Sigh:** 2× kurz einatmen durch die Nase, 1× lang aus durch den Mund
+2. **Kälte-Exposition:** 30 Sekunden kaltes Wasser über die Unterarme
+3. **Schütteln:** 2 Minuten den ganzen Körper schütteln — wie ein Hund nach dem Schwimmen
+
+Stress ist nicht der Feind. Chronischer Stress ohne Erholung ist der Feind.""",
+    },
+    {
+        "nr": 8,
+        "title": "Selbstmitgefühl statt Selbstkritik",
+        "subtitle": "Warum du aufhören musst, dich selbst fertigzumachen",
+        "content": """Die härteste Stimme in deinem Kopf ist deine eigene. 'Du bist schwach', 'Stell dich nicht an', 'Andere schaffen das doch auch.'
+
+Selbstkritik aktiviert das Bedrohungssystem — und damit Schmerz. Selbstmitgefühl aktiviert das Beruhigungssystem — und damit Heilung.
+
+**Die 3 Komponenten (nach Kristin Neff):**
+1. **Achtsamkeit:** Wahrnehmen, dass es dir schlecht geht (ohne Übertreibung)
+2. **Gemeinsames Menschsein:** Andere leiden auch. Du bist nicht allein.
+3. **Freundlichkeit:** Behandle dich wie einen guten Freund.
+
+**Übung:** Lege die Hand aufs Herz und sage: 'Das ist gerade schwer. Anderen geht es auch so. Ich darf freundlich zu mir sein.'
+
+Das ist nicht weich. Das ist Neurowissenschaft.""",
+    },
+]
+
+ZEIS_BODY_ZONES = {
+    "kopf": {"name": "Kopf", "x": 148, "y": 30, "w": 55, "h": 55},
+    "nacken": {"name": "Nacken", "x": 148, "y": 85, "w": 45, "h": 30},
+    "schulter": {"name": "Schultern", "x": 100, "y": 110, "w": 150, "h": 30},
+    "brust": {"name": "Brust", "x": 125, "y": 140, "w": 100, "h": 50},
+    "bauch": {"name": "Bauch", "x": 130, "y": 195, "w": 90, "h": 55},
+    "unterer_ruecken": {"name": "Unterer Rücken", "x": 130, "y": 250, "w": 90, "h": 45},
+    "knie": {"name": "Knie", "x": 120, "y": 340, "w": 110, "h": 30},
+    "kiefer": {"name": "Kiefer", "x": 130, "y": 60, "w": 90, "h": 25},
+    "ganzer_koerper": {"name": "Ganzer Körper", "x": 110, "y": 150, "w": 130, "h": 200},
+}
+
+
+# ---- ZEIS ROUTES ----
+
+@app.get("/zeis", response_class=HTMLResponse)
+async def zeis_landing(request: Request):
+    types_grid = ""
+    for key, t in ZEIS_TYPES.items():
+        types_grid += f"""
+        <a href="/zeis/protocol/{key}" style="text-decoration:none;color:inherit;">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#f59e0b;font-weight:700;">#{t['nr']}</span>
+              <span class="small">→</span>
+            </div>
+            <div style="font-weight:600;margin:6px 0 4px;color:#f3f4f6;">{t['name']}</div>
+            <div class="small">{t['short']}</div>
+          </div>
+        </a>"""
+
+    body = f"""
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:48px;margin-bottom:8px;">🧠</div>
+        <h1 style="margin:0;">ZEIS Protocol</h1>
+        <p style="color:#f59e0b;font-size:14px;margin-top:4px;">18 Schmerzverzerrungen erkennen & auflösen</p>
+      </div>
+
+      <p>Dein Schmerz ist real — aber dein Gehirn verstärkt ihn. Das ZEIS Protocol hilft dir, die 18 häufigsten Schmerzverzerrungen zu erkennen und mit gezielten Self-Treatment Protokollen aufzulösen.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;">
+        <a href="/zeis/scan" class="btn" style="text-align:center;">🔍 ZEIS Scan starten</a>
+        <a href="/zeis/method" class="btn btn-outline" style="text-align:center;color:#f59e0b;">📖 Die Methode</a>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <a href="/zeis/masterclass" class="btn btn-outline" style="text-align:center;">🎓 Masterclass</a>
+        <a href="/zeis/daily" class="btn btn-outline" style="text-align:center;">📋 Tägliches Protokoll</a>
+      </div>
+
+      <div class="hr"></div>
+      <h2>Die 18 Schmerzverzerrungen</h2>
+      {types_grid}
+
+      <div class="hr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/book/preview" class="btn btn-outline" style="text-align:center;">📖 Buch-Vorschau</a>
+        <a href="/zeis/book/export" class="btn btn-outline" style="text-align:center;">⬇ Buch-Export (.md)</a>
+      </div>
+
+      <div style="height:16px;"></div>
+      <a href="/" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Protocol — Schmerzverzerrungen", body, request=request)
+
+
+@app.get("/zeis/method", response_class=HTMLResponse)
+async def zeis_method(request: Request):
+    types_list = ""
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        types_list += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <span style="color:#f59e0b;font-weight:700;font-size:13px;">Typ #{t['nr']}</span>
+              <h2 style="margin:4px 0 6px;font-size:16px;">{t['name']}</h2>
+            </div>
+            <a href="/zeis/protocol/{key}" class="btn btn-outline" style="font-size:12px;padding:6px 12px;margin:0;width:auto;">Protokoll →</a>
+          </div>
+          <p style="margin:0 0 8px;font-size:14px;">{t['desc']}</p>
+          <div class="small" style="margin-bottom:4px;"><b>Körperzonen:</b> {zones}</div>
+          <div class="small" style="margin-bottom:4px;"><b>Signale:</b> {t['signal']}</div>
+          <div style="background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:10px;margin-top:8px;">
+            <div class="small" style="color:#f59e0b;font-weight:600;">Reframe:</div>
+            <div style="font-size:13px;color:#e5e7eb;">{t['reframe']}</div>
+          </div>
+        </div>"""
+
+    body = f"""
+      <h1>📖 Die ZEIS-Methode</h1>
+      <p style="color:#f59e0b;">18 Schmerzverzerrungen — erklärt, erkannt, aufgelöst</p>
+
+      <div class="hr"></div>
+
+      <h2>Was sind Schmerzverzerrungen?</h2>
+      <p>Kognitive Verzerrungen sind systematische Denkfehler, die deinen Schmerz verstärken. Sie sind nicht deine Schuld — sie sind evolutionär programmiert. Aber du kannst sie erkennen und umprogrammieren.</p>
+      <p>Das ZEIS Protocol identifiziert 18 spezifische Verzerrungsmuster, die bei Schmerzpatienten am häufigsten auftreten. Jede Verzerrung hat ein eigenes Self-Treatment Protokoll.</p>
+
+      <div class="hr"></div>
+
+      <h2>Alle 18 Typen im Detail</h2>
+      {types_list}
+
+      <div class="hr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/scan" class="btn" style="text-align:center;">🔍 Scan starten</a>
+        <a href="/zeis" class="btn btn-outline" style="text-align:center;">← Zurück</a>
+      </div>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Methode — 18 Typen", body, request=request)
+
+
+@app.get("/zeis/scan", response_class=HTMLResponse)
+async def zeis_scan(request: Request):
+    questions = []
+    for key, t in ZEIS_TYPES.items():
+        questions.append({"key": key, "name": t["name"], "signal": t["signal"]})
+
+    q_html = ""
+    for i, q in enumerate(questions):
+        q_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+          <label style="font-size:14px;color:#f3f4f6;margin:0 0 8px;">
+            <b>#{i+1}.</b> {q['name']}
+          </label>
+          <p class="small" style="margin:0 0 10px;">{q['signal']}</p>
+          <div class="slider-wrap">
+            <input type="range" name="{q['key']}" min="0" max="10" value="0"
+                   oninput="document.getElementById('val_{q['key']}').textContent=this.value"
+                   style="width:100%;">
+            <div style="display:flex;justify-content:space-between;margin-top:4px;">
+              <span class="small">Trifft nicht zu</span>
+              <span class="slider-val" id="val_{q['key']}">0</span>
+              <span class="small">Trifft voll zu</span>
+            </div>
+          </div>
+        </div>"""
+
+    body = f"""
+      <h1>🔍 ZEIS Body-Mind Scan</h1>
+      <p>Bewerte ehrlich, wie stark jede Verzerrung bei dir zutrifft (0 = gar nicht, 10 = extrem stark).</p>
+
+      <div class="hr"></div>
+
+      <form action="/zeis/scan" method="post">
+        {q_html}
+        <button type="submit" class="btn" style="margin-top:16px;">Scan auswerten →</button>
+      </form>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("ZEIS Scan", body, request=request)
+
+
+@app.post("/zeis/scan", response_class=HTMLResponse)
+async def zeis_scan_result(request: Request):
+    form = await request.form()
+    results = []
+    for key in ZEIS_TYPES:
+        val = int(form.get(key, 0))
+        if val > 0:
+            results.append({"key": key, "val": val, "type": ZEIS_TYPES[key]})
+    results.sort(key=lambda r: r["val"], reverse=True)
+
+    top_types = results[:5]
+
+    if not top_types:
+        body = """
+          <h1>🔍 Scan-Ergebnis</h1>
+          <p>Du hast keine Verzerrung bewertet. Bitte fülle den Scan ehrlich aus.</p>
+          <a href="/zeis/scan" class="btn" style="text-align:center;display:block;">Nochmal versuchen</a>
+        """
+        return _page("ZEIS Scan — Kein Ergebnis", body, request=request)
+
+    total = sum(r["val"] for r in results)
+    avg = round(total / len(results), 1) if results else 0
+
+    result_html = ""
+    for r in top_types:
+        pct = int(r["val"] / 10 * 100)
+        color = "#ef4444" if r["val"] >= 7 else "#f59e0b" if r["val"] >= 4 else "#22c55e"
+        result_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <span style="color:{color};font-weight:700;font-size:22px;">{r['val']}/10</span>
+              <span style="margin-left:8px;font-weight:600;color:#f3f4f6;">{r['type']['name']}</span>
+            </div>
+            <a href="/zeis/protocol/{r['key']}" class="btn btn-outline" style="font-size:12px;padding:6px 12px;margin:0;width:auto;">Protokoll →</a>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0;">
+            <div style="height:4px;background:{color};border-radius:999px;width:{pct}%;"></div>
+          </div>
+          <p class="small" style="margin:4px 0 0;">{r['type']['short']}</p>
+        </div>"""
+
+    severity = "hoch" if avg >= 6 else "mittel" if avg >= 3 else "niedrig"
+    sev_color = "#ef4444" if avg >= 6 else "#f59e0b" if avg >= 3 else "#22c55e"
+
+    body = f"""
+      <h1>🔍 Dein ZEIS-Profil</h1>
+
+      <div style="text-align:center;margin:16px 0;">
+        <div style="font-size:48px;font-weight:800;color:{sev_color};">{avg}</div>
+        <div style="font-size:14px;color:{sev_color};font-weight:600;">Verzerrungsindex: {severity}</div>
+        <p class="small">{len([r for r in results if r['val'] >= 5])} von 18 Verzerrungen aktiv (≥5)</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Deine Top-5 Verzerrungen</h2>
+      {result_html}
+
+      <div class="hr"></div>
+
+      <h2>Empfehlung</h2>
+      <div class="action-box">
+        <p style="margin:0;color:#f3f4f6;">Starte mit dem Protokoll für <b>{top_types[0]['type']['name']}</b> — deine stärkste Verzerrung. Führe es 7 Tage lang täglich durch.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;">
+        <a href="/zeis/protocol/{top_types[0]['key']}" class="btn" style="text-align:center;">Protokoll starten</a>
+        <a href="/zeis/scan" class="btn btn-outline" style="text-align:center;">Scan wiederholen</a>
+      </div>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("ZEIS Scan-Ergebnis", body, request=request)
+
+
+@app.get("/zeis/masterclass", response_class=HTMLResponse)
+async def zeis_masterclass(request: Request):
+    modules_html = ""
+    for m in ZEIS_MASTERCLASS:
+        modules_html += f"""
+        <a href="/zeis/masterclass/{m['nr']}" style="text-decoration:none;color:inherit;">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:10px;display:flex;align-items:center;gap:14px;">
+            <div style="min-width:44px;height:44px;background:rgba(245,158,11,.12);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#f59e0b;font-size:18px;">{m['nr']}</div>
+            <div>
+              <div style="font-weight:600;color:#f3f4f6;">{m['title']}</div>
+              <div class="small">{m['subtitle']}</div>
+            </div>
+          </div>
+        </a>"""
+
+    body = f"""
+      <h1>🎓 ZEIS Masterclass</h1>
+      <p>8 Module für ein tiefes Verständnis von Schmerz, Gehirn und Heilung.</p>
+
+      <div class="hr"></div>
+
+      {modules_html}
+
+      <div class="hr"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Masterclass — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Masterclass", body, request=request)
+
+
+@app.get("/zeis/masterclass/{nr}", response_class=HTMLResponse)
+async def zeis_masterclass_module(nr: int, request: Request):
+    module = None
+    for m in ZEIS_MASTERCLASS:
+        if m["nr"] == nr:
+            module = m
+            break
+    if not module:
+        return _page("Nicht gefunden", "<p>Modul nicht gefunden.</p><a href='/zeis/masterclass'>← Zurück</a>", request=request)
+
+    content_html = module["content"].replace("\n\n", "</p><p>").replace("**", "<b>").replace("**", "</b>")
+    # Simple markdown bold handling
+    import re
+    formatted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', module["content"])
+    formatted = formatted.replace("\n\n", "</p><p style='color:var(--muted);line-height:1.6;'>")
+    formatted = formatted.replace("\n- ", "<br>• ")
+    formatted = formatted.replace("\n1. ", "<br>1. ").replace("\n2. ", "<br>2. ").replace("\n3. ", "<br>3. ")
+    formatted = formatted.replace("\n4. ", "<br>4. ").replace("\n5. ", "<br>5. ").replace("\n6. ", "<br>6. ")
+
+    prev_link = f'<a href="/zeis/masterclass/{nr - 1}" class="btn btn-outline" style="text-align:center;">← Modul {nr - 1}</a>' if nr > 1 else '<span></span>'
+    next_link = f'<a href="/zeis/masterclass/{nr + 1}" class="btn" style="text-align:center;">Modul {nr + 1} →</a>' if nr < len(ZEIS_MASTERCLASS) else '<span></span>'
+
+    body = f"""
+      <div class="small" style="color:#f59e0b;margin-bottom:4px;">Modul {module['nr']} von {len(ZEIS_MASTERCLASS)}</div>
+      <h1>{module['title']}</h1>
+      <p style="color:#f59e0b;font-size:14px;margin-top:-8px;">{module['subtitle']}</p>
+
+      <div class="hr"></div>
+
+      <div style="line-height:1.8;">
+        <p style="color:var(--muted);line-height:1.6;">{formatted}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        {prev_link}
+        {next_link}
+      </div>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis/masterclass" class="btn btn-outline" style="text-align:center;display:block;">← Alle Module</a>
+    """
+    return _page(f"ZEIS Masterclass — {module['title']}", body, request=request)
+
+
+@app.get("/zeis/protocol/{type_key}", response_class=HTMLResponse)
+async def zeis_protocol(type_key: str, request: Request):
+    t = ZEIS_TYPES.get(type_key)
+    if not t:
+        return _page("Nicht gefunden", "<p>Verzerrungstyp nicht gefunden.</p><a href='/zeis'>← Zurück</a>", request=request)
+
+    steps_html = ""
+    for i, step in enumerate(t["protocol"]):
+        steps_html += f"""
+        <div id="step_{i}" class="protocol-step" style="display:{'block' if i == 0 else 'none'};background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;margin-bottom:8px;">Minute {step['min']}</div>
+          <p style="font-size:16px;color:#f3f4f6;line-height:1.6;margin:0;">{step['text']}</p>
+        </div>"""
+
+    zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+    total_steps = len(t["protocol"])
+
+    body = f"""
+      <div class="small" style="color:#f59e0b;">Self-Treatment Protokoll</div>
+      <h1>#{t['nr']} {t['name']}</h1>
+      <p>{t['desc']}</p>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;">
+        {"".join(f'<span class="pattern-tag">{ZEIS_BODY_ZONES[z]["name"]}</span>' for z in t["body_zones"] if z in ZEIS_BODY_ZONES)}
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="action-box">
+        <div class="small" style="color:#f59e0b;font-weight:600;">Erkennungssignal:</div>
+        <p style="margin:4px 0 0;color:#f3f4f6;">{t['signal']}</p>
+      </div>
+
+      <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.3);border-radius:16px;padding:18px;margin:12px 0;">
+        <div class="small" style="color:#22c55e;font-weight:600;">Reframe:</div>
+        <p style="margin:4px 0 0;color:#f3f4f6;">{t['reframe']}</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <h2>Protokoll starten</h2>
+      <p class="small">Klicke dich durch die {total_steps} Schritte. Nimm dir Zeit.</p>
+
+      <div id="timer_display" style="text-align:center;margin:16px 0;">
+        <span style="font-size:36px;font-weight:800;color:#f59e0b;" id="timer_val">00:00</span>
+        <div class="small">Timer</div>
+      </div>
+
+      {steps_html}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+        <button onclick="prevStep()" class="btn btn-outline" id="prev_btn" style="opacity:0.3;" disabled>← Zurück</button>
+        <button onclick="nextStep()" class="btn" id="next_btn">Weiter →</button>
+      </div>
+
+      <div id="done_section" style="display:none;text-align:center;margin-top:20px;">
+        <div style="font-size:48px;">✅</div>
+        <h2>Protokoll abgeschlossen</h2>
+        <p>Du hast das Self-Treatment für <b>{t['name']}</b> durchgeführt. Wiederhole es morgen.</p>
+        <a href="/zeis" class="btn" style="display:inline-block;margin-top:12px;">Zurück zum ZEIS Protocol</a>
+      </div>
+
+      <div class="hr"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+
+      <script>
+      let step = 0;
+      const total = {total_steps};
+      let seconds = 0;
+      let timerInterval = null;
+
+      function startTimer() {{
+        if (timerInterval) return;
+        timerInterval = setInterval(() => {{
+          seconds++;
+          const m = String(Math.floor(seconds / 60)).padStart(2, '0');
+          const s = String(seconds % 60).padStart(2, '0');
+          document.getElementById('timer_val').textContent = m + ':' + s;
+        }}, 1000);
+      }}
+
+      function nextStep() {{
+        startTimer();
+        if (step < total - 1) {{
+          document.getElementById('step_' + step).style.display = 'none';
+          step++;
+          document.getElementById('step_' + step).style.display = 'block';
+          document.getElementById('prev_btn').disabled = false;
+          document.getElementById('prev_btn').style.opacity = '1';
+          if (step === total - 1) {{
+            document.getElementById('next_btn').textContent = 'Abschließen ✓';
+          }}
+        }} else {{
+          document.getElementById('step_' + step).style.display = 'none';
+          document.getElementById('next_btn').style.display = 'none';
+          document.getElementById('prev_btn').style.display = 'none';
+          document.getElementById('done_section').style.display = 'block';
+          if (timerInterval) clearInterval(timerInterval);
+        }}
+      }}
+
+      function prevStep() {{
+        if (step > 0) {{
+          document.getElementById('step_' + step).style.display = 'none';
+          step--;
+          document.getElementById('step_' + step).style.display = 'block';
+          document.getElementById('next_btn').textContent = 'Weiter →';
+          if (step === 0) {{
+            document.getElementById('prev_btn').disabled = true;
+            document.getElementById('prev_btn').style.opacity = '0.3';
+          }}
+        }}
+      }}
+      </script>
+    """
+    return _page(f"ZEIS Protokoll — {t['name']}", body, request=request)
+
+
+@app.get("/zeis/daily", response_class=HTMLResponse)
+async def zeis_daily(request: Request):
+    options_html = ""
+    for key, t in ZEIS_TYPES.items():
+        options_html += f'<option value="{key}">{t["name"]}</option>'
+
+    body = f"""
+      <h1>📋 Tägliches ZEIS-Protokoll</h1>
+      <p>Tracke deine Verzerrungen und Fortschritte täglich.</p>
+
+      <div class="hr"></div>
+
+      <form action="/zeis/daily" method="post">
+        <label>Wie geht es dir gerade? (1–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="state" min="1" max="10" value="5"
+                 oninput="document.getElementById('state_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Schlecht</span>
+            <span class="slider-val" id="state_val">5</span>
+            <span class="small">Sehr gut</span>
+          </div>
+        </div>
+
+        <label>Schmerz-Level (0–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="pain" min="0" max="10" value="3"
+                 oninput="document.getElementById('pain_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Kein Schmerz</span>
+            <span class="slider-val" id="pain_val">3</span>
+            <span class="small">Maximal</span>
+          </div>
+        </div>
+
+        <label>Welche Verzerrung war heute am stärksten?</label>
+        <select name="distortion">
+          <option value="">— Wähle —</option>
+          {options_html}
+        </select>
+
+        <label>Verzerrungsstärke (0–10)</label>
+        <div class="slider-wrap">
+          <input type="range" name="intensity" min="0" max="10" value="5"
+                 oninput="document.getElementById('int_val').textContent=this.value">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="small">Schwach</span>
+            <span class="slider-val" id="int_val">5</span>
+            <span class="small">Extrem</span>
+          </div>
+        </div>
+
+        <label>Hast du ein Protokoll durchgeführt?</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="radio" name="protocol_done" value="ja" style="width:auto;"> Ja
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="radio" name="protocol_done" value="nein" checked style="width:auto;"> Nein
+          </label>
+        </div>
+
+        <label>Was hast du heute gelernt / erkannt?</label>
+        <textarea name="insight" rows="3" placeholder="Deine Erkenntnis des Tages..."></textarea>
+
+        <button type="submit" class="btn" style="margin-top:16px;">Eintrag speichern ✓</button>
+      </form>
+
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+    """
+    return _page("Tägliches ZEIS-Protokoll", body, request=request)
+
+
+@app.post("/zeis/daily", response_class=HTMLResponse)
+async def zeis_daily_save(request: Request):
+    form = await request.form()
+    state = form.get("state", "5")
+    pain = form.get("pain", "3")
+    distortion = form.get("distortion", "")
+    intensity = form.get("intensity", "5")
+    protocol_done = form.get("protocol_done", "nein")
+    insight = form.get("insight", "")
+
+    dist_name = ZEIS_TYPES[distortion]["name"] if distortion in ZEIS_TYPES else "Keine gewählt"
+
+    body = f"""
+      <div style="text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">✅</div>
+        <h1>Eintrag gespeichert</h1>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid3" style="margin-bottom:16px;">
+        <div class="kpi"><span class="small">Zustand</span><b>{state}/10</b></div>
+        <div class="kpi"><span class="small">Schmerz</span><b>{pain}/10</b></div>
+        <div class="kpi"><span class="small">Verzerrung</span><b>{intensity}/10</b></div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div class="small">Hauptverzerrung:</div>
+        <div style="font-weight:600;color:#f3f4f6;">{dist_name}</div>
+      </div>
+
+      <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;">
+        <div class="small">Protokoll durchgeführt:</div>
+        <div style="font-weight:600;color:{'#22c55e' if protocol_done == 'ja' else '#ef4444'};">{'Ja ✓' if protocol_done == 'ja' else 'Nein ✗'}</div>
+      </div>
+
+      {"<div style='background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px;'><div class=small>Erkenntnis:</div><p style=margin:4px_0_0;color:#f3f4f6;>" + insight + "</p></div>" if insight else ""}
+
+      <div class="hr"></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/zeis/daily" class="btn" style="text-align:center;">Neuer Eintrag</a>
+        <a href="/zeis" class="btn btn-outline" style="text-align:center;">← ZEIS Home</a>
+      </div>
+    """
+    return _page("ZEIS — Eintrag gespeichert", body, request=request)
+
+
+@app.get("/zeis/book/export")
+async def zeis_book_export(request: Request):
+    md = "# ZEIS Protocol — 18 Schmerzverzerrungen erkennen & auflösen\n\n"
+    md += "**Von Alexander Zeis**\n\n"
+    md += "---\n\n"
+
+    # Part 1: Masterclass
+    md += "# Teil 1: Masterclass\n\n"
+    for m in ZEIS_MASTERCLASS:
+        md += f"## Kapitel {m['nr']}: {m['title']}\n\n"
+        md += f"*{m['subtitle']}*\n\n"
+        md += m["content"] + "\n\n"
+        md += "---\n\n"
+
+    # Part 2: Die 18 Typen
+    md += "# Teil 2: Die 18 Schmerzverzerrungen\n\n"
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        md += f"## Typ #{t['nr']}: {t['name']}\n\n"
+        md += f"**{t['short']}**\n\n"
+        md += f"{t['desc']}\n\n"
+        md += f"**Körperzonen:** {zones}\n\n"
+        md += f"**Erkennungssignal:** {t['signal']}\n\n"
+        md += f"**Reframe:** {t['reframe']}\n\n"
+        md += "### Self-Treatment Protokoll\n\n"
+        for step in t["protocol"]:
+            md += f"- **Minute {step['min']}:** {step['text']}\n"
+        md += "\n---\n\n"
+
+    # Part 3: Tägliches Protokoll Vorlage
+    md += "# Teil 3: Tägliches Protokoll (Vorlage)\n\n"
+    md += "| Datum | Zustand (1-10) | Schmerz (0-10) | Hauptverzerrung | Stärke (0-10) | Protokoll? | Erkenntnis |\n"
+    md += "|-------|---------------|----------------|-----------------|---------------|------------|------------|\n"
+    md += "| ___ | ___ | ___ | ___ | ___ | ___ | ___ |\n" * 7
+    md += "\n---\n\n"
+    md += "*ZEIS Protocol — by Alexander Zeis — Generiert am " + datetime.now().strftime("%d.%m.%Y") + "*\n"
+
+    from starlette.responses import Response
+    return Response(
+        content=md.encode("utf-8"),
+        media_type="text/markdown",
+        headers={"Content-Disposition": "attachment; filename=ZEIS-Protocol-Buch.md"},
+    )
+
+
+@app.get("/zeis/book/preview", response_class=HTMLResponse)
+async def zeis_book_preview(request: Request):
+    import re
+
+    chapters_html = ""
+
+    # Masterclass chapters
+    chapters_html += '<h2 style="color:#f59e0b;margin-top:24px;">Teil 1: Masterclass</h2>'
+    for m in ZEIS_MASTERCLASS:
+        formatted = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', m["content"])
+        formatted = formatted.replace("\n\n", "</p><p style='color:var(--muted);line-height:1.6;font-size:14px;'>")
+        formatted = formatted.replace("\n- ", "<br>• ")
+        chapters_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;">Kapitel {m['nr']}</div>
+          <h2 style="font-size:16px;margin:4px 0;">{m['title']}</h2>
+          <div class="small" style="margin-bottom:8px;">{m['subtitle']}</div>
+          <p style="color:var(--muted);line-height:1.6;font-size:14px;">{formatted}</p>
+        </div>"""
+
+    # Type chapters
+    chapters_html += '<h2 style="color:#f59e0b;margin-top:24px;">Teil 2: Die 18 Schmerzverzerrungen</h2>'
+    for key, t in ZEIS_TYPES.items():
+        zones = ", ".join(ZEIS_BODY_ZONES[z]["name"] for z in t["body_zones"] if z in ZEIS_BODY_ZONES)
+        steps = "".join(f"<li><b>Min {s['min']}:</b> {s['text']}</li>" for s in t["protocol"])
+        chapters_html += f"""
+        <div style="background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px;">
+          <div class="small" style="color:#f59e0b;">Typ #{t['nr']}</div>
+          <h2 style="font-size:16px;margin:4px 0;">{t['name']}</h2>
+          <p style="font-size:13px;color:var(--muted);margin:4px 0 8px;">{t['desc']}</p>
+          <div class="small"><b>Zonen:</b> {zones}</div>
+          <div class="small"><b>Signal:</b> {t['signal']}</div>
+          <div style="background:rgba(245,158,11,.07);border-radius:10px;padding:10px;margin:8px 0;">
+            <div class="small" style="color:#22c55e;"><b>Reframe:</b></div>
+            <div style="font-size:13px;">{t['reframe']}</div>
+          </div>
+          <div class="small" style="margin-top:8px;"><b>Protokoll:</b></div>
+          <ol style="font-size:13px;color:var(--muted);padding-left:20px;">{steps}</ol>
+        </div>"""
+
+    total_chapters = len(ZEIS_MASTERCLASS) + len(ZEIS_TYPES)
+
+    body = f"""
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:48px;">📖</div>
+        <h1>ZEIS Protocol — Das Buch</h1>
+        <p style="color:#f59e0b;">Von Alexander Zeis</p>
+        <p class="small">{total_chapters} Kapitel • 8 Masterclass-Module • 18 Protokolle</p>
+      </div>
+
+      <div class="hr"></div>
+
+      <a href="/zeis/book/export" class="btn" style="text-align:center;display:block;margin-bottom:16px;">⬇ Als Markdown herunterladen</a>
+      <p class="small" style="text-align:center;margin-bottom:16px;">Lokal mit Pandoc → PDF/EPUB konvertierbar</p>
+
+      <div class="hr"></div>
+
+      {chapters_html}
+
+      <div class="hr"></div>
+      <a href="/zeis/book/export" class="btn" style="text-align:center;display:block;">⬇ Buch herunterladen (.md)</a>
+      <div style="height:12px;"></div>
+      <a href="/zeis" class="btn btn-outline" style="text-align:center;display:block;">← Zurück</a>
+      <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
+    """
+    return _page("ZEIS Protocol — Buch-Vorschau", body, request=request)

@@ -209,3 +209,6 @@ __marimo__/
 # Node.js
 node_modules/
 package-lock.json
+
+# Local dev database
+*.db
