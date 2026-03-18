@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>HEUTE — Nerve Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--glow-purple:0 0 20px rgba(168,85,247,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--purple);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--purple);border:1px solid var(--purple);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:20px 0 12px;color:var(--text);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:20px 0}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}.nav-btn:hover{color:var(--cyan)}
+
+.rule-today{background:rgba(255,45,142,.04);border:1px solid rgba(255,45,142,.25);padding:18px;margin-bottom:16px}
+.rule-today .label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--pink);letter-spacing:2px;margin-bottom:6px}
+.rule-today .name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--pink);margin-bottom:6px}
+.rule-today .practice{font-size:11px;color:var(--gold);line-height:1.5}
+
+.action-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;user-select:none;transition:all .2s}
+.action-item:hover{border-color:var(--cyan)}
+.action-item.done{opacity:.5;border-color:var(--green)}
+.action-item.done .check{background:var(--green);border-color:var(--green);box-shadow:var(--glow-purple)}
+.action-item.done .check::after{content:"✓";color:var(--bg);font-weight:700;font-size:14px}
+.check{width:24px;height:24px;min-width:24px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.action-text{font-size:12px;color:var(--text);line-height:1.6}
+
+.week-item{display:flex;align-items:flex-start;gap:12px;padding:14px;background:rgba(201,168,76,.03);border:1px solid rgba(201,168,76,.15);margin-bottom:8px}
+.week-icon{font-size:16px;min-width:24px;text-align:center}
+.week-text{font-size:12px;color:var(--text);line-height:1.6}
+
+.counter-box{background:var(--surface);border:1px solid var(--border);padding:20px;text-align:center;margin-bottom:16px}
+.counter-label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:8px}
+.counter-num{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;color:var(--cyan)}
+.counter-sub{font-size:11px;color:var(--dim);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <a href="/mastery" class="back-link">← HUB</a>
+  <div class="brand">HEUTE</div>
+  <span class="pill">ACTION PLAN</span>
+</div>
+
+<div style="text-align:center;margin:0 0 24px">
+  <div style="font-size:48px">🎯</div>
+  <h1>HEUTE UMSETZEN</h1>
+  <p id="dateDisplay"></p>
+</div>
+
+<!-- DONE COUNTER -->
+<div class="counter-box">
+  <div class="counter-label">ACTIONS DONE TODAY</div>
+  <div class="counter-num"><span id="doneCount">0</span> / <span id="totalCount">5</span></div>
+  <div class="counter-sub">Klicke auf eine Action um sie abzuhaken</div>
+</div>
+
+<!-- TODAY'S RULE -->
+<div class="rule-today">
+  <div class="label">IRON RULE DES TAGES</div>
+  <div class="name" id="todayRule"></div>
+  <div class="practice" id="todayPractice"></div>
+</div>
+
+<div class="hr"></div>
+
+<!-- TODAY ACTIONS -->
+<h2>SOFORT-ACTIONS FÜR HEUTE</h2>
+
+<div class="action-item" onclick="toggleAction(this)">
+  <div class="check"></div>
+  <div class="action-text">Erstelle ein LinkedIn Profil das dich als AI-Experte positioniert</div>
+</div>
+<div class="action-item" onclick="toggleAction(this)">
+  <div class="check"></div>
+  <div class="action-text">Schreibe 20 personalisierte Nachrichten an Geschäftsführer von KMUs</div>
+</div>
+<div class="action-item" onclick="toggleAction(this)">
+  <div class="check"></div>
+  <div class="action-text">Lerne ein AI-Tool bis du es besser kannst als 95% der Leute</div>
+</div>
+<div class="action-item" onclick="toggleAction(this)">
+  <div class="check"></div>
+  <div class="action-text">Erstelle ein einfaches Angebot: "Ich spare Ihrem Team 10h/Woche mit AI — oder Sie zahlen nichts"</div>
+</div>
+<div class="action-item" onclick="toggleAction(this)">
+  <div class="check"></div>
+  <div class="action-text">Setze einen Preis fest (mind. 3.000€) und stehe dazu</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- WEEK ACTIONS -->
+<h2>DIESE WOCHE</h2>
+
+<div class="week-item">
+  <div class="week-icon">📨</div>
+  <div class="week-text"><b>30 Outreach-Nachrichten pro Tag</b> (Mo-Fr = 150 Kontakte)</div>
+</div>
+<div class="week-item">
+  <div class="week-icon">📞</div>
+  <div class="week-text"><b>3 Discovery Calls buchen</b></div>
+</div>
+<div class="week-item">
+  <div class="week-icon">📊</div>
+  <div class="week-text"><b>1 Case Study erstellen</b> (auch wenn es ein Eigenprojekt ist)</div>
+</div>
+<div class="week-item">
+  <div class="week-icon">📋</div>
+  <div class="week-text"><b>PTGO Daily Check-in JEDEN Tag</b> — dein State bestimmt dein Income</div>
+</div>
+<div class="week-item">
+  <div class="week-icon">📚</div>
+  <div class="week-text"><b>Abends: 1h Skill-Development</b> (AI, Sales, Marketing)</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- DAILY CHALLENGE -->
+<div style="background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.25);padding:20px;text-align:center;margin:16px 0">
+  <div style="font-family:'Orbitron',sans-serif;font-size:10px;color:var(--purple);letter-spacing:2px;margin-bottom:8px">DAILY CHALLENGE</div>
+  <p style="font-size:14px;color:var(--text);font-weight:700;margin:0;line-height:1.6" id="dailyChallenge"></p>
+</div>
+
+<!-- QUOTE -->
+<div style="background:var(--surface2);border:1px solid var(--border);padding:24px;text-align:center;position:relative">
+  <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:.5"></div>
+  <p style="font-size:14px;color:var(--text);font-style:italic;line-height:1.7;margin-bottom:8px">"Specific knowledge + leverage + judgment = wealth"</p>
+  <p class="small" style="color:var(--green)">— Naval Ravikant</p>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/mastery">← HUB</a> · <a href="/mastery-income">INCOME</a> · <a href="/mastery-rollo">ROLLO</a> · <a href="/mastery-tagesplan">TAGESPLAN</a>
+</p>
+
+</div>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn">HOME</a>
+  <a href="/coaching" class="nav-btn">COACHING</a>
+  <a href="/mastery" class="nav-btn active">MASTERY</a>
+  <a href="/nerve" class="nav-btn">NERVE</a>
+</div></nav>
+
+<script>
+// Date display
+const d=new Date();
+const days=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+const months=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+document.getElementById('dateDisplay').textContent=days[d.getDay()]+', '+d.getDate()+'. '+months[d.getMonth()]+' '+d.getFullYear();
+
+// Iron Rules
+const rules=[
+  {rule:"Iron Rule #1: Frame ist alles",practice:"→ Übernimm bewusst die Führung in mindestens 3 Gesprächen heute."},
+  {rule:"Iron Rule #2: Zeige niemals mehr Interesse als sie",practice:"→ Spiegel das Engagement. Antworte nicht sofort. Setze deine Zeit bewusst ein."},
+  {rule:"Iron Rule #3: Abundance Mentality",practice:"→ Sprich mit 3 neuen Menschen. Baue Optionen auf."},
+  {rule:"Iron Rule #4: Keine verdeckten Absichten",practice:"→ Kommuniziere eine unbequeme Wahrheit direkt. Kein Umweg."},
+  {rule:"Iron Rule #5: Priorisiere dich selbst",practice:"→ Sage mindestens einmal Nein zu etwas das nicht deiner Mission dient."},
+  {rule:"Iron Rule #6: Verstehe die Unterschiede",practice:"→ Höre auf das WAS nicht gesagt wird. Beobachte die Subdynamik."},
+  {rule:"Iron Rule #7: Hypergamie ist Natur",practice:"→ Arbeite an einem Skill der deinen Marktwert steigert."},
+  {rule:"Iron Rule #8: Sei der Preis",practice:"→ Handle so als wärst du die wichtigste Person im Raum."},
+  {rule:"Iron Rule #9: Vertraue dem Verhalten",practice:"→ Entscheide basierend auf Handlungen, nicht auf Worten."}
+];
+
+const challenges=[
+  "Schreibe heute 50 LinkedIn-Nachrichten. Nicht 20. FÜNFZIG. Jede einzelne personalisiert.",
+  "Erstelle heute ein 2-Minuten Video in dem du erklärst was du mit AI für Firmen tun kannst. Poste es.",
+  "Identifiziere 3 Firmen in deiner Stadt die AI brauchen. Ruf sie AN. Nicht schreiben — ANRUFEN.",
+  "Lerne heute ein AI-Tool komplett durch. Jede Funktion. Werde zum Experten.",
+  "Erstelle ein Angebot mit konkretem ROI. 'Ich spare Ihnen X€/Monat' — mit Rechnung.",
+  "Finde einen Mentor. Schreibe 10 Menschen an die dort sind wo du hin willst.",
+  "Baue heute eine Landing Page für dein AI-Consulting. Simpel. Klar. Mit Calendly-Link.",
+  "Mache heute 5x Push/Pull in Gesprächen. Beobachte die Reaktion. Frame Control trainieren.",
+  "Sage heute zu ALLEM Nein was nicht direkt Revenue generiert oder deinen SMV steigert."
+];
+
+const dayOfYear=Math.floor((d-new Date(d.getFullYear(),0,0))/(1000*60*60*24));
+const rule=rules[dayOfYear%rules.length];
+document.getElementById('todayRule').textContent=rule.rule;
+document.getElementById('todayPractice').textContent=rule.practice;
+document.getElementById('dailyChallenge').textContent=challenges[dayOfYear%challenges.length];
+
+// Action toggle with localStorage persistence
+const storageKey='mastery-today-'+d.toISOString().split('T')[0];
+let doneSet=new Set(JSON.parse(localStorage.getItem(storageKey)||'[]'));
+
+function renderDone(){
+  document.querySelectorAll('.action-item').forEach((el,i)=>{
+    if(doneSet.has(i))el.classList.add('done');
+    else el.classList.remove('done');
+  });
+  document.getElementById('doneCount').textContent=doneSet.size;
+}
+
+function toggleAction(el){
+  const idx=[...document.querySelectorAll('.action-item')].indexOf(el);
+  if(doneSet.has(idx))doneSet.delete(idx);
+  else doneSet.add(idx);
+  localStorage.setItem(storageKey,JSON.stringify([...doneSet]));
+  renderDone();
+}
+renderDone();
+
+// Grain
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>

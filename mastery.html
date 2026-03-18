@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>MASTERY HUB — Nerve Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);border:1px solid var(--cyan);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;cursor:pointer;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+.card{background:var(--surface);border:1px solid var(--border);padding:24px 20px;margin-bottom:16px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:16px 0 10px;color:var(--text);text-transform:uppercase}
+h3{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;margin:12px 0 8px;color:var(--dim);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:16px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag{display:inline-block;font-family:'Orbitron',sans-serif;font-size:8px;border:1px solid var(--border);padding:3px 8px;color:var(--dim);margin:2px 4px 2px 0;letter-spacing:1px;text-transform:uppercase}
+.tag-gold{border-color:rgba(201,168,76,.4);color:var(--gold)}
+.tag-blue{border-color:rgba(0,240,255,.3);color:var(--cyan)}
+.tag-green{border-color:rgba(45,255,168,.3);color:var(--green)}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}
+.nav-btn:hover{color:var(--cyan)}
+.hub-card{background:var(--surface);border:1px solid var(--border);padding:20px 16px;text-align:center;cursor:pointer;transition:all .3s;text-decoration:none;display:block}
+.hub-card:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan);transform:translateY(-2px)}
+.hub-card .icon{font-size:32px;margin-bottom:8px}
+.hub-card .title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:4px}
+.hub-card .sub{font-size:10px;color:var(--dim)}
+.hub-card-red{border-color:rgba(255,45,142,.3)}.hub-card-red:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
+.hub-card-gold{border-color:rgba(201,168,76,.3)}.hub-card-gold:hover{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.hub-card-green{border-color:rgba(45,255,168,.3)}.hub-card-green:hover{border-color:var(--green);box-shadow:var(--glow-green)}
+.hub-card-purple{border-color:rgba(168,85,247,.3)}.hub-card-purple:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,.3)}
+.current-block{background:rgba(0,240,255,.04);border:1px solid rgba(0,240,255,.25);padding:18px;margin-bottom:16px}
+.current-block .label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:2px;margin-bottom:6px}
+.current-block .block-name{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--gold);margin-bottom:6px}
+.current-block .block-action{font-size:12px;color:var(--dim);line-height:1.6}
+.rule-box{background:rgba(255,45,142,.04);border:1px solid rgba(255,45,142,.25);padding:18px;margin-bottom:16px}
+.rule-box .label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--pink);letter-spacing:2px;margin-bottom:6px}
+.rule-box .rule-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--pink);margin-bottom:6px}
+.rule-box .rule-desc{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.rule-box .rule-practice{font-size:11px;color:var(--gold);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <div class="brand">PTGO</div>
+  <span class="pill">MASTERY HUB</span>
+</div>
+
+<div style="text-align:center;margin:0 0 20px">
+  <div style="font-size:48px;line-height:1">⚡</div>
+  <h1 style="margin-top:8px">MASTERY HUB</h1>
+  <p>Dein Weg zur Meisterschaft. Rollo Tomassi. Milliardärs-Routine. Income Engine.</p>
+</div>
+
+<!-- CURRENT TIME BLOCK -->
+<div class="current-block" id="currentBlock">
+  <div class="label">JETZT — <span id="currentTime">--:--</span></div>
+  <div class="block-name" id="blockName">Lade...</div>
+  <div class="block-action" id="blockAction"></div>
+</div>
+
+<!-- IRON RULE OF THE DAY -->
+<div class="rule-box" id="ruleBox">
+  <div class="label">IRON RULE DES TAGES</div>
+  <div class="rule-name" id="ruleName"></div>
+  <div class="rule-desc" id="ruleDesc"></div>
+  <div class="rule-practice" id="rulePractice"></div>
+</div>
+
+<div class="hr"></div>
+
+<!-- NAVIGATION GRID -->
+<div class="grid2" style="margin-bottom:16px">
+  <a href="/mastery-rollo" class="hub-card hub-card-red">
+    <div class="icon">🔴</div>
+    <div class="title">ROLLO TOMASSI</div>
+    <div class="sub">Iron Rules & SMV</div>
+  </a>
+  <a href="/mastery-tagesplan" class="hub-card hub-card-gold">
+    <div class="icon">📋</div>
+    <div class="title">TAGESPLAN</div>
+    <div class="sub">Milliardärs-Routine</div>
+  </a>
+</div>
+<div class="grid2">
+  <a href="/mastery-income" class="hub-card hub-card-green">
+    <div class="icon">💰</div>
+    <div class="title">INCOME ENGINE</div>
+    <div class="sub">5.000€/Tag Fahrplan</div>
+  </a>
+  <a href="/mastery-today" class="hub-card hub-card-purple">
+    <div class="icon">🎯</div>
+    <div class="title">HEUTE</div>
+    <div class="sub">Sofort-Actions</div>
+  </a>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/coaching">COACHING</a> · <a href="/portal">PORTAL</a> · <a href="/nerve">NERVE</a>
+</p>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2"/></svg>HOME</a>
+  <a href="/coaching" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>COACHING</a>
+  <a href="/mastery" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>MASTERY</a>
+  <a href="/nerve" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313"/></svg>NERVE</a>
+</div></nav>
+
+<script>
+// Schedule data
+const schedule=[
+  {time:"05:00",block:"WAKE PROTOCOL",action:"Kein Handy. Wasser (500ml). 2min Sonnenlicht. Kalt duschen (30sec)."},
+  {time:"05:15",block:"DEEP WORK I — BUILD",action:"Die EINE Sache die am meisten Impact hat. Phone off. Timer 25min Pomodoro."},
+  {time:"07:15",block:"TRAINING",action:"Krafttraining (Push/Pull/Legs). Heavy Compound Lifts."},
+  {time:"08:00",block:"FUEL",action:"High-Protein Frühstück (40g+). Schwarzer Kaffee. Keine Carbs vor 12:00."},
+  {time:"08:20",block:"REVIEW & PLAN",action:"Check-in machen. 3 MIT (Most Important Tasks) festlegen."},
+  {time:"08:30",block:"DEEP WORK II — REVENUE",action:"Direkt umsatzgenerierende Arbeit. Verkaufen, Pitchen, Content erstellen."},
+  {time:"11:00",block:"COMMUNICATION",action:"Alle E-Mails, Calls, Messages gebündelt. Batch Processing."},
+  {time:"12:00",block:"LUNCH + LEARNING",action:"Essen + Podcast/Audiobook. Business, Psychology, Finance."},
+  {time:"12:45",block:"DEEP WORK III — SCALE",action:"Systeme bauen. Automatisierung. Delegation. SOPs schreiben."},
+  {time:"14:45",block:"NETWORKING",action:"2-3 strategische Gespräche. LinkedIn Outreach. Mastermind."},
+  {time:"15:45",block:"CONTENT & BRAND",action:"1 Content Piece pro Tag. Video, Thread, oder Artikel."},
+  {time:"17:00",block:"REVIEW & ITERATE",action:"KPIs checken. Was hat Impact gehabt? Morgen anpassen."},
+  {time:"17:30",block:"RELATIONSHIPS",action:"Frame-bewusste Quality Time. Rollo-Prinzipien leben. Führe."},
+  {time:"20:00",block:"EVENING PROTOCOL",action:"Journaling. Lesen (30min). Screen-Time reduzieren."},
+  {time:"21:00",block:"SLEEP",action:"Zimmer kalt (18°C), dunkel, kein Handy. 7-8h. Nicht verhandelbar."}
+];
+
+const rules=[
+  {rule:"Iron Rule #1: Frame ist alles",desc:"Wer den Frame kontrolliert, kontrolliert die Dynamik.",practice:"Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm die Führung in 3 Gesprächen."},
+  {rule:"Iron Rule #2: Zeige niemals mehr Interesse als sie",desc:"Investition muss proportional sein. Wer mehr investiert, hat weniger Macht.",practice:"Spiegel das Engagement deines Gegenübers. Antworte nicht sofort."},
+  {rule:"Iron Rule #3: Abundance Mentality",desc:"Jede Frau ist eine Option, keine Garantie. Du bist die Wahl, nicht der Wartende.",practice:"Erweitere heute dein Netzwerk. Sprich mit 3 neuen Menschen."},
+  {rule:"Iron Rule #4: Keine verdeckten Absichten",desc:"Sei direkt. Friendzone entsteht durch fehlende Polarisierung.",practice:"Kommuniziere heute eine unbequeme Wahrheit direkt. Keine Umwege."},
+  {rule:"Iron Rule #5: Priorisiere dich selbst",desc:"Dein Wert steigt wenn du dich selbst priorisierst. SMV ist real.",practice:"Priorisiere DEIN Training, DEINE Karriere. Sage mindestens einmal Nein."},
+  {rule:"Iron Rule #6: Verstehe die Unterschiede",desc:"Frauen sind keine Männer mit anderen Körpern. Kommunikation, Attraktion, Bindung funktionieren anders.",practice:"Höre auf das WAS nicht gesagt wird. Beobachte Kommunikationsmuster."},
+  {rule:"Iron Rule #7: Hypergamie ist Natur",desc:"Frauen optimieren instinktiv nach oben. Deine Aufgabe: Werde die beste Version.",practice:"Arbeite an einem Skill der deinen Marktwert steigert. Körper, Geld, Status."},
+  {rule:"Iron Rule #8: Sei der Preis",desc:"Wenn du dich als Preis verhältst, wirst du als Preis behandelt.",practice:"Handle so als wärst du die wichtigste Person im Raum. Sicher, nicht arrogant."},
+  {rule:"Iron Rule #9: Vertraue dem Verhalten",desc:"Was Menschen TUN ist die Wahrheit. Was sie SAGEN ist oft Rationalisierung.",practice:"Ignoriere was dir gesagt wird. Beobachte was getan wird."}
+];
+
+function updateCurrent(){
+  const now=new Date();
+  const hh=String(now.getHours()).padStart(2,'0');
+  const mm=String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('currentTime').textContent=hh+':'+mm;
+
+  let current=schedule[schedule.length-1];
+  for(let i=schedule.length-1;i>=0;i--){
+    const[sh,sm]=schedule[i].time.split(':').map(Number);
+    if(now.getHours()>sh||(now.getHours()===sh&&now.getMinutes()>=sm)){current=schedule[i];break;}
+  }
+  document.getElementById('blockName').textContent=current.block;
+  document.getElementById('blockAction').textContent=current.action;
+
+  // Daily Iron Rule
+  const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,0))/(1000*60*60*24));
+  const rule=rules[dayOfYear%rules.length];
+  document.getElementById('ruleName').textContent=rule.rule;
+  document.getElementById('ruleDesc').textContent=rule.desc;
+  document.getElementById('rulePractice').textContent='→ '+rule.practice;
+}
+updateCurrent();
+setInterval(updateCurrent,30000);
+
+// Grain
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');
+gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>

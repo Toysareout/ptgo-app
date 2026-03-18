@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>TAGESPLAN — Nerve Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-gold:0 0 20px rgba(201,168,76,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--gold),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--gold);border:1px solid var(--gold);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:20px 0 12px;color:var(--text);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:20px 0}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}.nav-btn:hover{color:var(--cyan)}
+
+.block{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:10px;position:relative;overflow:hidden;transition:all .3s}
+.block::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);opacity:.3}
+.block.active{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.block.active::before{background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
+.block.active .here-tag{display:inline-block}
+.block-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.block-time{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--gold);font-weight:700}
+.block-dur{font-size:10px;color:var(--dim);font-family:'Orbitron',sans-serif;letter-spacing:1px}
+.block-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:1px}
+.block-action{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:6px}
+.block-why{font-size:11px;color:var(--dim);line-height:1.5;font-style:italic;opacity:.7}
+.here-tag{display:none;font-family:'Orbitron',sans-serif;font-size:9px;color:var(--bg);background:var(--gold);padding:3px 10px;letter-spacing:2px;margin-top:8px}
+.cat-tag{display:inline-block;font-family:'Orbitron',sans-serif;font-size:8px;border:1px solid;padding:2px 8px;letter-spacing:1px;text-transform:uppercase;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <a href="/mastery" class="back-link">← HUB</a>
+  <div class="brand">TAGESPLAN</div>
+  <span class="pill">MILLIARDÄRE</span>
+</div>
+
+<div style="text-align:center;margin:0 0 24px">
+  <div style="font-size:48px">📋</div>
+  <h1>DER OPTIMALE TAG</h1>
+  <p>Basierend auf Musk, Bezos, Hormozi, Naval, Huberman, Dalio</p>
+</div>
+
+<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);padding:16px;margin-bottom:20px">
+  <p style="color:var(--gold);font-size:12px;margin:0;line-height:1.7">Milliardäre optimieren nicht ihre Zeit — sie optimieren ihren <b>IMPACT pro Stunde</b>. Jede Stunde muss entweder Lernen, Bauen, oder Skalieren sein.</p>
+</div>
+
+<div id="schedule"></div>
+
+<div class="hr"></div>
+<h2>QUELLEN</h2>
+<div style="font-size:11px;color:var(--dim);line-height:2">
+  <div>• Elon Musk (Tesla, SpaceX, X) — Time Blocking in 5-Minuten-Einheiten</div>
+  <div>• Jeff Bezos (Amazon) — Regret Minimization Framework</div>
+  <div>• Ray Dalio (Bridgewater) — Principles-based Decision Making</div>
+  <div>• Naval Ravikant — Specific Knowledge + Leverage</div>
+  <div>• Andrew Huberman — Neuroscience-optimierte Routinen</div>
+  <div>• Alex Hormozi — $100M Offers Methodik</div>
+  <div>• Sam Altman — Compound Growth Thinking</div>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/mastery">← HUB</a> · <a href="/mastery-rollo">ROLLO</a> · <a href="/mastery-income">INCOME</a> · <a href="/mastery-today">HEUTE</a>
+</p>
+
+</div>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn">HOME</a>
+  <a href="/coaching" class="nav-btn">COACHING</a>
+  <a href="/mastery" class="nav-btn active">MASTERY</a>
+  <a href="/nerve" class="nav-btn">NERVE</a>
+</div></nav>
+
+<script>
+const schedule=[
+  {time:"05:00",block:"WAKE PROTOCOL",dur:"15min",action:"Kein Handy. Wasser (500ml). 2min Sonnenlicht oder helles Licht. Kalt duschen (30sec).",why:"Huberman: Cortisol-Peak durch Licht. Dopamin-Reset durch Kälte. Musk: 'I wake up and think about problems.'",cat:"health",color:"#2dffa8"},
+  {time:"05:15",block:"DEEP WORK I — BUILD",dur:"120min",action:"Die EINE Sache die am meisten Impact hat. Kein E-Mail, kein Social Media. Phone off. Timer auf 25min Pomodoro.",why:"Bezos: Die wichtigsten Entscheidungen morgens. Dein präfrontaler Cortex ist jetzt am schärfsten.",cat:"build",color:"#c9a84c"},
+  {time:"07:15",block:"TRAINING",dur:"45min",action:"Krafttraining (Push/Pull/Legs Rotation). Keine Ausdauer am Morgen. Heavy Compound Lifts.",why:"Musk trainiert 2-3x/Woche. Bezos macht es täglich. Testosteron + Disziplin + Körper = höherer SMV.",cat:"health",color:"#2dffa8"},
+  {time:"08:00",block:"FUEL",dur:"20min",action:"High-Protein Frühstück (40g+). Schwarzer Kaffee. Keine Kohlenhydrate vor 12:00.",why:"Hormozi: 'Your body is your first business.' Insulin-Kontrolle = Energie-Kontrolle.",cat:"health",color:"#2dffa8"},
+  {time:"08:20",block:"REVIEW & PLAN",dur:"10min",action:"PTGO Check-in machen. 3 MIT (Most Important Tasks) festlegen. Kalender checken.",why:"Dalio: 'Without data, you're just guessing.' Dein Check-in IST dein Daten-Dashboard.",cat:"review",color:"#a855f7"},
+  {time:"08:30",block:"DEEP WORK II — REVENUE",dur:"150min",action:"Direkt umsatzgenerierende Arbeit. Verkaufen, Pitchen, Content erstellen, Produkte bauen.",why:"Hormozi: Die ersten 4 Stunden deines Tages gehören der Umsatzgenerierung.",cat:"revenue",color:"#ff4444"},
+  {time:"11:00",block:"COMMUNICATION BLOCK",dur:"60min",action:"Alle E-Mails, Calls, Messages gebündelt. Batch Processing. Entscheidungen treffen, nicht aufschieben.",why:"Musk: Time-Boxing. Bezos: 'I do my email at 10am.' Nie reactive arbeiten.",cat:"comm",color:"#666680"},
+  {time:"12:00",block:"LUNCH + LEARNING",dur:"45min",action:"Essen + Podcast/Audiobook. Themen: Business, Psychology, Finance. 30min Input pro Tag minimum.",why:"Naval: 'Read what you love until you love to read.' Compound Knowledge = Compound Wealth.",cat:"learn",color:"#a855f7"},
+  {time:"12:45",block:"DEEP WORK III — SCALE",dur:"120min",action:"Systeme bauen. Automatisierung. Delegation. SOPs schreiben. Das Geschäft ohne dich möglich machen.",why:"Bezos: 'Your margin is my opportunity.' Skalierung = Marge = Freiheit.",cat:"scale",color:"#ff2d8e"},
+  {time:"14:45",block:"NETWORKING / SOCIAL",dur:"60min",action:"2-3 strategische Gespräche. LinkedIn Outreach. Mastermind. Kontakte die 10x deinem Level sind.",why:"Naval: 'Your network is your net worth.' Du bist der Durchschnitt der 5 Menschen um dich.",cat:"network",color:"#00f0ff"},
+  {time:"15:45",block:"CONTENT & BRAND",dur:"75min",action:"1 Content Piece pro Tag. Video, Thread, oder Artikel. Dokumentiere was du lernst/baust.",why:"Hormozi: 'Content is the new cold call.' Musk kommuniziert direkt. Deine Brand IST dein Hebel.",cat:"brand",color:"#c9a84c"},
+  {time:"17:00",block:"REVIEW & ITERATE",dur:"30min",action:"KPIs checken. Was hat heute Impact gehabt? Was war Zeitverschwendung? Morgen anpassen.",why:"Dalio: 'Pain + Reflection = Progress.' Tägliche Iteration schlägt jährliche Planung.",cat:"review",color:"#a855f7"},
+  {time:"17:30",block:"RELATIONSHIPS & LIFE",dur:"150min",action:"Frame-bewusste Quality Time. Rollo-Prinzipien leben. Sei der Preis. Führe Interaktionen.",why:"Tomassi: 'Your mission comes first.' Aber Beziehungen sind Teil der Mission. Balance durch Frame.",cat:"life",color:"#ff2d8e"},
+  {time:"20:00",block:"EVENING PROTOCOL",dur:"60min",action:"Journaling. Lesen (30min). Screen-Time reduzieren. Schlaf vorbereiten.",why:"Huberman: Licht dimmen 2h vor Schlaf. Melatonin-Produktion. Schlaf = Recovery = Performance.",cat:"wind",color:"#666680"},
+  {time:"21:00",block:"SLEEP",dur:"8h",action:"Zimmer kalt (18°C), dunkel, kein Handy. 7-8h durchschlafen. Nicht verhandelbar.",why:"Jeder Top-Performer: Schlaf ist nicht optional. Walker: 'Sleep is the greatest legal performance enhancer.'",cat:"sleep",color:"#1a1a2e"}
+];
+
+function render(){
+  const now=new Date();
+  const el=document.getElementById('schedule');
+  let html='';
+  schedule.forEach((s,i)=>{
+    const[h,m]=s.time.split(':').map(Number);
+    const blockMin=h*60+m;
+    const nowMin=now.getHours()*60+now.getMinutes();
+    const nextMin=i+1<schedule.length?parseInt(schedule[i+1].time)*60+parseInt(schedule[i+1].time.split(':')[1]):24*60;
+    const nh=i+1<schedule.length?parseInt(schedule[i+1].time.split(':')[0]):24;
+    const nm=i+1<schedule.length?parseInt(schedule[i+1].time.split(':')[1]):0;
+    const isActive=nowMin>=blockMin&&nowMin<nh*60+nm;
+    html+=`<div class="block ${isActive?'active':''}">
+      <div class="block-top">
+        <span class="block-time">${s.time}</span>
+        <span class="block-dur">${s.dur}</span>
+      </div>
+      <div class="block-name">${s.block}</div>
+      <span class="cat-tag" style="border-color:${s.color};color:${s.color}">${s.cat}</span>
+      <div class="block-action">${s.action}</div>
+      <div class="block-why">${s.why}</div>
+      <span class="here-tag">← DU BIST HIER</span>
+    </div>`;
+  });
+  el.innerHTML=html;
+  // Scroll active into view
+  const active=document.querySelector('.block.active');
+  if(active)active.scrollIntoView({behavior:'smooth',block:'center'});
+}
+render();
+
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>

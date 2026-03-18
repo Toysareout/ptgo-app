@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>INCOME ENGINE — Nerve Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--glow-green:0 0 20px rgba(45,255,168,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--green);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--green);border:1px solid var(--green);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:20px 0 12px;color:var(--text);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:20px 0}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}.nav-btn:hover{color:var(--cyan)}
+
+.alert-box{background:rgba(255,68,68,.06);border:1px solid rgba(255,68,68,.3);padding:18px;margin-bottom:16px}
+.alert-box .label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--red);letter-spacing:2px;margin-bottom:8px}
+.alert-box li{font-size:12px;color:var(--dim);margin:5px 0;line-height:1.6}
+
+.elon-box{background:rgba(45,255,168,.04);border:1px solid rgba(45,255,168,.25);padding:18px;margin-bottom:16px}
+.elon-box .label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:8px}
+.elon-box li{font-size:12px;color:var(--green);margin:6px 0;line-height:1.6;opacity:.85}
+
+.lever-card{background:var(--surface);border:1px solid var(--border);padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
+.lever-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3}
+.lever-icon{font-size:24px;display:inline;margin-right:8px}
+.lever-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--cyan);display:inline}
+.lever-desc{font-size:12px;color:var(--dim);margin:8px 0 4px;line-height:1.6}
+.lever-action{font-size:12px;color:var(--gold);line-height:1.5}
+
+.phase-card{background:var(--surface);border-left:3px solid;padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+.phase-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.phase-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px}
+.phase-target{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900}
+.phase-focus{font-size:13px;color:var(--text);font-weight:700;margin-bottom:10px}
+.phase-actions li{font-size:11px;color:var(--dim);margin:5px 0;line-height:1.6}
+.phase-kpi{background:rgba(255,255,255,.03);padding:10px;margin-top:12px;font-size:11px}
+.phase-kpi .kpi-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:3px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <a href="/mastery" class="back-link">← HUB</a>
+  <div class="brand">INCOME ENGINE</div>
+  <span class="pill">5K/TAG</span>
+</div>
+
+<div style="text-align:center;margin:0 0 24px">
+  <div style="font-size:48px">💰</div>
+  <h1>5.000€/TAG FAHRPLAN</h1>
+  <p>Realistische Strategie. Basierend auf echten Methoden. Kein Bullshit.</p>
+</div>
+
+<!-- REALITY CHECK -->
+<div class="alert-box">
+  <div class="label">⚠️ REALITY CHECK</div>
+  <ul style="padding-left:16px">
+    <li><b>5.000€/Tag = 150.000€/Monat = 1.800.000€/Jahr</b></li>
+    <li>Das ist Top 0.1% in Deutschland</li>
+    <li>Es ist MÖGLICH — aber nicht in einer Woche, nicht passiv, nicht ohne extremen Einsatz</li>
+    <li>Elon Musk hat 12 Jahre gebraucht für seinen ersten großen Exit</li>
+    <li>Alex Hormozi hat 3 Jahre gebraucht für $100M Revenue</li>
+    <li>Naval Ravikant: "You won't get rich renting out your time. You must own equity."</li>
+  </ul>
+</div>
+
+<!-- ELON PREDICTION -->
+<div class="elon-box">
+  <div class="label">🚀 WAS ELON MEINT MIT "VIELE NEUE MILLIARDÄRE"</div>
+  <ul style="padding-left:16px">
+    <li><b>AI-native Businesses:</b> Wer KI als Hebel nutzt, kann mit 1-3 Leuten Firmen bauen die früher 100 brauchten</li>
+    <li><b>Robotik + Physical AI:</b> Tesla Optimus, humanoide Roboter — neue Industrien entstehen</li>
+    <li><b>xAI + Grok:</b> AI-Tools werden Produktivität 10-100x steigern</li>
+    <li><b>Musk's These:</b> Arbeit wird durch AI so produktiv, dass Wertschöpfung pro Person explodiert</li>
+    <li><b>ABER:</b> Du musst der BUILDER sein, nicht der Konsument. Builder profitieren, Konsumenten werden ersetzt.</li>
+  </ul>
+</div>
+
+<div class="hr"></div>
+
+<!-- 4 LEVERS -->
+<h2 style="color:var(--cyan)">DIE 4 HEBEL ZUM REICHTUM</h2>
+<p>Nach Naval Ravikant — nutze mindestens 2 gleichzeitig</p>
+
+<div class="lever-card">
+  <span class="lever-icon">💻</span><span class="lever-name">CODE (SOFTWARE)</span>
+  <div class="lever-desc">Software arbeitet 24/7, skaliert unendlich, kostet fast nichts zu duplizieren.</div>
+  <div class="lever-action">→ Baue ein SaaS-Tool, eine App, oder automatisiere Prozesse.</div>
+</div>
+
+<div class="lever-card">
+  <span class="lever-icon">📱</span><span class="lever-name">MEDIA (CONTENT)</span>
+  <div class="lever-desc">Ein Video kann 10 Millionen Menschen erreichen. Ein Buch kann 50 Jahre verkaufen.</div>
+  <div class="lever-action">→ Erstelle täglich Content. Baue eine Audience. Audience = Attention = Money.</div>
+</div>
+
+<div class="lever-card">
+  <span class="lever-icon">💰</span><span class="lever-name">CAPITAL (GELD)</span>
+  <div class="lever-desc">Geld arbeiten lassen. Investieren. Compound Interest. Aber du brauchst erst Capital.</div>
+  <div class="lever-action">→ Investiere 20% von allem was reinkommt. Ab Tag 1. Auch wenn es 50€ sind.</div>
+</div>
+
+<div class="lever-card">
+  <span class="lever-icon">👥</span><span class="lever-name">PEOPLE (TEAM)</span>
+  <div class="lever-desc">Ein Team multipliziert deine Kapazität. Du kannst nur 16h/Tag arbeiten. 10 Leute = 160h.</div>
+  <div class="lever-action">→ Stelle so früh wie möglich ein. Billige Freelancer zuerst, dann A-Player.</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- 3 PHASES -->
+<h2>DER 3-PHASEN FAHRPLAN</h2>
+
+<div class="phase-card" style="border-color:var(--gold)">
+  <div class="phase-header">
+    <span class="phase-name" style="color:var(--gold)">PHASE 1: FOUNDATION</span>
+    <span class="phase-target" style="color:var(--gold)">500–2.000€/TAG</span>
+  </div>
+  <div class="phase-focus">Monat 1-3 — High-Value Skill + erstes Angebot</div>
+  <ul class="phase-actions" style="padding-left:16px">
+    <li><b>SKILL:</b> Lerne AI-Tools (Claude, GPT, Midjourney) bis du schneller bist als 99% der Leute</li>
+    <li><b>ANGEBOT:</b> Biete AI-Transformation für KMUs an (5.000–15.000€ pro Projekt)</li>
+    <li><b>KUNDEN:</b> 100 kalte Nachrichten pro Tag auf LinkedIn. Ohne Ausnahme.</li>
+    <li><b>PREIS:</b> Starte bei 3.000€/Projekt. Steigere auf 10.000€ nach 3 Kunden.</li>
+    <li><b>CONTENT:</b> 1 LinkedIn Post pro Tag über deine AI-Ergebnisse</li>
+    <li><b>MINDSET:</b> Du verkaufst nicht "AI" — du verkaufst ERGEBNISSE. Zeitersparnis. Kostensenkung.</li>
+  </ul>
+  <div class="phase-kpi"><div class="kpi-label" style="color:var(--gold)">WEEKLY KPI</div><span style="color:var(--dim)">Mindestens 3 Erstgespräche pro Woche, 1 Abschluss pro Woche</span></div>
+</div>
+
+<div class="phase-card" style="border-color:var(--green)">
+  <div class="phase-header">
+    <span class="phase-name" style="color:var(--green)">PHASE 2: SCALE</span>
+    <span class="phase-target" style="color:var(--green)">2.000–5.000€/TAG</span>
+  </div>
+  <div class="phase-focus">Monat 4-12 — Systeme + Team + Recurring Revenue</div>
+  <ul class="phase-actions" style="padding-left:16px">
+    <li><b>PRODUCTIZE:</b> Mach dein Angebot wiederholbar. SOPs für alles.</li>
+    <li><b>TEAM:</b> Stelle 2-3 Freelancer ein die die Delivery machen</li>
+    <li><b>RETAINER:</b> Verkaufe monatliche AI-Betreuung (2.000–5.000€/Monat pro Kunde)</li>
+    <li><b>CONTENT:</b> Skaliere auf YouTube + Newsletter. Zeige Case Studies.</li>
+    <li><b>LEVERAGE:</b> Nutze AI um 10x so viel zu liefern bei gleicher Zeit</li>
+    <li><b>UPSELL:</b> Biete Premium-Pakete an (25.000€+ für große Transformationen)</li>
+  </ul>
+  <div class="phase-kpi"><div class="kpi-label" style="color:var(--green)">WEEKLY KPI</div><span style="color:var(--dim)">10+ aktive Kunden, 50.000€+ Monatsrevenue, 60%+ Marge</span></div>
+</div>
+
+<div class="phase-card" style="border-color:var(--purple)">
+  <div class="phase-header">
+    <span class="phase-name" style="color:var(--purple)">PHASE 3: COMPOUND</span>
+    <span class="phase-target" style="color:var(--purple)">5.000–50.000€/TAG</span>
+  </div>
+  <div class="phase-focus">Jahr 2-3 — Equity + Software + Multiple Income Streams</div>
+  <ul class="phase-actions" style="padding-left:16px">
+    <li><b>SAAS:</b> Baue ein AI-Tool das deine beste Dienstleistung automatisiert</li>
+    <li><b>EQUITY:</b> Nimm Beteiligungen an statt Cash bei ausgewählten Kunden</li>
+    <li><b>FUND:</b> Starte einen kleinen AI-Fonds oder Angel-Investing</li>
+    <li><b>BRAND:</b> Du bist jetzt bekannt. Monetisiere (Kurse, Events, Consulting)</li>
+    <li><b>TEAM:</b> 10-20 Leute. Du bist CEO, nicht Operator.</li>
+    <li><b>EXIT:</b> Baue verkaufbare Assets (SaaS mit ARR, Content-Imperium, Kundenportfolio)</li>
+  </ul>
+  <div class="phase-kpi"><div class="kpi-label" style="color:var(--purple)">WEEKLY KPI</div><span style="color:var(--dim)">7-stelliger Monatsumsatz, multiple Revenue Streams, &lt;20h/Woche operativ</span></div>
+</div>
+
+<div class="hr"></div>
+
+<div style="background:var(--surface2);border:1px solid var(--border);padding:24px;text-align:center;position:relative">
+  <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:.5"></div>
+  <p style="font-size:14px;color:var(--text);font-style:italic;line-height:1.7;margin-bottom:8px">"Specific knowledge + leverage + judgment = wealth"</p>
+  <p class="small" style="color:var(--green)">— Naval Ravikant</p>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/mastery">← HUB</a> · <a href="/mastery-rollo">ROLLO</a> · <a href="/mastery-tagesplan">TAGESPLAN</a> · <a href="/mastery-today">HEUTE</a>
+</p>
+
+</div>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn">HOME</a>
+  <a href="/coaching" class="nav-btn">COACHING</a>
+  <a href="/mastery" class="nav-btn active">MASTERY</a>
+  <a href="/nerve" class="nav-btn">NERVE</a>
+</div></nav>
+
+<script>
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>
