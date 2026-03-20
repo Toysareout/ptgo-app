@@ -202,7 +202,20 @@ class TokenUsage(Base):
     patient_id = Column(Integer, nullable=True)
 
 
+class ProductSale(Base):
+    __tablename__ = "product_sales"
+    id = Column(Integer, primary_key=True, index=True)
+    product_name = Column(String(255), nullable=False, index=True)
+    quantity = Column(Integer, nullable=False, default=1)
+    price_cents = Column(Integer, nullable=False, default=0)  # Preis in Cent
+    sold_at = Column(DateTime, default=datetime.utcnow, index=True)
+    local_day = Column(String(10), index=True)  # YYYY-MM-DD
+    therapist_id = Column(Integer, ForeignKey("therapists.id"), nullable=True)
+
+
 Index("ix_checkins_patient_day", CheckIn.patient_id, CheckIn.local_day)
+Index("ix_product_sales_day", ProductSale.local_day)
+Index("ix_product_sales_product_day", ProductSale.product_name, ProductSale.local_day)
 Base.metadata.create_all(bind=engine)
 
 
@@ -2756,7 +2769,7 @@ def therapist_dashboard(request: Request, db=Depends(get_db)):
 
     body = f"""
       <h1>Therapist</h1>
-      <p class="small">Eingeloggt als <b>{t.name}</b> • <a href="/therapist/logout">logout</a></p>
+      <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/sales">Verkaufs-Tracker</a> &bull; <a href="/therapist/logout">logout</a></p>
       <div class="hr"></div>
       <h2>Patient zuweisen</h2>
       <form method="post" action="/therapist/assign">
@@ -5841,3 +5854,371 @@ def master_control_api(request: Request, db=Depends(get_db)):
             "smtp_enabled": bool(SMTP_HOST),
         },
     }
+
+
+# =========================================================
+# PRODUCT SALES TRACKER
+# =========================================================
+
+def _sales_nav(active: str = "daily") -> str:
+    """Navigation bar for the sales tracker pages."""
+    tabs = [
+        ("daily", "Heute", "/sales"),
+        ("weekly", "Woche", "/sales/weekly"),
+        ("monthly", "Monat", "/sales/monthly"),
+    ]
+    items = ""
+    for key, label, href in tabs:
+        style = "background:var(--accent);color:#111827;font-weight:700;" if key == active else "color:var(--muted);"
+        items += f'<a href="{href}" style="padding:8px 16px;border-radius:999px;font-size:14px;{style}">{label}</a>'
+    return f'<div style="display:flex;gap:6px;margin-bottom:16px;">{items}</div>'
+
+
+@app.get("/sales", response_class=HTMLResponse)
+def sales_daily(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    today = _now_local().date().isoformat()
+
+    sales = (
+        db.query(ProductSale)
+        .filter(ProductSale.local_day == today)
+        .all()
+    )
+
+    # Aggregate by product
+    product_totals: Dict[str, Dict[str, Any]] = {}
+    for s in sales:
+        if s.product_name not in product_totals:
+            product_totals[s.product_name] = {"qty": 0, "revenue": 0}
+        product_totals[s.product_name]["qty"] += s.quantity
+        product_totals[s.product_name]["revenue"] += s.quantity * s.price_cents
+
+    # Sort by quantity descending
+    sorted_products = sorted(product_totals.items(), key=lambda x: x[1]["qty"], reverse=True)
+
+    total_qty = sum(v["qty"] for v in product_totals.values())
+    total_revenue = sum(v["revenue"] for v in product_totals.values())
+
+    # Daily goal: top product
+    top_product_html = ""
+    if sorted_products:
+        top_name, top_data = sorted_products[0]
+        top_product_html = f"""
+        <div class="action-box" style="margin-bottom:16px">
+            <p class="small" style="margin:0 0 4px">Tages-Bestseller</p>
+            <div style="font-size:22px;font-weight:700;color:#f59e0b">{top_name}</div>
+            <p class="small" style="margin:4px 0 0">{top_data['qty']}x verkauft &bull; {top_data['revenue']/100:.2f} &euro; Umsatz</p>
+        </div>
+        """
+
+    # Product rows
+    rows = ""
+    for rank, (name, data) in enumerate(sorted_products, 1):
+        pct = int(data["qty"] / max(total_qty, 1) * 100)
+        rows += f"""
+        <div class="kpi" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <span style="color:var(--accent);font-weight:700;margin-right:8px">#{rank}</span>
+                    <b>{name}</b>
+                </div>
+                <div style="text-align:right">
+                    <b>{data['qty']}x</b>
+                    <span class="small" style="margin-left:8px">{data['revenue']/100:.2f} &euro;</span>
+                </div>
+            </div>
+            <div style="height:4px;background:#1f2937;border-radius:999px;margin-top:8px;">
+                <div style="height:4px;background:#f59e0b;border-radius:999px;width:{pct}%"></div>
+            </div>
+        </div>
+        """
+
+    body = f"""
+        <h1>Verkaufs-Tracker</h1>
+        <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/therapist">Dashboard</a> &bull; <a href="/therapist/logout">Logout</a></p>
+        <div class="hr"></div>
+        {_sales_nav("daily")}
+        <h2>Heute &mdash; {today}</h2>
+        {top_product_html}
+        <div class="grid3" style="margin-bottom:16px">
+            <div class="kpi"><span class="small">Produkte</span><b>{len(sorted_products)}</b></div>
+            <div class="kpi"><span class="small">Verkauft</span><b>{total_qty}</b></div>
+            <div class="kpi"><span class="small">Umsatz</span><b>{total_revenue/100:.2f}&euro;</b></div>
+        </div>
+        {rows if rows else "<p class='small'>Heute noch keine Verk&auml;ufe.</p>"}
+        <div class="hr"></div>
+        <h2>Verkauf erfassen</h2>
+        <form method="post" action="/sales/add">
+            <label>Produktname</label>
+            <input name="product_name" placeholder="z.B. Therapieband, &Ouml;l, Buch..." required>
+            <div class="row">
+                <div>
+                    <label>Menge</label>
+                    <input name="quantity" type="number" value="1" min="1" required>
+                </div>
+                <div>
+                    <label>Preis (&euro;)</label>
+                    <input name="price" type="number" step="0.01" min="0" placeholder="9.99" required>
+                </div>
+            </div>
+            <button type="submit">Verkauf speichern</button>
+        </form>
+    """
+    return _page("Verkaufs-Tracker", body, request=request)
+
+
+@app.post("/sales/add", response_class=HTMLResponse)
+def sales_add(
+    request: Request,
+    product_name: str = Form(...),
+    quantity: int = Form(...),
+    price: float = Form(...),
+    db=Depends(get_db),
+):
+    t = require_therapist_login(request, db)
+    now = _now_local()
+    sale = ProductSale(
+        product_name=product_name.strip(),
+        quantity=max(quantity, 1),
+        price_cents=int(round(price * 100)),
+        sold_at=now,
+        local_day=now.date().isoformat(),
+        therapist_id=t.id,
+    )
+    db.add(sale)
+    db.commit()
+    return RedirectResponse("/sales", status_code=303)
+
+
+@app.get("/sales/weekly", response_class=HTMLResponse)
+def sales_weekly(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    now = _now_local()
+    week_start = (now - timedelta(days=now.weekday())).date()
+    week_end = now.date()
+
+    sales = (
+        db.query(ProductSale)
+        .filter(ProductSale.local_day >= week_start.isoformat())
+        .filter(ProductSale.local_day <= week_end.isoformat())
+        .all()
+    )
+
+    # Aggregate by product
+    product_totals: Dict[str, Dict[str, Any]] = {}
+    for s in sales:
+        if s.product_name not in product_totals:
+            product_totals[s.product_name] = {"qty": 0, "revenue": 0}
+        product_totals[s.product_name]["qty"] += s.quantity
+        product_totals[s.product_name]["revenue"] += s.quantity * s.price_cents
+
+    sorted_products = sorted(product_totals.items(), key=lambda x: x[1]["qty"], reverse=True)
+    total_qty = sum(v["qty"] for v in product_totals.values())
+    total_revenue = sum(v["revenue"] for v in product_totals.values())
+
+    # Daily breakdown for the week
+    daily_breakdown = {}
+    for s in sales:
+        day = s.local_day
+        if day not in daily_breakdown:
+            daily_breakdown[day] = {"qty": 0, "revenue": 0, "top": {}}
+        daily_breakdown[day]["qty"] += s.quantity
+        daily_breakdown[day]["revenue"] += s.quantity * s.price_cents
+        if s.product_name not in daily_breakdown[day]["top"]:
+            daily_breakdown[day]["top"][s.product_name] = 0
+        daily_breakdown[day]["top"][s.product_name] += s.quantity
+
+    # Top product of the week
+    top_html = ""
+    if sorted_products:
+        top_name, top_data = sorted_products[0]
+        top_html = f"""
+        <div class="action-box" style="margin-bottom:16px">
+            <p class="small" style="margin:0 0 4px">Wochen-Bestseller</p>
+            <div style="font-size:22px;font-weight:700;color:#f59e0b">{top_name}</div>
+            <p class="small" style="margin:4px 0 0">{top_data['qty']}x verkauft &bull; {top_data['revenue']/100:.2f} &euro; Umsatz</p>
+        </div>
+        """
+
+    # Product ranking
+    rows = ""
+    for rank, (name, data) in enumerate(sorted_products, 1):
+        pct = int(data["qty"] / max(total_qty, 1) * 100)
+        rows += f"""
+        <div class="kpi" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <span style="color:var(--accent);font-weight:700;margin-right:8px">#{rank}</span>
+                    <b>{name}</b>
+                </div>
+                <div style="text-align:right">
+                    <b>{data['qty']}x</b>
+                    <span class="small" style="margin-left:8px">{data['revenue']/100:.2f} &euro;</span>
+                </div>
+            </div>
+            <div style="height:4px;background:#1f2937;border-radius:999px;margin-top:8px;">
+                <div style="height:4px;background:#f59e0b;border-radius:999px;width:{pct}%"></div>
+            </div>
+        </div>
+        """
+
+    # Daily breakdown rows
+    daily_rows = ""
+    for day in sorted(daily_breakdown.keys(), reverse=True):
+        dd = daily_breakdown[day]
+        top_prod = max(dd["top"].items(), key=lambda x: x[1]) if dd["top"] else ("—", 0)
+        daily_rows += f"""
+        <div class="kpi" style="margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between">
+                <b>{day}</b>
+                <span>{dd['qty']}x &bull; {dd['revenue']/100:.2f} &euro;</span>
+            </div>
+            <p class="small" style="margin:2px 0 0">Top: {top_prod[0]} ({top_prod[1]}x)</p>
+        </div>
+        """
+
+    body = f"""
+        <h1>Verkaufs-Tracker</h1>
+        <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/therapist">Dashboard</a> &bull; <a href="/therapist/logout">Logout</a></p>
+        <div class="hr"></div>
+        {_sales_nav("weekly")}
+        <h2>Woche: {week_start.isoformat()} &mdash; {week_end.isoformat()}</h2>
+        {top_html}
+        <div class="grid3" style="margin-bottom:16px">
+            <div class="kpi"><span class="small">Produkte</span><b>{len(sorted_products)}</b></div>
+            <div class="kpi"><span class="small">Verkauft</span><b>{total_qty}</b></div>
+            <div class="kpi"><span class="small">Umsatz</span><b>{total_revenue/100:.2f}&euro;</b></div>
+        </div>
+        <h2>Produkt-Ranking</h2>
+        {rows if rows else "<p class='small'>Diese Woche noch keine Verk&auml;ufe.</p>"}
+        <div class="hr"></div>
+        <h2>Tages&uuml;bersicht</h2>
+        {daily_rows if daily_rows else "<p class='small'>Keine Daten.</p>"}
+    """
+    return _page("Wochenansicht", body, request=request)
+
+
+@app.get("/sales/monthly", response_class=HTMLResponse)
+def sales_monthly(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    now = _now_local()
+    month_start = now.date().replace(day=1)
+    month_end = now.date()
+    month_name = now.strftime("%B %Y")
+
+    sales = (
+        db.query(ProductSale)
+        .filter(ProductSale.local_day >= month_start.isoformat())
+        .filter(ProductSale.local_day <= month_end.isoformat())
+        .all()
+    )
+
+    # Aggregate by product
+    product_totals: Dict[str, Dict[str, Any]] = {}
+    for s in sales:
+        if s.product_name not in product_totals:
+            product_totals[s.product_name] = {"qty": 0, "revenue": 0}
+        product_totals[s.product_name]["qty"] += s.quantity
+        product_totals[s.product_name]["revenue"] += s.quantity * s.price_cents
+
+    sorted_products = sorted(product_totals.items(), key=lambda x: x[1]["qty"], reverse=True)
+    total_qty = sum(v["qty"] for v in product_totals.values())
+    total_revenue = sum(v["revenue"] for v in product_totals.values())
+
+    # Weekly breakdown
+    weekly_breakdown: Dict[str, Dict[str, Any]] = {}
+    for s in sales:
+        sale_date = datetime.strptime(s.local_day, "%Y-%m-%d").date()
+        week_num = sale_date.isocalendar()[1]
+        week_key = f"KW {week_num}"
+        if week_key not in weekly_breakdown:
+            weekly_breakdown[week_key] = {"qty": 0, "revenue": 0, "top": {}}
+        weekly_breakdown[week_key]["qty"] += s.quantity
+        weekly_breakdown[week_key]["revenue"] += s.quantity * s.price_cents
+        if s.product_name not in weekly_breakdown[week_key]["top"]:
+            weekly_breakdown[week_key]["top"][s.product_name] = 0
+        weekly_breakdown[week_key]["top"][s.product_name] += s.quantity
+
+    # Monthly top product
+    top_html = ""
+    if sorted_products:
+        top_name, top_data = sorted_products[0]
+        top_html = f"""
+        <div class="action-box" style="margin-bottom:16px">
+            <p class="small" style="margin:0 0 4px">Monats-Bestseller</p>
+            <div style="font-size:28px;font-weight:700;color:#f59e0b">{top_name}</div>
+            <p class="small" style="margin:4px 0 0">{top_data['qty']}x verkauft &bull; {top_data['revenue']/100:.2f} &euro; Umsatz</p>
+        </div>
+        """
+
+    # Full ranking
+    rows = ""
+    for rank, (name, data) in enumerate(sorted_products, 1):
+        pct = int(data["qty"] / max(total_qty, 1) * 100)
+        medal = ""
+        if rank == 1:
+            medal = " style='color:#fbbf24'"
+        elif rank == 2:
+            medal = " style='color:#94a3b8'"
+        elif rank == 3:
+            medal = " style='color:#b45309'"
+        rows += f"""
+        <div class="kpi" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <span{medal}><b>#{rank}</b></span>
+                    <b style="margin-left:8px">{name}</b>
+                </div>
+                <div style="text-align:right">
+                    <b>{data['qty']}x</b>
+                    <span class="small" style="margin-left:8px">{data['revenue']/100:.2f} &euro;</span>
+                </div>
+            </div>
+            <div style="height:4px;background:#1f2937;border-radius:999px;margin-top:8px;">
+                <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#fbbf24);border-radius:999px;width:{pct}%"></div>
+            </div>
+        </div>
+        """
+
+    # Weekly breakdown rows
+    weekly_rows = ""
+    for wk in sorted(weekly_breakdown.keys()):
+        wd = weekly_breakdown[wk]
+        top_prod = max(wd["top"].items(), key=lambda x: x[1]) if wd["top"] else ("—", 0)
+        weekly_rows += f"""
+        <div class="kpi" style="margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between">
+                <b>{wk}</b>
+                <span>{wd['qty']}x &bull; {wd['revenue']/100:.2f} &euro;</span>
+            </div>
+            <p class="small" style="margin:2px 0 0">Top: {top_prod[0]} ({top_prod[1]}x)</p>
+        </div>
+        """
+
+    # Daily goal: average per day
+    days_elapsed = max((month_end - month_start).days + 1, 1)
+    avg_per_day = total_qty / days_elapsed
+
+    body = f"""
+        <h1>Monats&uuml;bersicht</h1>
+        <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/therapist">Dashboard</a> &bull; <a href="/therapist/logout">Logout</a></p>
+        <div class="hr"></div>
+        {_sales_nav("monthly")}
+        <h2>{month_name}</h2>
+        {top_html}
+        <div class="grid3" style="margin-bottom:16px">
+            <div class="kpi"><span class="small">Produkte</span><b>{len(sorted_products)}</b></div>
+            <div class="kpi"><span class="small">Gesamt</span><b>{total_qty}x</b></div>
+            <div class="kpi"><span class="small">Umsatz</span><b>{total_revenue/100:.2f}&euro;</b></div>
+        </div>
+        <div class="kpi" style="margin-bottom:16px">
+            <span class="small">Durchschnitt pro Tag</span>
+            <b style="font-size:20px;color:#f59e0b">{avg_per_day:.1f} Verk&auml;ufe/Tag</b>
+        </div>
+        <h2>Produkt-Ranking</h2>
+        {rows if rows else "<p class='small'>Dieser Monat noch keine Verk&auml;ufe.</p>"}
+        <div class="hr"></div>
+        <h2>Wochen&uuml;bersicht</h2>
+        {weekly_rows if weekly_rows else "<p class='small'>Keine Daten.</p>"}
+    """
+    return _page("Monats\u00fcbersicht", body, request=request)
