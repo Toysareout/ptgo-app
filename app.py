@@ -216,6 +216,158 @@ class ProductSale(Base):
 Index("ix_checkins_patient_day", CheckIn.patient_id, CheckIn.local_day)
 Index("ix_product_sales_day", ProductSale.local_day)
 Index("ix_product_sales_product_day", ProductSale.product_name, ProductSale.local_day)
+
+
+# =========================================================
+# SELF VS SELF — DB MODELS
+# =========================================================
+
+class AvatarProfile(Base):
+    """Visuelles Profil + aktuelle Stats eines Nutzers."""
+    __tablename__ = "svs_avatar_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    nickname = Column(String(128), nullable=True)
+
+    # Biometrie
+    height_cm = Column(Integer, nullable=True)
+    weight_kg = Column(Float, nullable=True)
+    age = Column(Integer, nullable=True)
+
+    # 6 Hauptstats (0–100)
+    strength = Column(Integer, nullable=False, default=30)
+    stamina = Column(Integer, nullable=False, default=30)
+    recovery = Column(Integer, nullable=False, default=30)
+    focus = Column(Integer, nullable=False, default=30)
+    composure = Column(Integer, nullable=False, default=30)
+    charisma = Column(Integer, nullable=False, default=30)
+
+    # Sekundärstats (0–100)
+    punch_power = Column(Integer, nullable=False, default=20)
+    explosiveness = Column(Integer, nullable=False, default=20)
+    balance = Column(Integer, nullable=False, default=20)
+    confidence = Column(Integer, nullable=False, default=20)
+    rhythm = Column(Integer, nullable=False, default=20)
+    courage = Column(Integer, nullable=False, default=20)
+
+    # Abgeleitete Kampfwerte
+    footwork = Column(Integer, nullable=False, default=20)
+    timing = Column(Integer, nullable=False, default=20)
+    dominance = Column(Integer, nullable=False, default=20)
+
+    # Evolution
+    evolution_tag = Column(String(64), nullable=False, default="v1.0")
+    total_events = Column(Integer, nullable=False, default=0)
+    total_battles = Column(Integer, nullable=False, default=0)
+    wins = Column(Integer, nullable=False, default=0)
+    losses = Column(Integer, nullable=False, default=0)
+
+    patient = relationship("Patient", backref="avatar_profile")
+    versions = relationship("AvatarVersion", back_populates="profile", order_by="AvatarVersion.created_at")
+
+
+class AvatarVersion(Base):
+    """Eingefrorener Snapshot für Kämpfe."""
+    __tablename__ = "svs_avatar_versions"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("svs_avatar_profiles.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    version_tag = Column(String(64), nullable=False)
+    is_opponent = Column(Boolean, default=False)
+
+    # Snapshot aller Stats
+    strength = Column(Integer, nullable=False, default=30)
+    stamina = Column(Integer, nullable=False, default=30)
+    recovery = Column(Integer, nullable=False, default=30)
+    focus = Column(Integer, nullable=False, default=30)
+    composure = Column(Integer, nullable=False, default=30)
+    charisma = Column(Integer, nullable=False, default=30)
+    punch_power = Column(Integer, nullable=False, default=20)
+    explosiveness = Column(Integer, nullable=False, default=20)
+    balance = Column(Integer, nullable=False, default=20)
+    confidence = Column(Integer, nullable=False, default=20)
+    rhythm = Column(Integer, nullable=False, default=20)
+    courage = Column(Integer, nullable=False, default=20)
+    footwork = Column(Integer, nullable=False, default=20)
+    timing = Column(Integer, nullable=False, default=20)
+    dominance = Column(Integer, nullable=False, default=20)
+
+    profile = relationship("AvatarProfile", back_populates="versions")
+
+
+class RealLifeEvent(Base):
+    """Reale Handlung die Stats verändert."""
+    __tablename__ = "svs_events"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("svs_avatar_profiles.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    local_day = Column(String(10), index=True)
+
+    # Art des Events
+    event_type = Column(String(64), nullable=False)  # workout_chest, workout_legs, cardio, sleep, supplement, meditation, music, communication, nutrition
+    event_detail = Column(Text, nullable=True)        # Freitext
+    duration_min = Column(Integer, nullable=True)
+
+    # Direkte Stat-Änderungen (berechnet vom Skill-System)
+    primary_stat = Column(String(32), nullable=True)
+    primary_delta = Column(Integer, nullable=False, default=0)
+    secondary_stat = Column(String(32), nullable=True)
+    secondary_delta = Column(Integer, nullable=False, default=0)
+    buff_name = Column(String(64), nullable=True)
+    buff_value = Column(Integer, nullable=False, default=0)
+    buff_expires_at = Column(DateTime, nullable=True)
+
+    profile = relationship("AvatarProfile", backref="events")
+
+
+class PsychResponse(Base):
+    """Psychologische Frage + Antwort + Tiefenbewertung."""
+    __tablename__ = "svs_psych_responses"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("svs_avatar_profiles.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    question_type = Column(String(32), nullable=False)  # reflection, action, confrontation, transfer
+    question_text = Column(Text, nullable=False)
+    answer_text = Column(Text, nullable=True)
+    depth_score = Column(Integer, nullable=False, default=0)   # 0–10
+    honesty_score = Column(Integer, nullable=False, default=0) # 0–10
+    stat_affected = Column(String(32), nullable=True)
+    stat_delta = Column(Integer, nullable=False, default=0)
+    transfer_task = Column(Text, nullable=True)
+    transfer_done = Column(Boolean, default=False)
+
+    profile = relationship("AvatarProfile", backref="psych_responses")
+
+
+class BattleSimulation(Base):
+    """Kampf zwischen alter und neuer Avatar-Version."""
+    __tablename__ = "svs_battles"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("svs_avatar_profiles.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    old_version_id = Column(Integer, ForeignKey("svs_avatar_versions.id"), nullable=False)
+    new_version_id = Column(Integer, ForeignKey("svs_avatar_versions.id"), nullable=False)
+
+    # Ergebnis
+    winner = Column(String(16), nullable=False, default="new")  # "old" | "new" | "draw"
+    result_type = Column(String(32), nullable=False, default="decision")  # knockout, decision, close_decision
+    rounds_total = Column(Integer, nullable=False, default=3)
+    replay_json = Column(Text, nullable=True)  # JSON mit Runden-Details
+    commentary_json = Column(Text, nullable=True)  # JSON mit Kampf-Kommentaren
+
+    # Vergleich
+    stat_diffs_json = Column(Text, nullable=True)  # JSON: welche Stats gestiegen/gefallen
+    biggest_lever = Column(Text, nullable=True)     # Empfohlene nächste Handlung
+
+    profile = relationship("AvatarProfile", backref="battles")
+    old_version = relationship("AvatarVersion", foreign_keys=[old_version_id])
+    new_version = relationship("AvatarVersion", foreign_keys=[new_version_id])
+
+
+Index("ix_svs_events_profile_day", RealLifeEvent.profile_id, RealLifeEvent.local_day)
+
 Base.metadata.create_all(bind=engine)
 
 
