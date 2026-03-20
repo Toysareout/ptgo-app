@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verkaufs-Tracker</title>
+  <style>
+    :root { --bg:#0b0f1a; --card:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#f59e0b; --line:#1f2937; }
+    html,body{height:100%;}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:radial-gradient(1000px 600px at 50% -100px,#1f2a52,transparent),var(--bg);color:var(--text);}
+    a{color:var(--accent);text-decoration:none}
+    .wrap{max-width:720px;margin:0 auto;padding:26px 16px 60px;}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .brand{font-weight:700;letter-spacing:.2px}
+    .pill{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:6px 10px;border-radius:999px;}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:24px 20px 20px;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+    h1{font-size:32px;line-height:1.1;margin:8px 0 12px;}
+    h2{font-size:18px;margin:18px 0 10px;color:#f3f4f6}
+    p{color:var(--muted);line-height:1.6}
+    .hr{height:1px;background:var(--line);margin:18px 0;}
+    label{display:block;color:#cbd5e1;font-size:13px;margin:14px 0 6px}
+    input,select,textarea{width:100%;box-sizing:border-box;background:#0b1223;border:1px solid #263246;color:#e5e7eb;border-radius:12px;padding:12px;font-size:16px;outline:none}
+    input:focus,textarea:focus{border-color:#f59e0b}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button,.btn{display:inline-block;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111827;border:none;border-radius:14px;padding:14px 20px;font-weight:700;font-size:16px;cursor:pointer;text-align:center;width:100%;margin-top:8px;}
+    .btn-outline{background:transparent;border:1px solid var(--line);color:var(--muted);width:auto;padding:10px 16px;font-size:14px;}
+    .btn-danger{background:transparent;border:1px solid #7f1d1d;color:#fca5a5;width:auto;padding:6px 12px;font-size:12px;border-radius:8px;margin-top:0;cursor:pointer;}
+    .btn-danger:hover{background:#7f1d1d;color:#fff}
+    .small{font-size:12px;color:var(--muted)}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .kpi{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)}
+    .kpi b{display:block;font-size:22px;margin-top:4px}
+    .action-box{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:18px;margin:16px 0}
+    .nav-tabs{display:flex;gap:6px;margin-bottom:16px;}
+    .nav-tabs a{padding:8px 16px;border-radius:999px;font-size:14px;color:var(--muted);cursor:pointer;}
+    .nav-tabs a.active{background:var(--accent);color:#111827;font-weight:700;}
+    .sale-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
+    .sale-item:last-child{border-bottom:none;}
+    .hidden{display:none;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">PTGO <span style="opacity:.4">&bull;</span> Sales</div>
+      <div class="pill">v2</div>
+    </div>
+    <div class="card">
+      <h1>Verkaufs-Tracker</h1>
+      <div class="hr"></div>
+
+      <div class="nav-tabs">
+        <a id="tab-daily" class="active" onclick="showView('daily')">Heute</a>
+        <a id="tab-weekly" onclick="showView('weekly')">Woche</a>
+        <a id="tab-monthly" onclick="showView('monthly')">Monat</a>
+      </div>
+
+      <!-- DAILY VIEW -->
+      <div id="view-daily">
+        <h2 id="daily-title">Heute</h2>
+        <div id="daily-bestseller"></div>
+        <div class="grid3" style="margin-bottom:16px" id="daily-kpis"></div>
+        <div id="daily-rows"></div>
+        <div class="hr"></div>
+        <h2>Verkauf erfassen</h2>
+        <form id="sale-form" onsubmit="return addSale(event)">
+          <label>Produktname</label>
+          <input id="inp-name" placeholder="z.B. Therapieband, &Ouml;l, Buch..." required>
+          <div class="row">
+            <div>
+              <label>Menge</label>
+              <input id="inp-qty" type="number" value="1" min="1" required>
+            </div>
+            <div>
+              <label>Preis (&euro;)</label>
+              <input id="inp-price" type="number" step="0.01" min="0" placeholder="9.99" required>
+            </div>
+          </div>
+          <button type="submit">Verkauf speichern</button>
+        </form>
+      </div>
+
+      <!-- WEEKLY VIEW -->
+      <div id="view-weekly" class="hidden">
+        <h2 id="weekly-title">Woche</h2>
+        <div id="weekly-bestseller"></div>
+        <div class="grid3" style="margin-bottom:16px" id="weekly-kpis"></div>
+        <h2>Produkt-Ranking</h2>
+        <div id="weekly-rows"></div>
+        <div class="hr"></div>
+        <h2>Tages&uuml;bersicht</h2>
+        <div id="weekly-daily-rows"></div>
+      </div>
+
+      <!-- MONTHLY VIEW -->
+      <div id="view-monthly" class="hidden">
+        <h2 id="monthly-title">Monat</h2>
+        <div id="monthly-bestseller"></div>
+        <div class="grid3" style="margin-bottom:16px" id="monthly-kpis"></div>
+        <div id="monthly-avg" style="margin-bottom:16px"></div>
+        <h2>Produkt-Ranking</h2>
+        <div id="monthly-rows"></div>
+        <div class="hr"></div>
+        <h2>Wochen&uuml;bersicht</h2>
+        <div id="monthly-weekly-rows"></div>
+      </div>
+
+      <!-- DATA MANAGEMENT -->
+      <div class="hr"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn-outline" onclick="exportData()" style="width:auto;margin-top:0;cursor:pointer;">Export CSV</button>
+        <button class="btn-danger" onclick="clearData()">Alle Daten l&ouml;schen</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// --- Storage ---
+const STORAGE_KEY = 'ptgo_product_sales';
+
+function getSales() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveSales(sales) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
+}
+
+// --- Date helpers ---
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getWeekStart(d) {
+  const dt = new Date(d);
+  const day = dt.getDay();
+  const diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  return dt.toISOString().slice(0, 10);
+}
+
+function getMonthStart(d) {
+  return d.slice(0, 7) + '-01';
+}
+
+function getISOWeek(dateStr) {
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  return Math.round(((d - week1) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7) + 1;
+}
+
+function fmt(cents) {
+  return (cents / 100).toFixed(2);
+}
+
+// --- Aggregate helpers ---
+function aggregateByProduct(sales) {
+  const map = {};
+  for (const s of sales) {
+    if (!map[s.name]) map[s.name] = { qty: 0, revenue: 0 };
+    map[s.name].qty += s.qty;
+    map[s.name].revenue += s.qty * s.price;
+  }
+  return Object.entries(map).sort((a, b) => b[1].qty - a[1].qty);
+}
+
+function bestseller(label, sorted) {
+  if (!sorted.length) return '';
+  const [name, data] = sorted[0];
+  return `<div class="action-box" style="margin-bottom:16px">
+    <p class="small" style="margin:0 0 4px">${label}</p>
+    <div style="font-size:22px;font-weight:700;color:#f59e0b">${name}</div>
+    <p class="small" style="margin:4px 0 0">${data.qty}x verkauft &bull; ${fmt(data.revenue)} &euro; Umsatz</p>
+  </div>`;
+}
+
+function kpiHtml(products, totalQty, totalRevenue) {
+  return `<div class="kpi"><span class="small">Produkte</span><b>${products}</b></div>
+    <div class="kpi"><span class="small">Verkauft</span><b>${totalQty}</b></div>
+    <div class="kpi"><span class="small">Umsatz</span><b>${fmt(totalRevenue)}&euro;</b></div>`;
+}
+
+function rankingRows(sorted, totalQty, medals) {
+  if (!sorted.length) return '<p class="small">Keine Verk&auml;ufe.</p>';
+  return sorted.map(([name, data], i) => {
+    const rank = i + 1;
+    const pct = Math.round(data.qty / Math.max(totalQty, 1) * 100);
+    let medalStyle = '';
+    if (medals) {
+      if (rank === 1) medalStyle = ' style="color:#fbbf24"';
+      else if (rank === 2) medalStyle = ' style="color:#94a3b8"';
+      else if (rank === 3) medalStyle = ' style="color:#b45309"';
+    }
+    const barBg = medals ? 'background:linear-gradient(90deg,#f59e0b,#fbbf24)' : 'background:#f59e0b';
+    return `<div class="kpi" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span${medalStyle}><b>#${rank}</b></span> <b style="margin-left:8px">${name}</b></div>
+        <div style="text-align:right"><b>${data.qty}x</b><span class="small" style="margin-left:8px">${fmt(data.revenue)} &euro;</span></div>
+      </div>
+      <div style="height:4px;background:#1f2937;border-radius:999px;margin-top:8px;">
+        <div style="height:4px;${barBg};border-radius:999px;width:${pct}%"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// --- Views ---
+function renderDaily() {
+  const today = todayStr();
+  const sales = getSales().filter(s => s.day === today);
+  const sorted = aggregateByProduct(sales);
+  const totalQty = sorted.reduce((s, [, d]) => s + d.qty, 0);
+  const totalRev = sorted.reduce((s, [, d]) => s + d.revenue, 0);
+
+  document.getElementById('daily-title').innerHTML = `Heute &mdash; ${today}`;
+  document.getElementById('daily-bestseller').innerHTML = bestseller('Tages-Bestseller', sorted);
+  document.getElementById('daily-kpis').innerHTML = kpiHtml(sorted.length, totalQty, totalRev);
+  document.getElementById('daily-rows').innerHTML = sorted.length
+    ? rankingRows(sorted, totalQty, false)
+    : '<p class="small">Heute noch keine Verk&auml;ufe.</p>';
+}
+
+function renderWeekly() {
+  const today = todayStr();
+  const weekStart = getWeekStart(today);
+  const sales = getSales().filter(s => s.day >= weekStart && s.day <= today);
+  const sorted = aggregateByProduct(sales);
+  const totalQty = sorted.reduce((s, [, d]) => s + d.qty, 0);
+  const totalRev = sorted.reduce((s, [, d]) => s + d.revenue, 0);
+
+  document.getElementById('weekly-title').innerHTML = `Woche: ${weekStart} &mdash; ${today}`;
+  document.getElementById('weekly-bestseller').innerHTML = bestseller('Wochen-Bestseller', sorted);
+  document.getElementById('weekly-kpis').innerHTML = kpiHtml(sorted.length, totalQty, totalRev);
+  document.getElementById('weekly-rows').innerHTML = sorted.length
+    ? rankingRows(sorted, totalQty, false)
+    : '<p class="small">Diese Woche noch keine Verk&auml;ufe.</p>';
+
+  // Daily breakdown
+  const byDay = {};
+  for (const s of sales) {
+    if (!byDay[s.day]) byDay[s.day] = { qty: 0, revenue: 0, top: {} };
+    byDay[s.day].qty += s.qty;
+    byDay[s.day].revenue += s.qty * s.price;
+    byDay[s.day].top[s.name] = (byDay[s.day].top[s.name] || 0) + s.qty;
+  }
+  const days = Object.keys(byDay).sort().reverse();
+  document.getElementById('weekly-daily-rows').innerHTML = days.length
+    ? days.map(day => {
+        const dd = byDay[day];
+        const topEntries = Object.entries(dd.top);
+        const topProd = topEntries.length ? topEntries.sort((a, b) => b[1] - a[1])[0] : ['\u2014', 0];
+        return `<div class="kpi" style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between"><b>${day}</b><span>${dd.qty}x &bull; ${fmt(dd.revenue)} &euro;</span></div>
+          <p class="small" style="margin:2px 0 0">Top: ${topProd[0]} (${topProd[1]}x)</p>
+        </div>`;
+      }).join('')
+    : '<p class="small">Keine Daten.</p>';
+}
+
+function renderMonthly() {
+  const today = todayStr();
+  const monthStart = getMonthStart(today);
+  const sales = getSales().filter(s => s.day >= monthStart && s.day <= today);
+  const sorted = aggregateByProduct(sales);
+  const totalQty = sorted.reduce((s, [, d]) => s + d.qty, 0);
+  const totalRev = sorted.reduce((s, [, d]) => s + d.revenue, 0);
+
+  const monthNames = ['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  const dt = new Date(today);
+  const monthLabel = monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
+
+  document.getElementById('monthly-title').innerHTML = monthLabel;
+  document.getElementById('monthly-bestseller').innerHTML = bestseller('Monats-Bestseller', sorted);
+  document.getElementById('monthly-kpis').innerHTML = kpiHtml(sorted.length, totalQty, totalRev);
+
+  const daysElapsed = Math.max(Math.round((new Date(today) - new Date(monthStart)) / 86400000) + 1, 1);
+  const avg = (totalQty / daysElapsed).toFixed(1);
+  document.getElementById('monthly-avg').innerHTML = `<div class="kpi">
+    <span class="small">Durchschnitt pro Tag</span>
+    <b style="font-size:20px;color:#f59e0b">${avg} Verk&auml;ufe/Tag</b>
+  </div>`;
+
+  document.getElementById('monthly-rows').innerHTML = sorted.length
+    ? rankingRows(sorted, totalQty, true)
+    : '<p class="small">Dieser Monat noch keine Verk&auml;ufe.</p>';
+
+  // Weekly breakdown
+  const byWeek = {};
+  for (const s of sales) {
+    const wk = 'KW ' + getISOWeek(s.day);
+    if (!byWeek[wk]) byWeek[wk] = { qty: 0, revenue: 0, top: {} };
+    byWeek[wk].qty += s.qty;
+    byWeek[wk].revenue += s.qty * s.price;
+    byWeek[wk].top[s.name] = (byWeek[wk].top[s.name] || 0) + s.qty;
+  }
+  const weeks = Object.keys(byWeek).sort();
+  document.getElementById('monthly-weekly-rows').innerHTML = weeks.length
+    ? weeks.map(wk => {
+        const wd = byWeek[wk];
+        const topEntries = Object.entries(wd.top);
+        const topProd = topEntries.length ? topEntries.sort((a, b) => b[1] - a[1])[0] : ['\u2014', 0];
+        return `<div class="kpi" style="margin-bottom:6px">
+          <div style="display:flex;justify-content:space-between"><b>${wk}</b><span>${wd.qty}x &bull; ${fmt(wd.revenue)} &euro;</span></div>
+          <p class="small" style="margin:2px 0 0">Top: ${topProd[0]} (${topProd[1]}x)</p>
+        </div>`;
+      }).join('')
+    : '<p class="small">Keine Daten.</p>';
+}
+
+// --- Actions ---
+function addSale(e) {
+  e.preventDefault();
+  const name = document.getElementById('inp-name').value.trim();
+  const qty = parseInt(document.getElementById('inp-qty').value) || 1;
+  const price = Math.round(parseFloat(document.getElementById('inp-price').value) * 100) || 0;
+  if (!name || price <= 0) return false;
+
+  const sales = getSales();
+  sales.push({ name, qty, price, day: todayStr(), ts: Date.now() });
+  saveSales(sales);
+
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-qty').value = '1';
+  document.getElementById('inp-price').value = '';
+
+  renderAll();
+  return false;
+}
+
+function showView(view) {
+  ['daily', 'weekly', 'monthly'].forEach(v => {
+    document.getElementById('view-' + v).classList.toggle('hidden', v !== view);
+    document.getElementById('tab-' + v).classList.toggle('active', v === view);
+  });
+  renderAll();
+}
+
+function renderAll() {
+  renderDaily();
+  renderWeekly();
+  renderMonthly();
+}
+
+function exportData() {
+  const sales = getSales();
+  if (!sales.length) { alert('Keine Daten vorhanden.'); return; }
+  let csv = 'Datum,Produkt,Menge,Preis_EUR\n';
+  for (const s of sales) {
+    csv += `${s.day},"${s.name.replace(/"/g, '""')}",${s.qty},${(s.price/100).toFixed(2)}\n`;
+  }
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'verkaufe_' + todayStr() + '.csv';
+  a.click();
+}
+
+function clearData() {
+  if (confirm('Wirklich ALLE Verkaufsdaten l\u00f6schen? Das kann nicht r\u00fcckg\u00e4ngig gemacht werden.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    renderAll();
+  }
+}
+
+// --- Init ---
+renderAll();
+</script>
+</body>
+</html>
