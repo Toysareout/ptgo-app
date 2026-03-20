@@ -2769,7 +2769,7 @@ def therapist_dashboard(request: Request, db=Depends(get_db)):
 
     body = f"""
       <h1>Therapist</h1>
-      <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/sales">Verkaufs-Tracker</a> &bull; <a href="/therapist/logout">logout</a></p>
+      <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/product">Verkaufs-Tracker</a> &bull; <a href="/therapist/logout">logout</a></p>
       <div class="hr"></div>
       <h2>Patient zuweisen</h2>
       <form method="post" action="/therapist/assign">
@@ -5863,9 +5863,9 @@ def master_control_api(request: Request, db=Depends(get_db)):
 def _sales_nav(active: str = "daily") -> str:
     """Navigation bar for the sales tracker pages."""
     tabs = [
-        ("daily", "Heute", "/sales"),
-        ("weekly", "Woche", "/sales/weekly"),
-        ("monthly", "Monat", "/sales/monthly"),
+        ("daily", "Heute", "/product"),
+        ("weekly", "Woche", "/product/weekly"),
+        ("monthly", "Monat", "/product/monthly"),
     ]
     items = ""
     for key, label, href in tabs:
@@ -5874,7 +5874,7 @@ def _sales_nav(active: str = "daily") -> str:
     return f'<div style="display:flex;gap:6px;margin-bottom:16px;">{items}</div>'
 
 
-@app.get("/sales", response_class=HTMLResponse)
+@app.get("/product", response_class=HTMLResponse)
 def sales_daily(request: Request, db=Depends(get_db)):
     t = require_therapist_login(request, db)
     today = _now_local().date().isoformat()
@@ -5948,7 +5948,7 @@ def sales_daily(request: Request, db=Depends(get_db)):
         {rows if rows else "<p class='small'>Heute noch keine Verk&auml;ufe.</p>"}
         <div class="hr"></div>
         <h2>Verkauf erfassen</h2>
-        <form method="post" action="/sales/add">
+        <form method="post" action="/product/add">
             <label>Produktname</label>
             <input name="product_name" placeholder="z.B. Therapieband, &Ouml;l, Buch..." required>
             <div class="row">
@@ -5967,7 +5967,7 @@ def sales_daily(request: Request, db=Depends(get_db)):
     return _page("Verkaufs-Tracker", body, request=request)
 
 
-@app.post("/sales/add", response_class=HTMLResponse)
+@app.post("/product/add", response_class=HTMLResponse)
 def sales_add(
     request: Request,
     product_name: str = Form(...),
@@ -5987,10 +5987,10 @@ def sales_add(
     )
     db.add(sale)
     db.commit()
-    return RedirectResponse("/sales", status_code=303)
+    return RedirectResponse("/product", status_code=303)
 
 
-@app.get("/sales/weekly", response_class=HTMLResponse)
+@app.get("/product/weekly", response_class=HTMLResponse)
 def sales_weekly(request: Request, db=Depends(get_db)):
     t = require_therapist_login(request, db)
     now = _now_local()
@@ -6098,7 +6098,7 @@ def sales_weekly(request: Request, db=Depends(get_db)):
     return _page("Wochenansicht", body, request=request)
 
 
-@app.get("/sales/monthly", response_class=HTMLResponse)
+@app.get("/product/monthly", response_class=HTMLResponse)
 def sales_monthly(request: Request, db=Depends(get_db)):
     t = require_therapist_login(request, db)
     now = _now_local()
