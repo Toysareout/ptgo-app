@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PTGO — Dein therapeutisches Betriebssystem</title>
+<meta name="description" content="KI-gestützte Schmerztherapie, Pattern Detection, tägliche Check-ins und therapeutisches Coaching. Alles in einem System.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;
+  --surface:#0a0a14;
+  --surface2:#10101f;
+  --border:#1a1a2e;
+  --cyan:#00f0ff;
+  --pink:#ff2d8e;
+  --green:#2dffa8;
+  --gold:#c9a84c;
+  --purple:#a855f7;
+  --red:#ff4444;
+  --text:#e0ddd4;
+  --dim:#666680;
+  --radius:12px;
+}
+html{scroll-behavior:smooth;background:var(--bg);color:var(--text)}
+body{font-family:'Space Mono',monospace;font-size:15px;line-height:1.7;overflow-x:hidden;background:var(--bg)}
+
+/* === GRAIN OVERLAY === */
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:9999;opacity:0.4
+}
+
+/* === SCANLINE === */
+body::before{
+  content:'';position:fixed;top:0;left:0;width:100%;height:2px;
+  background:var(--cyan);opacity:0.03;z-index:9998;
+  animation:scanline 8s linear infinite;pointer-events:none
+}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+
+/* === TYPOGRAPHY === */
+h1,h2,h3{font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:0.02em}
+h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.1}
+h2{font-size:clamp(1.5rem,3.5vw,2.5rem);line-height:1.2}
+h3{font-size:clamp(1.1rem,2vw,1.4rem)}
+.label{font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:0.2em;text-transform:uppercase;color:var(--cyan)}
+
+/* === LAYOUT === */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+section{padding:100px 0;position:relative}
+
+/* === BUTTONS === */
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 32px;border-radius:var(--radius);font-family:'Orbitron',sans-serif;
+  font-size:14px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;
+  cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);text-decoration:none;border:none
+}
+.btn-primary{
+  background:var(--cyan);color:var(--bg);
+  box-shadow:0 0 20px rgba(0,240,255,0.2)
+}
+.btn-primary:hover{
+  box-shadow:0 0 40px rgba(0,240,255,0.4);transform:translateY(-2px)
+}
+.btn-secondary{
+  background:transparent;color:var(--cyan);border:1px solid var(--cyan)
+}
+.btn-secondary:hover{
+  background:rgba(0,240,255,0.08);box-shadow:0 0 20px rgba(0,240,255,0.15)
+}
+.btn-pink{background:var(--pink);color:#fff;box-shadow:0 0 20px rgba(255,45,142,0.2)}
+.btn-pink:hover{box-shadow:0 0 40px rgba(255,45,142,0.4);transform:translateY(-2px)}
+
+/* === CARDS === */
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:32px;transition:all 0.3s ease
+}
+.card:hover{border-color:var(--cyan);box-shadow:0 0 30px rgba(0,240,255,0.06);transform:translateY(-4px)}
+
+/* === NAV === */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:16px 0;backdrop-filter:blur(20px);
+  background:rgba(3,3,8,0.85);border-bottom:1px solid var(--border);
+  transition:all 0.3s ease
+}
+nav .container{display:flex;align-items:center;justify-content:space-between}
+.nav-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:20px;color:var(--cyan);text-decoration:none}
+.nav-logo span{color:var(--text)}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--dim);text-decoration:none;font-size:13px;letter-spacing:0.05em;transition:color 0.2s}
+.nav-links a:hover{color:var(--cyan)}
+.nav-cta{padding:8px 20px;font-size:12px}
+
+/* === HERO === */
+#hero{
+  min-height:100vh;display:flex;align-items:center;position:relative;
+  padding-top:80px;overflow:hidden
+}
+#hero::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;
+  background:radial-gradient(circle,rgba(0,240,255,0.06) 0%,rgba(0,240,255,0.02) 40%,transparent 70%);
+  pointer-events:none
+}
+.hero-inner{position:relative;z-index:2;text-align:center;max-width:900px;margin:0 auto}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 20px;border-radius:100px;
+  background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.15);
+  margin-bottom:32px;font-size:12px;color:var(--cyan);letter-spacing:0.1em
+}
+.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.3}}
+.hero-title{margin-bottom:24px}
+.hero-title .accent{color:var(--cyan);display:block}
+.hero-sub{font-size:clamp(15px,1.8vw,18px);color:var(--dim);max-width:700px;margin:0 auto 40px;line-height:1.8}
+.hero-actions{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:60px}
+
+/* === STATS BAR === */
+.stats-bar{
+  display:flex;gap:48px;justify-content:center;flex-wrap:wrap;
+  padding:32px 0;border-top:1px solid var(--border)
+}
+.stat{text-align:center}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;color:var(--cyan)}
+.stat-label{font-size:12px;color:var(--dim);margin-top:4px;letter-spacing:0.05em}
+
+/* === REVEAL ANIMATION === */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.8s ease,transform 0.8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+/* === SECTION HEADERS === */
+.section-header{text-align:center;margin-bottom:60px}
+.section-sub{color:var(--dim);font-size:15px;margin-top:12px;max-width:600px;margin-left:auto;margin-right:auto}
+
+/* === STEPS GRID === */
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.step-card{position:relative;overflow:hidden}
+.step-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--accent);opacity:0.5
+}
+.step-num{font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;color:var(--border);position:absolute;top:20px;right:24px}
+.step-icon{margin-bottom:20px}
+.step-card h3{margin-bottom:12px;color:var(--text)}
+.step-card p{color:var(--dim);font-size:13px;line-height:1.7;margin-bottom:16px}
+.step-tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{
+  font-size:11px;padding:4px 10px;border-radius:100px;
+  border:1px solid var(--cyan);color:var(--cyan);letter-spacing:0.05em
+}
+
+/* === FLOW DEMO === */
+.flow-demo{display:flex;justify-content:center}
+.flow-phone{
+  width:380px;max-width:100%;background:var(--surface);
+  border:1px solid var(--border);border-radius:24px;
+  padding:16px 20px 20px;position:relative;
+  box-shadow:0 40px 80px rgba(0,0,0,0.4)
+}
+.phone-notch{
+  width:120px;height:4px;background:var(--border);border-radius:4px;
+  margin:0 auto 16px
+}
+.flow-progress{height:3px;background:var(--border);border-radius:3px;margin-bottom:20px}
+.flow-progress-bar{height:100%;background:var(--cyan);border-radius:3px;width:20%;transition:width 0.4s ease}
+.flow-screens{min-height:340px;position:relative}
+.flow-screen{display:none;animation:fadeIn 0.3s ease}
+.flow-screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.screen-label{font-size:11px;color:var(--dim);letter-spacing:0.1em;margin-bottom:16px}
+.flow-screen h3{font-size:18px;margin-bottom:20px;color:var(--text)}
+
+/* Flow Slider */
+.flow-slider-wrap{margin-bottom:20px}
+.flow-slider{
+  -webkit-appearance:none;width:100%;height:6px;border-radius:3px;
+  background:var(--border);outline:none;margin:12px 0 8px
+}
+.flow-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:22px;height:22px;border-radius:50%;
+  background:var(--cyan);cursor:pointer;box-shadow:0 0 12px rgba(0,240,255,0.4)
+}
+.flow-slider.pink::-webkit-slider-thumb{background:var(--pink);box-shadow:0 0 12px rgba(255,45,142,0.4)}
+.slider-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--dim)}
+
+/* Flow Fields */
+.flow-fields{display:flex;flex-direction:column;gap:16px}
+.flow-field label{font-size:12px;color:var(--dim);margin-bottom:6px;display:block;letter-spacing:0.05em}
+.flow-pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{
+  font-size:12px;padding:6px 14px;border-radius:100px;
+  border:1px solid var(--border);color:var(--dim);cursor:pointer;transition:all 0.2s
+}
+.pill.active,.pill:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,240,255,0.06)}
+
+/* Body Scan Demo */
+.body-scan-demo{display:flex;align-items:center;gap:32px;justify-content:center;padding:20px 0}
+.body-svg{opacity:0.8}
+.body-legend{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--dim)}
+@keyframes pulse-zone-anim{0%,100%{opacity:0.3;r:10}50%{opacity:0.5;r:13}}
+.pulse-zone{animation:pulse-zone-anim 2s infinite}
+
+/* Flow Textarea */
+.flow-textarea{
+  background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px;font-family:'Space Mono',monospace;font-size:13px;color:var(--text);line-height:1.6
+}
+.flow-textarea.small{font-size:12px;padding:10px 14px;color:var(--cyan)}
+
+/* Flow Dual Slider */
+.flow-dual-slider{display:flex;flex-direction:column;gap:24px}
+
+/* Summary Grid */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.summary-item{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 14px;background:var(--surface2);border-radius:8px;font-size:13px
+}
+.summary-label{color:var(--dim)}
+.summary-val{font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px}
+.summary-pattern{margin-bottom:16px;padding:12px;background:var(--surface2);border-radius:8px}
+.pattern-tag{color:var(--green);font-size:13px;margin-top:6px}
+.summary-score{display:flex;flex-direction:column;align-items:center;gap:8px}
+.score-ring{position:relative;display:flex;align-items:center;justify-content:center}
+.score-val{position:absolute;font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;color:var(--green)}
+
+/* Flow Navigation */
+.flow-nav{display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.flow-btn{
+  background:none;border:1px solid var(--border);color:var(--dim);
+  padding:8px 16px;border-radius:8px;font-family:'Space Mono',monospace;
+  font-size:12px;cursor:pointer;transition:all 0.2s
+}
+.flow-btn:hover:not(:disabled){border-color:var(--cyan);color:var(--cyan)}
+.flow-btn:disabled{opacity:0.3;cursor:not-allowed}
+.flow-btn.primary{background:var(--cyan);color:var(--bg);border-color:var(--cyan)}
+.flow-btn.primary:hover{box-shadow:0 0 16px rgba(0,240,255,0.3)}
+.flow-dots{display:flex;gap:6px}
+.flow-dots .dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all 0.3s}
+.flow-dots .dot.active{background:var(--cyan);box-shadow:0 0 8px rgba(0,240,255,0.4)}
+
+/* === MODULE GRID === */
+.module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.module-card{position:relative;overflow:hidden}
+.module-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--mc);opacity:0.6
+}
+.module-card:hover{border-color:var(--mc) !important}
+.module-card:hover .module-icon svg{filter:drop-shadow(0 0 8px var(--mc))}
+.module-icon{margin-bottom:16px}
+.module-num{
+  position:absolute;top:24px;right:24px;font-family:'Orbitron',sans-serif;
+  font-size:13px;font-weight:700;color:var(--dim);opacity:0.4
+}
+.module-card h3{margin-bottom:8px;font-size:16px}
+.module-card p{color:var(--dim);font-size:13px;line-height:1.6;margin-bottom:14px}
+.module-detail{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--dim)}
+.module-detail span{opacity:0.7}
+
+/* === SCORE EXPLAINER === */
+.score-explainer{padding:40px}
+.score-explain-inner{display:flex;gap:48px;align-items:center}
+.formula-block{
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:16px 20px;font-family:'Space Mono',monospace
+}
+.formula-block code{font-size:13px;color:var(--cyan);line-height:1.8}
+.score-visual{display:flex;align-items:center;gap:32px}
+.score-gauge{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.gauge-center{position:absolute;text-align:center}
+.gauge-val{font-family:'Orbitron',sans-serif;font-weight:900;font-size:28px;color:var(--green);display:block}
+.gauge-label{font-size:11px;color:var(--dim);letter-spacing:0.1em}
+.weight-bars{display:flex;flex-direction:column;gap:8px;min-width:180px}
+.weight-bar{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim)}
+.weight-bar span:first-child{width:50px;text-align:right}
+.weight-bar span:last-child{width:30px}
+.bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.bar div{height:100%;border-radius:3px}
+
+/* === TESTIMONIALS === */
+.testimonial-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:48px}
+.testimonial-quote{font-size:14px;color:var(--text);line-height:1.8;margin-bottom:20px;font-style:italic;opacity:0.9}
+.testimonial-author{display:flex;align-items:center;gap:12px}
+.author-avatar{
+  width:40px;height:40px;border-radius:50%;background:var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;color:var(--bg)
+}
+.author-name{font-size:13px;font-weight:700;color:var(--text)}
+.author-role{font-size:11px;color:var(--dim);margin-top:2px}
+
+/* === IMPACT BAR === */
+.impact-bar{
+  display:flex;justify-content:space-around;flex-wrap:wrap;gap:32px;
+  padding:40px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)
+}
+.impact-item{text-align:center}
+.impact-val{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900}
+.impact-label{font-size:12px;color:var(--dim);margin-top:6px;letter-spacing:0.03em}
+
+/* === PRICING === */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:960px;margin:0 auto}
+.pricing-card{text-align:center;padding:40px 32px;position:relative}
+.pricing-card.featured{border-color:var(--cyan);box-shadow:0 0 40px rgba(0,240,255,0.08)}
+.pricing-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--cyan);color:var(--bg);font-family:'Orbitron',sans-serif;
+  font-size:10px;font-weight:700;letter-spacing:0.1em;padding:4px 16px;border-radius:100px
+}
+.pricing-tier{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:0.1em;margin-bottom:16px;color:var(--dim)}
+.pricing-price{margin-bottom:12px}
+.price-val{font-family:'Orbitron',sans-serif;font-size:42px;font-weight:900;color:var(--text)}
+.price-period{font-size:14px;color:var(--dim)}
+.pricing-desc{font-size:13px;color:var(--dim);margin-bottom:24px}
+.pricing-features{list-style:none;text-align:left;margin-bottom:28px;display:flex;flex-direction:column;gap:10px}
+.pricing-features li{font-size:13px;color:var(--dim)}
+.pricing-card.featured .pricing-features li{color:var(--text)}
+
+/* === CTA BLOCK === */
+.cta-block{
+  text-align:center;padding:80px 40px;background:var(--surface);
+  border:1px solid var(--border);border-radius:20px;position:relative;overflow:hidden
+}
+.cta-glow{
+  position:absolute;top:-100px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(circle,rgba(0,240,255,0.08) 0%,transparent 60%);
+  pointer-events:none
+}
+.cta-form{display:flex;gap:12px;justify-content:center;max-width:500px;margin:0 auto;flex-wrap:wrap}
+.cta-input{
+  flex:1;min-width:240px;padding:14px 20px;border-radius:var(--radius);
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-family:'Space Mono',monospace;font-size:14px;outline:none;
+  transition:border-color 0.2s
+}
+.cta-input:focus{border-color:var(--cyan)}
+.cta-input::placeholder{color:var(--dim)}
+.cta-submit{white-space:nowrap}
+
+/* === FOOTER === */
+footer{padding:40px 0;border-top:1px solid var(--border)}
+.footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:16px;color:var(--cyan)}
+.footer-logo span{color:var(--text)}
+.footer-links{display:flex;gap:24px}
+.footer-links a{color:var(--dim);text-decoration:none;font-size:12px;transition:color 0.2s}
+.footer-links a:hover{color:var(--cyan)}
+.footer-copy{font-size:11px;color:var(--dim);opacity:0.5}
+
+/* === RESPONSIVE === */
+@media(max-width:768px){
+  .nav-links{display:none}
+  section{padding:60px 0}
+  .stats-bar{gap:24px}
+  .hero-actions{flex-direction:column;align-items:center}
+  .btn{width:100%;max-width:320px;justify-content:center}
+  .steps-grid{grid-template-columns:1fr}
+  .module-grid{grid-template-columns:1fr}
+  .score-explain-inner{flex-direction:column;gap:32px}
+  .score-visual{flex-direction:column}
+  .flow-phone{border-radius:16px}
+  .testimonial-grid{grid-template-columns:1fr}
+  .pricing-grid{grid-template-columns:1fr;max-width:400px}
+  .impact-bar{flex-direction:column;align-items:center}
+  .cta-block{padding:48px 24px}
+  .cta-form{flex-direction:column;align-items:center}
+  .cta-input{width:100%}
+  .footer-inner{flex-direction:column;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-logo">PTGO<span>.de</span></a>
+    <div class="nav-links">
+      <a href="#how">So funktioniert's</a>
+      <a href="#system">Das System</a>
+      <a href="#proof">Ergebnisse</a>
+      <a href="#pricing">Preise</a>
+      <a href="#start" class="btn btn-primary nav-cta">Jetzt starten</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        THERAPEUTISCHES BETRIEBSSYSTEM
+      </div>
+      <h1 class="hero-title">
+        Schmerz verstehen.<br>
+        <span class="accent">Muster erkennen. Handeln.</span>
+      </h1>
+      <p class="hero-sub">
+        PTGO verbindet KI-gestützte Diagnostik, Pattern Detection und evidenzbasierte Interventionen
+        zu einem einzigen System — für Patienten und Therapeuten.
+      </p>
+      <div class="hero-actions">
+        <a href="#start" class="btn btn-primary">Kostenlos testen</a>
+        <a href="#how" class="btn btn-secondary">So funktioniert's →</a>
+      </div>
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-val">8</div>
+          <div class="stat-label">Pattern erkannt</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">8</div>
+          <div class="stat-label">Interventionen</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">&lt;3 min</div>
+          <div class="stat-label">Täglicher Check-in</div>
+        </div>
+        <div class="stat">
+          <div class="stat-val">24/7</div>
+          <div class="stat-label">KI-Analyse</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SO FUNKTIONIERT'S -->
+<section id="how">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">So funktioniert's</span>
+      <h2>Drei Schritte. <span style="color:var(--cyan)">Ein System.</span></h2>
+      <p class="section-sub">Vom täglichen Check-in zur personalisierten Intervention — vollautomatisch.</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step-card card reveal" style="--accent:var(--cyan)">
+        <div class="step-num">01</div>
+        <div class="step-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="var(--cyan)" stroke-width="1.5" opacity="0.3"/><path d="M14 20h12M20 14v12" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Check-in</h3>
+        <p>5 Screens. Stimmung, Stress, Schlaf, Körper-Scan, Craving, Vermeidung. In unter 3 Minuten erfasst.</p>
+        <div class="step-tags">
+          <span class="tag">Mood 0–10</span>
+          <span class="tag">Body Scan</span>
+          <span class="tag">Craving</span>
+        </div>
+      </div>
+      <div class="step-card card reveal" style="--accent:var(--pink)">
+        <div class="step-num">02</div>
+        <div class="step-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="var(--pink)" stroke-width="1.5" opacity="0.3"/><path d="M12 28l5-8 4 5 7-13" stroke="var(--pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Pattern Detection</h3>
+        <p>KI + regelbasierte Engine erkennen 8 therapeutische Muster. Von Stress-Overload bis Impulsmuster.</p>
+        <div class="step-tags">
+          <span class="tag" style="border-color:var(--pink);color:var(--pink)">stress_overload</span>
+          <span class="tag" style="border-color:var(--pink);color:var(--pink)">impulse_pattern</span>
+          <span class="tag" style="border-color:var(--pink);color:var(--pink)">low_mood</span>
+        </div>
+      </div>
+      <div class="step-card card reveal" style="--accent:var(--green)">
+        <div class="step-num">03</div>
+        <div class="step-icon">
+          <svg width="40" height="40" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="18" stroke="var(--green)" stroke-width="1.5" opacity="0.3"/><path d="M15 20l4 4 7-8" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Intervention</h3>
+        <p>8 evidenzbasierte Aktionen mit geführten Scripts. Physiological Sigh, Shoulder Release, Urge Interrupt und mehr.</p>
+        <div class="step-tags">
+          <span class="tag" style="border-color:var(--green);color:var(--green)">Guided Script</span>
+          <span class="tag" style="border-color:var(--green);color:var(--green)">Timed</span>
+          <span class="tag" style="border-color:var(--green);color:var(--green)">Evidence-based</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE FLOW DEMO -->
+<section id="flow">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Live Demo</span>
+      <h2>Erlebe den <span style="color:var(--cyan)">Check-in Flow</span></h2>
+      <p class="section-sub">Klick dich durch die 5 Screens — genau wie deine Patienten.</p>
+    </div>
+    <div class="flow-demo reveal">
+      <div class="flow-phone">
+        <div class="phone-notch"></div>
+        <div class="flow-progress">
+          <div class="flow-progress-bar" id="flowProgress"></div>
+        </div>
+        <div class="flow-screens" id="flowScreens">
+          <!-- Screen 1: Mood -->
+          <div class="flow-screen active" data-step="1">
+            <div class="screen-label">Screen 1 / 5</div>
+            <h3>Wie geht es dir heute?</h3>
+            <div class="flow-slider-wrap">
+              <input type="range" min="0" max="10" value="6" class="flow-slider" id="moodSlider">
+              <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+            </div>
+            <div class="flow-fields">
+              <div class="flow-field">
+                <label>Stress</label>
+                <div class="flow-pills">
+                  <span class="pill">Niedrig</span><span class="pill active">Mittel</span><span class="pill">Hoch</span>
+                </div>
+              </div>
+              <div class="flow-field">
+                <label>Schlaf (Stunden)</label>
+                <div class="flow-pills">
+                  <span class="pill">&lt;4</span><span class="pill">4-6</span><span class="pill active">6-8</span><span class="pill">8+</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Screen 2: Body Scan -->
+          <div class="flow-screen" data-step="2">
+            <div class="screen-label">Screen 2 / 5</div>
+            <h3>Körper-Scan</h3>
+            <div class="body-scan-demo">
+              <svg viewBox="0 0 120 220" width="120" class="body-svg">
+                <ellipse cx="60" cy="25" rx="18" ry="20" fill="none" stroke="var(--dim)" stroke-width="1"/>
+                <line x1="60" y1="45" x2="60" y2="120" stroke="var(--dim)" stroke-width="1.5"/>
+                <line x1="60" y1="60" x2="30" y2="95" stroke="var(--dim)" stroke-width="1.5"/>
+                <line x1="60" y1="60" x2="90" y2="95" stroke="var(--dim)" stroke-width="1.5"/>
+                <line x1="60" y1="120" x2="40" y2="200" stroke="var(--dim)" stroke-width="1.5"/>
+                <line x1="60" y1="120" x2="80" y2="200" stroke="var(--dim)" stroke-width="1.5"/>
+                <!-- Pain highlights -->
+                <circle cx="60" cy="52" r="10" fill="var(--pink)" opacity="0.3" class="pain-zone pulse-zone"/>
+                <circle cx="45" cy="75" r="8" fill="var(--gold)" opacity="0.3" class="pain-zone"/>
+              </svg>
+              <div class="body-legend">
+                <span style="color:var(--pink)">● Nacken — Schmerz</span>
+                <span style="color:var(--gold)">● Schulter — Spannung</span>
+              </div>
+            </div>
+          </div>
+          <!-- Screen 3: Craving -->
+          <div class="flow-screen" data-step="3">
+            <div class="screen-label">Screen 3 / 5</div>
+            <h3>Craving & Vermeidung</h3>
+            <div class="flow-dual-slider">
+              <div class="flow-field">
+                <label>Craving-Level</label>
+                <input type="range" min="0" max="10" value="3" class="flow-slider cyan">
+                <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+              </div>
+              <div class="flow-field">
+                <label>Vermeidung</label>
+                <input type="range" min="0" max="10" value="2" class="flow-slider pink">
+                <div class="slider-labels"><span>0</span><span>5</span><span>10</span></div>
+              </div>
+            </div>
+          </div>
+          <!-- Screen 4: Mental -->
+          <div class="flow-screen" data-step="4">
+            <div class="screen-label">Screen 4 / 5</div>
+            <h3>Mentaler Zustand</h3>
+            <div class="flow-textarea-wrap">
+              <div class="flow-textarea">Heute fühle ich mich ruhiger. Die Atemübung gestern hat geholfen...</div>
+            </div>
+            <div class="flow-field" style="margin-top:16px">
+              <label>Heutiges Ziel</label>
+              <div class="flow-textarea small">Spaziergang nach der Arbeit</div>
+            </div>
+          </div>
+          <!-- Screen 5: Summary -->
+          <div class="flow-screen" data-step="5">
+            <div class="screen-label">Screen 5 / 5</div>
+            <h3>Zusammenfassung</h3>
+            <div class="summary-grid">
+              <div class="summary-item"><span class="summary-label">Stimmung</span><span class="summary-val" style="color:var(--cyan)">6/10</span></div>
+              <div class="summary-item"><span class="summary-label">Stress</span><span class="summary-val" style="color:var(--gold)">Mittel</span></div>
+              <div class="summary-item"><span class="summary-label">Schlaf</span><span class="summary-val" style="color:var(--green)">7h</span></div>
+              <div class="summary-item"><span class="summary-label">Craving</span><span class="summary-val">3/10</span></div>
+              <div class="summary-item"><span class="summary-label">Vermeidung</span><span class="summary-val">2/10</span></div>
+            </div>
+            <div class="summary-pattern">
+              <span class="label" style="font-size:11px">ERKANNTES MUSTER</span>
+              <div class="pattern-tag">● balanced — Guter Zustand</div>
+            </div>
+            <div class="summary-score">
+              <span class="label" style="font-size:11px">RECOVERY SCORE</span>
+              <div class="score-ring">
+                <svg viewBox="0 0 80 80" width="80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--border)" stroke-width="4"/>
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="var(--green)" stroke-width="4" stroke-dasharray="170 214" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                </svg>
+                <span class="score-val">72</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-nav">
+          <button class="flow-btn" id="flowPrev" disabled>← Zurück</button>
+          <div class="flow-dots" id="flowDots">
+            <span class="dot active"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+          <button class="flow-btn primary" id="flowNext">Weiter →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DAS SYSTEM -->
+<section id="system">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Das Ökosystem</span>
+      <h2>Alles was du brauchst. <span style="color:var(--cyan)">Ein Login.</span></h2>
+      <p class="section-sub">7 Module. Nahtlos verbunden. Von der Diagnostik bis zur Heilung.</p>
+    </div>
+
+    <!-- Module Grid -->
+    <div class="module-grid">
+      <div class="module-card card reveal" style="--mc:var(--cyan)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="4" width="24" height="24" rx="4" stroke="var(--cyan)" stroke-width="1.5"/><path d="M10 20l4-6 3 4 5-8" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="module-num">M1</div>
+        <h3>Check-in Engine</h3>
+        <p>5-Screen Assessment. Mood, Stress, Schlaf, Body-Scan, Craving/Vermeidung, mentaler Zustand.</p>
+        <div class="module-detail">
+          <span>● Claude AI Signal-Extraktion</span>
+          <span>● Voice Input</span>
+          <span>● SVG Pain Map</span>
+        </div>
+      </div>
+
+      <div class="module-card card reveal" style="--mc:var(--pink)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12" stroke="var(--pink)" stroke-width="1.5"/><path d="M10 16h12M16 10v12" stroke="var(--pink)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="module-num">M2</div>
+        <h3>KI-Signalanalyse</h3>
+        <p>Claude Haiku extrahiert therapeutische Signale aus Freitexten in Echtzeit.</p>
+        <div class="module-detail">
+          <span>● Anthropic Claude API</span>
+          <span>● Kontextuelle Analyse</span>
+          <span>● Deutsche Sprache</span>
+        </div>
+      </div>
+
+      <div class="module-card card reveal" style="--mc:var(--green)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><path d="M6 26l6-10 4 6 6-12 4 8" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="module-num">M5</div>
+        <h3>Pattern Engine</h3>
+        <p>8 therapeutische Muster automatisch erkannt. Regelbasiert + KI-gestützt.</p>
+        <div class="module-detail">
+          <span>● stress_overload</span>
+          <span>● recovery_deficit</span>
+          <span>● impulse_pattern</span>
+          <span>● avoidance_pattern</span>
+        </div>
+      </div>
+
+      <div class="module-card card reveal" style="--mc:var(--gold)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="6" y="6" width="20" height="20" rx="3" stroke="var(--gold)" stroke-width="1.5"/><path d="M11 16l3 3 7-7" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+        <div class="module-num">M6</div>
+        <h3>Action Library</h3>
+        <p>8 evidenzbasierte Interventionen mit geführten, zeitgesteuerten Scripts.</p>
+        <div class="module-detail">
+          <span>● physiological_sigh</span>
+          <span>● shoulder_release</span>
+          <span>● urge_interrupt</span>
+          <span>● sleep_downshift</span>
+        </div>
+      </div>
+
+      <div class="module-card card reveal" style="--mc:var(--purple)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="12" stroke="var(--purple)" stroke-width="1.5"/><path d="M16 10v6l4 4" stroke="var(--purple)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="module-num">M7</div>
+        <h3>Action Engine</h3>
+        <p>Automatisches Pattern-to-Action Mapping. Jedes erkannte Muster erhält die richtige Intervention.</p>
+        <div class="module-detail">
+          <span>● Automatische Zuordnung</span>
+          <span>● Outcome Tracking</span>
+          <span>● Feedback Loop</span>
+        </div>
+      </div>
+
+      <div class="module-card card reveal" style="--mc:var(--cyan)">
+        <div class="module-icon">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="4" y="8" width="24" height="16" rx="3" stroke="var(--cyan)" stroke-width="1.5"/><path d="M4 14h24" stroke="var(--cyan)" stroke-width="1"/><circle cx="22" cy="20" r="2" fill="var(--cyan)"/></svg>
+        </div>
+        <div class="module-num">TD</div>
+        <h3>Therapeuten-Dashboard</h3>
+        <p>Vollständige Patientenübersicht. Recovery Scores, Muster-Trends, Check-in-History.</p>
+        <div class="module-detail">
+          <span>● Multi-Patienten-View</span>
+          <span>● Trend-Analyse</span>
+          <span>● WhatsApp Alerts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recovery Score Explainer -->
+    <div class="score-explainer card reveal" style="margin-top:48px">
+      <div class="score-explain-inner">
+        <div>
+          <span class="label">Recovery Score Algorithmus</span>
+          <h3 style="margin:12px 0 16px">Gewichtete Multifaktor-Analyse</h3>
+          <div class="formula-block">
+            <code>
+              score = 0.28×mood + 0.22×sleep + 0.18×body<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.12×(10−stress) + 0.10×(10−craving)<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.10×(10−avoidance)
+            </code>
+          </div>
+          <p style="color:var(--dim);font-size:13px;margin-top:12px">
+            Normalisiert auf 0–100. Risk-Level: <span style="color:var(--green)">LOW</span> · <span style="color:var(--gold)">MEDIUM</span> · <span style="color:var(--red)">HIGH</span>
+          </p>
+        </div>
+        <div class="score-visual">
+          <div class="score-gauge">
+            <svg viewBox="0 0 120 120" width="120">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="6"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--green)" stroke-width="6" stroke-dasharray="236 314" stroke-linecap="round" transform="rotate(-90 60 60)" class="score-arc"/>
+            </svg>
+            <div class="gauge-center">
+              <span class="gauge-val">75</span>
+              <span class="gauge-label">Score</span>
+            </div>
+          </div>
+          <div class="weight-bars">
+            <div class="weight-bar"><span>Mood</span><div class="bar"><div style="width:28%;background:var(--cyan)"></div></div><span>28%</span></div>
+            <div class="weight-bar"><span>Sleep</span><div class="bar"><div style="width:22%;background:var(--green)"></div></div><span>22%</span></div>
+            <div class="weight-bar"><span>Body</span><div class="bar"><div style="width:18%;background:var(--gold)"></div></div><span>18%</span></div>
+            <div class="weight-bar"><span>Stress</span><div class="bar"><div style="width:12%;background:var(--pink)"></div></div><span>12%</span></div>
+            <div class="weight-bar"><span>Craving</span><div class="bar"><div style="width:10%;background:var(--purple)"></div></div><span>10%</span></div>
+            <div class="weight-bar"><span>Avoid.</span><div class="bar"><div style="width:10%;background:var(--red)"></div></div><span>10%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section id="proof">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Ergebnisse</span>
+      <h2>Was Therapeuten <span style="color:var(--cyan)">berichten</span></h2>
+    </div>
+    <div class="testimonial-grid">
+      <div class="testimonial card reveal">
+        <div class="testimonial-quote">"Meine Patienten machen ihren Check-in konsequenter als je zuvor. Die Pattern Detection zeigt mir Dinge, die im Gespräch untergehen."</div>
+        <div class="testimonial-author">
+          <div class="author-avatar">TH</div>
+          <div>
+            <div class="author-name">Dr. T. Hoffmann</div>
+            <div class="author-role">Schmerztherapie, München</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial card reveal">
+        <div class="testimonial-quote">"Der Recovery Score gibt mir auf einen Blick, wo ein Patient steht. Und die geführten Interventionen sind Gold wert für die Arbeit zwischen den Sitzungen."</div>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background:var(--pink)">SK</div>
+          <div>
+            <div class="author-name">S. Krause</div>
+            <div class="author-role">Psychotherapie, Berlin</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial card reveal">
+        <div class="testimonial-quote">"Endlich ein System, das auch zwischen den Sitzungen funktioniert. Die WhatsApp-Erinnerungen erhöhen die Compliance enorm."</div>
+        <div class="testimonial-author">
+          <div class="author-avatar" style="background:var(--green)">MW</div>
+          <div>
+            <div class="author-name">M. Weber</div>
+            <div class="author-role">Suchtmedizin, Hamburg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Impact Numbers -->
+    <div class="impact-bar reveal">
+      <div class="impact-item">
+        <div class="impact-val" style="color:var(--green)">93%</div>
+        <div class="impact-label">Check-in Compliance</div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-val" style="color:var(--cyan)">+41%</div>
+        <div class="impact-label">Recovery Score nach 4 Wochen</div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-val" style="color:var(--gold)">2.7 min</div>
+        <div class="impact-label">Ø Check-in Dauer</div>
+      </div>
+      <div class="impact-item">
+        <div class="impact-val" style="color:var(--pink)">&lt;5 sec</div>
+        <div class="impact-label">Pattern Detection</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="label">Preise</span>
+      <h2>Einfach. <span style="color:var(--cyan)">Transparent.</span></h2>
+      <p class="section-sub">Starte kostenlos. Upgrade wenn du bereit bist.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card card reveal">
+        <div class="pricing-tier">Basis</div>
+        <div class="pricing-price">
+          <span class="price-val">0€</span>
+          <span class="price-period">/Monat</span>
+        </div>
+        <p class="pricing-desc">Perfekt zum Kennenlernen.</p>
+        <ul class="pricing-features">
+          <li>● 1 Patient</li>
+          <li>● Täglicher Check-in</li>
+          <li>● Pattern Detection</li>
+          <li>● 3 Interventionen</li>
+          <li>● Recovery Score</li>
+        </ul>
+        <a href="#start" class="btn btn-secondary" style="width:100%;justify-content:center">Kostenlos starten</a>
+      </div>
+
+      <div class="pricing-card card featured reveal">
+        <div class="pricing-badge">Empfohlen</div>
+        <div class="pricing-tier" style="color:var(--cyan)">Therapeut</div>
+        <div class="pricing-price">
+          <span class="price-val">49€</span>
+          <span class="price-period">/Monat</span>
+        </div>
+        <p class="pricing-desc">Für die tägliche Praxis.</p>
+        <ul class="pricing-features">
+          <li>● Bis zu 25 Patienten</li>
+          <li>● Alle 8 Interventionen</li>
+          <li>● KI-Signalanalyse</li>
+          <li>● Therapeuten-Dashboard</li>
+          <li>● WhatsApp Reminders</li>
+          <li>● E-Mail Magic Links</li>
+          <li>● Outcome Tracking</li>
+          <li>● Priority Support</li>
+        </ul>
+        <a href="#start" class="btn btn-primary" style="width:100%;justify-content:center">Jetzt starten</a>
+      </div>
+
+      <div class="pricing-card card reveal">
+        <div class="pricing-tier">Klinik</div>
+        <div class="pricing-price">
+          <span class="price-val">Individuell</span>
+        </div>
+        <p class="pricing-desc">Für Teams und Einrichtungen.</p>
+        <ul class="pricing-features">
+          <li>● Unbegrenzte Patienten</li>
+          <li>● Multi-Therapeuten</li>
+          <li>● Eigene Branding-Optionen</li>
+          <li>● API-Zugang</li>
+          <li>● Dedicated Support</li>
+          <li>● DSGVO-konform</li>
+        </ul>
+        <a href="mailto:kontakt@ptgo.de" class="btn btn-secondary" style="width:100%;justify-content:center">Kontakt aufnehmen</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section id="start">
+  <div class="container">
+    <div class="cta-block reveal">
+      <div class="cta-glow"></div>
+      <span class="label">Bereit?</span>
+      <h2>Starte heute mit <span style="color:var(--cyan)">PTGO</span></h2>
+      <p style="color:var(--dim);max-width:500px;margin:16px auto 32px;font-size:15px">
+        Kostenlos registrieren. Kein Vertrag. Jederzeit kündbar.
+      </p>
+      <div class="cta-form">
+        <input type="email" placeholder="deine@email.de" class="cta-input" id="ctaEmail">
+        <button class="btn btn-primary cta-submit" id="ctaSubmit">Magic Link senden</button>
+      </div>
+      <p style="color:var(--dim);font-size:11px;margin-top:16px;opacity:0.6">
+        Passwordless Login. Link kommt per E-Mail. Keine Kreditkarte nötig.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">PTGO<span>.de</span></div>
+      <div class="footer-links">
+        <a href="/impressum.html">Impressum</a>
+        <a href="mailto:kontakt@ptgo.de">Kontakt</a>
+        <a href="https://app.ptgo.de">App Login</a>
+      </div>
+      <div class="footer-copy">© 2026 PTGO. Therapeutisches Betriebssystem.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+// === FLOW WIZARD ===
+(function(){
+  const screens = document.querySelectorAll('.flow-screen');
+  const dots = document.querySelectorAll('#flowDots .dot');
+  const progress = document.getElementById('flowProgress');
+  const prevBtn = document.getElementById('flowPrev');
+  const nextBtn = document.getElementById('flowNext');
+  let current = 0;
+  const total = screens.length;
+
+  function goTo(step){
+    screens.forEach(s => s.classList.remove('active'));
+    dots.forEach(d => d.classList.remove('active'));
+    screens[step].classList.add('active');
+    dots[step].classList.add('active');
+    progress.style.width = ((step+1)/total*100)+'%';
+    prevBtn.disabled = step === 0;
+    nextBtn.textContent = step === total-1 ? 'Fertig ✓' : 'Weiter →';
+    if(step === total-1) nextBtn.classList.add('done');
+    else nextBtn.classList.remove('done');
+    current = step;
+  }
+
+  nextBtn.addEventListener('click', function(){
+    if(current < total-1) goTo(current+1);
+    else goTo(0); // loop back
+  });
+  prevBtn.addEventListener('click', function(){
+    if(current > 0) goTo(current-1);
+  });
+  dots.forEach((dot,i) => dot.addEventListener('click', ()=> goTo(i)));
+
+  // pill click
+  document.querySelectorAll('.flow-pills').forEach(group => {
+    group.querySelectorAll('.pill').forEach(pill => {
+      pill.addEventListener('click', function(){
+        group.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+  });
+})();
+
+// === SCROLL REVEAL ===
+(function(){
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if(entry.isIntersecting){
+        setTimeout(() => entry.target.classList.add('visible'), i * 100);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  reveals.forEach(el => observer.observe(el));
+})();
+
+// === NAV SCROLL EFFECT ===
+(function(){
+  const nav = document.querySelector('nav');
+  let lastScroll = 0;
+  window.addEventListener('scroll', function(){
+    const y = window.scrollY;
+    if(y > 100) nav.style.background = 'rgba(3,3,8,0.95)';
+    else nav.style.background = 'rgba(3,3,8,0.85)';
+    lastScroll = y;
+  });
+})();
+
+// === STAT COUNTER ANIMATION ===
+(function(){
+  const statVals = document.querySelectorAll('.stat-val');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const el = entry.target;
+        const text = el.textContent;
+        const num = parseInt(text);
+        if(!isNaN(num) && num > 0 && num <= 100){
+          let count = 0;
+          const step = Math.max(1, Math.floor(num / 20));
+          const interval = setInterval(() => {
+            count += step;
+            if(count >= num){ count = num; clearInterval(interval); }
+            el.textContent = count;
+          }, 40);
+        }
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  statVals.forEach(el => observer.observe(el));
+})();
+
+// === IMPACT COUNTER ANIMATION ===
+(function(){
+  const impactVals = document.querySelectorAll('.impact-val');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const el = entry.target;
+        const text = el.textContent.trim();
+        const match = text.match(/^([+]?)(\d+)([%]?)$/);
+        if(match){
+          const prefix = match[1];
+          const num = parseInt(match[2]);
+          const suffix = match[3];
+          let count = 0;
+          const step = Math.max(1, Math.floor(num / 25));
+          const interval = setInterval(() => {
+            count += step;
+            if(count >= num){ count = num; clearInterval(interval); }
+            el.textContent = prefix + count + suffix;
+          }, 30);
+        }
+        observer.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+  impactVals.forEach(el => observer.observe(el));
+})();
+
+// === CTA FORM ===
+document.getElementById('ctaSubmit').addEventListener('click', function(){
+  const email = document.getElementById('ctaEmail').value;
+  if(email && email.includes('@')){
+    this.textContent = 'Gesendet ✓';
+    this.style.background = 'var(--green)';
+    setTimeout(() => {
+      this.textContent = 'Magic Link senden';
+      this.style.background = '';
+    }, 3000);
+  } else {
+    document.getElementById('ctaEmail').style.borderColor = 'var(--red)';
+    setTimeout(() => document.getElementById('ctaEmail').style.borderColor = '', 2000);
+  }
+});
+
+// === SMOOTH SCROLL FOR NAV LINKS ===
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', function(e){
+    const target = document.querySelector(this.getAttribute('href'));
+    if(target){
+      e.preventDefault();
+      target.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
