@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MASTER CONTROL — Bordcomputer</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--orange:#ff8c00;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* GATE */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#gate.hidden{display:none}
+#gate canvas{position:absolute;inset:0;z-index:0}
+.gate-box{position:relative;z-index:1;text-align:center}
+.gate-title{font-family:'Orbitron',sans-serif;font-size:clamp(24px,5vw,42px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.gate-sub{color:var(--dim);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+.gate-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:280px;border-radius:2px;text-align:center;outline:none;transition:border-color .3s}
+.gate-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.gate-btn{margin-top:16px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;padding:12px 40px;cursor:pointer;transition:all .3s}
+.gate-btn:hover{background:var(--cyan);color:var(--bg)}
+.gate-error{color:var(--red);font-size:12px;margin-top:12px;min-height:16px}
+
+/* MAIN */
+#app{display:none;min-height:100vh}
+#app.active{display:block}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:3px}
+.topbar-title span{color:var(--cyan)}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;animation:pulse 2s infinite}
+.status-dot.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-dot.offline{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.btn-back{background:none;border:1px solid var(--border);color:var(--dim);font-size:10px;padding:6px 12px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .3s;text-decoration:none}
+.btn-back:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* CONTENT */
+.content{max-width:1200px;margin:0 auto;padding:24px 16px 60px}
+
+/* SECTION HEADER */
+.sec-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px}
+.kpi{background:var(--surface);border:1px solid var(--border);padding:20px 16px;position:relative;overflow:hidden;transition:border-color .3s}
+.kpi:hover{border-color:rgba(0,240,255,.3)}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.kpi-value{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:900;margin:6px 0 2px}
+.kpi-sub{font-size:10px;color:var(--dim)}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:2px;transition:border-color .3s}
+.card:hover{border-color:rgba(0,240,255,.15)}
+.card-title{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--dim);margin-bottom:14px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+
+/* BARS */
+.bar-row{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.bar-label{min-width:140px;font-size:12px;font-weight:700}
+.bar-track{flex:1;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+.bar-val{min-width:80px;text-align:right;font-family:'Orbitron',sans-serif;font-size:11px}
+
+/* CHART */
+.chart{display:flex;align-items:flex-end;gap:3px;height:100px;padding:8px 0}
+.chart-bar{flex:1;min-width:0;border-radius:2px 2px 0 0;transition:height .4s;position:relative;cursor:crosshair}
+.chart-bar:hover{opacity:.8}
+.chart-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--border);color:var(--text);font-size:9px;padding:4px 8px;white-space:nowrap;z-index:10}
+.chart-labels{display:flex;gap:3px;margin-top:4px}
+.chart-labels span{flex:1;text-align:center;font-size:8px;color:var(--dim)}
+
+/* LOG */
+.log-row{display:grid;grid-template-columns:24px 1fr 100px 80px 70px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:11px}
+.log-dot{width:6px;height:6px;border-radius:50%;margin:0 auto}
+.log-dot.ok{background:var(--green)}.log-dot.err{background:var(--red)}
+
+/* SERVICE ROW */
+.svc-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.svc-status{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;display:flex;align-items:center;gap:6px}
+
+/* RISK BARS */
+.risk-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px}
+.risk-box{text-align:center;padding:16px;background:var(--surface2)}
+.risk-box b{font-family:'Orbitron',sans-serif;font-size:28px;display:block;margin-top:4px}
+.risk-label{font-size:9px;letter-spacing:2px;text-transform:uppercase}
+
+/* LOADING */
+.loading{text-align:center;padding:80px;color:var(--dim);font-size:11px;letter-spacing:2px}
+.loading::after{content:'';display:block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:16px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .log-row{grid-template-columns:20px 1fr 70px 60px;font-size:10px}
+  .log-row>:nth-child(5){display:none}
+  .bar-label{min-width:100px;font-size:11px}
+}
+@media(max-width:480px){
+  .kpi-grid{grid-template-columns:1fr}
+  .risk-grid{grid-template-columns:1fr}
+}
+
+/* GRAIN */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+</style>
+</head>
+<body>
+
+<canvas id="grain"></canvas>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <canvas id="gate-bg"></canvas>
+  <div class="gate-box">
+    <div class="gate-title">MASTER CONTROL</div>
+    <div class="gate-sub">Bordcomputer · Token Intelligence</div>
+    <input type="password" class="gate-input" id="gate-pw" placeholder="Zugangsformel" onkeydown="if(event.key==='Enter')tryGate()">
+    <br>
+    <button class="gate-btn" onclick="tryGate()">ZUGANG</button>
+    <div class="gate-error" id="gate-err"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="topbar-title">MASTER <span>CONTROL</span></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="status-dot" id="conn-dot"></div>
+        <span style="font-size:10px;color:var(--dim)" id="conn-status">CONNECTING</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbar-time"></div>
+      <a href="/" class="btn-back">← NERVE CENTER</a>
+    </div>
+  </div>
+
+  <div class="content" id="main-content">
+    <div class="loading" id="loading">LADE BORDCOMPUTER</div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   MASTER CONTROL — Bordcomputer Client
+   ══════════════════════════════════════════ */
+
+const API_URL = 'https://app.ptgo.de/master-control/api';
+let DATA = null;
+let MASTER_KEY = '';
+
+// ── PASSWORD GATE ──
+function hashPw(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h}
+const CORRECT_HASH = hashPw('1+1 ist eins');
+
+function tryGate(){
+  const val = document.getElementById('gate-pw').value.trim();
+  if(hashPw(val) === CORRECT_HASH){
+    sessionStorage.setItem('mc_auth','1');
+    MASTER_KEY = val;
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    init();
+  } else {
+    document.getElementById('gate-err').textContent = 'Falsche Formel.';
+    document.getElementById('gate-pw').value = '';
+    document.getElementById('gate-pw').focus();
+  }
+}
+
+if(sessionStorage.getItem('mc_auth') === '1'){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  requestAnimationFrame(() => init());
+}
+
+// ── GRAIN ──
+(function(){
+  const c=document.getElementById('grain'),ctx=c.getContext('2d');
+  function r(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function d(){const im=ctx.createImageData(c.width,c.height);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=12}ctx.putImageData(im,0,0);requestAnimationFrame(d)}
+  window.addEventListener('resize',r);r();d();
+})();
+
+// ── GATE BG ANIMATION ──
+(function(){
+  const c=document.getElementById('gate-bg'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  const particles=[];
+  for(let i=0;i<50;i++) particles.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.5+.5,c:['#00f0ff','#ff8c00','#2dffa8'][Math.floor(Math.random()*3)]});
+  function draw(){
+    ctx.fillStyle='rgba(3,3,8,.12)';ctx.fillRect(0,0,c.width,c.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;
+    });
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=particles[i].c;ctx.globalAlpha=.06*(1-d/100);ctx.stroke();ctx.globalAlpha=1}
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ── CLOCK ──
+function updateClock(){
+  const d = new Date();
+  document.getElementById('topbar-time').textContent =
+    d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short',year:'numeric'})+' '+
+    d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// ── DATA FETCH ──
+async function fetchData(){
+  try {
+    const res = await fetch(API_URL, {
+      headers: { 'x-master-key': MASTER_KEY || '' }
+    });
+    if(!res.ok) throw new Error('API ' + res.status);
+    DATA = await res.json();
+    setConn(true);
+    return true;
+  } catch(e) {
+    console.warn('API fetch failed:', e);
+    setConn(false);
+    return false;
+  }
+}
+
+function setConn(ok){
+  const dot = document.getElementById('conn-dot');
+  const txt = document.getElementById('conn-status');
+  dot.className = 'status-dot ' + (ok ? 'online' : 'offline');
+  txt.textContent = ok ? 'LIVE' : 'OFFLINE';
+  txt.style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+
+// ── INIT ──
+async function init(){
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  const ok = await fetchData();
+  if(ok){
+    render();
+  } else {
+    renderOffline();
+  }
+  // Auto-refresh every 30s
+  setInterval(async () => {
+    if(await fetchData()) render();
+  }, 30000);
+}
+
+// ── FEATURE LABELS ──
+const FEAT = {
+  signal_extraction: {name:'Signal Extraction', color:'var(--cyan)', icon:'◈'},
+  value_extraction: {name:'Value Extraction', color:'var(--purple)', icon:'◇'},
+  coaching_impulse: {name:'AI Coaching', color:'var(--green)', icon:'◆'},
+  trend_insights: {name:'Trend Insights', color:'var(--gold)', icon:'◉'},
+  evening_message: {name:'Abend-Nachricht', color:'var(--pink)', icon:'◐'},
+  mastery_today: {name:'Mastery Today', color:'var(--orange)', icon:'◑'},
+  music_analysis: {name:'Music AI', color:'var(--red)', icon:'◒'},
+};
+function featInfo(f){ return FEAT[f] || {name:f, color:'var(--dim)', icon:'○'} }
+
+// ── FORMAT HELPERS ──
+function fmt(n){ return n.toLocaleString('de-DE') }
+function usd(n){ return '$' + n.toFixed(4) }
+function pct(n,total){ return total > 0 ? (n/total*100).toFixed(1) + '%' : '0%' }
+
+// ── RENDER ──
+function render(){
+  if(!DATA) return;
+  const d = DATA;
+  const now = new Date();
+  const daysInMonth = now.getDate();
+  const projectedMonth = daysInMonth > 0 ? (d.month.cost_usd / daysInMonth * 30) : 0;
+  const successRate = d.all_time.calls > 0 ? ((d.all_time.calls - d.all_time.errors) / d.all_time.calls * 100) : 100;
+
+  let html = '';
+
+  // ── KPI SECTION ──
+  html += `<div class="sec-title">TOKEN INTELLIGENCE</div>`;
+  html += `<div class="kpi-grid">
+    <div class="kpi" style="border-top:2px solid var(--cyan)">
+      <div class="kpi-label">Heute</div>
+      <div class="kpi-value" style="color:var(--cyan)">${usd(d.today.cost_usd)}</div>
+      <div class="kpi-sub">${fmt(d.today.tokens)} tokens · ${d.today.calls} calls</div>
+    </div>
+    <div class="kpi" style="border-top:2px solid var(--purple)">
+      <div class="kpi-label">Dieser Monat</div>
+      <div class="kpi-value" style="color:var(--purple)">${usd(d.month.cost_usd)}</div>
+      <div class="kpi-sub">${fmt(d.month.tokens)} tokens · ${d.month.calls} calls</div>
+    </div>
+    <div class="kpi" style="border-top:2px solid var(--green)">
+      <div class="kpi-label">Gesamt</div>
+      <div class="kpi-value" style="color:var(--green)">${usd(d.all_time.cost_usd)}</div>
+      <div class="kpi-sub">${fmt(d.all_time.tokens)} tokens · ${d.all_time.calls} calls</div>
+    </div>
+    <div class="kpi" style="border-top:2px solid var(--gold)">
+      <div class="kpi-label">Prognose / Monat</div>
+      <div class="kpi-value" style="color:var(--gold)">${usd(projectedMonth)}</div>
+      <div class="kpi-sub">basierend auf ${daysInMonth} Tagen</div>
+    </div>
+  </div>`;
+
+  // ── TOKEN BREAKDOWN ──
+  html += `<div class="sec-title">TOKEN BREAKDOWN</div>`;
+  html += `<div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Input Tokens</div>
+      <div class="kpi-value" style="font-size:20px">${fmt(d.all_time.input_tokens)}</div>
+      <div class="kpi-sub">${pct(d.all_time.input_tokens, d.all_time.tokens)} vom Gesamt</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Output Tokens</div>
+      <div class="kpi-value" style="font-size:20px">${fmt(d.all_time.output_tokens)}</div>
+      <div class="kpi-sub">${pct(d.all_time.output_tokens, d.all_time.tokens)} vom Gesamt</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Erfolgsrate</div>
+      <div class="kpi-value" style="font-size:20px;color:${successRate >= 95 ? 'var(--green)' : successRate >= 80 ? 'var(--gold)' : 'var(--red)'}">${successRate.toFixed(1)}%</div>
+      <div class="kpi-sub">${d.all_time.errors} Fehler / ${d.all_time.calls} Calls</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Avg Tokens / Call</div>
+      <div class="kpi-value" style="font-size:20px">${d.all_time.calls > 0 ? fmt(Math.round(d.all_time.tokens / d.all_time.calls)) : '0'}</div>
+      <div class="kpi-sub">Durchschnitt</div>
+    </div>
+  </div>`;
+
+  // ── DAILY CHART ──
+  html += `<div class="sec-title">14-TAGE VERLAUF</div>`;
+  html += `<div class="card">`;
+  html += `<div class="card-title">◈ Token-Nutzung pro Tag</div>`;
+
+  const days = [];
+  for(let i=13; i>=0; i--){
+    const dt = new Date(now); dt.setDate(dt.getDate()-i);
+    const key = dt.toISOString().slice(0,10);
+    const label = dt.toLocaleDateString('de-DE',{day:'numeric',month:'numeric'});
+    const dd = d.daily[key] || {tokens:0, cost:0, calls:0, errors:0};
+    days.push({key, label, ...dd});
+  }
+  const maxTok = Math.max(...days.map(x=>x.tokens), 1);
+
+  html += `<div class="chart">`;
+  days.forEach(day => {
+    const h = Math.max(2, (day.tokens / maxTok) * 90);
+    const isToday = day.key === now.toISOString().slice(0,10);
+    const gradient = isToday ? 'linear-gradient(180deg,var(--cyan),var(--purple))' : 'linear-gradient(180deg,rgba(0,240,255,.6),rgba(167,85,247,.4))';
+    const border = isToday ? 'box-shadow:var(--glow-cyan);' : '';
+    html += `<div class="chart-bar" style="height:${h}px;background:${gradient};${border}" data-tip="${day.label}: ${fmt(day.tokens)} tok · ${day.calls} calls · ${usd(day.cost)}"></div>`;
+  });
+  html += `</div>`;
+  html += `<div class="chart-labels">`;
+  days.forEach(day => { html += `<span>${day.label}</span>` });
+  html += `</div></div>`;
+
+  // ── FEATURE BREAKDOWN ──
+  html += `<div class="sec-title">KOSTEN NACH FEATURE</div>`;
+  html += `<div class="card">`;
+  html += `<div class="card-title">⚡ Feature Intelligence</div>`;
+
+  const features = Object.entries(d.by_feature).sort((a,b) => b[1].cost - a[1].cost);
+  const maxCost = Math.max(...features.map(([,v]) => v.cost), 0.0001);
+
+  if(features.length === 0){
+    html += `<div style="text-align:center;padding:24px;color:var(--dim);font-size:11px">Noch keine AI-Aufrufe aufgezeichnet</div>`;
+  }
+  features.forEach(([key, val]) => {
+    const info = featInfo(key);
+    const w = (val.cost / maxCost * 100);
+    const errTag = val.errors > 0 ? ` <span style="color:var(--red);font-size:10px">(${val.errors} err)</span>` : '';
+    html += `<div class="bar-row">
+      <div class="bar-label"><span style="color:${info.color}">${info.icon}</span> ${info.name}${errTag}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${info.color}"></div></div>
+      <div class="bar-val" style="color:${info.color}">${usd(val.cost)}</div>
+    </div>
+    <div style="padding:0 0 4px 152px;font-size:10px;color:var(--dim)">${val.calls} calls · ${fmt(val.tokens)} tokens · ${pct(val.cost, d.all_time.cost_usd)}</div>`;
+  });
+  html += `</div>`;
+
+  // ── SYSTEM STATUS ──
+  html += `<div class="sec-title">SYSTEM STATUS</div>`;
+  html += `<div class="card">`;
+  html += `<div class="card-title">🛰 Service Monitor</div>`;
+
+  const svcs = [
+    {name:'AI Engine (Anthropic)', key:'ai_enabled', color:'var(--cyan)'},
+    {name:'Payments (Stripe)', key:'stripe_enabled', color:'var(--green)'},
+    {name:'WhatsApp (Twilio)', key:'twilio_enabled', color:'var(--gold)'},
+    {name:'Email (SMTP)', key:'smtp_enabled', color:'var(--pink)'},
+    {name:'Datenbank', key:null, color:'var(--purple)'},
+  ];
+  svcs.forEach(s => {
+    const online = s.key ? d.system[s.key] : true;
+    html += `<div class="svc-row">
+      <span style="font-size:12px">${s.name}</span>
+      <div class="svc-status" style="color:${online ? s.color : 'var(--red)'}">
+        <div class="status-dot ${online ? 'online' : 'offline'}" style="width:6px;height:6px;animation:${online?'pulse 2s infinite':'none'};background:${online ? s.color : 'var(--red)'}"></div>
+        ${online ? 'ONLINE' : 'OFFLINE'}
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // ── APP STATS ──
+  html += `<div class="sec-title">APP INTELLIGENCE</div>`;
+  html += `<div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Patienten</div>
+      <div class="kpi-value" style="font-size:24px">${d.system.patients}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Therapeuten</div>
+      <div class="kpi-value" style="font-size:24px">${d.system.therapists}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Check-ins</div>
+      <div class="kpi-value" style="font-size:24px">${fmt(d.system.checkins)}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Outcomes</div>
+      <div class="kpi-value" style="font-size:24px">${fmt(d.system.outcomes)}</div>
+    </div>
+  </div>`;
+
+  // ── RECENT AI CALLS ──
+  html += `<div class="sec-title">LETZTE AI-AUFRUFE</div>`;
+  html += `<div class="card">`;
+  html += `<div class="card-title">🧠 Live-Log</div>`;
+
+  if(d.recent && d.recent.length > 0){
+    html += `<div class="log-row" style="color:var(--dim);font-size:9px;letter-spacing:1px;border-bottom:1px solid var(--border)">
+      <div></div><div>FEATURE</div><div>TOKENS</div><div>KOSTEN</div><div>ZEIT</div>
+    </div>`;
+    d.recent.forEach(r => {
+      const info = featInfo(r.feature);
+      const t = r.time ? new Date(r.time).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '–';
+      html += `<div class="log-row">
+        <div><div class="log-dot ${r.success ? 'ok' : 'err'}"></div></div>
+        <div style="color:${info.color}">${info.icon} ${info.name}</div>
+        <div style="font-family:Orbitron,sans-serif;font-size:10px">${fmt(r.tokens)}</div>
+        <div style="color:var(--gold)">${usd(r.cost)}</div>
+        <div style="color:var(--dim)">${t}</div>
+      </div>`;
+    });
+  } else {
+    html += `<div style="text-align:center;padding:24px;color:var(--dim);font-size:11px">Keine Aufrufe vorhanden</div>`;
+  }
+  html += `</div>`;
+
+  // ── FOOTER ──
+  html += `<div style="text-align:center;padding:32px 0 16px;color:var(--dim);font-size:10px;letter-spacing:2px">
+    MASTER CONTROL · BORDCOMPUTER · AUTO-REFRESH 30s
+  </div>`;
+
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderOffline(){
+  const html = `
+    <div style="text-align:center;padding:80px 20px">
+      <div style="font-size:64px;margin-bottom:24px;opacity:.3">🛰</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:18px;letter-spacing:3px;margin-bottom:12px">KEINE VERBINDUNG</div>
+      <p style="color:var(--dim);font-size:12px;max-width:400px;margin:0 auto;line-height:1.8">
+        Der Bordcomputer kann die API unter<br>
+        <code style="color:var(--cyan)">${API_URL}</code><br>
+        nicht erreichen. Stelle sicher, dass das Backend laeuft.
+      </p>
+      <button onclick="location.reload()" style="margin-top:24px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;padding:10px 32px;cursor:pointer">ERNEUT VERBINDEN</button>
+    </div>
+  `;
+  document.getElementById('main-content').innerHTML = html;
+}
+</script>
+</body>
+</html>

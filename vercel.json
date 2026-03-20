@@ -20,6 +20,7 @@
     { "source": "/mastery-income", "destination": "/mastery-income.html" },
     { "source": "/mastery-today", "destination": "/mastery-today.html" },
     { "source": "/zeis", "destination": "/zeis.html" },
+    { "source": "/master-control", "destination": "/master-control.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

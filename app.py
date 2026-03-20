@@ -5798,10 +5798,27 @@ def master_control(request: Request, db=Depends(get_db)):
     return _page("Master Control — Bordcomputer", body, request=request)
 
 
+MASTER_CONTROL_KEY = os.getenv("MASTER_CONTROL_KEY", hashlib.sha256((APP_SECRET + "master-control").encode()).hexdigest()[:32])
+
+
+def _require_master_auth(request: Request, db):
+    """Allow therapist session OR API key for master-control access."""
+    # Check API key header first
+    api_key = request.headers.get("x-master-key", "")
+    if api_key and api_key == MASTER_CONTROL_KEY:
+        return True
+    # Fall back to therapist session
+    try:
+        require_therapist_login(request, db)
+        return True
+    except Exception:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
 @app.get("/master-control/api")
 def master_control_api(request: Request, db=Depends(get_db)):
-    """JSON API endpoint for Master Control data."""
-    t = require_therapist_login(request, db)
+    """JSON API endpoint for Master Control data. Supports CORS."""
+    _require_master_auth(request, db)
 
     all_usage = db.query(TokenUsage).all()
     now = _now_local()
@@ -5822,7 +5839,32 @@ def master_control_api(request: Request, db=Depends(get_db)):
         if not u.success:
             feature_stats[f]["errors"] += 1
 
-    return {
+    # Recent calls
+    recent = db.query(TokenUsage).order_by(TokenUsage.created_at.desc()).limit(30).all()
+    recent_list = [
+        {
+            "feature": u.feature, "tokens": u.total_tokens, "cost": round(u.cost_usd, 6),
+            "success": u.success, "time": u.created_at.isoformat() if u.created_at else None,
+            "input_tokens": u.input_tokens, "output_tokens": u.output_tokens,
+        }
+        for u in recent
+    ]
+
+    # Daily history (last 30 days)
+    daily = {}
+    for u in all_usage:
+        if u.created_at:
+            day = u.created_at.strftime("%Y-%m-%d")
+            if day not in daily:
+                daily[day] = {"tokens": 0, "cost": 0.0, "calls": 0, "errors": 0}
+            daily[day]["tokens"] += u.total_tokens
+            daily[day]["cost"] += round(u.cost_usd, 6)
+            daily[day]["calls"] += 1
+            if not u.success:
+                daily[day]["errors"] += 1
+
+    from starlette.responses import JSONResponse
+    resp = JSONResponse({
         "timestamp": now.isoformat(),
         "today": {
             "tokens": sum(u.total_tokens for u in today_usage),
@@ -5843,6 +5885,8 @@ def master_control_api(request: Request, db=Depends(get_db)):
             "errors": sum(1 for u in all_usage if not u.success),
         },
         "by_feature": feature_stats,
+        "recent": recent_list,
+        "daily": daily,
         "system": {
             "patients": db.query(Patient).count(),
             "therapists": db.query(Therapist).count(),
@@ -5853,7 +5897,21 @@ def master_control_api(request: Request, db=Depends(get_db)):
             "twilio_enabled": _twilio_enabled(),
             "smtp_enabled": bool(SMTP_HOST),
         },
-    }
+    })
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "x-master-key, content-type"
+    return resp
+
+
+@app.options("/master-control/api")
+def master_control_api_cors():
+    """CORS preflight for master control API."""
+    from starlette.responses import Response
+    resp = Response(status_code=204)
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+    resp.headers["Access-Control-Allow-Headers"] = "x-master-key, content-type"
+    return resp
 
 
 # =========================================================

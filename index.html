@@ -228,6 +228,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
         <div class="book-spine" style="background:var(--dim);opacity:.5"></div>
         <div class="book-info"><div class="book-title">BEWERBUNGEN</div><div class="book-desc">Admin Panel</div></div>
       </div>
+
+      <div class="shelf-label">System</div>
+
+      <div class="book" onclick="window.location.href='/master-control'">
+        <div class="book-spine" style="background:linear-gradient(180deg,var(--cyan),var(--orange))"></div>
+        <div class="book-info"><div class="book-title">MASTER CONTROL</div><div class="book-desc">Bordcomputer</div></div>
+        <div class="book-badge">NEW</div>
+      </div>
     </nav>
 
     <!-- MAIN PANEL -->
@@ -442,6 +450,12 @@ function renderHome(p){
         <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--dim)"></div>
         <h3>BOT ADMIN</h3>
         <p>WhatsApp Bot Steuerung und Monitoring.</p>
+      </div>
+      <div class="home-card" onclick="window.location.href='/master-control'" style="--c:var(--cyan)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--orange))"></div>
+        <h3>MASTER CONTROL</h3>
+        <p>Bordcomputer — Token Usage, Kosten, System Status, AI Intelligence.</p>
+        <div class="card-stat" style="color:var(--cyan)">$$$</div>
       </div>
     </div>`;
 }
