@@ -1,0 +1,20 @@
+# Music Tools Dependencies
+# Auto-Mastering
+pedalboard>=0.9.0
+pyloudnorm>=0.1.1
+matchering>=2.0.6
+soundfile>=0.12.0
+numpy>=1.24.0
+
+# Video Creation
+moviepy>=2.0.0
+Pillow>=10.0.0
+scipy>=1.11.0
+
+# YouTube Upload
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+
+# AI (für YouTube-Beschreibungen)
+anthropic>=0.39.0
