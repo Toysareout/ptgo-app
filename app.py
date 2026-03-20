@@ -187,6 +187,21 @@ class LoginEvent(Base):
     patient = relationship("Patient", back_populates="login_events")
 
 
+class TokenUsage(Base):
+    __tablename__ = "token_usage"
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    feature = Column(String(64), nullable=False, index=True)   # e.g. signal_extraction, coaching, trend_insights, value_extraction, evening_message, mastery_today, music_analysis
+    model = Column(String(64), nullable=False, default="claude-haiku-4-5")
+    input_tokens = Column(Integer, nullable=False, default=0)
+    output_tokens = Column(Integer, nullable=False, default=0)
+    total_tokens = Column(Integer, nullable=False, default=0)
+    cost_usd = Column(Float, nullable=False, default=0.0)
+    success = Column(Boolean, nullable=False, default=True)
+    error_message = Column(Text, nullable=True)
+    patient_id = Column(Integer, nullable=True)
+
+
 Index("ix_checkins_patient_day", CheckIn.patient_id, CheckIn.local_day)
 Base.metadata.create_all(bind=engine)
 
@@ -197,6 +212,60 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# =========================================================
+# TOKEN TRACKING
+# =========================================================
+
+# Pricing per 1M tokens (USD) — Claude Haiku 4.5
+_AI_PRICING = {
+    "claude-haiku-4-5": {"input": 1.00, "output": 5.00},
+}
+
+def _track_ai_usage(feature: str, resp_json: dict, model: str = "claude-haiku-4-5",
+                     success: bool = True, error_message: str = None, patient_id: int = None):
+    """Record token usage from a Claude API response."""
+    try:
+        usage = resp_json.get("usage", {})
+        input_tokens = usage.get("input_tokens", 0)
+        output_tokens = usage.get("output_tokens", 0)
+        total = input_tokens + output_tokens
+        pricing = _AI_PRICING.get(model, {"input": 1.0, "output": 5.0})
+        cost = (input_tokens / 1_000_000) * pricing["input"] + (output_tokens / 1_000_000) * pricing["output"]
+
+        db = SessionLocal()
+        try:
+            db.add(TokenUsage(
+                feature=feature, model=model,
+                input_tokens=input_tokens, output_tokens=output_tokens,
+                total_tokens=total, cost_usd=cost,
+                success=success, error_message=error_message,
+                patient_id=patient_id,
+            ))
+            db.commit()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"[WARN] Token tracking failed: {e}")
+
+
+def _track_ai_error(feature: str, error: str, patient_id: int = None):
+    """Record a failed AI call."""
+    try:
+        db = SessionLocal()
+        try:
+            db.add(TokenUsage(
+                feature=feature, model="claude-haiku-4-5",
+                input_tokens=0, output_tokens=0, total_tokens=0, cost_usd=0.0,
+                success=False, error_message=str(error)[:500],
+                patient_id=patient_id,
+            ))
+            db.commit()
+        finally:
+            db.close()
+    except Exception:
+        pass
 
 
 # =========================================================
@@ -378,12 +447,15 @@ def _ai_extract_values(data: Dict[str, Any]) -> Dict[str, Any]:
             timeout=15,
         )
         resp.raise_for_status()
-        text = resp.json()["content"][0]["text"].strip().replace("```json","").replace("```","").strip()
+        resp_data = resp.json()
+        _track_ai_usage("value_extraction", resp_data)
+        text = resp_data["content"][0]["text"].strip().replace("```json","").replace("```","").strip()
         vals = json.loads(text)
         for k in ["daily_state","stress","sleep","body","craving","avoidance"]:
             if k in vals:
                 data[k] = _clamp_int(vals[k], 0, 10)
     except Exception as e:
+        _track_ai_error("value_extraction", str(e))
         print("[WARN] AI value extraction failed:", e)
 
     return data
@@ -424,10 +496,13 @@ def extract_signals(data: Dict[str, Any]) -> Dict[str, Any]:
             timeout=15,
         )
         resp.raise_for_status()
-        text = resp.json()["content"][0]["text"].strip()
+        resp_data = resp.json()
+        _track_ai_usage("signal_extraction", resp_data)
+        text = resp_data["content"][0]["text"].strip()
         text = text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
+        _track_ai_error("signal_extraction", str(e))
         print("[WARN] Signal extraction failed:", e)
         return {}
 
@@ -2795,8 +2870,11 @@ def _generate_coaching_impulse(checkin: CheckIn, patient: Patient, recent_checki
             timeout=20,
         )
         resp.raise_for_status()
-        return resp.json()["content"][0]["text"].strip()
+        resp_data = resp.json()
+        _track_ai_usage("coaching_impulse", resp_data)
+        return resp_data["content"][0]["text"].strip()
     except Exception as e:
+        _track_ai_error("coaching_impulse", str(e))
         print("[WARN] Coaching impulse failed:", e)
         return ""
 
@@ -2887,8 +2965,11 @@ def _generate_trend_insights(checkins: list, patient_name: str) -> str:
             timeout=20,
         )
         resp.raise_for_status()
-        return resp.json()["content"][0]["text"].strip()
+        resp_data = resp.json()
+        _track_ai_usage("trend_insights", resp_data)
+        return resp_data["content"][0]["text"].strip()
     except Exception as e:
+        _track_ai_error("trend_insights", str(e))
         print("[WARN] Trend insights failed:", e)
         return ""
 
@@ -3068,8 +3149,11 @@ def _generate_evening_message(db, patient: Patient) -> str:
                 timeout=15,
             )
             resp.raise_for_status()
-            return resp.json()["content"][0]["text"].strip()
+            resp_data = resp.json()
+            _track_ai_usage("evening_message", resp_data, patient_id=patient.id)
+            return resp_data["content"][0]["text"].strip()
         except Exception as e:
+            _track_ai_error("evening_message", str(e), patient_id=patient.id)
             print("[WARN] Evening AI message failed:", e)
 
     if todays_checkin:
@@ -3847,8 +3931,11 @@ def mastery_today(request: Request, db=Depends(get_db)):
                     timeout=15,
                 )
                 resp.raise_for_status()
-                coaching_prompt = resp.json()["content"][0]["text"].strip()
+                resp_data = resp.json()
+                _track_ai_usage("mastery_today", resp_data, patient_id=p.id)
+                coaching_prompt = resp_data["content"][0]["text"].strip()
             except Exception as e:
+                _track_ai_error("mastery_today", str(e), patient_id=p.id)
                 print("[WARN] Today coaching failed:", e)
 
     coaching_html = ""
@@ -4090,10 +4177,13 @@ Antworte NUR mit validem JSON (keine Erklärung davor/danach):
             timeout=30,
         )
         resp.raise_for_status()
-        text = resp.json()["content"][0]["text"].strip()
+        resp_data = resp.json()
+        _track_ai_usage("music_analysis", resp_data)
+        text = resp_data["content"][0]["text"].strip()
         text = text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
     except Exception as e:
+        _track_ai_error("music_analysis", str(e))
         print(f"[WARN] Music AI analysis failed: {e}")
         return {
             "error": f"AI-Analyse fehlgeschlagen: {e}",
@@ -5353,3 +5443,401 @@ async def zeis_book_preview(request: Request):
       <p class="small" style="text-align:center;margin-top:12px;">ZEIS Protocol — by Alexander Zeis</p>
     """
     return _page("ZEIS Protocol — Buch-Vorschau", body, request=request)
+
+
+# =========================================================
+# MASTER CONTROL — Bordcomputer Dashboard
+# =========================================================
+
+@app.get("/master-control", response_class=HTMLResponse)
+def master_control(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    now = _now_local()
+    today = now.date().isoformat()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%d")
+
+    # --- Token Usage Stats ---
+    all_usage = db.query(TokenUsage).all()
+    today_usage = [u for u in all_usage if u.created_at and u.created_at.strftime("%Y-%m-%d") == today]
+    month_usage = [u for u in all_usage if u.created_at and u.created_at.strftime("%Y-%m-%d") >= month_start]
+
+    total_tokens_all = sum(u.total_tokens for u in all_usage)
+    total_cost_all = sum(u.cost_usd for u in all_usage)
+    total_calls_all = len(all_usage)
+    success_calls = sum(1 for u in all_usage if u.success)
+    error_calls = total_calls_all - success_calls
+
+    tokens_today = sum(u.total_tokens for u in today_usage)
+    cost_today = sum(u.cost_usd for u in today_usage)
+    calls_today = len(today_usage)
+
+    tokens_month = sum(u.total_tokens for u in month_usage)
+    cost_month = sum(u.cost_usd for u in month_usage)
+    calls_month = len(month_usage)
+
+    input_total = sum(u.input_tokens for u in all_usage)
+    output_total = sum(u.output_tokens for u in all_usage)
+
+    # --- Per-Feature Breakdown ---
+    feature_stats = {}
+    for u in all_usage:
+        f = u.feature
+        if f not in feature_stats:
+            feature_stats[f] = {"calls": 0, "tokens": 0, "cost": 0.0, "errors": 0}
+        feature_stats[f]["calls"] += 1
+        feature_stats[f]["tokens"] += u.total_tokens
+        feature_stats[f]["cost"] += u.cost_usd
+        if not u.success:
+            feature_stats[f]["errors"] += 1
+
+    feature_labels = {
+        "signal_extraction": "Signal Extraction",
+        "value_extraction": "Value Extraction",
+        "coaching_impulse": "AI Coaching",
+        "trend_insights": "Trend Insights",
+        "evening_message": "Abend-Nachricht",
+        "mastery_today": "Mastery Today",
+        "music_analysis": "Music AI",
+    }
+
+    feature_rows = ""
+    sorted_features = sorted(feature_stats.items(), key=lambda x: x[1]["cost"], reverse=True)
+    for feat, stats in sorted_features:
+        label = feature_labels.get(feat, feat)
+        err_tag = f"<span style='color:#fecaca;margin-left:6px;'>({stats['errors']} err)</span>" if stats["errors"] > 0 else ""
+        pct = (stats["cost"] / total_cost_all * 100) if total_cost_all > 0 else 0
+        bar_w = max(2, int(pct))
+        feature_rows += f"""
+        <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <b style="font-size:14px;">{label}</b>{err_tag}
+              <div class="small">{stats['calls']} Calls • {stats['tokens']:,} Tokens</div>
+            </div>
+            <div style="text-align:right;">
+              <b style="color:#f59e0b;">${stats['cost']:.4f}</b>
+              <div class="small">{pct:.1f}%</div>
+            </div>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:2px;margin-top:6px;">
+            <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:2px;width:{bar_w}%;"></div>
+          </div>
+        </div>"""
+
+    # --- System Stats ---
+    total_patients = db.query(Patient).count()
+    total_checkins = db.query(CheckIn).count()
+    total_therapists = db.query(Therapist).count()
+    total_outcomes = db.query(Outcome).count()
+    total_logins = db.query(LoginEvent).count()
+    checkins_today = db.query(CheckIn).filter(CheckIn.local_day == today).count()
+
+    # Active patients (last 7 days)
+    week_ago = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+    active_patients_week = db.query(CheckIn.patient_id).filter(
+        CheckIn.local_day >= week_ago
+    ).distinct().count()
+
+    # Average score
+    from sqlalchemy import func as sa_func
+    avg_score_row = db.query(sa_func.avg(CheckIn.score)).scalar()
+    avg_score = round(avg_score_row, 1) if avg_score_row else 0
+
+    # Risk distribution
+    high_risk = db.query(CheckIn).filter(CheckIn.risk_level == "high").count()
+    med_risk = db.query(CheckIn).filter(CheckIn.risk_level == "medium").count()
+    low_risk = db.query(CheckIn).filter(CheckIn.risk_level == "low").count()
+
+    # Pattern distribution (top 5)
+    pattern_counts = {}
+    all_checkins_patterns = db.query(CheckIn.pattern_code).filter(CheckIn.pattern_code.isnot(None)).all()
+    for (pc,) in all_checkins_patterns:
+        pattern_counts[pc] = pattern_counts.get(pc, 0) + 1
+    top_patterns = sorted(pattern_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    pattern_html = ""
+    for pc, cnt in top_patterns:
+        label = PATTERNS.get(pc, pc)
+        pattern_html += f"""<span class="tag" style="margin-bottom:4px;">{label}: {cnt}</span> """
+
+    # --- Recent AI calls (last 20) ---
+    recent_ai = db.query(TokenUsage).order_by(TokenUsage.created_at.desc()).limit(20).all()
+    recent_rows = ""
+    for u in recent_ai:
+        label = feature_labels.get(u.feature, u.feature)
+        ts = u.created_at.strftime("%d.%m %H:%M") if u.created_at else "–"
+        status_dot = "<span style='color:#22c55e;'>●</span>" if u.success else "<span style='color:#ef4444;'>●</span>"
+        recent_rows += f"""
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">
+          <div>{status_dot} {label}</div>
+          <div style="color:var(--muted);">{u.total_tokens:,} tok • ${u.cost_usd:.4f}</div>
+          <div class="small">{ts}</div>
+        </div>"""
+
+    # --- Daily usage chart (last 14 days, text-based) ---
+    daily_data = {}
+    for u in all_usage:
+        if u.created_at:
+            day = u.created_at.strftime("%Y-%m-%d")
+            if day not in daily_data:
+                daily_data[day] = {"tokens": 0, "cost": 0.0, "calls": 0}
+            daily_data[day]["tokens"] += u.total_tokens
+            daily_data[day]["cost"] += u.cost_usd
+            daily_data[day]["calls"] += 1
+
+    chart_html = ""
+    for i in range(13, -1, -1):
+        d = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+        day_label = (now - timedelta(days=i)).strftime("%d.%m")
+        dd = daily_data.get(d, {"tokens": 0, "cost": 0.0, "calls": 0})
+        max_tokens = max((daily_data.get((now - timedelta(days=j)).strftime("%Y-%m-%d"), {}).get("tokens", 0) for j in range(14)), default=1) or 1
+        bar_h = max(2, int(dd["tokens"] / max_tokens * 60))
+        is_today = "border:1px solid #f59e0b;" if d == today else ""
+        chart_html += f"""
+        <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;">
+          <div class="small" style="font-size:10px;margin-bottom:2px;">{dd['calls']}</div>
+          <div style="width:100%;max-width:24px;height:{bar_h}px;background:linear-gradient(180deg,#f59e0b,#7c3aed);border-radius:4px;{is_today}"></div>
+          <div class="small" style="font-size:9px;margin-top:3px;">{day_label}</div>
+        </div>"""
+
+    # --- Uptime / System ---
+    services = []
+    services.append(("AI (Anthropic)", "online" if ANTHROPIC_API_KEY else "offline"))
+    services.append(("Stripe", "online" if STRIPE_SECRET_KEY else "offline"))
+    services.append(("Twilio/WhatsApp", "online" if _twilio_enabled() else "offline"))
+    services.append(("SMTP/Email", "online" if SMTP_HOST else "offline"))
+    services.append(("Datenbank", "online"))
+
+    services_html = ""
+    for sname, status in services:
+        color = "#22c55e" if status == "online" else "#6b7280"
+        services_html += f"""
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">
+          <span style="font-size:13px;">{sname}</span>
+          <span style="color:{color};font-size:13px;font-weight:600;">● {status.upper()}</span>
+        </div>"""
+
+    # Estimated monthly cost projection
+    days_elapsed = now.day
+    if days_elapsed > 0 and cost_month > 0:
+        projected_monthly = cost_month / days_elapsed * 30
+    else:
+        projected_monthly = 0.0
+
+    body = f"""
+      <div style="text-align:center;margin:0 0 20px">
+        <div style="font-size:11px;color:#6b7280;letter-spacing:3px;">MASTER CONTROL</div>
+        <h1 style="font-size:28px;margin:6px 0;">Bordcomputer</h1>
+        <p class="small">{now.strftime('%d.%m.%Y %H:%M')} • Eingeloggt als <b>{t.name}</b></p>
+      </div>
+
+      <!-- SYSTEM STATUS -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">🛰</span>
+          <b style="font-size:15px;">System Status</b>
+        </div>
+        {services_html}
+      </div>
+
+      <!-- TOKEN KPIs -->
+      <div class="grid3" style="margin-bottom:16px;">
+        <div class="kpi" style="text-align:center;background:rgba(245,158,11,.05);border-color:rgba(245,158,11,.2);">
+          <div class="small">HEUTE</div>
+          <b style="color:#f59e0b;font-size:18px;">${cost_today:.4f}</b>
+          <div class="small">{tokens_today:,} tok • {calls_today} calls</div>
+        </div>
+        <div class="kpi" style="text-align:center;background:rgba(99,102,241,.05);border-color:rgba(99,102,241,.2);">
+          <div class="small">MONAT</div>
+          <b style="color:#a5b4fc;font-size:18px;">${cost_month:.4f}</b>
+          <div class="small">{tokens_month:,} tok • {calls_month} calls</div>
+        </div>
+        <div class="kpi" style="text-align:center;background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.2);">
+          <div class="small">GESAMT</div>
+          <b style="color:#22c55e;font-size:18px;">${total_cost_all:.4f}</b>
+          <div class="small">{total_tokens_all:,} tok • {total_calls_all} calls</div>
+        </div>
+      </div>
+
+      <!-- TOKEN DETAIL -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">🔢</span>
+          <b style="font-size:15px;">Token Breakdown</b>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div>
+            <div class="small">Input Tokens</div>
+            <b>{input_total:,}</b>
+          </div>
+          <div>
+            <div class="small">Output Tokens</div>
+            <b>{output_total:,}</b>
+          </div>
+          <div>
+            <div class="small">Fehler</div>
+            <b style="color:{'#fecaca' if error_calls > 0 else '#22c55e'};">{error_calls}</b>
+            <span class="small"> / {total_calls_all}</span>
+          </div>
+        </div>
+        <div style="height:8px"></div>
+        <div class="small">Erfolgsrate: <b style="color:#22c55e;">{(success_calls / total_calls_all * 100) if total_calls_all > 0 else 100:.1f}%</b></div>
+        <div class="small">Prognose Monat: <b style="color:#f59e0b;">${projected_monthly:.4f}</b></div>
+      </div>
+
+      <!-- DAILY CHART -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">📊</span>
+          <b style="font-size:15px;">Letzte 14 Tage</b>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:2px;height:80px;padding-top:10px;">
+          {chart_html}
+        </div>
+        <div class="small" style="text-align:center;margin-top:6px;">Calls pro Tag (Balkenhöhe = Tokens)</div>
+      </div>
+
+      <!-- FEATURE BREAKDOWN -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">⚡</span>
+          <b style="font-size:15px;">Kosten nach Feature</b>
+        </div>
+        {feature_rows if feature_rows else "<p class='small'>Noch keine AI-Aufrufe.</p>"}
+      </div>
+
+      <!-- APP STATS -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">📋</span>
+          <b style="font-size:15px;">App-Statistiken</b>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">Patienten</div>
+            <b>{total_patients}</b>
+          </div>
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">Therapeuten</div>
+            <b>{total_therapists}</b>
+          </div>
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">Check-ins</div>
+            <b>{total_checkins}</b>
+          </div>
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">Heute</div>
+            <b style="color:#f59e0b;">{checkins_today}</b>
+          </div>
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">Aktiv (7d)</div>
+            <b style="color:#22c55e;">{active_patients_week}</b>
+          </div>
+          <div class="kpi" style="text-align:center;padding:10px;">
+            <div class="small">&#216; Score</div>
+            <b>{avg_score}</b>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="small">Outcomes: {total_outcomes} • Logins: {total_logins}</div>
+      </div>
+
+      <!-- RISK DISTRIBUTION -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">🎯</span>
+          <b style="font-size:15px;">Risk-Verteilung</b>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div style="text-align:center;padding:10px;background:rgba(34,197,94,.08);border-radius:12px;">
+            <div class="small" style="color:#22c55e;">LOW</div>
+            <b style="font-size:22px;color:#22c55e;">{low_risk}</b>
+          </div>
+          <div style="text-align:center;padding:10px;background:rgba(245,158,11,.08);border-radius:12px;">
+            <div class="small" style="color:#f59e0b;">MEDIUM</div>
+            <b style="font-size:22px;color:#f59e0b;">{med_risk}</b>
+          </div>
+          <div style="text-align:center;padding:10px;background:rgba(239,68,68,.08);border-radius:12px;">
+            <div class="small" style="color:#ef4444;">HIGH</div>
+            <b style="font-size:22px;color:#ef4444;">{high_risk}</b>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="small">Top Patterns: {pattern_html if pattern_html else 'Keine Daten'}</div>
+      </div>
+
+      <!-- RECENT AI CALLS -->
+      <div class="card" style="margin-bottom:16px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+          <span style="font-size:20px;">🧠</span>
+          <b style="font-size:15px;">Letzte AI-Aufrufe</b>
+        </div>
+        {recent_rows if recent_rows else "<p class='small'>Noch keine AI-Aufrufe aufgezeichnet.</p>"}
+      </div>
+
+      <div class="hr"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <a href="/therapist" class="btn btn-outline" style="text-align:center;">Therapist Dashboard</a>
+        <a href="/master-control/api" class="btn btn-outline" style="text-align:center;">JSON API</a>
+      </div>
+      <p class="small" style="text-align:center;margin-top:12px;">PTGO Master Control • {now.strftime('%Y')}</p>
+    """
+    return _page("Master Control — Bordcomputer", body, request=request)
+
+
+@app.get("/master-control/api")
+def master_control_api(request: Request, db=Depends(get_db)):
+    """JSON API endpoint for Master Control data."""
+    t = require_therapist_login(request, db)
+
+    all_usage = db.query(TokenUsage).all()
+    now = _now_local()
+    today = now.date().isoformat()
+    month_start = now.replace(day=1).strftime("%Y-%m-%d")
+
+    today_usage = [u for u in all_usage if u.created_at and u.created_at.strftime("%Y-%m-%d") == today]
+    month_usage = [u for u in all_usage if u.created_at and u.created_at.strftime("%Y-%m-%d") >= month_start]
+
+    feature_stats = {}
+    for u in all_usage:
+        f = u.feature
+        if f not in feature_stats:
+            feature_stats[f] = {"calls": 0, "tokens": 0, "cost": 0.0, "errors": 0}
+        feature_stats[f]["calls"] += 1
+        feature_stats[f]["tokens"] += u.total_tokens
+        feature_stats[f]["cost"] += round(u.cost_usd, 6)
+        if not u.success:
+            feature_stats[f]["errors"] += 1
+
+    return {
+        "timestamp": now.isoformat(),
+        "today": {
+            "tokens": sum(u.total_tokens for u in today_usage),
+            "cost_usd": round(sum(u.cost_usd for u in today_usage), 6),
+            "calls": len(today_usage),
+        },
+        "month": {
+            "tokens": sum(u.total_tokens for u in month_usage),
+            "cost_usd": round(sum(u.cost_usd for u in month_usage), 6),
+            "calls": len(month_usage),
+        },
+        "all_time": {
+            "tokens": sum(u.total_tokens for u in all_usage),
+            "cost_usd": round(sum(u.cost_usd for u in all_usage), 6),
+            "calls": len(all_usage),
+            "input_tokens": sum(u.input_tokens for u in all_usage),
+            "output_tokens": sum(u.output_tokens for u in all_usage),
+            "errors": sum(1 for u in all_usage if not u.success),
+        },
+        "by_feature": feature_stats,
+        "system": {
+            "patients": db.query(Patient).count(),
+            "therapists": db.query(Therapist).count(),
+            "checkins": db.query(CheckIn).count(),
+            "outcomes": db.query(Outcome).count(),
+            "ai_enabled": bool(ANTHROPIC_API_KEY),
+            "stripe_enabled": bool(STRIPE_SECRET_KEY),
+            "twilio_enabled": _twilio_enabled(),
+            "smtp_enabled": bool(SMTP_HOST),
+        },
+    }
