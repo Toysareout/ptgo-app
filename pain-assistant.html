@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Schmerz-Analyse — PTGO</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;--accent:#f59e0b;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;overflow-x:hidden}
+a{color:var(--accent);text-decoration:none}
+::selection{background:var(--accent);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+.wrap{max-width:620px;margin:0 auto;padding:20px 16px 30px;display:flex;flex-direction:column;height:100vh;height:100dvh}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-shrink:0}
+.brand{font-weight:700;letter-spacing:.5px;font-size:16px;color:var(--text)}
+.brand span{color:var(--accent)}
+.pill{font-size:11px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;border-radius:999px;letter-spacing:1px}
+.back-link{font-size:11px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;border-radius:8px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--accent);color:var(--accent)}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:20px;display:flex;flex-direction:column;flex:1;min-height:0;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.3}
+
+.card-header{flex-shrink:0;margin-bottom:12px}
+h1{font-size:22px;font-weight:800;line-height:1.2;margin:0 0 4px}
+.subtitle{color:var(--dim);font-size:13px;line-height:1.5}
+.hr{height:1px;background:var(--border);margin:12px 0;flex-shrink:0}
+
+#chat-messages{flex:1;overflow-y:auto;padding:8px 0;min-height:0}
+
+.msg{margin:10px 0;padding:12px 16px;border-radius:16px;max-width:88%;line-height:1.55;font-size:14px;word-wrap:break-word;animation:fadeIn .3s ease}
+.msg-user{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);margin-left:auto;color:var(--text)}
+.msg-ai{background:rgba(255,255,255,.04);border:1px solid var(--border);margin-right:auto;color:#cbd5e1}
+.msg-ai strong{color:var(--accent)}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.typing-dot{display:inline-block;width:7px;height:7px;background:var(--dim);border-radius:50%;margin:0 2px;animation:blink 1.4s infinite both}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+#loading-initial{text-align:center;padding:30px}
+.spinner{display:inline-block;width:22px;height:22px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.input-area{flex-shrink:0;padding-top:12px}
+.input-row{display:flex;gap:8px;align-items:flex-end}
+#chat-input{flex:1;resize:none;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:14px;padding:12px 14px;font-size:15px;font-family:inherit;outline:none;transition:border-color .3s;min-height:44px;max-height:120px}
+#chat-input:focus{border-color:var(--accent)}
+#chat-input::placeholder{color:var(--dim)}
+#send-btn{width:48px;height:44px;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111;border:none;border-radius:14px;font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;transition:opacity .2s}
+#send-btn:disabled{opacity:.3;cursor:default}
+
+.voice-row{text-align:center;margin-top:8px}
+#voice-btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:8px 16px;font-size:13px;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .3s}
+#voice-btn:hover{border-color:var(--accent);color:var(--accent)}
+#voice-btn:disabled{opacity:.3;cursor:default}
+.voice-active{border-color:var(--red)!important;color:var(--red)!important;animation:pulse-voice 1.5s ease-in-out infinite}
+@keyframes pulse-voice{0%,100%{box-shadow:0 0 0 0 rgba(255,68,68,.4)}50%{box-shadow:0 0 0 8px rgba(255,68,68,0)}}
+
+.nav-links{text-align:center;margin-top:12px;flex-shrink:0}
+.nav-links a{font-size:12px;color:var(--dim);margin:0 6px;transition:color .2s}
+.nav-links a:hover{color:var(--accent)}
+
+.error-msg{color:var(--red);font-size:13px;text-align:center;padding:20px}
+
+@media(max-width:480px){
+  .wrap{padding:12px 10px 20px}
+  .card{padding:14px 12px;border-radius:14px}
+  h1{font-size:19px}
+  .msg{max-width:92%;font-size:13px;padding:10px 13px}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <div class="brand">PTGO <span>•</span> Schmerz</div>
+    <a href="/" class="back-link">Zurück</a>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h1>Schmerz-Analyse</h1>
+      <div class="subtitle">Beschreibe deinen Schmerz — ich führe dich Schritt für Schritt.</div>
+    </div>
+    <div class="hr"></div>
+
+    <div id="chat-messages">
+      <div id="loading-initial">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="hr"></div>
+      <div class="input-row">
+        <textarea id="chat-input" rows="1" placeholder="Beschreibe deinen Schmerz..." disabled></textarea>
+        <button type="button" id="send-btn" disabled onclick="sendMessage()">→</button>
+      </div>
+      <div class="voice-row">
+        <button type="button" id="voice-btn" onclick="toggleVoice()" disabled>🎤 Spracheingabe</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-links">
+    <a href="/">Start</a> •
+    <a href="/coaching">Coaching</a> •
+    <a href="/nerve">Nerve Center</a>
+  </div>
+</div>
+
+<script>
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const voiceBtn = document.getElementById('voice-btn');
+let sending = false;
+let recognition = null;
+let isListening = false;
+let conversationHistory = [];
+
+// Auto-resize textarea
+chatInput.addEventListener('input', function() {
+  this.style.height = '44px';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Load initial AI greeting
+(async function() {
+  try {
+    const resp = await fetch('/api/pain-assistant', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'chat', message: '__INIT__', history: []})
+    });
+    const data = await resp.json();
+    document.getElementById('loading-initial').remove();
+    appendMessage(data.reply, 'ai');
+    conversationHistory.push({role: 'user', content: 'Hallo, ich habe Schmerzen und brauche Hilfe.'});
+    conversationHistory.push({role: 'assistant', content: data.reply});
+    chatInput.disabled = false;
+    sendBtn.disabled = false;
+    voiceBtn.disabled = false;
+    chatInput.focus();
+  } catch(e) {
+    document.getElementById('loading-initial').innerHTML =
+      '<p class="error-msg">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+  }
+})();
+
+function appendMessage(text, role) {
+  const div = document.createElement('div');
+  div.className = 'msg msg-' + role;
+  let html = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  div.innerHTML = html;
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTyping() {
+  const div = document.createElement('div');
+  div.className = 'msg msg-ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+  chatMessages.appendChild(div);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || sending) return;
+
+  sending = true;
+  chatInput.value = '';
+  chatInput.style.height = '44px';
+  chatInput.disabled = true;
+  sendBtn.disabled = true;
+
+  appendMessage(text, 'user');
+  conversationHistory.push({role: 'user', content: text});
+  showTyping();
+
+  try {
+    const resp = await fetch('/api/pain-assistant', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: 'chat', message: text, history: conversationHistory})
+    });
+    removeTyping();
+    if (!resp.ok) {
+      appendMessage('Fehler bei der Verbindung. Bitte versuche es erneut.', 'ai');
+    } else {
+      const data = await resp.json();
+      appendMessage(data.reply, 'ai');
+      conversationHistory.push({role: 'assistant', content: data.reply});
+      // Keep last 20 messages
+      if (conversationHistory.length > 20) {
+        conversationHistory = conversationHistory.slice(-20);
+      }
+    }
+  } catch(err) {
+    removeTyping();
+    appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+  }
+
+  sending = false;
+  chatInput.disabled = false;
+  sendBtn.disabled = false;
+  chatInput.focus();
+}
+
+// Enter to send (Shift+Enter for newline)
+chatInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Voice input via Web Speech API
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    alert('Spracheingabe wird in diesem Browser nicht unterstützt.');
+    return;
+  }
+  if (isListening) {
+    recognition.stop();
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'de-DE';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isListening = true;
+    voiceBtn.classList.add('voice-active');
+    voiceBtn.textContent = '🔴 Aufnahme...';
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    chatInput.value = transcript;
+    chatInput.style.height = '44px';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  };
+
+  recognition.onend = () => {
+    isListening = false;
+    voiceBtn.classList.remove('voice-active');
+    voiceBtn.textContent = '🎤 Spracheingabe';
+  };
+
+  recognition.onerror = () => {
+    isListening = false;
+    voiceBtn.classList.remove('voice-active');
+    voiceBtn.textContent = '🎤 Spracheingabe';
+  };
+
+  recognition.start();
+}
+</script>
+</body>
+</html>
