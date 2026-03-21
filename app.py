@@ -1974,6 +1974,7 @@ def result_page(checkin_id: int, request: Request, db=Depends(get_db)):
       <div class="hr"></div>
       <p class="small">
         <a href="/checkin/1">Neuer Check</a> •
+        <a href="/pain-assistant">Schmerz-Analyse</a> •
         <a href="/progress">Progress</a> •
         <a href="/profile">Body Profile</a> •
         <a href="/timeline">Timeline</a> •
@@ -2091,6 +2092,7 @@ def progress_page(request: Request, db=Depends(get_db)):
       <div class="hr"></div>
       <p class="small">
         <a href="/checkin/1">Neuer Check</a> •
+        <a href="/pain-assistant">Schmerz-Analyse</a> •
         <a href="/insights">AI Trends</a> •
         <a href="/timeline">Timeline</a>
       </p>
@@ -6432,6 +6434,361 @@ def sales_monthly(request: Request, db=Depends(get_db)):
         {weekly_rows if weekly_rows else "<p class='small'>Keine Daten.</p>"}
     """
     return _page("Monats\u00fcbersicht", body, request=request)
+
+
+# =========================================================
+# PAIN ANALYSIS ASSISTANT — AI-gestützter Schmerz-Analyse-Chat
+# =========================================================
+
+PAIN_ASSISTANT_SYSTEM_PROMPT = """Du bist ein hochpräziser Schmerz-Analyse-Assistent basierend auf praktischer manueller Erfahrung.
+
+Dein Ziel ist es NICHT, Diagnosen im medizinischen Sinne zu stellen, sondern:
+- das Schmerzbild klar einzuordnen
+- Muster zu erkennen
+- die Situation so zu strukturieren, dass eine gezielte manuelle oder einfache Intervention möglich wird
+
+Du arbeitest wie ein erfahrener Praktiker:
+- stellst gezielte, kurze Fragen
+- gehst Schritt für Schritt vor
+- vermeidest Überforderung
+- denkst in Mustern, nicht in Theorie
+
+ABLAUF — Gehe IMMER in dieser Reihenfolge vor:
+
+STEP 1: Ort klären
+- "Zeig mir genau, wo der Schmerz ist"
+- Punkt / Linie / Fläche unterscheiden
+
+STEP 2: Gefühl klären
+- "Wie fühlt es sich an?"
+  (ziehend / stechend / dumpf / Druck)
+
+STEP 3: Trigger klären
+- "Wann wird es schlimmer?"
+  (Bewegung / Druck / Ruhe)
+
+STEP 4: Verlauf
+- "Seit wann ist es da?"
+- plötzlich oder langsam gekommen?
+
+STEP 5: Intensität / Veränderung
+- besser / gleich / schlimmer
+
+WICHTIGE REGELN:
+- immer nur 1–2 Fragen gleichzeitig
+- Fokus auf: Ort, Gefühl, Bewegung, Verlauf
+- keine langen Erklärungen
+- keine medizinischen Fachbegriffe
+- keine Unsicherheit zeigen
+- auf Antwort warten, dann nächste logische Frage
+
+INTERNE EINORDNUNG (dem Patienten NICHT zeigen, nur für deine Fragesteuerung):
+
+TYPE A: Linien-/Zugspannung — Schmerz zieht entlang einer Linie
+TYPE B: Punktueller Schmerz — klar lokalisierbar, druckempfindlich
+TYPE C: Gelenk-/Bewegungsproblem — bei Bewegung / Winkel spezifisch
+TYPE D: Diffuse Spannung — großflächig, unklar
+
+Nach jeder Antwort:
+1. Kurz zusammenfassen: "Okay, ich sehe…"
+2. Nächste präzise Frage stellen
+3. Wenn genug Klarheit: einfache, sichere Handlung vorschlagen (leichte Druckanweisung, kleine Bewegung, Wahrnehmungsfokus)
+4. Dann fragen: "Was passiert, wenn du das machst?"
+
+NIEMALS:
+- medizinische Diagnosen nennen
+- komplexe Erklärungen geben
+- 5 Dinge auf einmal sagen
+- unsicher wirken
+
+IMMER:
+- klar
+- ruhig
+- direkt
+- fokussiert
+
+Ziel: maximale Klarheit in minimaler Zeit.
+
+Starte das Gespräch mit einer freundlichen, kurzen Begrüßung und frage nach dem Schmerzort."""
+
+
+@app.get("/pain-assistant", response_class=HTMLResponse)
+def pain_assistant_page(request: Request, db=Depends(get_db)):
+    """Pain Analysis Assistant — conversational chat UI."""
+    pid = request.session.get("patient_id")
+    if not pid:
+        return RedirectResponse("/", status_code=303)
+
+    # Clear conversation history on fresh page load
+    request.session["pain_chat"] = "[]"
+
+    body = """
+    <h1>Schmerz-Analyse</h1>
+    <p style="margin-bottom:16px">Beschreibe deinen Schmerz — ich führe dich Schritt für Schritt durch die Analyse.</p>
+    <div class="hr"></div>
+
+    <div id="chat-messages" style="min-height:120px;max-height:60vh;overflow-y:auto;padding:8px 0;">
+      <div id="loading-initial" style="text-align:center;padding:20px;">
+        <div style="display:inline-block;width:24px;height:24px;border:3px solid #1f2937;border-top-color:#f59e0b;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      </div>
+    </div>
+
+    <div class="hr"></div>
+
+    <form id="chat-form" onsubmit="sendMessage(event)" style="display:flex;gap:8px;align-items:flex-end;">
+      <textarea id="chat-input" rows="2" placeholder="Beschreibe deinen Schmerz..."
+        style="flex:1;resize:none;font-size:15px;" disabled></textarea>
+      <button type="submit" id="send-btn" disabled
+        style="width:auto;min-width:60px;padding:12px 16px;margin-top:0;font-size:18px;">→</button>
+    </form>
+
+    <div id="voice-row" style="text-align:center;margin-top:10px;">
+      <button type="button" id="voice-btn" onclick="toggleVoice()" disabled
+        style="background:transparent;border:1px solid #263246;color:#94a3b8;width:auto;padding:10px 18px;font-size:14px;border-radius:12px;">
+        🎤 Spracheingabe
+      </button>
+    </div>
+
+    <p style="text-align:center;margin-top:14px;">
+      <a href="/checkin/1">Check-in</a> •
+      <a href="/progress">Progress</a> •
+      <a href="/logout">Logout</a>
+    </p>
+
+    <style>
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .msg { margin:10px 0; padding:12px 16px; border-radius:16px; max-width:85%; line-height:1.5; font-size:15px; word-wrap:break-word; }
+      .msg-user { background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); margin-left:auto; color:#e5e7eb; }
+      .msg-ai { background:rgba(255,255,255,.04); border:1px solid #1f2937; margin-right:auto; color:#cbd5e1; }
+      .msg-ai p { margin:4px 0; color:#cbd5e1; }
+      .typing-dot { display:inline-block; width:8px; height:8px; background:#94a3b8; border-radius:50%; margin:0 2px; animation:blink 1.4s infinite both; }
+      .typing-dot:nth-child(2) { animation-delay:0.2s; }
+      .typing-dot:nth-child(3) { animation-delay:0.4s; }
+      @keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+      #chat-input:focus { border-color:#f59e0b; }
+      .voice-active { border-color:#ef4444 !important; color:#ef4444 !important; animation:pulse-voice 1.5s ease-in-out infinite; }
+      @keyframes pulse-voice { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.4)} 50%{box-shadow:0 0 0 8px rgba(239,68,68,0)} }
+    </style>
+
+    <script>
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('send-btn');
+    const voiceBtn = document.getElementById('voice-btn');
+    let sending = false;
+    let recognition = null;
+    let isListening = false;
+
+    // Load initial AI greeting
+    (async function() {
+      try {
+        const resp = await fetch('/pain-assistant/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: '__INIT__'})
+        });
+        const data = await resp.json();
+        document.getElementById('loading-initial').remove();
+        appendMessage(data.reply, 'ai');
+        chatInput.disabled = false;
+        sendBtn.disabled = false;
+        voiceBtn.disabled = false;
+        chatInput.focus();
+      } catch(e) {
+        document.getElementById('loading-initial').innerHTML =
+          '<p style="color:#fecaca">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+      }
+    })();
+
+    function appendMessage(text, role) {
+      const div = document.createElement('div');
+      div.className = 'msg msg-' + role;
+      div.style.display = 'flex';
+      // Simple markdown: **bold**, newlines
+      let html = text
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+        .replace(/\\n/g, '<br>');
+      div.innerHTML = html;
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function showTyping() {
+      const div = document.createElement('div');
+      div.className = 'msg msg-ai';
+      div.id = 'typing-indicator';
+      div.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+      chatMessages.appendChild(div);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function removeTyping() {
+      const el = document.getElementById('typing-indicator');
+      if (el) el.remove();
+    }
+
+    async function sendMessage(e) {
+      if (e) e.preventDefault();
+      const text = chatInput.value.trim();
+      if (!text || sending) return;
+
+      sending = true;
+      chatInput.value = '';
+      chatInput.disabled = true;
+      sendBtn.disabled = true;
+
+      appendMessage(text, 'user');
+      showTyping();
+
+      try {
+        const resp = await fetch('/pain-assistant/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: text})
+        });
+        removeTyping();
+        if (!resp.ok) {
+          appendMessage('Fehler bei der Verbindung. Bitte versuche es erneut.', 'ai');
+        } else {
+          const data = await resp.json();
+          appendMessage(data.reply, 'ai');
+        }
+      } catch(err) {
+        removeTyping();
+        appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+      }
+
+      sending = false;
+      chatInput.disabled = false;
+      sendBtn.disabled = false;
+      chatInput.focus();
+    }
+
+    // Enter to send (Shift+Enter for newline)
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Voice input via Web Speech API
+    function toggleVoice() {
+      if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+        alert('Spracheingabe wird in diesem Browser nicht unterstützt.');
+        return;
+      }
+      if (isListening) {
+        recognition.stop();
+        return;
+      }
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = 'de-DE';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        isListening = true;
+        voiceBtn.classList.add('voice-active');
+        voiceBtn.textContent = '🔴 Aufnahme...';
+      };
+
+      recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        chatInput.value = transcript;
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        voiceBtn.classList.remove('voice-active');
+        voiceBtn.textContent = '🎤 Spracheingabe';
+      };
+
+      recognition.onerror = () => {
+        isListening = false;
+        voiceBtn.classList.remove('voice-active');
+        voiceBtn.textContent = '🎤 Spracheingabe';
+      };
+
+      recognition.start();
+    }
+    </script>
+    """
+    return _page("PTGO • Schmerz-Analyse", body, request=request)
+
+
+@app.post("/pain-assistant/chat")
+async def pain_assistant_chat(request: Request, db=Depends(get_db)):
+    """Handle chat messages for the Pain Analysis Assistant."""
+    pid = request.session.get("patient_id")
+    if not pid:
+        raise HTTPException(status_code=401, detail="Nicht eingeloggt")
+
+    if not ANTHROPIC_API_KEY:
+        return {"reply": "Der Schmerz-Analyse-Assistent ist momentan nicht verfügbar. Bitte versuche es später erneut."}
+
+    body = await request.json()
+    user_message = body.get("message", "").strip()
+
+    # Load conversation history from session
+    try:
+        history = json.loads(request.session.get("pain_chat", "[]"))
+    except (json.JSONDecodeError, TypeError):
+        history = []
+
+    # Build messages for Claude API
+    messages = list(history)
+
+    if user_message == "__INIT__":
+        # Initial greeting — no user message, just system prompt triggers first response
+        pass
+    else:
+        messages.append({"role": "user", "content": user_message})
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": ANTHROPIC_API_KEY,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-haiku-4-5",
+                "max_tokens": 500,
+                "system": PAIN_ASSISTANT_SYSTEM_PROMPT,
+                "messages": messages if messages else [{"role": "user", "content": "Hallo, ich habe Schmerzen und brauche Hilfe."}],
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        resp_data = resp.json()
+        _track_ai_usage("pain_assistant", resp_data, patient_id=pid)
+
+        reply = resp_data["content"][0]["text"].strip()
+
+        # Update conversation history
+        if user_message == "__INIT__":
+            # Add a synthetic user message for the init
+            messages.append({"role": "user", "content": "Hallo, ich habe Schmerzen und brauche Hilfe."})
+        messages.append({"role": "assistant", "content": reply})
+
+        # Keep last 20 messages to avoid session bloat
+        if len(messages) > 20:
+            messages = messages[-20:]
+
+        request.session["pain_chat"] = json.dumps(messages)
+
+        return {"reply": reply}
+
+    except Exception as e:
+        _track_ai_error("pain_assistant", str(e), patient_id=pid)
+        return {"reply": "Es ist ein Fehler aufgetreten. Bitte versuche es erneut."}
 
 
 # =========================================================
