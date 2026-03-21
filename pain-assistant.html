@@ -132,34 +132,175 @@ let recognition = null;
 let isListening = false;
 let conversationHistory = [];
 
+const SYSTEM_PROMPT = `Du bist ein hochpräziser Schmerz-Analyse-Assistent basierend auf praktischer manueller Erfahrung.
+
+Dein Ziel ist es NICHT, Diagnosen im medizinischen Sinne zu stellen, sondern:
+- das Schmerzbild klar einzuordnen
+- Muster zu erkennen
+- die Situation so zu strukturieren, dass eine gezielte manuelle oder einfache Intervention möglich wird
+
+Du arbeitest wie ein erfahrener Praktiker:
+- stellst gezielte, kurze Fragen
+- gehst Schritt für Schritt vor
+- vermeidest Überforderung
+- denkst in Mustern, nicht in Theorie
+
+ABLAUF — Gehe IMMER in dieser Reihenfolge vor:
+
+STEP 1: Ort klären
+- "Zeig mir genau, wo der Schmerz ist"
+- Punkt / Linie / Fläche unterscheiden
+
+STEP 2: Gefühl klären
+- "Wie fühlt es sich an?"
+  (ziehend / stechend / dumpf / Druck)
+
+STEP 3: Trigger klären
+- "Wann wird es schlimmer?"
+  (Bewegung / Druck / Ruhe)
+
+STEP 4: Verlauf
+- "Seit wann ist es da?"
+- plötzlich oder langsam gekommen?
+
+STEP 5: Intensität / Veränderung
+- besser / gleich / schlimmer
+
+WICHTIGE REGELN:
+- immer nur 1–2 Fragen gleichzeitig
+- Fokus auf: Ort, Gefühl, Bewegung, Verlauf
+- keine langen Erklärungen
+- keine medizinischen Fachbegriffe
+- keine Unsicherheit zeigen
+- auf Antwort warten, dann nächste logische Frage
+
+INTERNE EINORDNUNG (dem Patienten NICHT zeigen, nur für deine Fragesteuerung):
+
+TYPE A: Linien-/Zugspannung — Schmerz zieht entlang einer Linie
+TYPE B: Punktueller Schmerz — klar lokalisierbar, druckempfindlich
+TYPE C: Gelenk-/Bewegungsproblem — bei Bewegung / Winkel spezifisch
+TYPE D: Diffuse Spannung — großflächig, unklar
+
+Nach jeder Antwort:
+1. Kurz zusammenfassen: "Okay, ich sehe…"
+2. Nächste präzise Frage stellen
+3. Wenn genug Klarheit: einfache, sichere Handlung vorschlagen (leichte Druckanweisung, kleine Bewegung, Wahrnehmungsfokus)
+4. Dann fragen: "Was passiert, wenn du das machst?"
+
+NIEMALS:
+- medizinische Diagnosen nennen
+- komplexe Erklärungen geben
+- 5 Dinge auf einmal sagen
+- unsicher wirken
+
+IMMER:
+- klar
+- ruhig
+- direkt
+- fokussiert
+
+Ziel: maximale Klarheit in minimaler Zeit.
+
+Starte das Gespräch mit einer freundlichen, kurzen Begrüßung und frage nach dem Schmerzort.`;
+
+// API key management
+function getApiKey() {
+  return localStorage.getItem('ptgo_anthropic_key') || '';
+}
+function setApiKey(key) {
+  localStorage.setItem('ptgo_anthropic_key', key);
+}
+
+async function callClaude(messages) {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('NO_KEY');
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20241022',
+      max_tokens: 500,
+      system: SYSTEM_PROMPT,
+      messages: messages,
+    }),
+  });
+
+  if (resp.status === 401) {
+    localStorage.removeItem('ptgo_anthropic_key');
+    throw new Error('INVALID_KEY');
+  }
+  if (!resp.ok) throw new Error('API_ERROR');
+
+  const data = await resp.json();
+  return data.content?.[0]?.text || 'Keine Antwort erhalten.';
+}
+
+function promptForKey() {
+  document.getElementById('loading-initial').innerHTML = `
+    <div style="text-align:center;padding:20px 0">
+      <p style="color:var(--dim);font-size:13px;margin-bottom:16px">API-Key wird benötigt, um den Assistenten zu starten.</p>
+      <input type="password" id="key-input" placeholder="sk-ant-..." style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px 14px;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px">
+      <button onclick="submitKey()" style="width:100%;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111;border:none;border-radius:10px;padding:10px;font-size:14px;font-weight:600;cursor:pointer">Verbinden</button>
+      <p id="key-error" style="color:var(--red);font-size:12px;margin-top:8px;min-height:16px"></p>
+    </div>`;
+  const ki = document.getElementById('key-input');
+  ki.addEventListener('keydown', e => { if (e.key === 'Enter') submitKey(); });
+  ki.focus();
+}
+
+async function submitKey() {
+  const input = document.getElementById('key-input');
+  const key = input.value.trim();
+  if (!key) return;
+  setApiKey(key);
+  document.getElementById('key-error').textContent = '';
+  document.getElementById('loading-initial').innerHTML = '<div class="spinner"></div>';
+  await initChat();
+}
+
 // Auto-resize textarea
 chatInput.addEventListener('input', function() {
   this.style.height = '44px';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
 });
 
-// Load initial AI greeting
-(async function() {
+async function initChat() {
+  if (!getApiKey()) {
+    promptForKey();
+    return;
+  }
   try {
-    const resp = await fetch('/api/pain-assistant', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({action: 'chat', message: '__INIT__', history: []})
-    });
-    const data = await resp.json();
+    const initMessages = [{ role: 'user', content: 'Hallo, ich habe Schmerzen und brauche Hilfe.' }];
+    const reply = await callClaude(initMessages);
     document.getElementById('loading-initial').remove();
-    appendMessage(data.reply, 'ai');
-    conversationHistory.push({role: 'user', content: 'Hallo, ich habe Schmerzen und brauche Hilfe.'});
-    conversationHistory.push({role: 'assistant', content: data.reply});
+    appendMessage(reply, 'ai');
+    conversationHistory.push({ role: 'user', content: 'Hallo, ich habe Schmerzen und brauche Hilfe.' });
+    conversationHistory.push({ role: 'assistant', content: reply });
     chatInput.disabled = false;
     sendBtn.disabled = false;
     voiceBtn.disabled = false;
     chatInput.focus();
   } catch(e) {
-    document.getElementById('loading-initial').innerHTML =
-      '<p class="error-msg">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+    if (e.message === 'NO_KEY' || e.message === 'INVALID_KEY') {
+      promptForKey();
+      if (e.message === 'INVALID_KEY') {
+        document.getElementById('key-error').textContent = 'Ungültiger API-Key. Bitte erneut eingeben.';
+      }
+    } else {
+      document.getElementById('loading-initial').innerHTML =
+        '<p class="error-msg">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+    }
   }
-})();
+}
+
+// Start
+initChat();
 
 function appendMessage(text, role) {
   const div = document.createElement('div');
@@ -202,26 +343,20 @@ async function sendMessage() {
   showTyping();
 
   try {
-    const resp = await fetch('/api/pain-assistant', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({action: 'chat', message: text, history: conversationHistory})
-    });
+    const reply = await callClaude(conversationHistory);
     removeTyping();
-    if (!resp.ok) {
-      appendMessage('Fehler bei der Verbindung. Bitte versuche es erneut.', 'ai');
-    } else {
-      const data = await resp.json();
-      appendMessage(data.reply, 'ai');
-      conversationHistory.push({role: 'assistant', content: data.reply});
-      // Keep last 20 messages
-      if (conversationHistory.length > 20) {
-        conversationHistory = conversationHistory.slice(-20);
-      }
+    appendMessage(reply, 'ai');
+    conversationHistory.push({role: 'assistant', content: reply});
+    if (conversationHistory.length > 20) {
+      conversationHistory = conversationHistory.slice(-20);
     }
   } catch(err) {
     removeTyping();
-    appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+    if (err.message === 'INVALID_KEY') {
+      appendMessage('API-Key ungültig. Bitte Seite neu laden.', 'ai');
+    } else {
+      appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+    }
   }
 
   sending = false;
