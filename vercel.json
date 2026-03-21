@@ -1,5 +1,6 @@
 {
   "framework": null,
+  "outputDirectory": "public",
   "installCommand": "cd netlify/functions && npm install",
   "rewrites": [
     { "source": "/heal", "destination": "/heal.html" },
