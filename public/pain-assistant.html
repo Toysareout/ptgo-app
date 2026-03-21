@@ -74,6 +74,19 @@ h1{font-size:22px;font-weight:800;line-height:1.2;margin:0 0 4px}
 
 .error-msg{color:var(--red);font-size:13px;text-align:center;padding:20px}
 
+/* API Key setup */
+#key-setup{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 10px;gap:14px;flex:1}
+#key-setup p{color:var(--dim);font-size:13px;text-align:center;line-height:1.6;max-width:400px}
+#key-setup input{width:100%;max-width:380px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color .3s}
+#key-setup input:focus{border-color:var(--accent)}
+#key-setup input::placeholder{color:var(--dim)}
+#key-setup button{background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111;border:none;border-radius:12px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+#key-setup button:hover{opacity:.85}
+.key-hint{font-size:11px!important;color:var(--dim)!important;margin-top:4px}
+.key-saved{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--green)}
+#change-key-btn{background:transparent;border:1px solid var(--border);color:var(--dim);padding:4px 12px;font-size:11px;border-radius:8px;cursor:pointer;font-family:inherit;margin-left:8px;transition:all .3s}
+#change-key-btn:hover{border-color:var(--accent);color:var(--accent)}
+
 @media(max-width:480px){
   .wrap{padding:12px 10px 20px}
   .card{padding:14px 12px;border-radius:14px}
@@ -86,63 +99,221 @@ h1{font-size:22px;font-weight:800;line-height:1.2;margin:0 0 4px}
 
 <div class="wrap">
   <div class="top">
-    <div class="brand">PTGO <span>•</span> Schmerz</div>
-    <a href="/" class="back-link">Zurück</a>
+    <div class="brand">PTGO <span>&bull;</span> Schmerz</div>
+    <a href="/" class="back-link">Zur&uuml;ck</a>
   </div>
 
   <div class="card">
     <div class="card-header">
       <h1>Schmerz-Analyse</h1>
-      <div class="subtitle">Beschreibe deinen Schmerz — ich führe dich Schritt für Schritt.</div>
+      <div class="subtitle">Beschreibe deinen Schmerz &mdash; ich f&uuml;hre dich Schritt f&uuml;r Schritt.</div>
     </div>
     <div class="hr"></div>
 
-    <div id="chat-messages">
+    <!-- API Key Setup Screen -->
+    <div id="key-setup" style="display:none">
+      <p>Gib deinen Anthropic API Key ein, um den Schmerz-Assistenten zu nutzen.<br>Der Key wird nur lokal in deinem Browser gespeichert.</p>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+      <button onclick="saveKey()">Verbinden</button>
+      <p class="key-hint">Den Key findest du auf <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a></p>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="chat-messages" style="display:none">
       <div id="loading-initial">
         <div class="spinner"></div>
       </div>
     </div>
 
-    <div class="input-area">
+    <div class="input-area" id="input-area" style="display:none">
       <div class="hr"></div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:6px">
+        <span class="key-saved" id="key-status"></span>
+      </div>
       <div class="input-row">
         <textarea id="chat-input" rows="1" placeholder="Beschreibe deinen Schmerz..." disabled></textarea>
-        <button type="button" id="send-btn" disabled onclick="sendMessage()">→</button>
+        <button type="button" id="send-btn" disabled onclick="sendMessage()">&rarr;</button>
       </div>
       <div class="voice-row">
-        <button type="button" id="voice-btn" onclick="toggleVoice()" disabled>🎤 Spracheingabe</button>
+        <button type="button" id="voice-btn" onclick="toggleVoice()" disabled>&#x1f3a4; Spracheingabe</button>
       </div>
     </div>
   </div>
 
   <div class="nav-links">
-    <a href="/">Start</a> •
-    <a href="/coaching">Coaching</a> •
+    <a href="/">Start</a> &bull;
+    <a href="/coaching">Coaching</a> &bull;
     <a href="/nerve">Nerve Center</a>
   </div>
 </div>
 
 <script>
+const SYSTEM_PROMPT = `Du bist ein hochpr\u00e4ziser Schmerz-Analyse-Assistent basierend auf praktischer manueller Erfahrung.
+
+Dein Ziel ist es NICHT, Diagnosen im medizinischen Sinne zu stellen, sondern:
+- das Schmerzbild klar einzuordnen
+- Muster zu erkennen
+- die Situation so zu strukturieren, dass eine gezielte manuelle oder einfache Intervention m\u00f6glich wird
+
+Du arbeitest wie ein erfahrener Praktiker:
+- stellst gezielte, kurze Fragen
+- gehst Schritt f\u00fcr Schritt vor
+- vermeidest \u00dcberforderung
+- denkst in Mustern, nicht in Theorie
+
+ABLAUF \u2014 Gehe IMMER in dieser Reihenfolge vor:
+
+STEP 1: Ort kl\u00e4ren
+- "Zeig mir genau, wo der Schmerz ist"
+- Punkt / Linie / Fl\u00e4che unterscheiden
+
+STEP 2: Gef\u00fchl kl\u00e4ren
+- "Wie f\u00fchlt es sich an?"
+  (ziehend / stechend / dumpf / Druck)
+
+STEP 3: Trigger kl\u00e4ren
+- "Wann wird es schlimmer?"
+  (Bewegung / Druck / Ruhe)
+
+STEP 4: Verlauf
+- "Seit wann ist es da?"
+- pl\u00f6tzlich oder langsam gekommen?
+
+STEP 5: Intensit\u00e4t / Ver\u00e4nderung
+- besser / gleich / schlimmer
+
+WICHTIGE REGELN:
+- immer nur 1\u20132 Fragen gleichzeitig
+- Fokus auf: Ort, Gef\u00fchl, Bewegung, Verlauf
+- keine langen Erkl\u00e4rungen
+- keine medizinischen Fachbegriffe
+- keine Unsicherheit zeigen
+- auf Antwort warten, dann n\u00e4chste logische Frage
+
+INTERNE EINORDNUNG (dem Patienten NICHT zeigen, nur f\u00fcr deine Fragesteuerung):
+
+TYPE A: Linien-/Zugspannung \u2014 Schmerz zieht entlang einer Linie
+TYPE B: Punktueller Schmerz \u2014 klar lokalisierbar, druckempfindlich
+TYPE C: Gelenk-/Bewegungsproblem \u2014 bei Bewegung / Winkel spezifisch
+TYPE D: Diffuse Spannung \u2014 gro\u00dffl\u00e4chig, unklar
+
+Nach jeder Antwort:
+1. Kurz zusammenfassen: "Okay, ich sehe\u2026"
+2. N\u00e4chste pr\u00e4zise Frage stellen
+3. Wenn genug Klarheit: einfache, sichere Handlung vorschlagen (leichte Druckanweisung, kleine Bewegung, Wahrnehmungsfokus)
+4. Dann fragen: "Was passiert, wenn du das machst?"
+
+NIEMALS:
+- medizinische Diagnosen nennen
+- komplexe Erkl\u00e4rungen geben
+- 5 Dinge auf einmal sagen
+- unsicher wirken
+
+IMMER:
+- klar
+- ruhig
+- direkt
+- fokussiert
+
+Ziel: maximale Klarheit in minimaler Zeit.
+
+Starte das Gespr\u00e4ch mit einer freundlichen, kurzen Begr\u00fc\u00dfung und frage nach dem Schmerzort.`;
+
 const chatMessages = document.getElementById('chat-messages');
 const chatInput = document.getElementById('chat-input');
 const sendBtn = document.getElementById('send-btn');
 const voiceBtn = document.getElementById('voice-btn');
+const keySetup = document.getElementById('key-setup');
+const inputArea = document.getElementById('input-area');
+const keyStatus = document.getElementById('key-status');
 let sending = false;
 let recognition = null;
 let isListening = false;
 let conversationHistory = [];
 
-// API — calls serverless function (key lives server-side)
+function getApiKey() {
+  return localStorage.getItem('ptgo_anthropic_key') || '';
+}
+
+function saveKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) return;
+  localStorage.setItem('ptgo_anthropic_key', key);
+  startChat();
+}
+
+function changeKey() {
+  localStorage.removeItem('ptgo_anthropic_key');
+  chatMessages.style.display = 'none';
+  inputArea.style.display = 'none';
+  keySetup.style.display = 'flex';
+  chatMessages.innerHTML = '<div id="loading-initial"><div class="spinner"></div></div>';
+  conversationHistory = [];
+}
+
+function startChat() {
+  keySetup.style.display = 'none';
+  chatMessages.style.display = 'block';
+  inputArea.style.display = 'block';
+  keyStatus.innerHTML = 'Key gespeichert <button id="change-key-btn" onclick="changeKey()">Ändern</button>';
+  initChat();
+}
+
+// Direct Claude API call from browser
 async function callClaude(message, history) {
-  const resp = await fetch('/api/pain-assistant', {
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('NO_KEY');
+
+  let messages = Array.isArray(history) ? [...history] : [];
+
+  if (message === '__INIT__') {
+    messages = [{ role: 'user', content: 'Hallo, ich habe Schmerzen und brauche Hilfe.' }];
+  } else if (message) {
+    const lastMsg = messages[messages.length - 1];
+    if (!lastMsg || lastMsg.role !== 'user' || lastMsg.content !== message) {
+      messages.push({ role: 'user', content: message });
+    }
+  }
+
+  if (messages.length > 20) {
+    messages = messages.slice(-20);
+  }
+
+  // Ensure messages alternate correctly
+  const cleanMessages = [];
+  for (const msg of messages) {
+    if (cleanMessages.length === 0 || cleanMessages[cleanMessages.length - 1].role !== msg.role) {
+      cleanMessages.push(msg);
+    }
+  }
+  if (cleanMessages.length > 0 && cleanMessages[0].role !== 'user') {
+    cleanMessages.unshift({ role: 'user', content: 'Hallo' });
+  }
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'chat', message, history }),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20241022',
+      max_tokens: 500,
+      system: SYSTEM_PROMPT,
+      messages: cleanMessages,
+    }),
   });
+
+  if (resp.status === 401) {
+    localStorage.removeItem('ptgo_anthropic_key');
+    throw new Error('INVALID_KEY');
+  }
 
   if (!resp.ok) throw new Error('API_ERROR');
   const data = await resp.json();
-  return data.reply || 'Keine Antwort erhalten.';
+  return data.content?.[0]?.text || 'Keine Antwort erhalten.';
 }
 
 // Auto-resize textarea
@@ -163,13 +334,23 @@ async function initChat() {
     voiceBtn.disabled = false;
     chatInput.focus();
   } catch(e) {
-    document.getElementById('loading-initial').innerHTML =
-      '<p class="error-msg">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+    if (e.message === 'INVALID_KEY') {
+      document.getElementById('loading-initial').innerHTML =
+        '<p class="error-msg">Ung\u00fcltiger API Key. Bitte erneut eingeben.</p>';
+      setTimeout(changeKey, 2000);
+    } else {
+      document.getElementById('loading-initial').innerHTML =
+        '<p class="error-msg">Verbindung fehlgeschlagen. Bitte Seite neu laden.</p>';
+    }
   }
 }
 
-// Start
-initChat();
+// Check for stored key on load
+if (getApiKey()) {
+  startChat();
+} else {
+  keySetup.style.display = 'flex';
+}
 
 function appendMessage(text, role) {
   const div = document.createElement('div');
@@ -221,7 +402,12 @@ async function sendMessage() {
     }
   } catch(err) {
     removeTyping();
-    appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+    if (err.message === 'INVALID_KEY') {
+      appendMessage('Ung\u00fcltiger API Key. Bitte neu eingeben.', 'ai');
+      setTimeout(changeKey, 2000);
+    } else {
+      appendMessage('Verbindung unterbrochen. Bitte versuche es erneut.', 'ai');
+    }
   }
 
   sending = false;
@@ -241,7 +427,7 @@ chatInput.addEventListener('keydown', function(e) {
 // Voice input via Web Speech API
 function toggleVoice() {
   if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-    alert('Spracheingabe wird in diesem Browser nicht unterstützt.');
+    alert('Spracheingabe wird in diesem Browser nicht unterst\u00fctzt.');
     return;
   }
   if (isListening) {
@@ -257,7 +443,7 @@ function toggleVoice() {
   recognition.onstart = () => {
     isListening = true;
     voiceBtn.classList.add('voice-active');
-    voiceBtn.textContent = '🔴 Aufnahme...';
+    voiceBtn.textContent = '\ud83d\udd34 Aufnahme...';
   };
 
   recognition.onresult = (event) => {
@@ -273,13 +459,13 @@ function toggleVoice() {
   recognition.onend = () => {
     isListening = false;
     voiceBtn.classList.remove('voice-active');
-    voiceBtn.textContent = '🎤 Spracheingabe';
+    voiceBtn.textContent = '\ud83c\udfa4 Spracheingabe';
   };
 
   recognition.onerror = () => {
     isListening = false;
     voiceBtn.classList.remove('voice-active');
-    voiceBtn.textContent = '🎤 Spracheingabe';
+    voiceBtn.textContent = '\ud83c\udfa4 Spracheingabe';
   };
 
   recognition.start();
@@ -287,4 +473,3 @@ function toggleVoice() {
 </script>
 </body>
 </html>
-
