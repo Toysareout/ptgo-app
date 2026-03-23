@@ -368,6 +368,75 @@ class BattleSimulation(Base):
 
 Index("ix_svs_events_profile_day", RealLifeEvent.profile_id, RealLifeEvent.local_day)
 
+
+# =========================================================
+# UNDERCOVER WEALTH SYSTEM — DB MODELS
+# =========================================================
+
+class WealthStream(Base):
+    """Einkommensquelle / Revenue Stream."""
+    __tablename__ = "wealth_streams"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    category = Column(String(64), nullable=False, default="active")  # active | passive | equity
+    stream_type = Column(String(64), nullable=False, default="recurring")  # recurring | one-time | equity | license
+    holding = Column(String(128), nullable=True)  # z.B. "PTGO Health", "THETOYSAREOUT", "AI Services"
+    monthly_target = Column(Integer, nullable=False, default=0)  # Ziel in Cent
+    monthly_actual = Column(Integer, nullable=False, default=0)  # Ist in Cent
+    automation_level = Column(Integer, nullable=False, default=0)  # 0-100%
+    status = Column(String(32), nullable=False, default="active")  # active | paused | planned | retired
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class WealthAsset(Base):
+    """Asset im Portfolio (IP, SaaS, Brand, Equity, Immobilie)."""
+    __tablename__ = "wealth_assets"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    asset_type = Column(String(64), nullable=False, default="ip")  # ip | saas | brand | equity | real_estate | license
+    holding = Column(String(128), nullable=True)
+    current_value = Column(Integer, nullable=False, default=0)  # Wert in Cent
+    monthly_revenue = Column(Integer, nullable=False, default=0)  # Monatl. Einnahmen in Cent
+    growth_rate = Column(Float, nullable=False, default=0.0)  # Jährliche Wachstumsrate in %
+    status = Column(String(32), nullable=False, default="active")  # active | developing | planned
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class WealthSnapshot(Base):
+    """Monatlicher Snapshot aller KPIs für Trendanalyse."""
+    __tablename__ = "wealth_snapshots"
+    id = Column(Integer, primary_key=True, index=True)
+    period = Column(String(7), nullable=False, index=True)  # YYYY-MM
+    total_revenue = Column(Integer, nullable=False, default=0)  # Cent
+    passive_revenue = Column(Integer, nullable=False, default=0)  # Cent
+    active_revenue = Column(Integer, nullable=False, default=0)  # Cent
+    total_assets_value = Column(Integer, nullable=False, default=0)  # Cent
+    automation_avg = Column(Integer, nullable=False, default=0)  # 0-100
+    streams_count = Column(Integer, nullable=False, default=0)
+    passive_ratio = Column(Float, nullable=False, default=0.0)  # 0-100%
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class WealthWeekly(Base):
+    """Wöchentlicher Review — 5 Kernfragen."""
+    __tablename__ = "wealth_weekly"
+    id = Column(Integer, primary_key=True, index=True)
+    week = Column(String(10), nullable=False, index=True)  # YYYY-WXX
+    q1_passive_income = Column(Text, nullable=True)  # Was kam OHNE mein Zutun?
+    q2_automated = Column(Text, nullable=True)  # Was habe ich automatisiert?
+    q3_automation_progress = Column(Text, nullable=True)  # Welchen Stream näher an 100%?
+    q4_visibility = Column(String(16), nullable=True)  # reduced | same | increased
+    q5_in_vs_on = Column(Text, nullable=True)  # Stunden IN vs. AN dem System
+    score = Column(Integer, nullable=True)  # Selbstbewertung 1-10
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -5943,8 +6012,9 @@ def master_control(request: Request, db=Depends(get_db)):
       </div>
 
       <div class="hr"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
         <a href="/therapist" class="btn btn-outline" style="text-align:center;">Therapist Dashboard</a>
+        <a href="/wealth" class="btn btn-outline" style="text-align:center;">Wealth System</a>
         <a href="/master-control/api" class="btn btn-outline" style="text-align:center;">JSON API</a>
       </div>
       <p class="small" style="text-align:center;margin-top:12px;">PTGO Master Control • {now.strftime('%Y')}</p>
@@ -6789,6 +6859,684 @@ async def pain_assistant_chat(request: Request, db=Depends(get_db)):
     except Exception as e:
         _track_ai_error("pain_assistant", str(e), patient_id=pid)
         return {"reply": "Es ist ein Fehler aufgetreten. Bitte versuche es erneut."}
+
+
+# =========================================================
+# UNDERCOVER WEALTH SYSTEM — ROUTES
+# =========================================================
+
+def _wealth_page(title: str, body_html: str, active_tab: str = "dashboard") -> HTMLResponse:
+    """Page wrapper for wealth system with tab navigation."""
+    tabs = [
+        ("dashboard", "Dashboard", "/wealth"),
+        ("streams", "Streams", "/wealth/streams"),
+        ("assets", "Assets", "/wealth/assets"),
+        ("weekly", "Weekly", "/wealth/weekly"),
+    ]
+    tab_html = ""
+    for key, label, href in tabs:
+        active = "background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:#f59e0b;" if key == active_tab else ""
+        tab_html += f'<a href="{href}" style="display:inline-block;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid var(--line);color:var(--muted);text-decoration:none;{active}">{label}</a> '
+
+    nav = f"""
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <div style="font-weight:700;font-size:18px;">Wealth System</div>
+      <a href="/master-control" style="font-size:12px;color:var(--muted);text-decoration:none;">&larr; Master Control</a>
+    </div>
+    <div style="margin-bottom:18px;display:flex;gap:6px;flex-wrap:wrap;">{tab_html}</div>
+    """
+
+    css = """
+    <style>
+      :root { --bg:#0b0f1a; --card:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#f59e0b; --line:#1f2937; }
+      html,body{height:100%;}
+      body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;background:radial-gradient(1000px 600px at 50% -100px,#1f2a52,transparent),var(--bg);color:var(--text);}
+      a{color:var(--accent);text-decoration:none}
+      .wrap{max-width:900px;margin:0 auto;padding:26px 16px 60px;}
+      .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:18px;padding:24px 20px 20px;box-shadow:0 20px 60px rgba(0,0,0,.35);margin-bottom:16px;}
+      h1{font-size:28px;line-height:1.1;margin:0 0 12px;}
+      h2{font-size:18px;margin:18px 0 10px;color:#f3f4f6}
+      p{color:var(--muted);line-height:1.6}
+      .hr{height:1px;background:var(--line);margin:18px 0;}
+      label{display:block;color:#cbd5e1;font-size:13px;margin:14px 0 6px}
+      input,select,textarea{width:100%;box-sizing:border-box;background:#0b1223;border:1px solid #263246;color:#e5e7eb;border-radius:12px;padding:12px;font-size:16px;outline:none}
+      input:focus,textarea:focus{border-color:#f59e0b}
+      .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      button,.btn{display:inline-block;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111827;border:none;border-radius:14px;padding:14px 20px;font-weight:700;font-size:16px;cursor:pointer;text-align:center;width:100%;margin-top:8px;}
+      .btn-outline{background:transparent;border:1px solid var(--line);color:var(--muted);width:auto;padding:10px 16px;font-size:14px;}
+      .btn-sm{padding:8px 14px;font-size:13px;width:auto;margin-top:0;border-radius:10px;}
+      .small{font-size:12px;color:var(--muted)}
+      .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+      .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+      .kpi{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)}
+      .kpi b{display:block;font-size:22px;margin-top:4px}
+      .tag{display:inline-block;font-size:11px;border:1px solid #374151;padding:3px 8px;border-radius:999px;color:#cbd5e1;margin-right:4px}
+      @media(max-width:600px){.grid3,.grid4{grid-template-columns:1fr 1fr;}}
+    </style>
+    """
+
+    html = f"""
+    <html><head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>{title}</title>
+      {css}
+    </head>
+    <body>
+      <div class="wrap">
+        {nav}
+        {body_html}
+      </div>
+    </body></html>
+    """
+    return HTMLResponse(html)
+
+
+def _fmt_eur(cents: int) -> str:
+    """Format cents as EUR string."""
+    if cents >= 100_00:
+        return f"{cents / 100:,.0f} EUR".replace(",", ".")
+    return f"{cents / 100:,.2f} EUR".replace(",", ".")
+
+
+def _automation_bar(level: int) -> str:
+    """Render a small automation progress bar."""
+    color = "#22c55e" if level >= 80 else "#f59e0b" if level >= 40 else "#ef4444"
+    return f"""<div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;height:6px;background:#1f2937;border-radius:3px;">
+        <div style="height:6px;background:{color};border-radius:3px;width:{level}%;"></div>
+      </div>
+      <span style="font-size:12px;color:{color};font-weight:600;">{level}%</span>
+    </div>"""
+
+
+# --- DASHBOARD ---
+
+@app.get("/wealth", response_class=HTMLResponse)
+async def wealth_dashboard(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+
+    streams = db.query(WealthStream).filter(WealthStream.status != "retired").all()
+    assets = db.query(WealthAsset).filter(WealthAsset.status != "retired").all()
+
+    # KPIs
+    total_monthly_target = sum(s.monthly_target for s in streams)
+    total_monthly_actual = sum(s.monthly_actual for s in streams)
+    passive_actual = sum(s.monthly_actual for s in streams if s.category == "passive")
+    active_actual = sum(s.monthly_actual for s in streams if s.category == "active")
+    equity_actual = sum(s.monthly_actual for s in streams if s.category == "equity")
+    active_streams = [s for s in streams if s.status == "active"]
+    avg_automation = round(sum(s.automation_level for s in active_streams) / len(active_streams)) if active_streams else 0
+    passive_ratio = round(passive_actual / total_monthly_actual * 100) if total_monthly_actual > 0 else 0
+    total_asset_value = sum(a.current_value for a in assets)
+    pct_target = round(total_monthly_actual / total_monthly_target * 100) if total_monthly_target > 0 else 0
+
+    # Holdings breakdown
+    holdings = {}
+    for s in streams:
+        h = s.holding or "Sonstige"
+        if h not in holdings:
+            holdings[h] = {"target": 0, "actual": 0, "streams": 0}
+        holdings[h]["target"] += s.monthly_target
+        holdings[h]["actual"] += s.monthly_actual
+        holdings[h]["streams"] += 1
+
+    holdings_html = ""
+    for h_name, h_data in sorted(holdings.items(), key=lambda x: x[1]["actual"], reverse=True):
+        h_pct = round(h_data["actual"] / total_monthly_actual * 100) if total_monthly_actual > 0 else 0
+        holdings_html += f"""
+        <div style="padding:10px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;">
+            <div><b style="font-size:14px;">{h_name}</b> <span class="small">{h_data['streams']} Streams</span></div>
+            <div style="text-align:right;">
+              <b style="color:#f59e0b;">{_fmt_eur(h_data['actual'])}</b>
+              <div class="small">Ziel: {_fmt_eur(h_data['target'])}</div>
+            </div>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:2px;margin-top:6px;">
+            <div style="height:4px;background:linear-gradient(90deg,#f59e0b,#22c55e);border-radius:2px;width:{min(h_pct, 100)}%;"></div>
+          </div>
+        </div>"""
+
+    # Stream list (top 5 by actual)
+    top_streams = sorted(streams, key=lambda s: s.monthly_actual, reverse=True)[:5]
+    stream_rows = ""
+    for s in top_streams:
+        cat_colors = {"active": "#3b82f6", "passive": "#22c55e", "equity": "#a855f7"}
+        cat_color = cat_colors.get(s.category, "#94a3b8")
+        stream_rows += f"""
+        <div style="padding:10px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <b style="font-size:14px;">{s.name}</b>
+            <div><span class="tag" style="border-color:{cat_color};color:{cat_color};">{s.category}</span>
+            <span class="small">{s.holding or ''}</span></div>
+          </div>
+          <div style="text-align:right;">
+            <b style="color:#f59e0b;">{_fmt_eur(s.monthly_actual)}</b>
+            <div class="small">Auto: {s.automation_level}%</div>
+          </div>
+        </div>"""
+
+    body = f"""
+    <div class="card">
+      <h1>Wealth Dashboard</h1>
+      <p>Unternehmens-KPIs &amp; Einkommensströme</p>
+
+      <div class="grid4" style="margin-top:16px;">
+        <div class="kpi"><span class="small">Monatl. Umsatz</span><b style="color:#f59e0b;">{_fmt_eur(total_monthly_actual)}</b>
+          <div class="small">{pct_target}% vom Ziel</div></div>
+        <div class="kpi"><span class="small">Passiv-Quote</span><b style="color:#22c55e;">{passive_ratio}%</b>
+          <div class="small">{_fmt_eur(passive_actual)} passiv</div></div>
+        <div class="kpi"><span class="small">Automation</span><b style="color:#3b82f6;">{avg_automation}%</b>
+          {_automation_bar(avg_automation)}</div>
+        <div class="kpi"><span class="small">Asset-Wert</span><b>{_fmt_eur(total_asset_value)}</b>
+          <div class="small">{len(assets)} Assets</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="margin:0;">Holdings</h2>
+      </div>
+      {holdings_html if holdings_html else '<p>Noch keine Streams angelegt.</p>'}
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h2 style="margin:0;">Top Streams</h2>
+        <a href="/wealth/streams" class="btn-sm btn-outline">Alle &rarr;</a>
+      </div>
+      {stream_rows if stream_rows else '<p>Noch keine Streams angelegt.</p>'}
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0;">Revenue Split</h2>
+      <div class="grid3">
+        <div class="kpi"><span class="small" style="color:#3b82f6;">Active</span><b>{_fmt_eur(active_actual)}</b></div>
+        <div class="kpi"><span class="small" style="color:#22c55e;">Passive</span><b>{_fmt_eur(passive_actual)}</b></div>
+        <div class="kpi"><span class="small" style="color:#a855f7;">Equity</span><b>{_fmt_eur(equity_actual)}</b></div>
+      </div>
+    </div>
+    """
+
+    return _wealth_page("Wealth Dashboard", body, active_tab="dashboard")
+
+
+# --- STREAMS ---
+
+@app.get("/wealth/streams", response_class=HTMLResponse)
+async def wealth_streams(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    streams = db.query(WealthStream).order_by(WealthStream.monthly_actual.desc()).all()
+
+    rows = ""
+    for s in streams:
+        cat_colors = {"active": "#3b82f6", "passive": "#22c55e", "equity": "#a855f7"}
+        cat_color = cat_colors.get(s.category, "#94a3b8")
+        status_colors = {"active": "#22c55e", "paused": "#f59e0b", "planned": "#3b82f6", "retired": "#6b7280"}
+        st_color = status_colors.get(s.status, "#94a3b8")
+        pct = round(s.monthly_actual / s.monthly_target * 100) if s.monthly_target > 0 else 0
+        rows += f"""
+        <div style="padding:14px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <b style="font-size:15px;">{s.name}</b>
+              <div style="margin-top:4px;">
+                <span class="tag" style="border-color:{cat_color};color:{cat_color};">{s.category}</span>
+                <span class="tag" style="border-color:{st_color};color:{st_color};">{s.status}</span>
+                <span class="tag">{s.stream_type}</span>
+                {f'<span class="small">{s.holding}</span>' if s.holding else ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <b style="color:#f59e0b;font-size:18px;">{_fmt_eur(s.monthly_actual)}</b>
+              <div class="small">Ziel: {_fmt_eur(s.monthly_target)} ({pct}%)</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;">
+            <div class="small" style="margin-bottom:4px;">Automation</div>
+            {_automation_bar(s.automation_level)}
+          </div>
+          {f'<div class="small" style="margin-top:6px;color:#cbd5e1;">{s.notes}</div>' if s.notes else ''}
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <a href="/wealth/streams/{s.id}/edit" class="btn-sm btn-outline">Bearbeiten</a>
+            <form method="post" action="/wealth/streams/{s.id}/delete" style="margin:0;"><button type="submit" class="btn-sm btn-outline" style="color:#fecaca;border-color:#7f1d1d;" onclick="return confirm('Stream löschen?')">Löschen</button></form>
+          </div>
+        </div>"""
+
+    body = f"""
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h1 style="margin:0;">Income Streams</h1>
+        <a href="/wealth/streams/new" class="btn-sm" style="text-decoration:none;">+ Neuer Stream</a>
+      </div>
+      <div class="small" style="margin-top:4px;">{len(streams)} Streams</div>
+      <div style="margin-top:12px;">
+        {rows if rows else '<p>Noch keine Streams angelegt.</p>'}
+      </div>
+    </div>
+    """
+    return _wealth_page("Income Streams", body, active_tab="streams")
+
+
+@app.get("/wealth/streams/new", response_class=HTMLResponse)
+async def wealth_stream_new(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    body = _wealth_stream_form("Neuer Stream", "/wealth/streams/create")
+    return _wealth_page("Neuer Stream", body, active_tab="streams")
+
+
+@app.get("/wealth/streams/{stream_id}/edit", response_class=HTMLResponse)
+async def wealth_stream_edit(stream_id: int, request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    s = db.query(WealthStream).filter(WealthStream.id == stream_id).first()
+    if not s:
+        raise HTTPException(404, "Stream not found")
+    body = _wealth_stream_form("Stream bearbeiten", f"/wealth/streams/{s.id}/update", s)
+    return _wealth_page("Stream bearbeiten", body, active_tab="streams")
+
+
+def _wealth_stream_form(title: str, action: str, s=None) -> str:
+    return f"""
+    <div class="card">
+      <h1>{title}</h1>
+      <form method="post" action="{action}">
+        <label>Name</label>
+        <input name="name" required value="{s.name if s else ''}">
+        <div class="row">
+          <div>
+            <label>Kategorie</label>
+            <select name="category">
+              <option value="active" {'selected' if s and s.category == 'active' else ''}>Active</option>
+              <option value="passive" {'selected' if s and s.category == 'passive' else ''}>Passive</option>
+              <option value="equity" {'selected' if s and s.category == 'equity' else ''}>Equity</option>
+            </select>
+          </div>
+          <div>
+            <label>Typ</label>
+            <select name="stream_type">
+              <option value="recurring" {'selected' if s and s.stream_type == 'recurring' else ''}>Recurring</option>
+              <option value="one-time" {'selected' if s and s.stream_type == 'one-time' else ''}>One-Time</option>
+              <option value="equity" {'selected' if s and s.stream_type == 'equity' else ''}>Equity</option>
+              <option value="license" {'selected' if s and s.stream_type == 'license' else ''}>License</option>
+            </select>
+          </div>
+        </div>
+        <label>Holding / Unternehmen</label>
+        <input name="holding" value="{s.holding if s and s.holding else ''}">
+        <div class="row">
+          <div>
+            <label>Monatl. Ziel (EUR)</label>
+            <input name="monthly_target" type="number" step="0.01" value="{s.monthly_target / 100 if s else '0'}">
+          </div>
+          <div>
+            <label>Monatl. Ist (EUR)</label>
+            <input name="monthly_actual" type="number" step="0.01" value="{s.monthly_actual / 100 if s else '0'}">
+          </div>
+        </div>
+        <label>Automation Level (0-100%)</label>
+        <input name="automation_level" type="number" min="0" max="100" value="{s.automation_level if s else 0}">
+        <label>Status</label>
+        <select name="status">
+          <option value="active" {'selected' if s and s.status == 'active' else ''}>Active</option>
+          <option value="paused" {'selected' if s and s.status == 'paused' else ''}>Paused</option>
+          <option value="planned" {'selected' if s and s.status == 'planned' else ''}>Planned</option>
+          <option value="retired" {'selected' if s and s.status == 'retired' else ''}>Retired</option>
+        </select>
+        <label>Notizen</label>
+        <textarea name="notes" rows="3">{s.notes if s and s.notes else ''}</textarea>
+        <button type="submit">Speichern</button>
+      </form>
+      <div style="margin-top:12px;text-align:center;">
+        <a href="/wealth/streams" class="small">&larr; Zurück</a>
+      </div>
+    </div>
+    """
+
+
+@app.post("/wealth/streams/create", response_class=HTMLResponse)
+async def wealth_stream_create(request: Request, db=Depends(get_db),
+                                name: str = Form(...), category: str = Form("active"),
+                                stream_type: str = Form("recurring"), holding: str = Form(""),
+                                monthly_target: float = Form(0), monthly_actual: float = Form(0),
+                                automation_level: int = Form(0), status: str = Form("active"),
+                                notes: str = Form("")):
+    t = require_therapist_login(request, db)
+    s = WealthStream(
+        name=name, category=category, stream_type=stream_type,
+        holding=holding or None,
+        monthly_target=int(monthly_target * 100), monthly_actual=int(monthly_actual * 100),
+        automation_level=max(0, min(100, automation_level)), status=status,
+        notes=notes or None,
+    )
+    db.add(s)
+    db.commit()
+    return RedirectResponse("/wealth/streams", status_code=303)
+
+
+@app.post("/wealth/streams/{stream_id}/update", response_class=HTMLResponse)
+async def wealth_stream_update(stream_id: int, request: Request, db=Depends(get_db),
+                                name: str = Form(...), category: str = Form("active"),
+                                stream_type: str = Form("recurring"), holding: str = Form(""),
+                                monthly_target: float = Form(0), monthly_actual: float = Form(0),
+                                automation_level: int = Form(0), status: str = Form("active"),
+                                notes: str = Form("")):
+    t = require_therapist_login(request, db)
+    s = db.query(WealthStream).filter(WealthStream.id == stream_id).first()
+    if not s:
+        raise HTTPException(404, "Stream not found")
+    s.name = name
+    s.category = category
+    s.stream_type = stream_type
+    s.holding = holding or None
+    s.monthly_target = int(monthly_target * 100)
+    s.monthly_actual = int(monthly_actual * 100)
+    s.automation_level = max(0, min(100, automation_level))
+    s.status = status
+    s.notes = notes or None
+    db.commit()
+    return RedirectResponse("/wealth/streams", status_code=303)
+
+
+@app.post("/wealth/streams/{stream_id}/delete")
+async def wealth_stream_delete(stream_id: int, request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    s = db.query(WealthStream).filter(WealthStream.id == stream_id).first()
+    if s:
+        db.delete(s)
+        db.commit()
+    return RedirectResponse("/wealth/streams", status_code=303)
+
+
+# --- ASSETS ---
+
+@app.get("/wealth/assets", response_class=HTMLResponse)
+async def wealth_assets(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    assets = db.query(WealthAsset).order_by(WealthAsset.current_value.desc()).all()
+
+    total_value = sum(a.current_value for a in assets)
+    total_monthly = sum(a.monthly_revenue for a in assets)
+
+    rows = ""
+    for a in assets:
+        type_colors = {"ip": "#f59e0b", "saas": "#3b82f6", "brand": "#a855f7", "equity": "#22c55e", "real_estate": "#ef4444", "license": "#06b6d4"}
+        t_color = type_colors.get(a.asset_type, "#94a3b8")
+        pct_of_total = round(a.current_value / total_value * 100) if total_value > 0 else 0
+        rows += f"""
+        <div style="padding:14px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <b style="font-size:15px;">{a.name}</b>
+              <div style="margin-top:4px;">
+                <span class="tag" style="border-color:{t_color};color:{t_color};">{a.asset_type}</span>
+                <span class="tag">{a.status}</span>
+                {f'<span class="small">{a.holding}</span>' if a.holding else ''}
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <b style="color:#f59e0b;font-size:18px;">{_fmt_eur(a.current_value)}</b>
+              <div class="small">{pct_of_total}% Portfolio</div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:8px;">
+            <div class="small">Monatl. Revenue: <b style="color:#22c55e;">{_fmt_eur(a.monthly_revenue)}</b></div>
+            <div class="small">Wachstum: <b>{a.growth_rate}% p.a.</b></div>
+          </div>
+          {f'<div class="small" style="margin-top:6px;color:#cbd5e1;">{a.notes}</div>' if a.notes else ''}
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <a href="/wealth/assets/{a.id}/edit" class="btn-sm btn-outline">Bearbeiten</a>
+            <form method="post" action="/wealth/assets/{a.id}/delete" style="margin:0;"><button type="submit" class="btn-sm btn-outline" style="color:#fecaca;border-color:#7f1d1d;" onclick="return confirm('Asset löschen?')">Löschen</button></form>
+          </div>
+        </div>"""
+
+    body = f"""
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h1 style="margin:0;">Asset Portfolio</h1>
+        <a href="/wealth/assets/new" class="btn-sm" style="text-decoration:none;">+ Neues Asset</a>
+      </div>
+      <div class="grid3" style="margin-top:14px;">
+        <div class="kpi"><span class="small">Gesamtwert</span><b style="color:#f59e0b;">{_fmt_eur(total_value)}</b></div>
+        <div class="kpi"><span class="small">Monatl. Revenue</span><b style="color:#22c55e;">{_fmt_eur(total_monthly)}</b></div>
+        <div class="kpi"><span class="small">Assets</span><b>{len(assets)}</b></div>
+      </div>
+      <div style="margin-top:12px;">
+        {rows if rows else '<p>Noch keine Assets angelegt.</p>'}
+      </div>
+    </div>
+    """
+    return _wealth_page("Asset Portfolio", body, active_tab="assets")
+
+
+@app.get("/wealth/assets/new", response_class=HTMLResponse)
+async def wealth_asset_new(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    body = _wealth_asset_form("Neues Asset", "/wealth/assets/create")
+    return _wealth_page("Neues Asset", body, active_tab="assets")
+
+
+@app.get("/wealth/assets/{asset_id}/edit", response_class=HTMLResponse)
+async def wealth_asset_edit(asset_id: int, request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    a = db.query(WealthAsset).filter(WealthAsset.id == asset_id).first()
+    if not a:
+        raise HTTPException(404, "Asset not found")
+    body = _wealth_asset_form("Asset bearbeiten", f"/wealth/assets/{a.id}/update", a)
+    return _wealth_page("Asset bearbeiten", body, active_tab="assets")
+
+
+def _wealth_asset_form(title: str, action: str, a=None) -> str:
+    return f"""
+    <div class="card">
+      <h1>{title}</h1>
+      <form method="post" action="{action}">
+        <label>Name</label>
+        <input name="name" required value="{a.name if a else ''}">
+        <div class="row">
+          <div>
+            <label>Typ</label>
+            <select name="asset_type">
+              <option value="ip" {'selected' if a and a.asset_type == 'ip' else ''}>IP</option>
+              <option value="saas" {'selected' if a and a.asset_type == 'saas' else ''}>SaaS</option>
+              <option value="brand" {'selected' if a and a.asset_type == 'brand' else ''}>Brand</option>
+              <option value="equity" {'selected' if a and a.asset_type == 'equity' else ''}>Equity</option>
+              <option value="real_estate" {'selected' if a and a.asset_type == 'real_estate' else ''}>Real Estate</option>
+              <option value="license" {'selected' if a and a.asset_type == 'license' else ''}>License</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select name="status">
+              <option value="active" {'selected' if a and a.status == 'active' else ''}>Active</option>
+              <option value="developing" {'selected' if a and a.status == 'developing' else ''}>Developing</option>
+              <option value="planned" {'selected' if a and a.status == 'planned' else ''}>Planned</option>
+            </select>
+          </div>
+        </div>
+        <label>Holding / Unternehmen</label>
+        <input name="holding" value="{a.holding if a and a.holding else ''}">
+        <div class="row">
+          <div>
+            <label>Aktueller Wert (EUR)</label>
+            <input name="current_value" type="number" step="0.01" value="{a.current_value / 100 if a else '0'}">
+          </div>
+          <div>
+            <label>Monatl. Revenue (EUR)</label>
+            <input name="monthly_revenue" type="number" step="0.01" value="{a.monthly_revenue / 100 if a else '0'}">
+          </div>
+        </div>
+        <label>Wachstumsrate (% p.a.)</label>
+        <input name="growth_rate" type="number" step="0.1" value="{a.growth_rate if a else 0}">
+        <label>Notizen</label>
+        <textarea name="notes" rows="3">{a.notes if a and a.notes else ''}</textarea>
+        <button type="submit">Speichern</button>
+      </form>
+      <div style="margin-top:12px;text-align:center;">
+        <a href="/wealth/assets" class="small">&larr; Zurück</a>
+      </div>
+    </div>
+    """
+
+
+@app.post("/wealth/assets/create", response_class=HTMLResponse)
+async def wealth_asset_create(request: Request, db=Depends(get_db),
+                               name: str = Form(...), asset_type: str = Form("ip"),
+                               holding: str = Form(""), current_value: float = Form(0),
+                               monthly_revenue: float = Form(0), growth_rate: float = Form(0),
+                               status: str = Form("active"), notes: str = Form("")):
+    t = require_therapist_login(request, db)
+    a = WealthAsset(
+        name=name, asset_type=asset_type, holding=holding or None,
+        current_value=int(current_value * 100), monthly_revenue=int(monthly_revenue * 100),
+        growth_rate=growth_rate, status=status, notes=notes or None,
+    )
+    db.add(a)
+    db.commit()
+    return RedirectResponse("/wealth/assets", status_code=303)
+
+
+@app.post("/wealth/assets/{asset_id}/update", response_class=HTMLResponse)
+async def wealth_asset_update(asset_id: int, request: Request, db=Depends(get_db),
+                               name: str = Form(...), asset_type: str = Form("ip"),
+                               holding: str = Form(""), current_value: float = Form(0),
+                               monthly_revenue: float = Form(0), growth_rate: float = Form(0),
+                               status: str = Form("active"), notes: str = Form("")):
+    t = require_therapist_login(request, db)
+    a = db.query(WealthAsset).filter(WealthAsset.id == asset_id).first()
+    if not a:
+        raise HTTPException(404, "Asset not found")
+    a.name = name
+    a.asset_type = asset_type
+    a.holding = holding or None
+    a.current_value = int(current_value * 100)
+    a.monthly_revenue = int(monthly_revenue * 100)
+    a.growth_rate = growth_rate
+    a.status = status
+    a.notes = notes or None
+    db.commit()
+    return RedirectResponse("/wealth/assets", status_code=303)
+
+
+@app.post("/wealth/assets/{asset_id}/delete")
+async def wealth_asset_delete(asset_id: int, request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    a = db.query(WealthAsset).filter(WealthAsset.id == asset_id).first()
+    if a:
+        db.delete(a)
+        db.commit()
+    return RedirectResponse("/wealth/assets", status_code=303)
+
+
+# --- WEEKLY REVIEW ---
+
+@app.get("/wealth/weekly", response_class=HTMLResponse)
+async def wealth_weekly(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    now = datetime.now(ZoneInfo("Europe/Berlin"))
+    current_week = now.strftime("%Y-W%V")
+
+    reviews = db.query(WealthWeekly).order_by(WealthWeekly.created_at.desc()).limit(12).all()
+    current = next((r for r in reviews if r.week == current_week), None)
+
+    form_html = f"""
+    <div class="card">
+      <h1>Weekly Review</h1>
+      <p>Woche: <b>{current_week}</b></p>
+      <form method="post" action="/wealth/weekly/save">
+        <input type="hidden" name="week" value="{current_week}">
+
+        <label>1. Was kam OHNE mein Zutun rein? (Passive Income)</label>
+        <textarea name="q1_passive_income" rows="2">{current.q1_passive_income if current and current.q1_passive_income else ''}</textarea>
+
+        <label>2. Was habe ich diese Woche automatisiert?</label>
+        <textarea name="q2_automated" rows="2">{current.q2_automated if current and current.q2_automated else ''}</textarea>
+
+        <label>3. Welchen Stream habe ich näher an 100% Automation gebracht?</label>
+        <textarea name="q3_automation_progress" rows="2">{current.q3_automation_progress if current and current.q3_automation_progress else ''}</textarea>
+
+        <label>4. Meine öffentliche Sichtbarkeit diese Woche?</label>
+        <select name="q4_visibility">
+          <option value="reduced" {'selected' if current and current.q4_visibility == 'reduced' else ''}>Reduziert</option>
+          <option value="same" {'selected' if current and current.q4_visibility == 'same' else ''}>Gleich</option>
+          <option value="increased" {'selected' if current and current.q4_visibility == 'increased' else ''}>Erhöht</option>
+        </select>
+
+        <label>5. Stunden IN vs. AN dem System gearbeitet?</label>
+        <textarea name="q5_in_vs_on" rows="2">{current.q5_in_vs_on if current and current.q5_in_vs_on else ''}</textarea>
+
+        <label>Selbstbewertung (1-10)</label>
+        <input name="score" type="number" min="1" max="10" value="{current.score if current and current.score else ''}">
+
+        <label>Notizen</label>
+        <textarea name="notes" rows="2">{current.notes if current and current.notes else ''}</textarea>
+
+        <button type="submit">Speichern</button>
+      </form>
+    </div>
+    """
+
+    past_html = ""
+    for r in reviews:
+        if r.week == current_week:
+            continue
+        score_color = "#22c55e" if r.score and r.score >= 7 else "#f59e0b" if r.score and r.score >= 4 else "#ef4444"
+        vis_labels = {"reduced": "Reduziert", "same": "Gleich", "increased": "Erhöht"}
+        past_html += f"""
+        <div style="padding:12px 0;border-bottom:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;">
+            <b>{r.week}</b>
+            <span style="color:{score_color};font-weight:700;">{r.score or '-'}/10</span>
+          </div>
+          <div class="small" style="margin-top:4px;">
+            Sichtbarkeit: {vis_labels.get(r.q4_visibility, '-')}
+            {f' | {r.q1_passive_income[:60]}...' if r.q1_passive_income and len(r.q1_passive_income) > 60 else f' | {r.q1_passive_income}' if r.q1_passive_income else ''}
+          </div>
+        </div>"""
+
+    if past_html:
+        past_html = f"""
+        <div class="card">
+          <h2 style="margin-top:0;">Vergangene Reviews</h2>
+          {past_html}
+        </div>"""
+
+    return _wealth_page("Weekly Review", form_html + past_html, active_tab="weekly")
+
+
+@app.post("/wealth/weekly/save")
+async def wealth_weekly_save(request: Request, db=Depends(get_db),
+                              week: str = Form(...),
+                              q1_passive_income: str = Form(""),
+                              q2_automated: str = Form(""),
+                              q3_automation_progress: str = Form(""),
+                              q4_visibility: str = Form("same"),
+                              q5_in_vs_on: str = Form(""),
+                              score: int = Form(None),
+                              notes: str = Form("")):
+    t = require_therapist_login(request, db)
+    existing = db.query(WealthWeekly).filter(WealthWeekly.week == week).first()
+    if existing:
+        existing.q1_passive_income = q1_passive_income or None
+        existing.q2_automated = q2_automated or None
+        existing.q3_automation_progress = q3_automation_progress or None
+        existing.q4_visibility = q4_visibility
+        existing.q5_in_vs_on = q5_in_vs_on or None
+        existing.score = score
+        existing.notes = notes or None
+    else:
+        r = WealthWeekly(
+            week=week,
+            q1_passive_income=q1_passive_income or None,
+            q2_automated=q2_automated or None,
+            q3_automation_progress=q3_automation_progress or None,
+            q4_visibility=q4_visibility,
+            q5_in_vs_on=q5_in_vs_on or None,
+            score=score,
+            notes=notes or None,
+        )
+        db.add(r)
+    db.commit()
+    return RedirectResponse("/wealth/weekly", status_code=303)
 
 
 # =========================================================
