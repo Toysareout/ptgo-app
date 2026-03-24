@@ -3434,104 +3434,209 @@ ROLLO_TOMASSI = {
         "iron_rules": [
             {
                 "rule": "Iron Rule #1: Frame ist alles",
-                "description": "Wer den Frame kontrolliert, kontrolliert die Dynamik. In jeder Interaktion gibt es einen Frame – deinen oder den des anderen.",
-                "daily_practice": "Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm bewusst die Führung in mindestens 3 Gesprächen.",
+                "description": "In jeder Beziehung bestimmt die Person, die den Frame hält, die Realität dieser Beziehung. Dein Frame ist deine mentale Herkunft – deine Mission, deine Überzeugungen, dein Lebensentwurf. Wenn du deinen Frame aufgibst, lebst du im Frame eines anderen.",
+                "daily_practice": "Beobachte heute jede Interaktion: Wer setzt den Frame? Übernimm bewusst die Führung. Wenn jemand deinen Frame testet, halte ruhig stand statt zu reagieren.",
                 "metric": "frame_control",
             },
             {
-                "rule": "Iron Rule #2: Zeige niemals mehr Interesse als sie",
-                "description": "Investition muss immer proportional sein. Wer mehr investiert, hat weniger Macht.",
-                "daily_practice": "Spiegel heute das Engagement deines Gegenübers. Antworte nicht sofort. Setze deine Zeit bewusst ein.",
-                "metric": "investment_balance",
+                "rule": "Iron Rule #2: Mache deine Beziehung niemals zu deinem Lebenszweck",
+                "description": "Eine Frau oder Beziehung darf niemals deine einzige Daseinsberechtigung sein. Der Mann, der seine gesamte Identität auf eine Beziehung aufbaut, verliert seine Attraktivität und seinen Frame. Deine Mission kommt zuerst – immer.",
+                "daily_practice": "Überprüfe: Wie viel deiner Identität hängt an einer Person? Investiere heute bewusst Zeit in DEINE Mission, DEIN Wachstum, DEINE Ziele – unabhängig von jeder Beziehung.",
+                "metric": "mission_priority",
             },
             {
-                "rule": "Iron Rule #3: Jede Frau ist eine Option, keine Garantie",
-                "description": "Abundance Mentality. Nie alles auf eine Karte setzen. Du bist die Wahl, nicht der Wartende.",
-                "daily_practice": "Erweitere heute dein soziales Netzwerk. Sprich mit 3 neuen Menschen. Baue Optionen auf.",
-                "metric": "abundance_mindset",
+                "rule": "Iron Rule #3: Jede Frau die dich warten lässt, ist das Warten nicht wert",
+                "description": "Eine Frau, die echtes sexuelles Interesse an dir hat, wird Gelegenheiten schaffen, keine Hindernisse. Warten-lassen ist kein Zeichen von Qualität – es ist ein Zeichen mangelnden Interesses. Für den richtigen Mann gibt es keine Regeln.",
+                "daily_practice": "Bewerte heute deine Investitionen: Wo wartest du auf jemanden, der nicht dieselbe Energie zurückgibt? Setze deine Zeit dort ein, wo echtes Interesse besteht.",
+                "metric": "investment_awareness",
             },
             {
-                "rule": "Iron Rule #4: Verdecke deine Absichten nie mit Freundschaft",
-                "description": "Sei direkt. Friendzone entsteht durch fehlende Polarisierung. Mache deine Intention klar.",
-                "daily_practice": "Kommuniziere heute eine unbequeme Wahrheit direkt. Keine Umwege. Keine Entschuldigung.",
-                "metric": "directness",
+                "rule": "Iron Rule #4: Ziehe niemals unter keinen Umständen mit einer Frau zusammen, die nicht deine Ehefrau ist",
+                "description": "Zusammenziehen ohne Commitment gibt alle Vorteile der Ehe ohne die Verpflichtung. Du verlierst Verhandlungsmacht, Unabhängigkeit und deinen mysteriösen Wert. Es normalisiert deine Präsenz und macht dich zum Möbelstück.",
+                "daily_practice": "Reflektiere deine Wohnsituation und Unabhängigkeit. Schütze deinen persönlichen Raum als Grundlage deines Frames.",
+                "metric": "independence",
             },
             {
-                "rule": "Iron Rule #5: Dein Wert steigt, wenn du dich selbst priorisierst",
-                "description": "Sexual Market Value (SMV) ist real. Dein Wert wird durch dein Verhalten definiert, nicht durch deine Worte.",
-                "daily_practice": "Priorisiere heute DEIN Training, DEINE Karriere, DEINE Ziele. Sage mindestens einmal Nein.",
-                "metric": "self_priority",
+                "rule": "Iron Rule #5: Überlasse niemals einer Frau die Kontrolle über Verhütung oder Familienplanung",
+                "description": "Reproduktive Entscheidungen haben lebenslange Konsequenzen. Übernimm die volle Verantwortung für deine eigene Verhütung. Vertraue nicht auf die Aussagen anderer in einer so fundamentalen Frage.",
+                "daily_practice": "Übernimm Eigenverantwortung in ALLEN Lebensbereichen. Überprüfe, wo du kritische Entscheidungen an andere delegierst.",
+                "metric": "self_responsibility",
             },
             {
-                "rule": "Iron Rule #6: Frauen sind keine Männer mit anderen Körpern",
-                "description": "Verstehe die fundamentalen Unterschiede in Kommunikation, Attraktion und Bindung.",
-                "daily_practice": "Beobachte heute Kommunikationsmuster. Höre auf das WAS nicht gesagt wird.",
-                "metric": "awareness",
+                "rule": "Iron Rule #6: Frauen sind grundlegend nicht in der Lage, einen Mann so zu lieben wie er es erwartet",
+                "description": "Männer lieben idealistisch – bedingungslos und aufopfernd. Frauen lieben opportunistisch – pragmatisch und bedingt. Das ist keine Kritik, sondern Biologie. Weibliche Liebe basiert auf dem, was du BIST und DARSTELLST, nicht auf wer du im Herzen bist.",
+                "daily_practice": "Akzeptiere diese Realität ohne Bitterkeit. Werde die beste Version deiner selbst – nicht für sie, sondern für DICH. Dein Wert bestimmt die Qualität deiner Beziehungen.",
+                "metric": "realistic_expectations",
             },
             {
-                "rule": "Iron Rule #7: Hypergamie ist Natur, nicht Moral",
-                "description": "Frauen optimieren instinktiv nach oben. Das ist keine Kritik, sondern Biologie. Deine Aufgabe: Werde die beste Version.",
-                "daily_practice": "Arbeite heute an einem Skill der deinen Marktwert steigert. Körper, Geld, oder Status.",
-                "metric": "smv_improvement",
+                "rule": "Iron Rule #7: Es ist immer besser neue Frauen kennenzulernen als alte Beziehungen wiederzubeleben",
+                "description": "Der Versuch, eine Ex zurückzugewinnen, kommt immer aus einer Position der Schwäche. Du investierst Energie in eine gescheiterte Dynamik statt in neue Möglichkeiten. Nostalgie ist ein schlechter Berater – Abundance Mentality ist der Weg.",
+                "daily_practice": "Lasse heute etwas Altes los, das nicht mehr funktioniert. Investiere die freigewordene Energie in neue Möglichkeiten – im sozialen Leben, in der Karriere, überall.",
+                "metric": "forward_momentum",
             },
             {
-                "rule": "Iron Rule #8: Sei der Preis",
-                "description": "Wenn du dich als Preis verhältst, wirst du als Preis behandelt. Internalisiere deinen Wert.",
-                "daily_practice": "Handle heute so, als wärst du die wichtigste Person im Raum. Nicht arrogant – aber sicher.",
-                "metric": "prize_mentality",
+                "rule": "Iron Rule #8: Lass sie selbst herausfinden warum sie nicht mit dir schlafen will – erkläre es ihr niemals",
+                "description": "Wenn du einer Frau erklärst, warum sie dich nicht attraktiv findet, gibst du ihr das Werkzeug, dich zu manipulieren. Echte Attraktion braucht keine Erklärung. Zeige, demonstriere, SEI – aber erkläre dich nie.",
+                "daily_practice": "Höre heute auf, dich zu erklären oder zu rechtfertigen. Lass deine Handlungen sprechen. Wer dich versteht, versteht dich – wer nicht, ist nicht dein Publikum.",
+                "metric": "non_justification",
             },
             {
-                "rule": "Iron Rule #9: Vertraue dem Verhalten, nicht den Worten",
-                "description": "Was Menschen TUN ist die Wahrheit. Was sie SAGEN ist oft Rationalisierung.",
-                "daily_practice": "Ignoriere heute was dir gesagt wird. Beobachte was getan wird. Entscheide basierend auf Handlungen.",
-                "metric": "behavioral_reading",
+                "rule": "Iron Rule #9: Mache dich niemals selbst herunter – unter keinen Umständen",
+                "description": "Selbstabwertung ist kein Humor und keine Bescheidenheit – es ist Selbstsabotage. Jedes Mal wenn du dich selbst herunterputzt, bestätigst du den niedrigen Wert, den andere dir zuschreiben wollen. Sei der Preis.",
+                "daily_practice": "Achte heute auf jeden Moment, in dem du dich selbst abwertest – auch 'humorvoll'. Ersetze Selbstironie durch ruhiges Selbstvertrauen. Sprich über dich, wie du über deinen besten Freund sprechen würdest.",
+                "metric": "self_regard",
             },
         ],
     },
     "books": {
         "rational_male_1": {
-            "title": "The Rational Male – Buch 1",
+            "title": "The Rational Male – Buch 1 (2013)",
             "key_concepts": [
-                "Hypergamie verstehen und akzeptieren",
-                "SMV (Sexual Market Value) Kurven – Männer peaken später",
-                "Blue Pill vs Red Pill Bewusstsein",
-                "Oneitis als größte Gefahr",
-                "Plate Theory – Optionen aufbauen",
-                "Frame Control als Lebensphilosophie",
+                "Hypergamie – der weibliche Instinkt zum Optimieren nach oben (Branch Swinging)",
+                "SMV-Kurven (Sexual Market Value) – Männer peaken ~35-45, Frauen ~18-28",
+                "Blue Pill Conditioning – gesellschaftliche Programmierung die Männer schwächt",
+                "Oneitis – die Fixierung auf EINE Frau als größter AFC-Fehler",
+                "Plate Theory – mehrere Optionen gleichzeitig als natürlicher Zustand",
+                "Frame Control – wer den Frame hält, bestimmt die Beziehungsrealität",
+                "AFC (Average Frustrated Chump) – der typische Beta-Mann und seine Fehler",
+                "Alpha Fucks / Beta Bucks – die duale Sexualstrategie der Frau",
+                "War Brides – Frauen passen sich emotional schneller an neue Realitäten an",
+                "The Feminine Mystique – die Überhöhung des Weiblichen als Kontrollmechanismus",
+                "Scarcity vs Abundance Mentality – Knappheitsdenken vs. Überflussdenken",
+                "The Medium is the Message – WIE du kommunizierst ist wichtiger als WAS",
+                "Female Solipsism – die weibliche Tendenz alles auf sich selbst zu beziehen",
+                "Desire Cannot Be Negotiated – echte Attraktion kann nicht verhandelt werden",
             ],
         },
         "rational_male_2": {
-            "title": "The Rational Male – Preventive Medicine",
+            "title": "The Rational Male – Preventive Medicine (2015)",
             "key_concepts": [
-                "Die 5 Phasen der Red Pill Entwicklung",
-                "Phase 1: Denial – Ablehnung der Realität",
-                "Phase 2: Anger – Wut über die Täuschung",
-                "Phase 3: Bargaining – Verhandlung mit dem alten Ich",
-                "Phase 4: Depression – Trauer über die Illusion",
-                "Phase 5: Acceptance – Integration und Neuaufbau",
-                "Feminine Imperative erkennen",
-                "Social Conventions die Männer klein halten",
+                "SMV-Timeline im Detail – strategische Lebensphasen für Männer (20er, 30er, 40er)",
+                "Die Epiphany Phase – Frauen ~28-32 wechseln die Strategie (Alpha → Beta-Suche)",
+                "Open Hypergamy – Hypergamie wird im modernen Kontext offen gelebt und gefeiert",
+                "Alpha Widow – Frau die emotional an einen früheren Alpha gebunden bleibt",
+                "Die 5 Phasen der Red Pill Entwicklung: Denial → Anger → Bargaining → Depression → Acceptance",
+                "Feminine Imperative – das gesellschaftliche System das weibliche Sexualstrategie priorisiert",
+                "Social Conventions – ungeschriebene Regeln die Männer in Blue-Pill-Verhalten halten",
+                "Preventive Medicine für junge Männer – früh die Dynamiken verstehen statt spät",
+                "Zeitfenster-Strategien – wann investieren, wann ernten, wann aufbauen",
+                "Beta Game vs Alpha Game – die fundamentalen Unterschiede im Beziehungsverhalten",
+                "The Wall – der Punkt an dem weibliche SMV rapide sinkt und Strategien sich ändern",
+                "Buffers – Schutzmechanismen die Männer vor Ablehnung bewahren sollen (aber schaden)",
             ],
         },
         "rational_male_3": {
-            "title": "The Rational Male – Positive Masculinity",
+            "title": "The Rational Male – Positive Masculinity (2017)",
             "key_concepts": [
-                "Maskulinität ist kein Fehler",
-                "Konventionelle Attraktivität aufbauen",
-                "Mission vor Beziehung",
-                "Red Pill Parenting",
-                "Komplementäre Geschlechterrollen",
-                "Authentic vs Performance Masculinity",
+                "Maskulinität ist kein Fehler – gegen die Pathologisierung männlicher Natur",
+                "Konventionelle Attraktivität – bewusst aufbauen statt 'just be yourself'",
+                "Mission vor Beziehung – dein Lebenszweck definiert deinen Wert",
+                "Red Pill Parenting – Söhne UND Töchter mit realistischem Weltbild erziehen",
+                "Komplementäre Geschlechterrollen vs egalitärer Gleichheitsmythos",
+                "Authentic Masculinity vs Performance Masculinity – echt sein statt spielen",
+                "Fatherlessness – die Krise der vaterlosen Generation und ihre Auswirkungen",
+                "Tribalism und Male Spaces – Männer brauchen männliche Räume ohne Feminisierung",
+                "The New Polyandry – wie moderne Dating-Kultur Frauen ermutigt mehrere Männer zu halten",
+                "Positive Maskulinität als Gegenpol zur 'Toxic Masculinity' Narrative",
+                "Intersexual Hierarchies – wie Männer und Frauen sich gegenseitig bewerten",
+                "Red Pill Awareness in Langzeitbeziehungen – Frame halten über Jahrzehnte",
             ],
         },
         "rational_male_4": {
-            "title": "The Rational Male – Religion",
+            "title": "The Rational Male – Religion (2019)",
             "key_concepts": [
-                "Spiritualität und Red Pill vereinen",
-                "Traditionelle Werte im modernen Kontext",
-                "Purpose-driven Leadership",
-                "Moralische Integrität ohne Blue Pill Conditioning",
+                "Egalitarian vs Complementarian Christianity – zwei Modelle der Geschlechterrollen",
+                "The Purple Pill – der Kompromiss-Versuch religiöser Männer (Red Pill + Blue Pill)",
+                "Churchianity vs echte Spiritualität – wenn Kirche zum Feminine Imperative wird",
+                "Blue Pill Conditioning durch religiöse Institutionen – 'Happy Wife, Happy Life'",
+                "Das 'Good Man' Narrativ als Manipulation – Pflicht ohne Gegenwert",
+                "Headship und männliche Führung – biblische Führung vs moderne Unterwerfung",
+                "Sexual Marketplace innerhalb religiöser Gemeinschaften",
+                "Moralische Integrität ohne Blue Pill Conditioning – Ethik mit offenen Augen",
+                "Purpose-driven Leadership – spirituelle Mission als Frame-Fundament",
+                "Traditionelle Werte im modernen Kontext – was funktioniert, was nicht",
+                "Red Pill Women – Frauen die die Dynamiken verstehen und bewusst wählen",
+                "Intersexual Dynamics in der Gemeinde – wie Kirchen oft Beta-Verhalten belohnen",
             ],
+        },
+        "rational_male_5": {
+            "title": "The Rational Male – The Players Handbook (2022)",
+            "key_concepts": [
+                "Game als erlernbare Fähigkeit – nicht angeboren, sondern trainierbar",
+                "Approach Anxiety überwinden – systematische Desensibilisierung",
+                "Social Proof in der Praxis – Demonstration statt Behauptung",
+                "Push/Pull Dynamik – Spannung aufbauen und halten",
+                "Text Game – die Kunst der digitalen Kommunikation",
+                "Date Logistics – Planung und Führung von Anfang an",
+                "Kino Escalation – physische Eskalation lesen und führen",
+                "LMR (Last Minute Resistance) – verstehen und kalibrieren",
+                "Shit Tests erkennen und bestehen – Agree & Amplify, Amused Mastery, Ignore",
+                "Inner Game – Mindset als Fundament für äußeren Erfolg",
+                "Plates vs LTR – wann und wie man von Optionen zu Commitment übergeht",
+                "Post-Wall Game – Attraktivität als reifer Mann maximieren",
+            ],
+        },
+    },
+    "glossary": {
+        "hypergamie": {
+            "term": "Hypergamie",
+            "definition": "Der weibliche Instinkt, sich mit dem Mann höchsten verfügbaren Werts zu paaren. Kein moralisches Urteil – evolutionäre Biologie.",
+        },
+        "smv": {
+            "term": "SMV (Sexual Market Value)",
+            "definition": "Dein sexueller Marktwert. Kombination aus Aussehen, Status, Game und Ressourcen. Männer peaken ~35-45, Frauen ~18-28.",
+        },
+        "frame": {
+            "term": "Frame",
+            "definition": "Deine mentale Realität. Wer den Frame kontrolliert, bestimmt die Dynamik jeder Interaktion und Beziehung.",
+        },
+        "oneitis": {
+            "term": "Oneitis",
+            "definition": "Die krankhafte Fixierung auf EINE Frau als 'die Einzige'. Zerstört Abundance Mentality und Frame.",
+        },
+        "alpha_widow": {
+            "term": "Alpha Widow",
+            "definition": "Eine Frau, die emotional an einen früheren Alpha-Partner gebunden bleibt und jeden neuen Mann an ihm misst.",
+        },
+        "war_brides": {
+            "term": "War Brides",
+            "definition": "Das weibliche Talent, sich emotional schnell an neue Realitäten anzupassen. Erklärt schnelles 'Weitergehen' nach Trennungen.",
+        },
+        "the_wall": {
+            "term": "The Wall",
+            "definition": "Der Punkt (~30-32) an dem weibliche SMV rapide sinkt. Führt zur Epiphany Phase und Strategiewechsel.",
+        },
+        "epiphany_phase": {
+            "term": "Epiphany Phase",
+            "definition": "Frauen ~28-32 erkennen, dass ihre SMV sinkt und wechseln von Alpha-Partnern zu Beta-Providern (Strategiewechsel).",
+        },
+        "plate_theory": {
+            "term": "Plate Theory",
+            "definition": "Mehrere romantische Optionen gleichzeitig pflegen. Nicht um zu täuschen, sondern um Abundance Mentality zu leben.",
+        },
+        "afc": {
+            "term": "AFC (Average Frustrated Chump)",
+            "definition": "Der durchschnittliche Beta-Mann, der Blue-Pill-Strategien verfolgt (nett sein, warten, investieren) und frustriert scheitert.",
+        },
+        "shit_test": {
+            "term": "Shit Test / Fitness Test",
+            "definition": "Unbewusste Tests die Frauen einsetzen um die Frame-Stärke und den Wert eines Mannes zu prüfen.",
+        },
+        "feminine_imperative": {
+            "term": "Feminine Imperative",
+            "definition": "Das gesellschaftliche System das weibliche Sexualstrategie als Norm priorisiert und männliche Interessen unterordnet.",
+        },
+        "blue_pill": {
+            "term": "Blue Pill",
+            "definition": "Die gesellschaftliche Konditionierung: 'Sei einfach du selbst', 'Die Richtige kommt schon', 'Happy Wife Happy Life'. Hält Männer in passivem Verhalten.",
+        },
+        "abundance_mentality": {
+            "term": "Abundance Mentality",
+            "definition": "Die innere Überzeugung, dass es viele Optionen gibt. Das Gegenteil von Scarcity Mindset und Oneitis. Grundlage für Frame.",
+        },
+        "amused_mastery": {
+            "term": "Amused Mastery",
+            "definition": "Die Fähigkeit, Shit Tests und Provokationen mit souveränem Humor zu begegnen statt emotional zu reagieren.",
         },
     },
     "smv_pillars": {
@@ -3922,13 +4027,23 @@ def mastery_rollo(request: Request, db=Depends(get_db)):
         </div>
         """
 
+    # Glossary
+    glossary_html = ""
+    for key, entry in ROLLO_TOMASSI["glossary"].items():
+        glossary_html += f"""
+        <div style="border-bottom:1px solid #1f2937;padding:10px 0">
+          <b style="color:#fca5a5;font-size:13px">{entry['term']}</b>
+          <p style="font-size:12px;margin:4px 0 0;color:#94a3b8">{entry['definition']}</p>
+        </div>
+        """
+
     body = f"""
       <div style="text-align:center;margin:8px 0 16px">
         <div style="font-size:48px;line-height:1">🔴</div>
         <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">THE RATIONAL MALE</div>
       </div>
       <h1 style="text-align:center;font-size:22px">Rollo Tomassi Framework</h1>
-      <p class="small" style="text-align:center">Alle Iron Rules, alle Bücher, das komplette System</p>
+      <p class="small" style="text-align:center">Alle 9 Iron Rules, alle 5 Bücher, das komplette System – buchgetreu</p>
 
       <div class="hr"></div>
       <h2 style="color:#fca5a5">Iron Rules of Tomassi</h2>
@@ -3941,7 +4056,15 @@ def mastery_rollo(request: Request, db=Depends(get_db)):
 
       <div class="hr"></div>
       <h2>Bücher & Key Concepts</h2>
+      <p class="small">Alle 5 Bücher der Rational Male Serie mit den wichtigsten Konzepten</p>
       {books_html}
+
+      <div class="hr"></div>
+      <h2 style="color:#f59e0b">Glossar – Die Sprache von Tomassi</h2>
+      <p class="small">Die wichtigsten Begriffe aus allen 5 Büchern</p>
+      <div style="border:1px solid #1f2937;border-radius:14px;padding:16px;background:rgba(255,255,255,.02)">
+        {glossary_html}
+      </div>
 
       <div class="hr"></div>
       <p class="small" style="text-align:center">
