@@ -3951,7 +3951,7 @@ def mastery_hub(request: Request, db=Depends(get_db)):
         <a href="/mastery/rollo" style="display:block;padding:16px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:14px;text-align:center;text-decoration:none">
           <div style="font-size:28px">🔴</div>
           <div style="font-size:14px;font-weight:700;color:#fca5a5;margin-top:6px">Rollo Tomassi</div>
-          <div style="font-size:11px;color:#6b7280">Iron Rules & SMV</div>
+          <div style="font-size:11px;color:#6b7280">Cheat Sheet</div>
         </a>
         <a href="/mastery/tagesplan" style="display:block;padding:16px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:14px;text-align:center;text-decoration:none">
           <div style="font-size:28px">📋</div>
@@ -3984,96 +3984,97 @@ def mastery_hub(request: Request, db=Depends(get_db)):
 def mastery_rollo(request: Request, db=Depends(get_db)):
     p = require_patient_login(request, db)
 
-    # Iron Rules
+    # --- IRON RULES: compact cheat-sheet rows ---
     rules_html = ""
-    for i, rule in enumerate(ROLLO_TOMASSI["core_principles"]["iron_rules"]):
+    for rule in ROLLO_TOMASSI["core_principles"]["iron_rules"]:
         rules_html += f"""
-        <div style="border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(239,68,68,.03)">
-          <b style="color:#fca5a5;font-size:15px">{rule['rule']}</b>
-          <p style="font-size:13px;margin:8px 0 6px">{rule['description']}</p>
-          <div style="background:rgba(245,158,11,.08);border-radius:10px;padding:10px;margin-top:8px">
-            <span style="font-size:11px;color:#f59e0b;font-weight:600">DAILY PRACTICE:</span>
-            <p style="font-size:12px;margin:4px 0 0;color:#fcd34d">{rule['daily_practice']}</p>
+        <details style="border:1px solid rgba(239,68,68,.18);border-radius:12px;margin-bottom:8px;background:rgba(239,68,68,.03)">
+          <summary style="padding:12px 14px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center">
+            <b style="color:#fca5a5;font-size:13px;flex:1">{rule['rule']}</b>
+            <span style="color:#4b5563;font-size:11px;margin-left:8px">▼</span>
+          </summary>
+          <div style="padding:0 14px 12px">
+            <p style="font-size:12px;margin:0 0 8px;color:#d1d5db">{rule['description']}</p>
+            <div style="font-size:11px;color:#f59e0b">→ {rule['daily_practice']}</div>
           </div>
-        </div>
-        """
+        </details>"""
 
-    # Books
+    # --- BOOKS: compact, 5 top concepts per book, no overlap with glossary ---
+    book_colors = ["#ef4444", "#f59e0b", "#22c55e", "#6366f1", "#ec4899"]
     books_html = ""
-    for key, book in ROLLO_TOMASSI["books"].items():
-        concepts = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{c}</li>" for c in book["key_concepts"])
+    for i, (key, book) in enumerate(ROLLO_TOMASSI["books"].items()):
+        color = book_colors[i % len(book_colors)]
+        # Show max 5 most distinctive concepts per book for cheat-sheet brevity
+        top_concepts = book["key_concepts"][:5]
+        concepts = "".join(f"<li style='font-size:11px;margin:2px 0;color:#94a3b8'>{c}</li>" for c in top_concepts)
+        more = f"<li style='font-size:11px;color:#4b5563;margin:2px 0'>+ {len(book['key_concepts']) - 5} weitere</li>" if len(book["key_concepts"]) > 5 else ""
         books_html += f"""
-        <div style="border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:12px;background:rgba(255,255,255,.02)">
-          <b style="color:#e5e7eb;font-size:14px">{book['title']}</b>
-          <ul style="margin:8px 0 0;padding-left:18px">{concepts}</ul>
-        </div>
-        """
+        <div style="border-left:3px solid {color};padding:10px 14px;margin-bottom:10px;background:rgba(255,255,255,.02);border-radius:0 10px 10px 0">
+          <b style="color:{color};font-size:12px">{book['title']}</b>
+          <ul style="margin:6px 0 0;padding-left:14px">{concepts}{more}</ul>
+        </div>"""
 
-    # SMV Pillars
+    # --- SMV: horizontal compact bars ---
     smv_html = ""
+    pillar_icons = {"physique": "💪", "status": "👑", "game": "🎯", "resources": "💰"}
     for key, pillar in ROLLO_TOMASSI["smv_pillars"].items():
-        actions = "".join(f"<li style='font-size:12px;margin:3px 0;color:#94a3b8'>{a}</li>" for a in pillar["actions"])
         pct = int(pillar["weight"] * 100)
+        icon = pillar_icons.get(key, "•")
+        actions_short = " · ".join(a.split("(")[0].strip() for a in pillar["actions"][:3])
         smv_html += f"""
-        <div style="border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:14px;margin-bottom:10px;background:rgba(99,102,241,.03)">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <b style="color:#a5b4fc;font-size:14px">{pillar['label']}</b>
-            <span style="font-size:12px;color:#f59e0b;font-weight:700">{pct}%</span>
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:12px;color:#a5b4fc;font-weight:600">{icon} {pillar['label']}</span>
+            <span style="font-size:11px;color:#f59e0b;font-weight:700">{pct}%</span>
           </div>
-          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0">
+          <div style="height:4px;background:#1f2937;border-radius:999px">
             <div style="height:4px;background:#6366f1;border-radius:999px;width:{pct}%"></div>
           </div>
-          <ul style="margin:6px 0 0;padding-left:18px">{actions}</ul>
-        </div>
-        """
+          <div style="font-size:10px;color:#6b7280;margin-top:3px">{actions_short}</div>
+        </div>"""
 
-    # Glossary
+    # --- GLOSSARY: compact 2-column grid ---
     glossary_html = ""
     for key, entry in ROLLO_TOMASSI["glossary"].items():
         glossary_html += f"""
-        <div style="border-bottom:1px solid #1f2937;padding:10px 0">
-          <b style="color:#fca5a5;font-size:13px">{entry['term']}</b>
-          <p style="font-size:12px;margin:4px 0 0;color:#94a3b8">{entry['definition']}</p>
-        </div>
-        """
+        <div style="padding:6px 0;border-bottom:1px solid #111827">
+          <span style="color:#fca5a5;font-size:11px;font-weight:700">{entry['term']}</span>
+          <span style="font-size:10px;color:#6b7280"> — {entry['definition']}</span>
+        </div>"""
 
     body = f"""
-      <div style="text-align:center;margin:8px 0 16px">
-        <div style="font-size:48px;line-height:1">🔴</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:6px;letter-spacing:2px">THE RATIONAL MALE</div>
+      <div style="text-align:center;margin:8px 0 12px">
+        <div style="font-size:36px;line-height:1">🔴</div>
+        <div style="font-size:10px;color:#6b7280;margin-top:4px;letter-spacing:3px">CHEAT SHEET</div>
       </div>
-      <h1 style="text-align:center;font-size:22px">Rollo Tomassi Framework</h1>
-      <p class="small" style="text-align:center">Alle 9 Iron Rules, alle 5 Bücher, das komplette System – buchgetreu</p>
+      <h1 style="text-align:center;font-size:20px;margin:0 0 4px">The Rational Male</h1>
+      <p style="text-align:center;font-size:11px;color:#6b7280;margin:0 0 16px">Rollo Tomassi · 5 Bücher · 9 Iron Rules · Buchgetreu</p>
 
-      <div class="hr"></div>
-      <h2 style="color:#fca5a5">Iron Rules of Tomassi</h2>
+      <h2 style="color:#fca5a5;font-size:14px;margin:0 0 8px;letter-spacing:1px">⚔️ IRON RULES</h2>
       {rules_html}
 
-      <div class="hr"></div>
-      <h2 style="color:#a5b4fc">SMV Pillars – Dein Marktwert</h2>
-      <p class="small">Sexual Market Value = Summe aus 4 Bereichen. Optimiere alle parallel.</p>
-      {smv_html}
+      <div style="height:1px;background:#1f2937;margin:16px 0"></div>
+      <h2 style="color:#a5b4fc;font-size:14px;margin:0 0 10px;letter-spacing:1px">📊 SMV – DEIN MARKTWERT</h2>
+      <div style="background:rgba(99,102,241,.04);border:1px solid rgba(99,102,241,.15);border-radius:12px;padding:14px">
+        {smv_html}
+      </div>
 
-      <div class="hr"></div>
-      <h2>Bücher & Key Concepts</h2>
-      <p class="small">Alle 5 Bücher der Rational Male Serie mit den wichtigsten Konzepten</p>
+      <div style="height:1px;background:#1f2937;margin:16px 0"></div>
+      <h2 style="font-size:14px;margin:0 0 10px;letter-spacing:1px">📚 BÜCHER – KEY TAKEAWAYS</h2>
       {books_html}
 
-      <div class="hr"></div>
-      <h2 style="color:#f59e0b">Glossar – Die Sprache von Tomassi</h2>
-      <p class="small">Die wichtigsten Begriffe aus allen 5 Büchern</p>
-      <div style="border:1px solid #1f2937;border-radius:14px;padding:16px;background:rgba(255,255,255,.02)">
+      <div style="height:1px;background:#1f2937;margin:16px 0"></div>
+      <h2 style="color:#f59e0b;font-size:14px;margin:0 0 8px;letter-spacing:1px">🔑 GLOSSAR</h2>
+      <div style="background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:10px 14px">
         {glossary_html}
       </div>
 
-      <div class="hr"></div>
-      <p class="small" style="text-align:center">
-        <a href="/mastery">← Hub</a> •
-        <a href="/mastery/tagesplan">Tagesplan</a> •
-        <a href="/mastery/income">Income</a>
+      <div style="height:1px;background:#1f2937;margin:16px 0"></div>
+      <p style="text-align:center;font-size:11px;color:#4b5563;margin:0 0 8px">
+        <a href="/mastery">← Hub</a> · <a href="/mastery/tagesplan">Tagesplan</a> · <a href="/mastery/income">Income</a>
       </p>
     """
-    return _page("PTGO • Rollo Tomassi", body, request=request)
+    return _page("PTGO • Rollo Tomassi Cheat Sheet", body, request=request)
 
 
 @app.get("/mastery/tagesplan", response_class=HTMLResponse)
