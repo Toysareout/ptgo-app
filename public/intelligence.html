@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>INTELLIGENCE — Command Center</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--orange:#ff8c00;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+
+/* SCANLINE + GRAIN */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:14px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-pill{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--orange);border:1px solid var(--orange);padding:3px 10px;letter-spacing:2px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* CONTENT */
+.content{max-width:1200px;margin:0 auto;padding:20px 16px 100px}
+
+/* THREAT INDEX */
+.threat-bar{background:var(--surface);border:1px solid var(--border);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.threat-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.threat-track{flex:1;min-width:200px;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative}
+.threat-fill{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.16,1,.3,1)}
+.threat-value{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;min-width:60px;text-align:right}
+.threat-status{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:3px 10px;border:1px solid;white-space:nowrap}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:2px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);padding:16px 14px;position:relative;overflow:hidden;transition:border-color .3s}
+.kpi:hover{border-color:rgba(0,240,255,.3)}
+.kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.kpi-value{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;margin:4px 0 2px}
+.kpi-sub{font-size:10px;color:var(--dim)}
+.kpi-trend{font-family:'Orbitron',sans-serif;font-size:10px}
+.kpi-trend.up{color:var(--green)}.kpi-trend.down{color:var(--red)}
+
+/* SECTION HEADER */
+.sec-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* SIGNAL FEED */
+.signal-filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-btn{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:5px 12px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.filter-btn.active,.filter-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.filter-btn[data-cat="market"].active{border-color:var(--cyan);color:var(--cyan)}
+.filter-btn[data-cat="competitor"].active{border-color:var(--pink);color:var(--pink)}
+.filter-btn[data-cat="financial"].active{border-color:var(--gold);color:var(--gold)}
+.filter-btn[data-cat="operations"].active{border-color:var(--green);color:var(--green)}
+
+.signal-feed{display:flex;flex-direction:column;gap:2px;margin-bottom:16px;max-height:500px;overflow-y:auto}
+.signal-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:all .3s;position:relative}
+.signal-card:hover{border-color:rgba(0,240,255,.3);transform:translateX(4px)}
+.signal-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.signal-card[data-cat="market"]::before{background:var(--cyan)}
+.signal-card[data-cat="competitor"]::before{background:var(--pink)}
+.signal-card[data-cat="financial"]::before{background:var(--gold)}
+.signal-card[data-cat="operations"]::before{background:var(--green)}
+.signal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.signal-cat{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;border:1px solid}
+.signal-cat.market{color:var(--cyan);border-color:rgba(0,240,255,.4)}
+.signal-cat.competitor{color:var(--pink);border-color:rgba(255,45,142,.4)}
+.signal-cat.financial{color:var(--gold);border-color:rgba(201,168,76,.4)}
+.signal-cat.operations{color:var(--green);border-color:rgba(45,255,168,.4)}
+.signal-severity{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:2px 8px}
+.signal-severity.critical{color:var(--red);border:1px solid var(--red);animation:pulse 1.5s infinite}
+.signal-severity.high{color:var(--orange);border:1px solid var(--orange)}
+.signal-severity.medium{color:var(--gold);border:1px solid rgba(201,168,76,.4)}
+.signal-severity.low{color:var(--dim);border:1px solid var(--border)}
+.signal-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.signal-desc{font-size:11px;color:var(--dim);line-height:1.5}
+.signal-time{font-size:9px;color:var(--dim);margin-top:6px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
+.signal-actions{display:flex;gap:6px;margin-top:8px}
+.signal-action-btn{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:4px 10px;cursor:pointer;transition:all .3s}
+.signal-action-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* QUERY BOX */
+.query-section{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px;position:relative}
+.query-section::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.5}
+.query-header{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--orange);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.query-input-wrap{display:flex;gap:8px}
+.query-input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px 16px;outline:none;transition:border-color .3s;resize:none;min-height:44px;max-height:120px}
+.query-input:focus{border-color:var(--orange);box-shadow:0 0 15px rgba(255,140,0,.15)}
+.query-input::placeholder{color:var(--dim)}
+.query-submit{background:transparent;border:1px solid var(--orange);color:var(--orange);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:12px 24px;cursor:pointer;transition:all .3s;white-space:nowrap}
+.query-submit:hover{background:var(--orange);color:var(--bg)}
+.query-submit:disabled{opacity:.4;cursor:not-allowed}
+.query-result{margin-top:16px;padding:16px;background:var(--surface2);border:1px solid var(--border);font-size:12px;line-height:1.7;color:var(--text);display:none;max-height:400px;overflow-y:auto;white-space:pre-wrap}
+.query-result.visible{display:block;animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* DEEP DIVE MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(3,3,8,.9);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.visible{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--pink),var(--orange))}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:1px solid var(--border);color:var(--dim);font-size:16px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.modal-close:hover{border-color:var(--red);color:var(--red)}
+.modal-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin-bottom:4px}
+.modal-cat{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:16px;display:inline-block;padding:2px 8px;border:1px solid}
+.modal-body{font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap}
+.modal-loading{text-align:center;padding:40px;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px}
+.modal-loading::after{content:'';display:block;width:40px;height:40px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:16px auto 0;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* LOADING */
+.feed-loading{text-align:center;padding:40px;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px}
+.feed-loading::after{content:'';display:block;width:30px;height:30px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:12px auto 0;animation:spin 1s linear infinite}
+
+/* BOTTOM NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s;text-decoration:none}
+.nav-btn svg{width:20px;height:20px}
+.nav-btn.active{color:var(--cyan)}
+.nav-btn:hover{color:var(--cyan)}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .threat-bar{flex-direction:column;align-items:stretch}
+  .threat-track{min-width:0}
+  .query-input-wrap{flex-direction:column}
+  .query-submit{padding:10px}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-brand">PTGO</div>
+    <span class="topbar-pill">INTELLIGENCE</span>
+  </div>
+  <div class="topbar-right">
+    <span class="status-dot"></span>
+    <span class="topbar-time" id="clock">--:--:--</span>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- THREAT INDEX -->
+<div class="threat-bar">
+  <span class="threat-label">Threat Index</span>
+  <div class="threat-track">
+    <div class="threat-fill" id="threatFill" style="width:0%;background:linear-gradient(90deg,var(--green),var(--gold),var(--red))"></div>
+  </div>
+  <span class="threat-value" id="threatValue" style="color:var(--green)">--</span>
+  <span class="threat-status" id="threatStatus" style="color:var(--green);border-color:var(--green)">LOADING</span>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Active Signals</div>
+    <div class="kpi-value" id="kpiSignals">--</div>
+    <div class="kpi-sub">Heute erfasst</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Critical Alerts</div>
+    <div class="kpi-value" id="kpiCritical" style="color:var(--red)">--</div>
+    <div class="kpi-sub">Sofortiger Handlungsbedarf</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Queries Today</div>
+    <div class="kpi-value" id="kpiQueries">0</div>
+    <div class="kpi-sub">KI-Analysen durchgefuehrt</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">System Status</div>
+    <div class="kpi-value" style="color:var(--green);font-size:14px">OPERATIONAL</div>
+    <div class="kpi-sub">Alle Systeme aktiv</div>
+  </div>
+</div>
+
+<!-- KI QUERY BOX -->
+<div class="sec-title">KI Intelligence Query</div>
+<div class="query-section">
+  <div class="query-header">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    CLAUDE SONNET 4 — INTELLIGENCE ANALYST
+  </div>
+  <div class="query-input-wrap">
+    <textarea class="query-input" id="queryInput" placeholder="Stelle eine strategische Frage... z.B. 'Analysiere die aktuelle Marktlage im Tech-Sektor'" rows="1"></textarea>
+    <button class="query-submit" id="querySubmit" onclick="submitQuery()">ANALYSE</button>
+  </div>
+  <div class="query-result" id="queryResult"></div>
+</div>
+
+<!-- SIGNAL FEED -->
+<div class="sec-title">Live Signal Feed</div>
+<div class="signal-filters">
+  <button class="filter-btn active" data-cat="all" onclick="filterSignals('all')">Alle</button>
+  <button class="filter-btn" data-cat="market" onclick="filterSignals('market')">Market</button>
+  <button class="filter-btn" data-cat="competitor" onclick="filterSignals('competitor')">Competitor</button>
+  <button class="filter-btn" data-cat="financial" onclick="filterSignals('financial')">Financial</button>
+  <button class="filter-btn" data-cat="operations" onclick="filterSignals('operations')">Operations</button>
+</div>
+<div class="signal-feed" id="signalFeed">
+  <div class="feed-loading" id="feedLoading">SIGNALS WERDEN GELADEN</div>
+</div>
+
+</div>
+
+<!-- DEEP DIVE MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">&times;</button>
+    <div class="modal-title" id="modalTitle"></div>
+    <div class="modal-cat" id="modalCat"></div>
+    <div class="modal-body" id="modalBody">
+      <div class="modal-loading" id="modalLoading">DEEP DIVE ANALYSE</div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2"/></svg>HOME</a>
+  <a href="/coaching" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>COACHING</a>
+  <a href="/mastery" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>MASTERY</a>
+  <a href="/nerve" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313"/></svg>NERVE</a>
+  <a href="/intelligence" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>INTEL</a>
+</div></nav>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ── STATE ──
+let signals=[];
+let activeFilter='all';
+let queryCount=0;
+
+// ── THREAT INDEX ──
+function updateThreatIndex(){
+  if(!signals.length)return;
+  const weights={critical:25,high:15,medium:8,low:3};
+  let score=0;
+  signals.forEach(s=>score+=weights[s.severity]||0);
+  score=Math.min(Math.round(score/signals.length*10),100);
+  const fill=document.getElementById('threatFill');
+  const val=document.getElementById('threatValue');
+  const status=document.getElementById('threatStatus');
+  fill.style.width=score+'%';
+  val.textContent=score;
+  if(score>=70){val.style.color=status.style.color=status.style.borderColor='var(--red)';status.textContent='CRITICAL';}
+  else if(score>=40){val.style.color=status.style.color=status.style.borderColor='var(--orange)';status.textContent='ELEVATED';}
+  else{val.style.color=status.style.color=status.style.borderColor='var(--green)';status.textContent='NORMAL';}
+}
+
+// ── SIGNAL FEED ──
+function renderSignals(){
+  const feed=document.getElementById('signalFeed');
+  const filtered=activeFilter==='all'?signals:signals.filter(s=>s.category===activeFilter);
+  if(!filtered.length){feed.innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);font-size:11px">Keine Signals in dieser Kategorie</div>';return;}
+  feed.innerHTML=filtered.map((s,i)=>`
+    <div class="signal-card" data-cat="${s.category}" onclick="openDeepDive(${i})">
+      <div class="signal-head">
+        <span class="signal-cat ${s.category}">${s.category.toUpperCase()}</span>
+        <span class="signal-severity ${s.severity}">${s.severity.toUpperCase()}</span>
+      </div>
+      <div class="signal-title">${esc(s.title)}</div>
+      <div class="signal-desc">${esc(s.description)}</div>
+      <div class="signal-time">${formatTime(s.timestamp)}</div>
+      <div class="signal-actions">
+        <button class="signal-action-btn" onclick="event.stopPropagation();openDeepDive(${i})">DEEP DIVE</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterSignals(cat){
+  activeFilter=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
+  renderSignals();
+}
+
+function formatTime(ts){
+  try{const d=new Date(ts);return d.toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+  catch(e){return'--';}
+}
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ── LOAD SIGNALS ──
+async function loadSignals(){
+  document.getElementById('feedLoading').style.display='block';
+  try{
+    const res=await fetch('/api/intelligence-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'generate_signals'})});
+    const data=await res.json();
+    if(data.signals&&data.signals.length){
+      signals=data.signals;
+      updateThreatIndex();
+      document.getElementById('kpiSignals').textContent=signals.length;
+      document.getElementById('kpiCritical').textContent=signals.filter(s=>s.severity==='critical').length;
+      renderSignals();
+    }else{
+      document.getElementById('signalFeed').innerHTML='<div style="text-align:center;padding:30px;color:var(--dim);font-size:11px">Signal-Generierung fehlgeschlagen. Pruefe den API Key.</div>';
+    }
+  }catch(e){
+    document.getElementById('signalFeed').innerHTML='<div style="text-align:center;padding:30px;color:var(--red);font-size:11px">Verbindungsfehler: '+esc(e.message)+'</div>';
+  }
+  document.getElementById('feedLoading').style.display='none';
+}
+
+// ── KI QUERY ──
+async function submitQuery(){
+  const input=document.getElementById('queryInput');
+  const btn=document.getElementById('querySubmit');
+  const result=document.getElementById('queryResult');
+  const q=input.value.trim();
+  if(!q)return;
+  btn.disabled=true;btn.textContent='ANALYSIERE...';
+  result.classList.add('visible');result.textContent='Analyse laeuft...';
+  try{
+    const res=await fetch('/api/intelligence-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'query',query:q})});
+    const data=await res.json();
+    result.textContent=data.text||data.error||'Keine Antwort';
+    queryCount++;document.getElementById('kpiQueries').textContent=queryCount;
+  }catch(e){result.textContent='Fehler: '+e.message;}
+  btn.disabled=false;btn.textContent='ANALYSE';
+}
+
+// Submit on Enter (Shift+Enter for newline)
+document.getElementById('queryInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitQuery();}
+});
+
+// Auto-resize textarea
+document.getElementById('queryInput').addEventListener('input',function(){
+  this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+
+// ── DEEP DIVE MODAL ──
+async function openDeepDive(idx){
+  const s=signals[idx];if(!s)return;
+  const overlay=document.getElementById('modalOverlay');
+  const title=document.getElementById('modalTitle');
+  const cat=document.getElementById('modalCat');
+  const body=document.getElementById('modalBody');
+  title.textContent=s.title;
+  cat.textContent=s.category.toUpperCase()+' — '+s.severity.toUpperCase();
+  cat.className='modal-cat '+s.category;
+  cat.style.color='var(--'+{market:'cyan',competitor:'pink',financial:'gold',operations:'green'}[s.category]+')';
+  cat.style.borderColor=cat.style.color;
+  body.innerHTML='<div class="modal-loading">DEEP DIVE ANALYSE</div>';
+  overlay.classList.add('visible');
+  try{
+    const res=await fetch('/api/intelligence-query',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deep_dive',signal:s})});
+    const data=await res.json();
+    body.textContent=data.text||data.error||'Keine Antwort';
+    queryCount++;document.getElementById('kpiQueries').textContent=queryCount;
+  }catch(e){body.textContent='Fehler: '+e.message;}
+}
+
+function closeModal(){document.getElementById('modalOverlay').classList.remove('visible');}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
+// ── GRAIN EFFECT ──
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');
+gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+
+// ── INIT ──
+loadSignals();
+</script>
+</body>
+</html>
