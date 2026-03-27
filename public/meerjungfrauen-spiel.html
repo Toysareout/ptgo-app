@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meerjungfrauen Würfel-Abenteuer 🧜‍♀️🎲</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(180deg, #0a1628 0%, #0d3b66 30%, #1a6b8a 60%, #2d9da6 80%, #48c6a0 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+  }
+
+  /* Bubbles animation */
+  .bubbles {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .bubble {
+    position: absolute;
+    bottom: -40px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), rgba(255,255,255,0.05));
+    border-radius: 50%;
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.6; }
+    50% { opacity: 0.3; }
+    100% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
+  }
+
+  /* Seaweed */
+  .seaweed-container {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 120px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .seaweed {
+    position: absolute;
+    bottom: 0;
+    width: 20px;
+    border-radius: 40% 60% 0 0;
+    transform-origin: bottom center;
+    animation: sway 3s ease-in-out infinite;
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
+  .game-container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 1.6em;
+    text-align: center;
+    margin-bottom: 6px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .subtitle {
+    font-size: 0.95em;
+    opacity: 0.85;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  /* Board */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 16px;
+  }
+  .tile {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6em;
+    background: rgba(255,255,255,0.12);
+    border: 2px solid rgba(255,255,255,0.15);
+    position: relative;
+    transition: all 0.3s;
+  }
+  .tile.current-p1 { box-shadow: 0 0 12px 4px #ff6bca, inset 0 0 8px rgba(255,107,202,0.3); border-color: #ff6bca; }
+  .tile.current-p2 { box-shadow: 0 0 12px 4px #6bdfff, inset 0 0 8px rgba(107,223,255,0.3); border-color: #6bdfff; }
+  .tile.current-both { box-shadow: 0 0 12px 4px #ff6bca, 0 0 20px 6px #6bdfff; border-color: #e0a0ff; }
+  .tile.special { background: rgba(255,215,0,0.2); border-color: rgba(255,215,0,0.4); }
+  .tile.danger { background: rgba(255,60,60,0.15); border-color: rgba(255,60,60,0.3); }
+  .tile .tile-num {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    font-size: 0.4em;
+    opacity: 0.5;
+  }
+  .tile .player-markers {
+    position: absolute;
+    bottom: 1px;
+    display: flex;
+    gap: 2px;
+    font-size: 0.5em;
+  }
+
+  /* Players */
+  .players-bar {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 12px;
+  }
+  .player-card {
+    flex: 1;
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .player-card.active { border-color: #ffd700; background: rgba(255,215,0,0.15); }
+  .player-card .name { font-weight: bold; font-size: 1.1em; }
+  .player-card .pos { font-size: 0.85em; opacity: 0.8; }
+  .player-card .treasures { font-size: 0.85em; margin-top: 4px; }
+
+  /* Dice */
+  .dice-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .dice {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8em;
+    color: #1a3a5c;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform 0.15s;
+    user-select: none;
+  }
+  .dice:hover { transform: scale(1.08); }
+  .dice:active { transform: scale(0.95); }
+  .dice.rolling {
+    animation: diceRoll 0.5s ease-out;
+  }
+  @keyframes diceRoll {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(90deg) scale(1.1); }
+    50% { transform: rotate(180deg) scale(0.9); }
+    75% { transform: rotate(270deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  .roll-btn {
+    background: linear-gradient(135deg, #ff6bca, #c86bff);
+    border: none;
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 10px 32px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(200,107,255,0.4);
+    transition: all 0.2s;
+  }
+  .roll-btn:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(200,107,255,0.5); }
+  .roll-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Message */
+  .message-box {
+    background: rgba(255,255,255,0.12);
+    border-radius: 14px;
+    padding: 12px 16px;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1em;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Win screen */
+  .win-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .win-overlay.show { display: flex; }
+  .win-card {
+    background: linear-gradient(135deg, #1a3a5c, #0d5e6e);
+    border-radius: 24px;
+    padding: 40px 32px;
+    text-align: center;
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 40px rgba(255,215,0,0.3);
+    max-width: 340px;
+  }
+  .win-card h2 { font-size: 1.8em; margin-bottom: 10px; }
+  .win-card .trophy { font-size: 4em; margin-bottom: 10px; }
+  .win-card p { margin-bottom: 16px; opacity: 0.9; }
+  .win-card button {
+    background: linear-gradient(135deg, #ffd700, #ffaa00);
+    border: none;
+    color: #1a3a5c;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 12px 36px;
+    border-radius: 30px;
+    cursor: pointer;
+  }
+
+  /* Start screen */
+  .start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    text-align: center;
+    gap: 20px;
+  }
+  .start-screen h1 { font-size: 2em; }
+  .start-screen .big-mermaid { font-size: 5em; }
+  .start-screen p { max-width: 320px; opacity: 0.9; line-height: 1.5; }
+  .start-screen .mode-btns { display: flex; flex-direction: column; gap: 10px; }
+  .start-screen .mode-btn {
+    background: linear-gradient(135deg, #ff6bca, #c86bff);
+    border: none;
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: bold;
+    padding: 14px 40px;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(200,107,255,0.4);
+    transition: all 0.2s;
+  }
+  .start-screen .mode-btn:hover { transform: scale(1.05); }
+  .start-screen .mode-btn.solo { background: linear-gradient(135deg, #6bdfff, #6ba0ff); box-shadow: 0 4px 12px rgba(107,160,255,0.4); }
+</style>
+</head>
+<body>
+
+<div class="bubbles" id="bubbles"></div>
+<div class="seaweed-container" id="seaweed"></div>
+
+<!-- Start Screen -->
+<div class="game-container" id="startScreen">
+  <div class="start-screen">
+    <div class="big-mermaid">🧜‍♀️</div>
+    <h1>Meerjungfrauen<br>Würfel-Abenteuer</h1>
+    <p>Würfle dich durch die Unterwasserwelt! Sammle Schätze, reite auf Delfinen und hüte dich vor dem Strudel!</p>
+    <div class="mode-btns">
+      <button class="mode-btn" onclick="startGame(2)">👫 2 Spieler</button>
+      <button class="mode-btn solo" onclick="startGame(1)">🧜‍♀️ 1 Spieler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Game Screen -->
+<div class="game-container" id="gameScreen" style="display:none;">
+  <h1>🧜‍♀️ Meerjungfrauen-Abenteuer 🎲</h1>
+  <div class="subtitle" id="turnLabel">Spieler 1 ist dran!</div>
+
+  <div class="players-bar" id="playersBar"></div>
+
+  <div class="board" id="board"></div>
+
+  <div class="dice-area">
+    <div class="dice" id="dice" onclick="rollDice()">🎲</div>
+    <button class="roll-btn" id="rollBtn" onclick="rollDice()">Würfeln!</button>
+  </div>
+
+  <div class="message-box" id="message">Tippe auf den Würfel oder den Knopf um zu starten!</div>
+</div>
+
+<!-- Win Overlay -->
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="trophy">👑</div>
+    <h2 id="winTitle">Gewonnen!</h2>
+    <p id="winText"></p>
+    <button onclick="location.reload()">🔄 Nochmal spielen!</button>
+  </div>
+</div>
+
+<script>
+// ── Tile data ──
+const TILE_ICONS = [
+  '🏖️','🐚','🌊','🐠','⭐','🦀','🪸','🐙','💎','🐬',
+  '🌺','🦈','🪼','⭐','🐡','🏝️','🐳','💎','🦑','🐬',
+  '🪸','🦞','⭐','🐟','🏰'
+];
+
+const SPECIAL_TILES = {
+  4:  { type: 'star',    text: '⭐ Ein Seestern zeigt dir den Weg! 2 Felder vor!' },
+  9:  { type: 'dolphin', text: '🐬 Ein Delfin nimmt dich mit! 3 Felder vor!' },
+  13: { type: 'star',    text: '⭐ Eine leuchtende Perle! 2 Felder vor!' },
+  17: { type: 'treasure',text: '💎 Du findest einen Meeresschatz! +1 Schatz!' },
+  19: { type: 'dolphin', text: '🐬 Delfin-Express! 3 Felder vor!' },
+  22: { type: 'star',    text: '⭐ Sternenstaub gibt dir Kraft! 2 Felder vor!' },
+};
+
+const DANGER_TILES = {
+  5:  { type: 'crab',     text: '🦀 Oh nein, eine freche Krabbe! 2 Felder zurück!' },
+  11: { type: 'shark',    text: '🦈 Ein Hai jagt dich! 3 Felder zurück!' },
+  15: { type: 'whirlpool',text: '🌊 Ein Strudel zieht dich mit! Zurück auf Feld 10!' },
+  21: { type: 'squid',    text: '🦑 Tintenwolke! Du kannst nichts sehen – 1 Runde aussetzen!' },
+};
+
+const DICE_FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+const TOTAL_TILES = 25;
+const WIN_TILE = 24; // index 24 = tile 25
+
+// ── Game state ──
+let numPlayers = 2;
+let players = [];
+let currentPlayer = 0;
+let rolling = false;
+let skipTurn = [false, false];
+
+function startGame(n) {
+  numPlayers = n;
+  players = [
+    { name: 'Koralle', icon: '🧜‍♀️', pos: 0, treasures: 0, color: '#ff6bca' },
+    { name: 'Aqua', icon: '🧜‍♂️', pos: 0, treasures: 0, color: '#6bdfff' },
+  ];
+  if (n === 1) players.pop();
+  currentPlayer = 0;
+  skipTurn = [false, false];
+
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('gameScreen').style.display = 'flex';
+  renderPlayersBar();
+  renderBoard();
+  updateUI();
+}
+
+function renderPlayersBar() {
+  const bar = document.getElementById('playersBar');
+  bar.innerHTML = players.map((p, i) => `
+    <div class="player-card" id="pcard${i}">
+      <div class="name">${p.icon} ${p.name}</div>
+      <div class="pos">Feld: <span id="ppos${i}">1</span> / ${TOTAL_TILES}</div>
+      <div class="treasures">💎 <span id="ptreasure${i}">0</span></div>
+    </div>
+  `).join('');
+}
+
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  for (let i = 0; i < TOTAL_TILES; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.id = `tile${i}`;
+    if (SPECIAL_TILES[i]) tile.classList.add('special');
+    if (DANGER_TILES[i]) tile.classList.add('danger');
+    tile.innerHTML = `<span class="tile-num">${i + 1}</span>${TILE_ICONS[i]}<span class="player-markers" id="markers${i}"></span>`;
+    board.appendChild(tile);
+  }
+}
+
+function updateUI() {
+  // Update player cards
+  players.forEach((p, i) => {
+    const card = document.getElementById(`pcard${i}`);
+    card.className = 'player-card' + (i === currentPlayer ? ' active' : '');
+    document.getElementById(`ppos${i}`).textContent = p.pos + 1;
+    document.getElementById(`ptreasure${i}`).textContent = p.treasures;
+  });
+
+  // Update board markers
+  for (let i = 0; i < TOTAL_TILES; i++) {
+    const el = document.getElementById(`tile${i}`);
+    el.classList.remove('current-p1', 'current-p2', 'current-both');
+    document.getElementById(`markers${i}`).innerHTML = '';
+  }
+  const positions = players.map(p => p.pos);
+  players.forEach((p, i) => {
+    const el = document.getElementById(`tile${p.pos}`);
+    const both = players.length === 2 && positions[0] === positions[1];
+    if (both) {
+      el.classList.add('current-both');
+    } else {
+      el.classList.add(i === 0 ? 'current-p1' : 'current-p2');
+    }
+    document.getElementById(`markers${p.pos}`).innerHTML += p.icon;
+  });
+
+  // Turn label
+  const p = players[currentPlayer];
+  document.getElementById('turnLabel').textContent = `${p.icon} ${p.name} ist dran!`;
+}
+
+function rollDice() {
+  if (rolling) return;
+
+  // Check skip turn
+  if (skipTurn[currentPlayer]) {
+    skipTurn[currentPlayer] = false;
+    setMessage(`${players[currentPlayer].icon} ${players[currentPlayer].name} muss leider aussetzen!`);
+    setTimeout(() => {
+      nextTurn();
+    }, 1500);
+    return;
+  }
+
+  rolling = true;
+  const btn = document.getElementById('rollBtn');
+  const diceEl = document.getElementById('dice');
+  btn.disabled = true;
+
+  // Rolling animation
+  diceEl.classList.add('rolling');
+  let flickers = 0;
+  const flickerInterval = setInterval(() => {
+    diceEl.textContent = DICE_FACES[Math.floor(Math.random() * 6)];
+    flickers++;
+    if (flickers > 8) {
+      clearInterval(flickerInterval);
+      const roll = Math.floor(Math.random() * 6) + 1;
+      diceEl.textContent = DICE_FACES[roll - 1];
+      diceEl.classList.remove('rolling');
+      applyRoll(roll);
+    }
+  }, 80);
+}
+
+function applyRoll(roll) {
+  const p = players[currentPlayer];
+  const oldPos = p.pos;
+  let newPos = Math.min(p.pos + roll, WIN_TILE);
+  p.pos = newPos;
+
+  setMessage(`${p.icon} ${p.name} würfelt eine ${roll}!`);
+  updateUI();
+
+  // Check win
+  if (newPos >= WIN_TILE) {
+    setTimeout(() => showWin(currentPlayer), 600);
+    return;
+  }
+
+  // Check special / danger tiles after short delay
+  setTimeout(() => {
+    if (SPECIAL_TILES[newPos]) {
+      handleSpecial(newPos);
+    } else if (DANGER_TILES[newPos]) {
+      handleDanger(newPos);
+    } else {
+      finishTurn();
+    }
+  }, 800);
+}
+
+function handleSpecial(pos) {
+  const tile = SPECIAL_TILES[pos];
+  const p = players[currentPlayer];
+  setMessage(tile.text);
+
+  setTimeout(() => {
+    if (tile.type === 'star') {
+      p.pos = Math.min(p.pos + 2, WIN_TILE);
+    } else if (tile.type === 'dolphin') {
+      p.pos = Math.min(p.pos + 3, WIN_TILE);
+    } else if (tile.type === 'treasure') {
+      p.treasures++;
+    }
+    updateUI();
+
+    if (p.pos >= WIN_TILE) {
+      setTimeout(() => showWin(currentPlayer), 600);
+      return;
+    }
+    finishTurn();
+  }, 1200);
+}
+
+function handleDanger(pos) {
+  const tile = DANGER_TILES[pos];
+  const p = players[currentPlayer];
+  setMessage(tile.text);
+
+  setTimeout(() => {
+    if (tile.type === 'crab') {
+      p.pos = Math.max(p.pos - 2, 0);
+    } else if (tile.type === 'shark') {
+      p.pos = Math.max(p.pos - 3, 0);
+    } else if (tile.type === 'whirlpool') {
+      p.pos = 9; // back to field 10 (index 9)
+    } else if (tile.type === 'squid') {
+      skipTurn[currentPlayer] = true;
+    }
+    updateUI();
+    finishTurn();
+  }, 1200);
+}
+
+function finishTurn() {
+  setTimeout(() => {
+    nextTurn();
+  }, 600);
+}
+
+function nextTurn() {
+  currentPlayer = (currentPlayer + 1) % players.length;
+  updateUI();
+  rolling = false;
+  document.getElementById('rollBtn').disabled = false;
+}
+
+function setMessage(text) {
+  document.getElementById('message').textContent = text;
+}
+
+function showWin(playerIdx) {
+  const p = players[playerIdx];
+  document.getElementById('winTitle').textContent = `${p.icon} ${p.name} gewinnt!`;
+  document.getElementById('winText').textContent =
+    `Glückwunsch! ${p.name} hat die Unterwasserwelt durchquert und ${p.treasures} Schätze gesammelt! 🎉`;
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+// ── Background effects ──
+function createBubbles() {
+  const container = document.getElementById('bubbles');
+  for (let i = 0; i < 20; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 8 + Math.random() * 20;
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left = Math.random() * 100 + '%';
+    b.style.animationDuration = (4 + Math.random() * 6) + 's';
+    b.style.animationDelay = Math.random() * 8 + 's';
+    container.appendChild(b);
+  }
+}
+
+function createSeaweed() {
+  const container = document.getElementById('seaweed');
+  const colors = ['#1a8a4a', '#2aaa5a', '#15773e', '#0e6632'];
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('div');
+    s.className = 'seaweed';
+    const h = 50 + Math.random() * 70;
+    s.style.height = h + 'px';
+    s.style.left = (i * 8 + Math.random() * 5) + '%';
+    s.style.background = colors[Math.floor(Math.random() * colors.length)];
+    s.style.animationDelay = (Math.random() * 2) + 's';
+    s.style.animationDuration = (2.5 + Math.random() * 2) + 's';
+    container.appendChild(s);
+  }
+}
+
+createBubbles();
+createSeaweed();
+</script>
+</body>
+</html>
