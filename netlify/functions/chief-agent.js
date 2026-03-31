@@ -1,3 +1,15 @@
+// ============================================================
+// KI-CHEFAGENT — Executive Intelligence for Therapists
+// Aggregates patient data from Supabase + Claude AI analysis
+// ============================================================
+
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL || 'https://pwdhxarvemcgkhhnvbng.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || ''
+);
+
 const headers = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -26,40 +38,41 @@ async function callClaude(prompt, systemPrompt, maxTokens = 2000) {
   return { text: data.content?.[0]?.text || data.error?.message || 'Keine Antwort' };
 }
 
-// Supabase helper
-async function supabaseQuery(table, query = '') {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-
-  const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
-    headers: {
-      'apikey': key,
-      'Authorization': `Bearer ${key}`,
-      'Content-Type': 'application/json',
-    },
-  });
-  if (!res.ok) return null;
-  return res.json();
+function avg(arr) {
+  if (!arr.length) return null;
+  return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10;
 }
 
 async function collectPatientData() {
   // Get all patients
-  const patients = await supabaseQuery('patients', 'select=id,name,phone,email,created_at&order=name.asc');
-  if (!patients || !patients.length) return { patients: [], summary: {} };
+  const { data: patients, error: pErr } = await supabase
+    .from('patients')
+    .select('id, name, phone, email, created_at, therapist_id')
+    .order('name');
+
+  if (pErr || !patients || !patients.length) {
+    return { patients: [], risk_patients: [], summary: { total_patients: 0, active_7d: 0, total_checkins_7d: 0, avg_score: null, pattern_frequency: {}, outcome_distribution: { better: 0, same: 0, worse: 0 }, risk_count: 0 } };
+  }
 
   const now = new Date();
   const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // Get recent check-ins (last 7 days)
-  const recentCheckins = await supabaseQuery('checkins',
-    `select=id,patient_id,daily_state,stress,sleep,body,craving,avoidance,pattern_code,pattern_label,action_code,action_label,score,risk_level,local_day,created_at,signals_json,mental_text,goal_text&created_at=gte.${weekAgo}&order=created_at.desc`
-  ) || [];
+  const { data: recentCheckins } = await supabase
+    .from('checkins')
+    .select('id, patient_id, daily_state, stress, sleep, body, craving, avoidance, pattern_code, pattern_label, action_code, action_label, score, risk_level, local_day, created_at, mental_text, goal_text')
+    .gte('created_at', weekAgo)
+    .order('created_at', { ascending: false });
 
-  // Get outcomes
-  const recentOutcomes = await supabaseQuery('outcomes',
-    `select=id,patient_id,checkin_id,rating,outcome_note,created_at&created_at=gte.${weekAgo}`
-  ) || [];
+  const checkins = recentCheckins || [];
+
+  // Get outcomes (last 7 days)
+  const { data: recentOutcomes } = await supabase
+    .from('outcomes')
+    .select('id, patient_id, checkin_id, rating, outcome_note, created_at')
+    .gte('created_at', weekAgo);
+
+  const outcomes = recentOutcomes || [];
 
   // Aggregate per patient
   const patientData = [];
@@ -69,59 +82,46 @@ async function collectPatientData() {
   const riskPatients = [];
 
   for (const p of patients) {
-    const pCheckins = recentCheckins.filter(c => c.patient_id === p.id);
-    const pOutcomes = recentOutcomes.filter(o => o.patient_id === p.id);
+    const pCheckins = checkins.filter(c => c.patient_id === p.id);
+    const pOutcomes = outcomes.filter(o => o.patient_id === p.id);
     const scores = pCheckins.map(c => c.score).filter(s => s != null);
     const patterns = pCheckins.map(c => c.pattern_code).filter(Boolean);
 
-    const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) / 10 : null;
-    const avgStress = pCheckins.filter(c => c.stress != null).length
-      ? Math.round(pCheckins.filter(c => c.stress != null).reduce((a, c) => a + c.stress, 0) / pCheckins.filter(c => c.stress != null).length * 10) / 10 : null;
-    const avgSleep = pCheckins.filter(c => c.sleep != null).length
-      ? Math.round(pCheckins.filter(c => c.sleep != null).reduce((a, c) => a + c.sleep, 0) / pCheckins.filter(c => c.sleep != null).length * 10) / 10 : null;
-    const avgCraving = pCheckins.filter(c => c.craving != null).length
-      ? Math.round(pCheckins.filter(c => c.craving != null).reduce((a, c) => a + c.craving, 0) / pCheckins.filter(c => c.craving != null).length * 10) / 10 : null;
-    const avgAvoidance = pCheckins.filter(c => c.avoidance != null).length
-      ? Math.round(pCheckins.filter(c => c.avoidance != null).reduce((a, c) => a + c.avoidance, 0) / pCheckins.filter(c => c.avoidance != null).length * 10) / 10 : null;
+    const avgScore = avg(scores);
+    const avgStress = avg(pCheckins.map(c => c.stress).filter(v => v != null));
+    const avgSleep = avg(pCheckins.map(c => c.sleep).filter(v => v != null));
+    const avgCraving = avg(pCheckins.map(c => c.craving).filter(v => v != null));
+    const avgAvoidance = avg(pCheckins.map(c => c.avoidance).filter(v => v != null));
 
     // Trend
     let scoreTrend = null;
     if (scores.length >= 4) {
       const half = Math.floor(scores.length / 2);
-      const older = scores.slice(half).reduce((a, b) => a + b, 0) / (scores.length - half);
-      const newer = scores.slice(0, half).reduce((a, b) => a + b, 0) / half;
+      const older = avg(scores.slice(half));
+      const newer = avg(scores.slice(0, half));
       scoreTrend = newer > older + 3 ? 'steigend' : newer < older - 3 ? 'fallend' : 'stabil';
     }
 
-    // Days since last check-in
+    // Days since last
     let daysSince = null;
     if (pCheckins.length) {
-      const lastDate = new Date(pCheckins[0].created_at);
-      daysSince = Math.floor((now - lastDate) / (24 * 60 * 60 * 1000));
+      daysSince = Math.floor((now - new Date(pCheckins[0].created_at)) / (24 * 60 * 60 * 1000));
     }
 
-    const lastCheckin = pCheckins[0] || null;
+    const last = pCheckins[0] || null;
     const outcomeRatings = pOutcomes.map(o => o.rating);
 
     const entry = {
-      name: p.name,
-      phone: p.phone,
+      name: p.name, phone: p.phone,
       checkins_7d: pCheckins.length,
-      avg_score: avgScore,
-      score_trend: scoreTrend,
-      last_score: lastCheckin?.score,
-      last_risk: lastCheckin?.risk_level,
-      last_pattern: lastCheckin?.pattern_label,
-      last_day: lastCheckin?.local_day,
+      avg_score: avgScore, score_trend: scoreTrend,
+      last_score: last?.score, last_risk: last?.risk_level,
+      last_pattern: last?.pattern_label, last_day: last?.local_day,
       days_since: daysSince,
-      patterns: patterns,
-      outcomes: outcomeRatings,
-      stress_avg: avgStress,
-      sleep_avg: avgSleep,
-      craving_avg: avgCraving,
-      avoidance_avg: avgAvoidance,
-      mental_text: lastCheckin?.mental_text || '',
-      goal_text: lastCheckin?.goal_text || '',
+      patterns, outcomes: outcomeRatings,
+      stress_avg: avgStress, sleep_avg: avgSleep,
+      craving_avg: avgCraving, avoidance_avg: avgAvoidance,
+      mental_text: last?.mental_text || '', goal_text: last?.goal_text || '',
     };
     patientData.push(entry);
 
@@ -129,7 +129,7 @@ async function collectPatientData() {
     allScores.push(...scores);
     allOutcomes.push(...outcomeRatings);
 
-    if ((lastCheckin && lastCheckin.risk_level === 'high') || (daysSince != null && daysSince >= 3)) {
+    if ((last && last.risk_level === 'high') || (daysSince != null && daysSince >= 3)) {
       riskPatients.push(entry);
     }
   }
@@ -148,8 +148,8 @@ async function collectPatientData() {
     summary: {
       total_patients: patients.length,
       active_7d: patientData.filter(p => p.checkins_7d > 0).length,
-      total_checkins_7d: recentCheckins.length,
-      avg_score: allScores.length ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length * 10) / 10 : null,
+      total_checkins_7d: checkins.length,
+      avg_score: avg(allScores),
       pattern_frequency: patternFreq,
       outcome_distribution: outcomeDist,
       risk_count: riskPatients.length,
@@ -164,15 +164,14 @@ exports.handler = async (event) => {
   try {
     const { action, question } = JSON.parse(event.body);
     const data = await collectPatientData();
-    const summary = data.summary;
-    const patients = data.patients;
-    const riskPatients = data.risk_patients;
+    const { summary, patients, risk_patients: riskPatients } = data;
 
+    // ── GET RAW DATA (no AI) ──
     if (action === 'get_data') {
-      // Return raw aggregated data (no AI call)
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
+    // ── EXECUTIVE BRIEFING ──
     if (action === 'briefing') {
       let patientDetails = '';
       patients.forEach(p => {
@@ -209,27 +208,13 @@ Welche Patterns dominieren, was bedeutet das
 EMPFEHLUNGEN
 3 konkrete naechste Schritte fuer den Therapeuten`;
 
-      const prompt = `DATEN:
-- Patienten gesamt: ${summary.total_patients}
-- Aktive (7 Tage): ${summary.active_7d}
-- Check-ins (7 Tage): ${summary.total_checkins_7d}
-- Score Ø: ${summary.avg_score || '–'}
-- Patterns: ${JSON.stringify(summary.pattern_frequency)}
-- Outcomes: ${JSON.stringify(summary.outcome_distribution)}
-- Risiko-Patienten: ${summary.risk_count}
-
-PATIENTEN-DETAILS:
-${patientDetails || 'Keine Daten.'}
-
-RISIKO-ALERTS:
-${riskDetails || 'Keine Risiko-Patienten.'}
-
-Erstelle das Executive Briefing.`;
+      const prompt = `DATEN:\n- Patienten gesamt: ${summary.total_patients}\n- Aktive (7 Tage): ${summary.active_7d}\n- Check-ins (7 Tage): ${summary.total_checkins_7d}\n- Score Ø: ${summary.avg_score || '–'}\n- Patterns: ${JSON.stringify(summary.pattern_frequency)}\n- Outcomes: ${JSON.stringify(summary.outcome_distribution)}\n- Risiko-Patienten: ${summary.risk_count}\n\nPATIENTEN-DETAILS:\n${patientDetails || 'Keine Daten.'}\n\nRISIKO-ALERTS:\n${riskDetails || 'Keine Risiko-Patienten.'}\n\nErstelle das Executive Briefing.`;
 
       const result = await callClaude(prompt, systemPrompt, 1500);
       return { statusCode: 200, headers, body: JSON.stringify(result) };
     }
 
+    // ── ASK QUESTION ──
     if (action === 'ask') {
       if (!question) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Keine Frage gestellt' }) };
 
@@ -242,17 +227,7 @@ Erstelle das Executive Briefing.`;
 Beantworte die Frage direkt, konkret und auf Deutsch. Kein Smalltalk.
 Sei praezise und handlungsorientiert. Maximal 300 Woerter.`;
 
-      const prompt = `ZUSAMMENFASSUNG:
-- Patienten: ${summary.total_patients}, Aktive: ${summary.active_7d}
-- Check-ins (7T): ${summary.total_checkins_7d}, Score Ø: ${summary.avg_score || '–'}
-- Patterns: ${JSON.stringify(summary.pattern_frequency)}
-- Outcomes: ${JSON.stringify(summary.outcome_distribution)}
-
-PATIENTEN:
-${patientInfo || 'Keine Daten.'}
-
-FRAGE DES THERAPEUTEN:
-${question}`;
+      const prompt = `ZUSAMMENFASSUNG:\n- Patienten: ${summary.total_patients}, Aktive: ${summary.active_7d}\n- Check-ins (7T): ${summary.total_checkins_7d}, Score Ø: ${summary.avg_score || '–'}\n- Patterns: ${JSON.stringify(summary.pattern_frequency)}\n- Outcomes: ${JSON.stringify(summary.outcome_distribution)}\n\nPATIENTEN:\n${patientInfo || 'Keine Daten.'}\n\nFRAGE DES THERAPEUTEN:\n${question}`;
 
       const result = await callClaude(prompt, systemPrompt, 800);
       return { statusCode: 200, headers, body: JSON.stringify(result) };
