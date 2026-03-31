@@ -8,41 +8,106 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#030308;--green:#2dffa8;--gold:#c9a84c;--text:#e0ddd4;--dim:#555568;--surface:#0a0a14;--border:#1a1a2e}
-html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+:root{--bg:#030308;--green:#2dffa8;--text:#e0ddd4;--dim:#555568;--gold:#c9a84c}
+html{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden;scroll-behavior:smooth}
 ::selection{background:var(--green);color:var(--bg)}
 a{text-decoration:none}
 
-.page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;position:relative}
-.page::before{content:'';position:absolute;top:20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(45,255,168,.04),transparent 70%);pointer-events:none}
+.s{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;position:relative}
+.s::before{content:'';position:absolute;top:20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(45,255,168,.04),transparent 70%);pointer-events:none}
 
 .title{font-family:'Orbitron',sans-serif;font-size:clamp(48px,12vw,96px);font-weight:900;letter-spacing:6px;line-height:1;margin-bottom:32px;color:var(--text)}
-.line{font-size:clamp(15px,3vw,20px);color:var(--dim);max-width:480px;line-height:1.8;margin-bottom:48px}
-.price{font-family:'Orbitron',sans-serif;font-size:clamp(32px,6vw,56px);font-weight:900;color:var(--green);margin-bottom:6px}
+.line{font-size:clamp(14px,2.5vw,18px);color:var(--dim);max-width:500px;line-height:2;margin-bottom:48px}
+.line b{color:var(--text)}
+.scroll-hint{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;color:var(--dim);text-transform:uppercase;position:absolute;bottom:32px;animation:bob 2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* TRUST SECTION */
+.trust{max-width:560px;margin:0 auto;padding:80px 24px;text-align:left}
+.trust-q{font-family:'Orbitron',sans-serif;font-size:clamp(18px,3.5vw,28px);font-weight:900;letter-spacing:2px;line-height:1.4;margin-bottom:32px}
+.trust-a{font-size:14px;color:var(--dim);line-height:2;margin-bottom:20px}
+.trust-a b{color:var(--text)}
+.divider{width:40px;height:1px;background:var(--dim);margin:40px 0}
+
+/* FIRST PRINCIPLES */
+.fp{background:rgba(45,255,168,.03);border-top:1px solid rgba(45,255,168,.1);border-bottom:1px solid rgba(45,255,168,.1);padding:60px 24px;text-align:center}
+.fp-inner{max-width:560px;margin:0 auto}
+.fp-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;color:var(--green);text-transform:uppercase;margin-bottom:16px}
+.fp-title{font-family:'Orbitron',sans-serif;font-size:clamp(18px,3.5vw,28px);font-weight:900;letter-spacing:2px;line-height:1.4;margin-bottom:24px}
+.fp-text{font-size:14px;color:var(--dim);line-height:2;max-width:480px;margin:0 auto 20px}
+.fp-text b{color:var(--text)}
+.fp-steps{text-align:left;max-width:400px;margin:32px auto 0}
+.fp-step{display:flex;gap:16px;margin-bottom:20px;align-items:baseline}
+.fp-num{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--green);flex-shrink:0}
+.fp-desc{font-size:13px;color:var(--dim);line-height:1.7}
+.fp-desc b{color:var(--text)}
+
+/* FINAL */
+.final{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px}
+.price{font-family:'Orbitron',sans-serif;font-size:clamp(36px,8vw,64px);font-weight:900;color:var(--green);margin-bottom:6px}
 .price-note{font-size:11px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:40px}
-
-.btns{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;max-width:360px}
-.cta{display:block;width:100%;font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,15px);letter-spacing:4px;padding:20px 32px;background:var(--green);color:var(--bg);font-weight:700;cursor:pointer;transition:all .15s;border:none;text-transform:uppercase;text-align:center}
-.cta:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(45,255,168,.25)}
+.cta{display:inline-block;font-family:'Orbitron',sans-serif;font-size:clamp(13px,2vw,16px);letter-spacing:4px;padding:22px 56px;background:var(--text);color:var(--bg);font-weight:700;transition:all .15s;text-transform:uppercase}
+.cta:hover{background:var(--green);transform:translateY(-2px);box-shadow:0 0 60px rgba(45,255,168,.25)}
 .cta:active{transform:scale(.97)}
-.cta-wa{background:none;border:1px solid var(--dim);color:var(--dim);font-size:clamp(10px,1.5vw,12px);letter-spacing:3px;padding:16px 32px}
-.cta-wa:hover{border-color:var(--text);color:var(--text);transform:translateY(-2px)}
+.guarantee{font-size:11px;color:var(--dim);margin-top:20px;letter-spacing:1px;max-width:320px;line-height:1.7}
 
-.foot{position:absolute;bottom:24px;font-size:10px;color:var(--dim);letter-spacing:2px}
+.foot{text-align:center;padding:40px 24px;font-size:10px;color:var(--dim);letter-spacing:2px}
 .foot a{color:var(--dim)}
 </style>
 </head>
 <body>
 
-<div class="page">
+<!-- HERO -->
+<section class="s">
   <h1 class="title">THE MATRIX</h1>
-  <p class="line">KI-Betriebssystem. Täglich gefüttert. Sagt dir was du tun sollst. Du handelst.</p>
-  <div class="price">€4.997</div>
-  <div class="price-note">Einmalig · Lifetime · 14 Tage Garantie</div>
-  <div class="btns">
-    <a class="cta" href="https://wa.me/4917683231000?text=Ich%20will%20THE%20MATRIX." target="_blank" rel="noopener">Jetzt starten</a>
+  <p class="line">Traditionelle Ansätze bringen traditionelle Ergebnisse.<br><b>Dieses System denkt anders.</b></p>
+  <div class="scroll-hint">↓</div>
+</section>
+
+<!-- TRUST: How it works -->
+<section class="trust">
+  <div class="trust-q">Was ist das?</div>
+  <p class="trust-a">Ein <b>KI-Betriebssystem</b> das ich täglich mit meinen Erkenntnissen füttere. Du tippst dein Problem ein. Es sagt dir <b>was du tun sollst.</b> Nicht irgendwann. Jetzt.</p>
+  <p class="trust-a">Kein Kurs den du nie abschließt. Kein Coach der nickt und zuhört. <b>Eine Maschine die dir Befehle gibt.</b></p>
+
+  <div class="divider"></div>
+
+  <div class="trust-q">Warum funktioniert das?</div>
+  <p class="trust-a">Weil es auf <b>First Principles</b> gebaut ist. Nicht auf Meinungen, Trends oder Motivationssprüchen.</p>
+  <p class="trust-a">Jedes Problem wird <b>zerlegt</b> — runter auf die Grundbausteine. Dann neu zusammengebaut. Der kürzeste Weg zur Lösung. Kein Umweg.</p>
+  <p class="trust-a">Die gleiche Methode mit der Musk Raketen baut, Bezos Märkte dominiert und Hormozi Firmen skaliert. <b>Angewandt auf dein Leben.</b></p>
+
+  <div class="divider"></div>
+
+  <div class="trust-q">Was bekomme ich?</div>
+  <p class="trust-a"><b>Zugang zum System.</b> Sofort. Du öffnest es, tippst was dich beschäftigt — Geld, Stress, Angst, Strategie, Beziehung, Gesundheit — und bekommst eine klare Anweisung.</p>
+  <p class="trust-a">Plus: <b>Revenue Tracker</b> der dein tägliches Einkommen trackt. Du siehst die Wahrheit. Jeden Tag.</p>
+  <p class="trust-a">Plus: Tägliche Direktiven basierend auf Tageszeit und deinem Fortschritt. Das System passt sich dir an — <b>nicht umgekehrt.</b></p>
+</section>
+
+<!-- FIRST PRINCIPLES -->
+<section class="fp">
+  <div class="fp-inner">
+    <div class="fp-label">Die Methode</div>
+    <div class="fp-title">First Principles Thinking</div>
+    <p class="fp-text">Echte Durchbrüche kommen nicht davon, <b>Regeln besser zu befolgen.</b> Sie kommen davon, <b>Systeme neu zu denken.</b></p>
+    <p class="fp-text">Dieses System hinterfragt deine Annahmen. Zerlegt dein Problem. Zeigt dir den Weg den du nicht siehst weil du <b>im alten System denkst.</b></p>
+    <div class="fp-steps">
+      <div class="fp-step"><div class="fp-num">1</div><div class="fp-desc"><b>Zerlegen.</b> Was ist dein eigentliches Problem? Nicht das Symptom — die Ursache.</div></div>
+      <div class="fp-step"><div class="fp-num">2</div><div class="fp-desc"><b>Neu denken.</b> Welche Annahmen limitieren dich? Was wäre wenn sie falsch sind?</div></div>
+      <div class="fp-step"><div class="fp-num">3</div><div class="fp-desc"><b>Handeln.</b> Ein Befehl. Eine Aktion. Jetzt. Nicht morgen.</div></div>
+    </div>
   </div>
-  <div class="foot"><a href="/impressum">Impressum</a></div>
-</div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="final">
+  <div class="price">€4.997</div>
+  <div class="price-note">Einmalig · Lifetime Access</div>
+  <a class="cta" href="https://wa.me/4917683231000?text=Ich%20will%20THE%20MATRIX." target="_blank" rel="noopener">Jetzt starten</a>
+  <div class="guarantee">14 Tage testen. Wenn das System dir keinen Wert bringt, bekommst du dein Geld zurück. Ohne Fragen.</div>
+</section>
+
+<footer class="foot"><a href="/impressum">Impressum & Datenschutz</a></footer>
 </body>
 </html>

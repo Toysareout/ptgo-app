@@ -30,6 +30,7 @@
     { "source": "/intelligence", "destination": "/intelligence.html" },
     { "source": "/chief-agent", "destination": "/chief-agent.html" },
     { "source": "/matrix", "destination": "/matrix.html" },
+    { "source": "/m", "destination": "/m.html" },
     { "source": "/archive", "destination": "/archive.html" },
     { "source": "/hub", "destination": "/hub.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }

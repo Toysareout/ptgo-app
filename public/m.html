@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>M</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--border:#1a1a2e;--green:#2dffa8;--gold:#c9a84c;--cyan:#00f0ff;--purple:#a855f7;--text:#e0ddd4;--dim:#555568}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--green);color:var(--bg)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border)}
+
+/* GATE */
+#gate{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+#gate.gone{display:none}
+.gate-title{font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;color:var(--text);letter-spacing:6px}
+.gate-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:260px;text-align:center;outline:none;transition:border-color .3s;-webkit-appearance:none}
+.gate-input:focus{border-color:var(--green)}
+.gate-input::placeholder{color:var(--dim)}
+.gate-err{color:#ff4444;font-size:11px;min-height:16px}
+
+/* APP */
+#app{display:none;height:100vh;height:100dvh;flex-direction:column;overflow:hidden}
+#app.on{display:flex}
+
+/* HEADER */
+.hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.hdr-m{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--text);letter-spacing:4px}
+.hdr-rev{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--green)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column}
+
+/* DIRECTIVE */
+.dir{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.25);padding:20px;margin-bottom:16px;position:relative;flex-shrink:0}
+.dir::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)}
+.dir-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:8px}
+.dir-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:700}
+.dir-src{font-size:10px;color:var(--gold);margin-top:8px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
+
+/* STREAM */
+.stream{flex:1;overflow-y:auto;margin-bottom:12px}
+.msg{padding:14px;margin-bottom:6px;border:1px solid var(--border);background:var(--surface)}
+.msg.u{border-left:2px solid var(--cyan)}
+.msg.a{border-left:2px solid var(--green);background:rgba(45,255,168,.03)}
+.msg .ml{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.msg.u .ml{color:var(--cyan)}
+.msg.a .ml{color:var(--green)}
+.msg .mt{font-size:13px;line-height:1.7;color:var(--text)}
+.empty{text-align:center;padding:40px 20px;color:var(--dim);font-size:12px}
+
+/* INPUT BAR */
+.bar{display:flex;gap:8px;padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.bar textarea{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px;outline:none;resize:none;min-height:44px;max-height:80px;transition:border-color .3s}
+.bar textarea:focus{border-color:var(--green)}
+.bar textarea::placeholder{color:var(--dim)}
+.bar-send{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;width:48px;cursor:pointer;flex-shrink:0;transition:opacity .2s}
+.bar-send:hover{opacity:.8}
+
+/* REVENUE FLOAT */
+.rev-bar{display:flex;gap:8px;padding:0 20px 12px;flex-shrink:0}
+.rev-input{flex:1;background:var(--bg);border:1px solid rgba(45,255,168,.2);color:var(--green);font-family:'Orbitron',sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .3s;-webkit-appearance:none}
+.rev-input:focus{border-color:var(--green)}
+.rev-input::placeholder{color:var(--dim);font-family:'Space Mono',monospace;font-size:11px}
+.rev-btn{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;padding:10px 16px;cursor:pointer;font-weight:700}
+.rev-prog{height:3px;background:var(--surface);margin:0 20px 16px;flex-shrink:0}
+.rev-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .5s}
+
+/* STREAK */
+.streak{text-align:center;padding:4px 0 12px;flex-shrink:0}
+.streak span{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--gold);letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-title">M</div>
+  <input type="password" class="gate-input" id="pw" placeholder="Code" autofocus>
+  <div class="gate-err" id="err"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-m">M</div>
+    <div class="hdr-rev" id="hdrRev">€0</div>
+  </div>
+
+  <div class="main">
+    <div class="dir" id="dir"></div>
+    <div class="stream" id="stream">
+      <div class="empty" id="empty">Was beschäftigt dich? Schreib es.</div>
+    </div>
+  </div>
+
+  <div class="rev-bar">
+    <input type="number" class="rev-input" id="revIn" placeholder="€ verdient..." min="0">
+    <button class="rev-btn" id="revBtn">LOG</button>
+  </div>
+  <div class="rev-prog"><div class="rev-fill" id="revFill" style="width:0%"></div></div>
+  <div class="streak"><span id="streakText"></span></div>
+
+  <div class="bar">
+    <textarea id="input" placeholder="Was ist los?" rows="1"></textarea>
+    <button class="bar-send" id="send">→</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const PASS='matrix2026';
+const DAILY_TARGET=333333;
+const REV_KEY='m_revenue';
+const MSG_KEY='m_messages';
+
+// ── GATE ──
+const gate=document.getElementById('gate');
+const pwInput=document.getElementById('pw');
+if(localStorage.getItem('m_auth')==='1'){gate.classList.add('gone');document.getElementById('app').classList.add('on');init()}
+pwInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(pwInput.value===PASS){localStorage.setItem('m_auth','1');gate.classList.add('gone');document.getElementById('app').classList.add('on');init()}
+    else{document.getElementById('err').textContent='Falscher Code.';pwInput.value=''}
+  }
+});
+
+// ── DATA ──
+function getRev(){try{return JSON.parse(localStorage.getItem(REV_KEY))||{}}catch(e){return{}}}
+function saveRev(r){localStorage.setItem(REV_KEY,JSON.stringify(r))}
+function today(){return new Date().toISOString().slice(0,10)}
+function todayRev(){return getRev()[today()]||0}
+function getStreak(){const r=getRev();let s=0;const d=new Date();for(let i=1;i<=365;i++){d.setDate(d.getDate()-1);if(r[d.toISOString().slice(0,10)]>0)s++;else break}if(todayRev()>0)s++;return s}
+function getMsgs(){try{return JSON.parse(localStorage.getItem(MSG_KEY))||[]}catch(e){return[]}}
+function saveMsgs(m){localStorage.setItem(MSG_KEY,JSON.stringify(m))}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// ── PATTERNS ──
+const P={
+  stress:['stress','druck','burnout','überlastet','erschöpft','müde','kaputt','overwhelm','fertig'],
+  geld:['geld','money','verdien','umsatz','kunde','client','sales','business','income','cash','profit','startup','revenue'],
+  beziehung:['frau','frauen','beziehung','dating','liebe','sex','trennung','freundin','single','attraction'],
+  gesundheit:['schmerz','schlaf','krank','training','gym','körper','rücken','kopf','müde','sport','pain'],
+  angst:['angst','zweifel','unsicher','sorge','panik','blockade','stuck','fear','versagen'],
+  disziplin:['prokrastin','faul','aufschieb','keine lust','unmotiviert','abgelenkt','focus','disziplin'],
+  strategie:['plan','strategie','ziel','richtung','entscheid','wohin','nächster schritt','fokus','priorit'],
+  idee:['idee','projekt','bauen','app','content','kreativ','innovation','startup']
+};
+
+function detect(text){
+  const l=text.toLowerCase();
+  for(const[k,words]of Object.entries(P)){if(words.some(w=>l.includes(w)))return k}
+  return'general';
+}
+
+// ── COMMANDS — First Principles. Zerlegen. Neu denken. Handeln. ──
+const CMD={
+  stress:[
+    'ZERLEGEN: Was genau stresst dich? Nicht "alles" — EIN konkreter Auslöser. Schreib ihn auf. NEU DENKEN: Musst du das wirklich tun? Oder glaubst du nur dass du musst? HANDELN: Streiche es oder erledige es. Jetzt.',
+    'Dein Stress ist kein Gefühl — es ist ein System-Fehler. Du versuchst zu viel gleichzeitig. First Principle: Ein Mensch, eine Aufgabe, ein Zeitblock. Lösch 3 Dinge von deiner Liste. Sofort.',
+    'Alte Annahme: "Ich muss das alles schaffen." Neue Wahrheit: Du musst nur die EINE Sache schaffen die alles andere überflüssig macht. Welche ist das? Mach nur die.'
+  ],
+  geld:[
+    'ZERLEGEN: Geld = jemand bezahlt dich für gelöstes Problem. Welches Problem löst du? Für wen? NEU DENKEN: Löst du ein €10 oder ein €10.000 Problem? HANDELN: Schreib JETZT eine Nachricht an jemanden mit dem teuren Problem.',
+    'Alte Annahme: "Ich muss erst alles fertig bauen." Neue Wahrheit: Verkaufe bevor du baust. Frag 3 Menschen ob sie zahlen würden. Heute. Wenn ja: build. Wenn nein: anderes Problem suchen.',
+    'First Principle: Geld fließt zu dem der Wert liefert. Nicht zu dem der am härtesten arbeitet. Frage: Wo lieferst du gerade Wert? Wo nicht? Eliminiere alles ohne Wertschöpfung.',
+    'Dein nächster Kunde ist eine Nachricht entfernt. Nicht eine Website. Nicht ein Funnel. Eine ehrliche Nachricht: "Ich kann X für dich lösen." Schick sie. Jetzt.',
+    'ZERLEGEN: Was kostet eine Stunde deiner Zeit? Wenn du €10M/Jahr willst = €4.800/Stunde. Ist das was du GERADE tust €4.800/Stunde wert? Wenn nein — sofort wechseln.'
+  ],
+  beziehung:[
+    'ZERLEGEN: Was willst du wirklich? Aufmerksamkeit? Bestätigung? Verbindung? NEU DENKEN: Suchst du bei jemand anderem was du dir selbst nicht geben kannst? HANDELN: Definiere deinen Wert unabhängig von anderen. Dann handle danach.',
+    'Alte Annahme: "Ich muss die richtige Person finden." Neue Wahrheit: Werde die richtige Person. Alles andere folgt. Was fehlt dir? Arbeite dran. Heute.',
+    'First Principle: Anziehung ist kein Zufall — es ist ein System. Dein Wert bestimmt deine Optionen. Was erhöht deinen Wert? Physique, Skills, Status, Mission. Pick one. Verbessere es diese Woche.'
+  ],
+  gesundheit:[
+    'ZERLEGEN: Dein Körper ist keine Blackbox — er ist ein System. Schlaf, Ernährung, Bewegung, Stress. Welches System ist gerade kaputt? NEU DENKEN: Nicht Symptome behandeln — Ursache finden. HANDELN: Fix das EINE kaputte System heute.',
+    'Alte Annahme: "Ich habe keine Zeit für Gesundheit." Neue Wahrheit: Ohne Gesundheit hast du keine Zeit für NICHTS. 7h Schlaf ist nicht verhandelbar. Was musst du heute Abend ändern damit du das schaffst?',
+    'First Principle: Schmerz ist Information. Nicht der Feind. Was sagt dein Körper? Hör 5 Minuten zu. Schreib auf was er sagt. Das ist dein Diagnose-Report. Dann handle.'
+  ],
+  angst:[
+    'ZERLEGEN: Wovor genau hast du Angst? Nicht "ich habe Angst" — WAS genau passiert im schlimmsten Fall? Schreib es auf. NEU DENKEN: Kannst du damit leben? Ja. Also ist die Angst eine Lüge. HANDELN: Tu die Sache. Jetzt. 5-4-3-2-1.',
+    'Alte Annahme: "Ich muss mich sicher fühlen bevor ich handle." Neue Wahrheit: Sicherheit kommt NACH dem Handeln. Nie davor. Dein Gehirn will dich schützen — aber es schützt dich vor dem Erfolg.',
+    'First Principle: Angst und Aufregung sind das GLEICHE Signal im Körper. Gleicher Puls, gleiche Hormone. Der einzige Unterschied ist deine Interpretation. Interpretiere es als Aufregung. Dann handle.'
+  ],
+  disziplin:[
+    'ZERLEGEN: Du prokrastinierst nicht weil du faul bist. Du prokrastinierst weil die Aufgabe unklar ist. NEU DENKEN: Was sind die ERSTEN 2 Minuten? Nur die. HANDELN: Mach nur die 2 Minuten. Jetzt. Der Rest kommt von allein.',
+    'Alte Annahme: "Ich brauche Motivation." Neue Wahrheit: Motivation kommt NACH dem Anfangen. Nicht davor. Timer auf 25 Minuten. Eine Aufgabe. Los.',
+    'First Principle: Willenskraft ist endlich. Jede Entscheidung verbraucht sie. Lösung: Automatisiere Entscheidungen. Gleiche Morgenroutine. Gleicher Tagesplan. Gleiche Regeln. Keine Ausnahmen.'
+  ],
+  strategie:[
+    'ZERLEGEN: Wo willst du hin? Wo bist du jetzt? Was ist die Lücke? NEU DENKEN: Ist dein Plan ein 10% Plan oder ein 10x Plan? 10% verbessert das alte System. 10x erfordert ein NEUES System. HANDELN: Was wäre der 10x Move? Tu den.',
+    'Alte Annahme: "Ich brauche einen besseren Plan." Neue Wahrheit: Pläne sind wertlos. Planning ist alles. Der ERSTE Schritt zeigt dir den zweiten. Mach den ersten. In 5 Minuten.',
+    'First Principle: Delete → Simplify → Accelerate → Automate. In dieser Reihenfolge. Die meisten Menschen starten bei Accelerate. Starte bei Delete. Was kannst du JETZT streichen?'
+  ],
+  idee:[
+    'ZERLEGEN: Eine Idee ist wertlos. Was zählt ist: Löst sie ein Problem? Zahlt jemand dafür? NEU DENKEN: Nicht bauen — validieren. HANDELN: Frag 3 Menschen heute ob sie zahlen würden. Antwort = Wahrheit.',
+    'Alte Annahme: "Meine Idee muss perfekt sein." Neue Wahrheit: Die schlechteste Idee die du umsetzt schlägt die beste Idee die du nicht umsetzt. 48 Stunden. Ship or kill.',
+    'First Principle: Eine Idee die niemand kauft ist ein Hobby. Ein Problem das jemand bezahlt ist ein Business. Was ist das PROBLEM? Nicht deine Lösung — das Problem des Kunden.'
+  ],
+  general:[
+    'Schreib konkreter. Was ist dein EIGENTLICHES Problem? Nicht das Symptom — die Ursache. Je genauer du bist, desto besser der Befehl.',
+    'First Principle: Jeder Moment in dem du nachdenkst statt handelst ist ein Moment in dem sich nichts ändert. Was ist die EINE Sache die du jetzt tun kannst? Mach sie.',
+    'ZERLEGEN: Was beschäftigt dich? GENAU. Geld? Beziehung? Gesundheit? Angst? Strategie? Schreib das Wort. Ich sage dir was du tun sollst.'
+  ]
+};
+
+// ── DIRECTIVES ──
+const DIRS=[
+  {h:[5,6,7,8],t:'First Principle: Morgens ist dein Cortisol am höchsten. Dein Gehirn ist 3x schneller. Nutze es für das Problem das du seit Tagen aufschiebst.',s:'FIRST PRINCIPLES × HUBERMAN'},
+  {h:[9,10,11],t:'Alte Annahme: "Multitasking ist produktiv." Wahrheit: Deep Work schlägt alles. 3 Stunden, eine Aufgabe, null Ablenkung. Die Wertschöpfung passiert jetzt.',s:'FIRST PRINCIPLES × MUSK'},
+  {h:[12,13],t:'Zerlege deinen Tag: Hast du heute Wert geliefert? Nicht gearbeitet — WERT GELIEFERT. Wenn nein, die nächste Stunde gehört dem Kunden.',s:'FIRST PRINCIPLES × HORMOZI'},
+  {h:[14,15,16,17],t:'Neu denken: Jeder Mensch in deinem Netzwerk hat ein Problem. Dein Job ist es das Problem zu finden und zu lösen. Ein Call. Ein Deal. Jetzt.',s:'FIRST PRINCIPLES × BEZOS'},
+  {h:[18,19,20],t:'Eine Sache heute FERTIG machen. Nicht anfangen — FERTIG. Der Unterschied zwischen Gewinnern und Verlierern: Abschluss.',s:'FIRST PRINCIPLES × EXECUTION'},
+  {h:[21,22,23,0,1,2,3,4],t:'First Principle: Recovery ist keine Schwäche. Es ist System-Wartung. Ohne 7h Schlaf verlierst du morgen 30% Kapazität. Plan morgen. Schlaf jetzt.',s:'FIRST PRINCIPLES × HUBERMAN'}
+];
+
+function getDir(){
+  const h=new Date().getHours();
+  const d=DIRS.find(d=>d.h.includes(h))||DIRS[5];
+  const rev=todayRev();
+  const pre=rev>0?`€${rev.toLocaleString('de-DE')} heute. Weiter. `:'';
+  return{t:pre+d.t,s:d.s};
+}
+
+function respond(text){
+  const p=detect(text);
+  const pool=CMD[p];
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ── RENDER ──
+function render(){
+  const rev=todayRev();
+  const streak=getStreak();
+  const msgs=getMsgs();
+  const pct=Math.min(100,Math.round(rev/DAILY_TARGET*100));
+
+  document.getElementById('hdrRev').textContent='€'+rev.toLocaleString('de-DE');
+  document.getElementById('revFill').style.width=pct+'%';
+  document.getElementById('streakText').textContent=streak>0?streak+' TAGE STREAK':'';
+
+  const dir=getDir();
+  document.getElementById('dir').innerHTML=`<div class="dir-label">Dein Befehl</div><div class="dir-text">${dir.t}</div><div class="dir-src">${dir.s}</div>`;
+
+  const stream=document.getElementById('stream');
+  const empty=document.getElementById('empty');
+  const recent=msgs.slice(0,30);
+  if(recent.length){
+    empty.style.display='none';
+    stream.innerHTML=recent.map(m=>{
+      const t=new Date(m.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      return`<div class="msg ${m.who==='u'?'u':'a'}"><div class="ml">${m.who==='u'?'Du':'M'} · ${t}</div><div class="mt">${esc(m.text)}</div></div>`;
+    }).join('');
+  }else{empty.style.display='block'}
+}
+
+// ── SUBMIT ──
+function submit(){
+  const el=document.getElementById('input');
+  const text=el.value.trim();if(!text)return;
+  const msgs=getMsgs();
+  msgs.unshift({who:'u',text,ts:Date.now()});
+  const reply=respond(text);
+  msgs.unshift({who:'a',text:reply,ts:Date.now()+1});
+  saveMsgs(msgs);
+  el.value='';
+  render();
+  document.getElementById('stream').scrollTop=0;
+}
+
+// ── REVENUE ──
+function logRev(){
+  const el=document.getElementById('revIn');
+  const val=parseFloat(el.value);if(!val||val<=0)return;
+  const r=getRev();r[today()]=(r[today()]||0)+val;saveRev(r);
+  const total=r[today()];
+  const pct=Math.round(total/DAILY_TARGET*100);
+  const msgs=getMsgs();
+  msgs.unshift({who:'a',text:`€${val.toLocaleString('de-DE')} geloggt. Tagesstand: €${total.toLocaleString('de-DE')} (${pct}%). ${pct<5?'Anfang. Mehr.':pct<50?'Weiter. Nicht aufhören.':pct<100?'Auf dem Weg. Push.':'TAGESZIEL. Jetzt überperformen.'}`,ts:Date.now()});
+  saveMsgs(msgs);
+  el.value='';render();
+}
+
+function init(){
+  render();
+  document.getElementById('send').addEventListener('click',submit);
+  document.getElementById('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit()}});
+  document.getElementById('revBtn').addEventListener('click',logRev);
+  document.getElementById('revIn').addEventListener('keydown',e=>{if(e.key==='Enter')logRev()});
+}
+</script>
+</body>
+</html>
