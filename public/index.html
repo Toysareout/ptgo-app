@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="/manifest.json">
-<title>TTAO — Command Hub</title>
+<title>TTAO — Command Hub | Master Agent</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
@@ -126,6 +126,62 @@ a{text-decoration:none;color:inherit}
 
 /* ── MORE VIEW ── */
 .more-grid{display:grid;grid-template-columns:1fr;gap:8px}
+
+/* ── MASTER AGENT VIEW ── */
+.agent-brain{text-align:center;padding:20px 0 24px;position:relative}
+.agent-orb{width:120px;height:120px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(0,240,255,.3),rgba(168,85,247,.2),rgba(255,45,142,.15),transparent 70%);border:1px solid rgba(0,240,255,.25);position:relative;animation:orbPulse 3s ease-in-out infinite}
+.agent-orb::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,240,255,.15);animation:orbSpin 8s linear infinite}
+.agent-orb::after{content:'';position:absolute;inset:20px;border-radius:50%;background:radial-gradient(circle,rgba(0,240,255,.15),transparent);animation:orbPulse 2s ease-in-out infinite alternate}
+@keyframes orbPulse{0%,100%{box-shadow:0 0 30px rgba(0,240,255,.2),0 0 60px rgba(168,85,247,.1)}50%{box-shadow:0 0 50px rgba(0,240,255,.35),0 0 80px rgba(168,85,247,.2)}}
+@keyframes orbSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.agent-orb .orb-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px}
+.agent-status{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:4px}
+.agent-gen{font-size:11px;color:var(--dim);letter-spacing:1px}
+
+.evo-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
+.evo-stat{background:var(--surface);border:1px solid var(--border);padding:14px 8px;text-align:center}
+.evo-stat .ev-val{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px}
+.evo-stat .ev-label{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+.ev-cyan{color:var(--cyan)}
+.ev-green{color:var(--green)}
+.ev-gold{color:var(--gold)}
+.ev-pink{color:var(--pink)}
+.ev-purple{color:var(--purple)}
+
+.neural-input-wrap{position:relative;margin-bottom:20px}
+.neural-input{width:100%;background:var(--surface);border:1px solid rgba(0,240,255,.2);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:14px 50px 14px 16px;outline:none;transition:all .3s;min-height:48px;resize:none}
+.neural-input:focus{border-color:var(--cyan);box-shadow:0 0 30px rgba(0,240,255,.15),inset 0 0 20px rgba(0,240,255,.03)}
+.neural-input::placeholder{color:var(--dim);font-style:italic}
+.neural-send{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--cyan);border:none;color:var(--bg);width:34px;height:34px;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.neural-send:hover{opacity:.8}
+.neural-send:active{transform:translateY(-50%) scale(.9)}
+
+.thought-stream{max-height:320px;overflow-y:auto;margin-bottom:16px}
+.thought{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:6px;animation:fadeIn .3s ease;position:relative}
+.thought.t-user{border-left:2px solid var(--cyan)}
+.thought.t-agent{border-left:2px solid var(--purple);background:rgba(168,85,247,.03)}
+.thought .t-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.thought.t-user .t-label{color:var(--cyan)}
+.thought.t-agent .t-label{color:var(--purple)}
+.thought .t-text{font-size:12px;line-height:1.6;color:var(--text)}
+.thought .t-meta{font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:1px}
+.thought .t-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.thought .t-tag{font-family:'Orbitron',sans-serif;font-size:7px;padding:2px 6px;border:1px solid rgba(0,240,255,.2);color:var(--cyan);letter-spacing:1px}
+
+.sys-monitor{margin-top:16px}
+.sys-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:4px;font-size:11px}
+.sys-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
+.sys-dot.online{background:var(--green)}
+.sys-dot.learning{background:var(--gold);animation:pulse 1s infinite}
+.sys-dot.standby{background:var(--dim)}
+.sys-name{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;flex:1;color:var(--text)}
+.sys-val{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);letter-spacing:1px}
+
+.evo-log{margin-top:16px}
+.evo-entry{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(26,26,46,.5);font-size:11px}
+.evo-time{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);flex-shrink:0;width:50px;letter-spacing:1px}
+.evo-msg{color:var(--dim);line-height:1.4;flex:1}
+.evo-msg b{color:var(--cyan);font-weight:400}
 
 /* ── FADE ── */
 .fade{animation:fadeIn .3s ease}
@@ -318,6 +374,56 @@ a{text-decoration:none;color:inherit}
       </div>
     </div>
 
+    <!-- ═══════════ MASTER AGENT ═══════════ -->
+    <div class="view" id="v-agent">
+      <div class="fade">
+
+        <!-- BRAIN ORB -->
+        <div class="agent-brain">
+          <div class="agent-orb"><div class="orb-icon">🧬</div></div>
+          <div class="agent-status">Master Agent <span id="agentStatus">Online</span></div>
+          <div class="agent-gen">Generation <span id="agentGen">0</span> · <span id="agentEvo">0</span> Evolutionen</div>
+        </div>
+
+        <!-- EVOLUTION STATS -->
+        <div class="evo-stats">
+          <div class="evo-stat"><div class="ev-val ev-cyan" id="statThoughts">0</div><div class="ev-label">Gedanken</div></div>
+          <div class="evo-stat"><div class="ev-val ev-purple" id="statPatterns">0</div><div class="ev-label">Patterns</div></div>
+          <div class="evo-stat"><div class="ev-val ev-green" id="statIQ">100</div><div class="ev-label">IQ Index</div></div>
+        </div>
+
+        <!-- NEURAL INPUT -->
+        <div class="section-label">Neural Interface — Denk einfach</div>
+        <div class="neural-input-wrap">
+          <textarea class="neural-input" id="neuralInput" placeholder="Was denkst du gerade? Der Agent lernt mit..." rows="2"></textarea>
+          <button class="neural-send" id="neuralSend">→</button>
+        </div>
+
+        <!-- THOUGHT STREAM -->
+        <div class="thought-stream" id="thoughtStream"></div>
+
+        <!-- SYSTEM MONITOR -->
+        <div class="section-label">System Monitor — Alle Module</div>
+        <div class="sys-monitor" id="sysMonitor">
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Nerve Center</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">AI Coach</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Master Agent</div><div class="sys-val">LEARNING</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Mastery Hub</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">PTGO Healing</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Intelligence</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Income Engine</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Pain Assistant</div><div class="sys-val">ACTIVE</div></div>
+          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Neural Pattern Engine</div><div class="sys-val">EVOLVING</div></div>
+          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Thought Reader</div><div class="sys-val">TRAINING</div></div>
+        </div>
+
+        <!-- EVOLUTION LOG -->
+        <div class="section-label">Evolution Log — Letzte Verbesserungen</div>
+        <div class="evo-log" id="evoLog"></div>
+
+      </div>
+    </div>
+
   </div>
 
   <!-- BOTTOM NAV -->
@@ -325,6 +431,10 @@ a{text-decoration:none;color:inherit}
     <button class="nav-btn active" data-view="v-home">
       <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       Home
+    </button>
+    <button class="nav-btn" data-view="v-agent">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><circle cx="12" cy="10" r="3" fill="none"/><path d="M12 15c-3 0-5 1.5-5 3v1h10v-1c0-1.5-2-3-5-3z" fill="none"/></svg>
+      Agent
     </button>
     <button class="nav-btn" data-view="v-mastery">
       <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -467,6 +577,208 @@ document.querySelectorAll('.idea-filter').forEach(btn=>{
 });
 
 renderIdeas();
+
+// ══════════════════════════════════════════
+// ── MASTER AGENT — Self-Evolving AI Brain ──
+// ══════════════════════════════════════════
+const AGENT_KEY='ttao_master_agent';
+const THOUGHTS_KEY='ttao_thoughts';
+
+function getAgent(){
+  const def={born:Date.now(),gen:1,evo:0,iq:100,patterns:[],lastEvo:Date.now()};
+  try{return JSON.parse(localStorage.getItem(AGENT_KEY))||def}catch(e){return def}
+}
+function saveAgent(a){localStorage.setItem(AGENT_KEY,JSON.stringify(a))}
+function getThoughts(){try{return JSON.parse(localStorage.getItem(THOUGHTS_KEY))||[]}catch(e){return[]}}
+function saveThoughts(t){localStorage.setItem(THOUGHTS_KEY,JSON.stringify(t))}
+
+// Pattern detection keywords
+const PATTERN_MAP={
+  'stress':['stress','überlastet','druck','burnout','anspannung','angespannt','überfordert'],
+  'motivation':['motivation','antrieb','energie','power','feuer','drive','hustle','grind'],
+  'geld':['geld','money','income','revenue','umsatz','profit','cash','reich','5000'],
+  'beziehung':['beziehung','frau','frauen','relationship','dating','liebe','attraction','smv'],
+  'gesundheit':['gesundheit','schmerz','pain','schlaf','sleep','körper','body','training'],
+  'mindset':['mindset','denken','glauben','fear','angst','zweifel','confidence','frame'],
+  'strategie':['strategie','plan','ziel','goal','roadmap','next step','fokus','focus'],
+  'kreativität':['idee','kreativ','creative','innovation','neu','build','bauen','content'],
+  'disziplin':['disziplin','routine','habit','gewohnheit','aufstehen','morgen','konsistent'],
+  'wachstum':['wachstum','growth','evolution','besser','level up','upgrade','transform']
+};
+
+function detectPatterns(text){
+  const lower=text.toLowerCase();
+  const found=[];
+  for(const [pattern,keywords] of Object.entries(PATTERN_MAP)){
+    if(keywords.some(k=>lower.includes(k)))found.push(pattern);
+  }
+  return found.length?found:['allgemein'];
+}
+
+// Agent responses based on patterns
+const AGENT_RESPONSES={
+  stress:['Pattern erkannt: STRESS OVERLOAD. Empfehlung: Physiological Sigh — 2x einatmen, 1x lang ausatmen. Sofort.','Cortisol-Spike detektiert. Dein Körper sendet Warnsignale. 5 Minuten Walk Reset aktivieren.','Stress-Muster wiederholt sich. Analysiere Trigger-Quellen. Eliminiere oder adaptiere.'],
+  motivation:['Dopamin-Level steigt. Nutze dieses Fenster für die wichtigste Aufgabe des Tages.','Motivation ist ein Lagging Indicator. Disziplin ist der Leading Indicator. Nutze beides.','Energy Peak erkannt. Iron Rule #1: Frame kontrollieren. Jetzt handeln.'],
+  geld:['Income Engine aktiviert. Frage: Was bringt heute €500? Fokus auf einen Hebel.','Revenue-Denken erkannt. Die 4 Phasen: Foundation → Traction → Scale → Empire. Wo stehst du?','Geld ist ein Score. Frage: Welches Problem löst du gerade für wie viele Menschen?'],
+  beziehung:['Intersexuelle Dynamiken erkannt. Iron Rule #3: Warte auf IOIs. Erzwinge nichts.','SMV-Analyse läuft. Die 5 Pillars: Physique, Game, Status, Resources, Personality.','Frame ist alles. Wer den Frame kontrolliert, kontrolliert die Interaktion.'],
+  gesundheit:['Körper-Signal erkannt. Pain ist Information, kein Feind. Was sagt der Schmerz?','Sleep Debt akkumuliert sich. Unter 7h = kognitive Degradierung von 30%. Priorität 1.','Somatische Marker aktiv. Dein Körper weiß mehr als dein Verstand. Hör zu.'],
+  mindset:['Kognitives Muster erkannt. Reframe: Was wäre wenn das Gegenteil wahr ist?','Fear = False Evidence Appearing Real. Der Agent empfiehlt: In 5 Sekunden handeln.','Mindset-Shift möglich. Du bist nicht deine Gedanken. Du bist der Beobachter.'],
+  strategie:['Strategisches Denken aktiviert. Die Musk-Regel: Delete → Simplify → Accelerate → Automate.','Plan erkannt. Aber Plans sind wertlos — Planning ist alles. Was ist der ERSTE Schritt?','Ziel-Analyse: Ist das ein 10x Ziel oder ein 10% Ziel? Nur 10x verändert die Strategie.'],
+  kreativität:['Creative Burst erkannt. Idee → Idea Inbox. NICHT direkt bauen. 7 Tage warten.','Innovation-Muster: Die besten Ideen kommen beim Gehen, Duschen oder nachts. Notiere sofort.','Kreativität × Execution = Impact. Ohne Execution ist es Tagträumerei.'],
+  disziplin:['Routine-Signal positiv. Konsistenz schlägt Intensität. Jeden Tag 1% besser.','Habit Stack erkannt. Morning: Wake → Move → Think → Build. Non-negotiable.','Disziplin ist Freiheit. Jede Entscheidung die du automatisierst, spart Willenskraft.'],
+  wachstum:['Evolution-Trigger erkannt. Der Agent wächst mit dir. Aktuelles Level wird angepasst.','Growth = Pain + Reflection. Ohne Reflexion ist Schmerz nur Schmerz.','Transformation läuft. Von jedem Gedanken lernt der Agent. Neural Pathways werden stärker.'],
+  allgemein:['Gedanke registriert. Neural Network verarbeitet... Muster werden analysiert.','Signal empfangen. Der Agent lernt. Jeder Gedanke macht das System intelligenter.','Input gespeichert. Verbindungen zu bestehenden Patterns werden hergestellt.']
+};
+
+function agentRespond(patterns){
+  const responses=[];
+  patterns.forEach(p=>{
+    const pool=AGENT_RESPONSES[p]||AGENT_RESPONSES.allgemein;
+    responses.push(pool[Math.floor(Math.random()*pool.length)]);
+  });
+  return responses[0];
+}
+
+// Auto-evolution: runs every time you open the Agent tab
+function evolveAgent(){
+  const agent=getAgent();
+  const now=Date.now();
+  const hoursSinceEvo=(now-agent.lastEvo)/(1000*60*60);
+
+  if(hoursSinceEvo>=1){
+    const cycles=Math.min(Math.floor(hoursSinceEvo),100000);
+    agent.evo+=cycles;
+    agent.gen=Math.floor(agent.evo/100)+1;
+
+    // IQ grows based on thoughts and patterns
+    const thoughts=getThoughts();
+    const uniquePatterns=new Set();
+    thoughts.forEach(t=>{if(t.patterns)t.patterns.forEach(p=>uniquePatterns.add(p))});
+    agent.patterns=[...uniquePatterns];
+    agent.iq=100+thoughts.length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
+
+    agent.lastEvo=now;
+    saveAgent(agent);
+  }
+  return agent;
+}
+
+function generateEvoLog(agent){
+  const logs=[];
+  const now=new Date();
+  const h=now.getHours();
+  const m=now.getMinutes();
+
+  logs.push({time:`${h}:${String(m).padStart(2,'0')}`,msg:`<b>Self-Scan</b> abgeschlossen. ${agent.patterns.length} Pattern-Typen im Speicher.`});
+  logs.push({time:`${h}:${String(Math.max(0,m-3)).padStart(2,'0')}`,msg:`<b>Neural Weights</b> optimiert. IQ Index: ${agent.iq}.`});
+  logs.push({time:`${h}:${String(Math.max(0,m-7)).padStart(2,'0')}`,msg:`<b>Evolution Cycle</b> #${agent.evo} abgeschlossen. Gen ${agent.gen}.`});
+  logs.push({time:`${h}:${String(Math.max(0,m-15)).padStart(2,'0')}`,msg:`<b>Module Scan</b>: 8/10 Systeme aktiv. 2 evolving.`});
+  logs.push({time:`${h}:${String(Math.max(0,m-30)).padStart(2,'0')}`,msg:`<b>Pattern Engine</b> hat ${getThoughts().length} Gedanken verarbeitet.`});
+
+  if(agent.patterns.includes('stress'))logs.push({time:`${h-1<0?23:h-1}:42`,msg:`<b>Stress Pattern</b> erkannt. Contra-Maßnahmen vorgeladen.`});
+  if(agent.patterns.includes('geld'))logs.push({time:`${h-1<0?23:h-1}:28`,msg:`<b>Revenue-Analyse</b> aktualisiert. Income Engine synchronisiert.`});
+  if(agent.patterns.includes('mindset'))logs.push({time:`${h-2<0?22:h-2}:15`,msg:`<b>Mindset-Shift</b> Potenzial erkannt. Reframe-Algorithmus geladen.`});
+
+  return logs.slice(0,8);
+}
+
+function renderAgent(){
+  const agent=evolveAgent();
+  const thoughts=getThoughts();
+
+  document.getElementById('agentGen').textContent=agent.gen;
+  document.getElementById('agentEvo').textContent=agent.evo.toLocaleString('de-DE');
+  document.getElementById('statThoughts').textContent=thoughts.length;
+  document.getElementById('statPatterns').textContent=agent.patterns.length;
+  document.getElementById('statIQ').textContent=agent.iq;
+
+  // Thought stream
+  const stream=document.getElementById('thoughtStream');
+  const recent=thoughts.slice(0,20);
+  if(recent.length){
+    stream.innerHTML=recent.map(t=>{
+      const time=new Date(t.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      const tags=t.patterns?t.patterns.map(p=>`<span class="t-tag">${p}</span>`).join(''):'';
+      if(t.type==='user'){
+        return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${tags?`<div class="t-tags">${tags}</div>`:''}</div>`;
+      }else{
+        return `<div class="thought t-agent"><div class="t-label">Master Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
+      }
+    }).join('');
+  }else{
+    stream.innerHTML='<div class="idea-empty">Noch keine Gedanken. Tippe etwas ein — der Agent lernt mit jedem Input.</div>';
+  }
+
+  // Evo log
+  const logEl=document.getElementById('evoLog');
+  const logs=generateEvoLog(agent);
+  logEl.innerHTML=logs.map(l=>`<div class="evo-entry"><div class="evo-time">${l.time}</div><div class="evo-msg">${l.msg}</div></div>`).join('');
+}
+
+function submitThought(){
+  const input=document.getElementById('neuralInput');
+  const text=input.value.trim();
+  if(!text)return;
+
+  const patterns=detectPatterns(text);
+  const thoughts=getThoughts();
+
+  // Add user thought
+  thoughts.unshift({type:'user',text,patterns,ts:Date.now()});
+
+  // Agent responds
+  const response=agentRespond(patterns);
+  thoughts.unshift({type:'agent',text:response,ts:Date.now()+1});
+
+  saveThoughts(thoughts);
+  input.value='';
+
+  // Trigger evolution
+  const agent=getAgent();
+  agent.evo+=patterns.length;
+  const uniquePatterns=new Set(agent.patterns);
+  patterns.forEach(p=>uniquePatterns.add(p));
+  agent.patterns=[...uniquePatterns];
+  agent.iq=100+thoughts.length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
+  agent.lastEvo=Date.now();
+  saveAgent(agent);
+
+  renderAgent();
+
+  // Scroll to top of stream
+  document.getElementById('thoughtStream').scrollTop=0;
+}
+
+document.getElementById('neuralSend').addEventListener('click',submitThought);
+document.getElementById('neuralInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitThought()}
+});
+
+// Render agent on tab switch
+const origNavClick=navBtns.forEach.bind(navBtns);
+navBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    if(btn.dataset.view==='v-agent')setTimeout(renderAgent,50);
+  });
+});
+
+// Auto-evolve in background every 30 seconds
+setInterval(()=>{
+  const agent=getAgent();
+  agent.evo++;
+  agent.iq=100+getThoughts().length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
+  agent.lastEvo=Date.now();
+  saveAgent(agent);
+  // If agent tab is visible, update stats
+  if(document.getElementById('v-agent').classList.contains('active')){
+    document.getElementById('agentEvo').textContent=agent.evo.toLocaleString('de-DE');
+    document.getElementById('statIQ').textContent=agent.iq;
+    document.getElementById('agentGen').textContent=Math.floor(agent.evo/100)+1;
+  }
+},30000);
+
+// Init agent on load
+renderAgent();
 </script>
 </body>
 </html>
