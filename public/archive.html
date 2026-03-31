@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="robots" content="noindex,nofollow">
+<title>ARCHIVE — THETOYSAREOUT</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{text-decoration:none;color:inherit}
+
+/* GRAIN + SCANLINE */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.03}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.12;z-index:9999;animation:scan 5s linear infinite;pointer-events:none}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+
+/* LAYOUT */
+.wrap{max-width:1100px;margin:0 auto;padding:40px 20px 80px}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:48px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(20px,4vw,32px);letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.count{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim);letter-spacing:2px}
+.count b{color:var(--cyan)}
+
+/* SEARCH */
+.search-wrap{margin-bottom:32px}
+.search{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:14px 20px;outline:none;transition:border-color .3s}
+.search:focus{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.15)}
+.search::placeholder{color:var(--dim)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+
+/* CARD */
+.card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);padding:20px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;transition:opacity .3s;opacity:.4}
+.card:hover{transform:translateY(-3px);border-color:var(--accent,var(--cyan))}
+.card:hover::before{opacity:1}
+.card:active{transform:translateY(0)}
+.card .icon{font-size:28px;margin-bottom:12px;line-height:1}
+.card .name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:6px;text-transform:uppercase}
+.card .desc{font-size:11px;color:var(--dim);line-height:1.5;flex:1}
+.card .tag{display:inline-block;font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:3px 8px;margin-top:10px;border:1px solid var(--accent,var(--border));color:var(--accent,var(--dim));text-transform:uppercase;align-self:flex-start}
+
+/* COLOR VARIANTS */
+.c-cyan{--accent:var(--cyan)}.c-cyan::before{background:var(--cyan)}
+.c-pink{--accent:var(--pink)}.c-pink::before{background:var(--pink)}
+.c-gold{--accent:var(--gold)}.c-gold::before{background:var(--gold)}
+.c-green{--accent:var(--green)}.c-green::before{background:var(--green)}
+.c-purple{--accent:var(--purple)}.c-purple::before{background:var(--purple)}
+.c-red{--accent:var(--red)}.c-red::before{background:var(--red)}
+
+/* HIDDEN */
+.hidden{display:none!important}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr 1fr;gap:10px}
+  .card{padding:16px}
+  .card .icon{font-size:24px;margin-bottom:8px}
+  .card .name{font-size:10px}
+  .card .desc{font-size:10px}
+  .wrap{padding:24px 12px 60px}
+}
+@media(max-width:380px){
+  .grid{grid-template-columns:1fr}
+}
+
+/* FADE IN */
+.fade{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* NO RESULTS */
+.no-results{display:none;text-align:center;padding:60px 20px;color:var(--dim);font-size:13px;letter-spacing:1px}
+.no-results.show{display:block}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+
+<div class="wrap fade">
+
+<div class="header">
+  <div class="logo">ARCHIVE</div>
+  <div class="count"><b id="total">30</b> MODULES</div>
+</div>
+
+<div class="search-wrap">
+  <input type="text" class="search" id="search" placeholder="Suchen..." autocomplete="off" spellcheck="false">
+</div>
+
+<div class="grid" id="grid">
+
+  <!-- ═══ CORE SYSTEMS ═══ -->
+
+  <a href="/nerve" class="card c-cyan" data-tags="nerve center ki gehirn wissen strategie ai">
+    <div class="icon">🧠</div>
+    <div class="name">Nerve Center</div>
+    <div class="desc">KI-Gehirn — Wissen, Strategie, Evolution</div>
+    <div class="tag">AI Core</div>
+  </a>
+
+  <a href="/mastery" class="card c-gold" data-tags="mastery hub tagesplan routine">
+    <div class="icon">⚡</div>
+    <div class="name">Mastery Hub</div>
+    <div class="desc">Daily Routine, Iron Rules, Zeitblöcke</div>
+    <div class="tag">Mastery</div>
+  </a>
+
+  <a href="/coaching" class="card c-green" data-tags="coaching engine check-in fortschritt">
+    <div class="icon">🎯</div>
+    <div class="name">Coaching Engine</div>
+    <div class="desc">Check-in, Progress Tracking, Analyse</div>
+    <div class="tag">Coaching</div>
+  </a>
+
+  <a href="/intelligence" class="card c-pink" data-tags="intelligence command center threat monitor kpi">
+    <div class="icon">📡</div>
+    <div class="name">Intelligence</div>
+    <div class="desc">Command Center — KPIs, Signale, Monitoring</div>
+    <div class="tag">Intel</div>
+  </a>
+
+  <!-- ═══ MASTERY MODULES ═══ -->
+
+  <a href="/mastery-rollo" class="card c-pink" data-tags="rollo tomassi rational male iron rules smv red pill">
+    <div class="icon">🔴</div>
+    <div class="name">Rollo Tomassi</div>
+    <div class="desc">9 Iron Rules — The Rational Male Cheat Sheet</div>
+    <div class="tag">Red Pill</div>
+  </a>
+
+  <a href="/mastery-tate" class="card c-gold" data-tags="andrew tate 41 tenets tateism bible">
+    <div class="icon">🏆</div>
+    <div class="name">Andrew Tate</div>
+    <div class="desc">41 Tenets — Tateism Cheat Sheet</div>
+    <div class="tag">Tenets</div>
+  </a>
+
+  <a href="/mastery-income" class="card c-green" data-tags="income engine 5000 geld revenue roadmap kpi">
+    <div class="icon">💰</div>
+    <div class="name">Income Engine</div>
+    <div class="desc">€5.000/Tag Roadmap — Phasen, Hebel, KPIs</div>
+    <div class="tag">Revenue</div>
+  </a>
+
+  <a href="/mastery-today" class="card c-cyan" data-tags="heute today daily action plan checklist">
+    <div class="icon">📋</div>
+    <div class="name">Heute</div>
+    <div class="desc">Tages-Actionplan — Checklist, Done Counter</div>
+    <div class="tag">Daily</div>
+  </a>
+
+  <a href="/mastery-tagesplan" class="card c-purple" data-tags="tagesplan schedule musk bezos hormozi huberman dalio billionaire">
+    <div class="icon">⏱️</div>
+    <div class="name">Tagesplan</div>
+    <div class="desc">Billionaire Schedule — 5-Minuten-Blöcke</div>
+    <div class="tag">Schedule</div>
+  </a>
+
+  <!-- ═══ HEALING & THERAPY ═══ -->
+
+  <a href="/heal" class="card c-green" data-tags="heal ptgo method pain trauma growth outcome therapie">
+    <div class="icon">🌿</div>
+    <div class="name">PTGO Method</div>
+    <div class="desc">Pain · Trauma · Growth · Outcome — 1:1 Sessions</div>
+    <div class="tag">Healing</div>
+  </a>
+
+  <a href="/heal-en" class="card c-green" data-tags="heal english ptgo method">
+    <div class="icon">🌍</div>
+    <div class="name">PTGO Method EN</div>
+    <div class="desc">English — Pain · Trauma · Growth · Outcome</div>
+    <div class="tag">English</div>
+  </a>
+
+  <a href="/heal-ultra" class="card c-green" data-tags="heal ultra intensive">
+    <div class="icon">💎</div>
+    <div class="name">PTGO Ultra</div>
+    <div class="desc">Intensive Healing Variant</div>
+    <div class="tag">Premium</div>
+  </a>
+
+  <a href="/pain-assistant" class="card c-cyan" data-tags="pain assistant schmerz analyse chatbot ki">
+    <div class="icon">💬</div>
+    <div class="name">Pain Assistant</div>
+    <div class="desc">KI Schmerz-Analyse — Chatbot Interface</div>
+    <div class="tag">AI Chat</div>
+  </a>
+
+  <a href="/ai-coaching.html" class="card c-purple" data-tags="ai coaching transformation os entrepreneur check-in streak">
+    <div class="icon">🤖</div>
+    <div class="name">AI Coaching</div>
+    <div class="desc">Transformation OS — KI-Selbstführung, Streaks</div>
+    <div class="tag">AI Coach</div>
+  </a>
+
+  <!-- ═══ REFERENCE & PROTOCOLS ═══ -->
+
+  <a href="/zeis" class="card c-gold" data-tags="zeis protocol 18 schmerzverzerrungen pain distortion">
+    <div class="icon">📖</div>
+    <div class="name">Zeis Protocol</div>
+    <div class="desc">18 Schmerzverzerrungen — Alexander Zeis</div>
+    <div class="tag">Protocol</div>
+  </a>
+
+  <a href="/flyer-psycho-schutz.html" class="card c-red" data-tags="psycho schutzschild manipulation erkennen schutz">
+    <div class="icon">🛡️</div>
+    <div class="name">Psycho-Schutzschild</div>
+    <div class="desc">Manipulation erkennen, bevor sie wirkt</div>
+    <div class="tag">Defense</div>
+  </a>
+
+  <!-- ═══ EVENTS & MUSIC ═══ -->
+
+  <a href="/live" class="card c-gold" data-tags="live piano booking event konzert domspatz">
+    <div class="icon">🎹</div>
+    <div class="name">Live Piano</div>
+    <div class="desc">Booking — Eine Reise durch mein Leben</div>
+    <div class="tag">Event</div>
+  </a>
+
+  <a href="/musik" class="card c-pink" data-tags="musik music movement">
+    <div class="icon">🎵</div>
+    <div class="name">Musik</div>
+    <div class="desc">Music & Movement Platform</div>
+    <div class="tag">Music</div>
+  </a>
+
+  <!-- ═══ ADMIN & CONTROL ═══ -->
+
+  <a href="/admin" class="card c-red" data-tags="admin bewerbungen applications dashboard">
+    <div class="icon">📊</div>
+    <div class="name">Admin</div>
+    <div class="desc">Bewerbungen & Assessment Dashboard</div>
+    <div class="tag">Admin</div>
+  </a>
+
+  <a href="/bot-admin" class="card c-cyan" data-tags="bot admin mission control broadcast evolve whatsapp">
+    <div class="icon">🤖</div>
+    <div class="name">Bot Admin</div>
+    <div class="desc">Mission Control — Broadcast, Reports, Evolve</div>
+    <div class="tag">Bot</div>
+  </a>
+
+  <a href="/master-control" class="card c-pink" data-tags="master control bordcomputer">
+    <div class="icon">🚀</div>
+    <div class="name">Master Control</div>
+    <div class="desc">Bordcomputer — Internes Kontrollzentrum</div>
+    <div class="tag">Control</div>
+  </a>
+
+  <a href="/mein-dashboard.html" class="card c-gold" data-tags="mein dashboard command center az alexander zeis">
+    <div class="icon">🏠</div>
+    <div class="name">Mein Dashboard</div>
+    <div class="desc">AZ Command Center — Protokoll Management</div>
+    <div class="tag">Dashboard</div>
+  </a>
+
+  <!-- ═══ SALES & PRODUCT ═══ -->
+
+  <a href="/product" class="card c-green" data-tags="product verkauf tracker sales kpi">
+    <div class="icon">📈</div>
+    <div class="name">Verkaufs-Tracker</div>
+    <div class="desc">Sales Dashboard — KPIs, Status, Tracking</div>
+    <div class="tag">Sales</div>
+  </a>
+
+  <!-- ═══ PORTALS ═══ -->
+
+  <a href="/" class="card c-cyan" data-tags="portal nerve center home hauptseite">
+    <div class="icon">🌐</div>
+    <div class="name">Portal</div>
+    <div class="desc">Hauptportal — Nerve Center Eingang</div>
+    <div class="tag">Home</div>
+  </a>
+
+  <a href="/landing.html" class="card c-green" data-tags="landing page ptgo marketing therapeutisch betriebssystem">
+    <div class="icon">🚪</div>
+    <div class="name">Landing Page</div>
+    <div class="desc">PTGO Marketing — Therapeutisches Betriebssystem</div>
+    <div class="tag">Landing</div>
+  </a>
+
+  <!-- ═══ GAMIFICATION ═══ -->
+
+  <a href="/meerjungfrauen-spiel.html" class="card c-purple" data-tags="meerjungfrauen spiel game dice würfel abenteuer">
+    <div class="icon">🧜‍♀️</div>
+    <div class="name">Meerjungfrauen-Spiel</div>
+    <div class="desc">Würfel-Abenteuer — Underwater Dice Game</div>
+    <div class="tag">Game</div>
+  </a>
+
+  <a href="/ostern" class="card c-gold" data-tags="ostern easter reset box gamification">
+    <div class="icon">🐣</div>
+    <div class="name">Oster Reset Box</div>
+    <div class="desc">Easter Reset Ritual — Gamification</div>
+    <div class="tag">Seasonal</div>
+  </a>
+
+  <!-- ═══ SETUP ═══ -->
+
+  <a href="/setup-supabase" class="card c-cyan" data-tags="setup supabase database init">
+    <div class="icon">🗄️</div>
+    <div class="name">Supabase Setup</div>
+    <div class="desc">Database Initialisierung</div>
+    <div class="tag">Setup</div>
+  </a>
+
+  <a href="/vercel-setup.html" class="card c-cyan" data-tags="vercel setup deployment config">
+    <div class="icon">▲</div>
+    <div class="name">Vercel Setup</div>
+    <div class="desc">Deployment Konfiguration</div>
+    <div class="tag">Setup</div>
+  </a>
+
+  <!-- ═══ LEGAL ═══ -->
+
+  <a href="/impressum" class="card c-red" data-tags="impressum datenschutz legal privacy">
+    <div class="icon">⚖️</div>
+    <div class="name">Impressum</div>
+    <div class="desc">Impressum & Datenschutzerklärung</div>
+    <div class="tag">Legal</div>
+  </a>
+
+</div>
+
+<div class="no-results" id="noResults">Kein Modul gefunden.</div>
+
+</div>
+
+<script>
+// Grain effect
+(function(){
+  const c=document.getElementById('grain'),x=c.getContext('2d');
+  function r(){c.width=window.innerWidth;c.height=window.innerHeight}
+  r();window.addEventListener('resize',r);
+  function g(){const d=x.createImageData(c.width,c.height),p=d.data;
+  for(let i=0;i<p.length;i+=4){const v=Math.random()*255;p[i]=p[i+1]=p[i+2]=v;p[i+3]=255}
+  x.putImageData(d,0,0);requestAnimationFrame(g)}g()
+})();
+
+// Search
+const search=document.getElementById('search');
+const cards=document.querySelectorAll('.card');
+const noResults=document.getElementById('noResults');
+const totalEl=document.getElementById('total');
+totalEl.textContent=cards.length;
+
+search.addEventListener('input',function(){
+  const q=this.value.toLowerCase().trim();
+  let visible=0;
+  cards.forEach(c=>{
+    const text=(c.textContent+' '+c.dataset.tags).toLowerCase();
+    const show=!q||text.includes(q);
+    c.classList.toggle('hidden',!show);
+    if(show)visible++;
+  });
+  noResults.classList.toggle('show',visible===0);
+  totalEl.textContent=visible;
+});
+
+// Keyboard shortcut: focus search with /
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'&&document.activeElement!==search){e.preventDefault();search.focus()}
+  if(e.key==='Escape'){search.value='';search.dispatchEvent(new Event('input'));search.blur()}
+});
+</script>
+</body>
+</html>

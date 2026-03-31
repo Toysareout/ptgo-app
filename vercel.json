@@ -28,6 +28,7 @@
     { "source": "/master-control", "destination": "/master-control.html" },
     { "source": "/pain-assistant", "destination": "/pain-assistant.html" },
     { "source": "/intelligence", "destination": "/intelligence.html" },
+    { "source": "/archive", "destination": "/archive.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [
