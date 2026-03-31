@@ -49,6 +49,7 @@
   ],
   "crons": [
     { "path": "/api/bot-daily-report", "schedule": "0 9 * * *" },
-    { "path": "/api/bot-evolve", "schedule": "0 3 * * *" }
+    { "path": "/api/bot-evolve", "schedule": "0 3 * * *" },
+    { "path": "/api/chief-agent", "schedule": "0 8 * * *" }
   ]
 }
