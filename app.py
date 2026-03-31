@@ -2992,7 +2992,7 @@ def therapist_dashboard(request: Request, db=Depends(get_db)):
 
     body = f"""
       <h1>Therapist</h1>
-      <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/product">Verkaufs-Tracker</a> &bull; <a href="/therapist/logout">logout</a></p>
+      <p class="small">Eingeloggt als <b>{t.name}</b> &bull; <a href="/therapist/chief-agent" style="color:#f59e0b;font-weight:700">🧠 KI-Chefagent</a> &bull; <a href="/product">Verkaufs-Tracker</a> &bull; <a href="/therapist/logout">logout</a></p>
       <div class="hr"></div>
       <h2>Patient zuweisen</h2>
       <form method="post" action="/therapist/assign">
@@ -3063,6 +3063,424 @@ def therapist_view_checkin(checkin_id: int, request: Request, db=Depends(get_db)
       <p><a href="/therapist">← Back</a></p>
     """
     return _page("Therapist • Checkin", body, request=request)
+
+
+# =========================================================
+# KI-CHEFAGENT — AI Chief Agent for Therapists
+# =========================================================
+
+def _chief_agent_collect_data(db, therapist_id: int) -> dict:
+    """Collect and aggregate all patient data for the AI Chief Agent."""
+    patients = db.query(Patient).filter(Patient.therapist_id == therapist_id).all()
+    if not patients:
+        return {"patients": [], "summary": {}}
+
+    now = _now_local()
+    today = now.strftime("%Y-%m-%d")
+    week_ago = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    patient_data = []
+    total_checkins_7d = 0
+    all_patterns_7d = []
+    all_scores_7d = []
+    all_outcomes_7d = []
+    risk_patients = []
+
+    for p in patients:
+        # Recent check-ins (last 7 days)
+        recent = db.query(CheckIn).filter(
+            CheckIn.patient_id == p.id,
+            CheckIn.local_day >= week_ago,
+        ).order_by(CheckIn.created_at.desc()).all()
+
+        # Last check-in overall
+        last = db.query(CheckIn).filter(CheckIn.patient_id == p.id).order_by(CheckIn.created_at.desc()).first()
+
+        # All check-ins for trend
+        all_checkins = db.query(CheckIn).filter(CheckIn.patient_id == p.id).order_by(CheckIn.created_at.desc()).limit(30).all()
+
+        # Outcomes last 7 days
+        outcomes = db.query(Outcome).filter(
+            Outcome.patient_id == p.id,
+            Outcome.created_at >= datetime.utcnow() - timedelta(days=7),
+        ).all()
+
+        scores = [c.score for c in recent if c.score is not None]
+        patterns = [c.pattern_code for c in recent if c.pattern_code]
+        actions = [c.action_code for c in recent if c.action_code]
+
+        avg_score = round(sum(scores) / len(scores), 1) if scores else None
+        trend_scores = [c.score for c in all_checkins[:14] if c.score is not None]
+        score_trend = None
+        if len(trend_scores) >= 4:
+            first_half = sum(trend_scores[len(trend_scores)//2:]) / max(1, len(trend_scores) - len(trend_scores)//2)
+            second_half = sum(trend_scores[:len(trend_scores)//2]) / max(1, len(trend_scores)//2)
+            score_trend = "steigend" if second_half > first_half + 3 else "fallend" if second_half < first_half - 3 else "stabil"
+
+        days_since_last = None
+        if last:
+            try:
+                ld = datetime.strptime(last.local_day, "%Y-%m-%d")
+                days_since_last = (now - ld.replace(tzinfo=now.tzinfo)).days
+            except Exception:
+                pass
+
+        outcome_ratings = [o.rating for o in outcomes]
+
+        pd_entry = {
+            "name": p.name,
+            "phone": p.phone,
+            "checkins_7d": len(recent),
+            "avg_score_7d": avg_score,
+            "score_trend": score_trend,
+            "last_score": last.score if last else None,
+            "last_risk": last.risk_level if last else None,
+            "last_pattern": last.pattern_label if last else None,
+            "last_day": last.local_day if last else None,
+            "days_since_last": days_since_last,
+            "patterns_7d": patterns,
+            "actions_7d": actions,
+            "outcomes_7d": outcome_ratings,
+            "stress_avg": round(sum(c.stress for c in recent if c.stress is not None) / max(1, len([c for c in recent if c.stress is not None])), 1) if recent else None,
+            "sleep_avg": round(sum(c.sleep for c in recent if c.sleep is not None) / max(1, len([c for c in recent if c.sleep is not None])), 1) if recent else None,
+            "craving_avg": round(sum(c.craving for c in recent if c.craving is not None) / max(1, len([c for c in recent if c.craving is not None])), 1) if recent else None,
+        }
+        patient_data.append(pd_entry)
+
+        total_checkins_7d += len(recent)
+        all_patterns_7d.extend(patterns)
+        all_scores_7d.extend(scores)
+        all_outcomes_7d.extend(outcome_ratings)
+
+        if last and last.risk_level == "high":
+            risk_patients.append(pd_entry)
+        elif days_since_last and days_since_last >= 3:
+            risk_patients.append(pd_entry)
+
+    # Pattern frequency
+    pattern_freq = {}
+    for pat in all_patterns_7d:
+        pattern_freq[pat] = pattern_freq.get(pat, 0) + 1
+
+    # Outcome distribution
+    outcome_dist = {"better": 0, "same": 0, "worse": 0}
+    for o in all_outcomes_7d:
+        if o in outcome_dist:
+            outcome_dist[o] += 1
+
+    summary = {
+        "total_patients": len(patients),
+        "active_patients_7d": len([p for p in patient_data if p["checkins_7d"] > 0]),
+        "total_checkins_7d": total_checkins_7d,
+        "avg_score_7d": round(sum(all_scores_7d) / len(all_scores_7d), 1) if all_scores_7d else None,
+        "pattern_frequency": pattern_freq,
+        "outcome_distribution": outcome_dist,
+        "risk_patients": len(risk_patients),
+    }
+
+    return {
+        "patients": patient_data,
+        "risk_patients": risk_patients,
+        "summary": summary,
+        "today": today,
+    }
+
+
+def _chief_agent_briefing(data: dict) -> str:
+    """Generate AI executive briefing from aggregated patient data."""
+    if not ANTHROPIC_API_KEY:
+        return "<p class='small' style='color:#fecaca'>Kein ANTHROPIC_API_KEY konfiguriert. KI-Analyse nicht verfügbar.</p>"
+
+    summary = data.get("summary", {})
+    patients = data.get("patients", [])
+    risk_patients = data.get("risk_patients", [])
+
+    patient_details = ""
+    for p in patients:
+        patient_details += (
+            f"- {p['name']}: Score Ø{p['avg_score_7d']}, Trend {p['score_trend'] or '?'}, "
+            f"Check-ins {p['checkins_7d']}, Letztes Pattern: {p['last_pattern'] or '–'}, "
+            f"Stress Ø{p['stress_avg']}, Schlaf Ø{p['sleep_avg']}, Craving Ø{p['craving_avg']}, "
+            f"Outcomes: {p['outcomes_7d']}, Letzter Check-in: {p['last_day'] or '–'} "
+            f"({p['days_since_last']} Tage her)\n"
+        )
+
+    risk_details = ""
+    for r in risk_patients:
+        risk_details += f"- ⚠️ {r['name']}: Score {r['last_score']}, Risk {r['last_risk']}, {r['days_since_last']} Tage seit letztem Check-in\n"
+
+    prompt = f"""Du bist der KI-Chefagent eines Therapeuten. Deine Aufgabe: Liefere ein Executive Briefing über alle Patienten.
+Schreibe auf Deutsch. Sei direkt, konkret, handlungsorientiert. Kein Smalltalk.
+
+DATEN:
+- Patienten gesamt: {summary.get('total_patients', 0)}
+- Aktive Patienten (7 Tage): {summary.get('active_patients_7d', 0)}
+- Check-ins (7 Tage): {summary.get('total_checkins_7d', 0)}
+- Durchschnitts-Score (7 Tage): {summary.get('avg_score_7d', '–')}
+- Pattern-Häufigkeit: {json.dumps(summary.get('pattern_frequency', {}), ensure_ascii=False)}
+- Outcome-Verteilung: {json.dumps(summary.get('outcome_distribution', {}), ensure_ascii=False)}
+- Risiko-Patienten: {summary.get('risk_patients', 0)}
+
+PATIENTEN-DETAILS:
+{patient_details if patient_details else 'Keine Patientendaten vorhanden.'}
+
+RISIKO-ALERTS:
+{risk_details if risk_details else 'Keine Risiko-Patienten aktuell.'}
+
+Erstelle ein strukturiertes Briefing mit diesen Abschnitten:
+
+1. **LAGE-ÜBERBLICK** (2-3 Sätze Gesamtbild)
+2. **SOFORT-HANDLUNGSBEDARF** (welche Patienten brauchen Aufmerksamkeit und warum)
+3. **POSITIVE ENTWICKLUNGEN** (was läuft gut)
+4. **MUSTER & TRENDS** (welche Patterns dominieren, was bedeutet das)
+5. **EMPFEHLUNGEN** (3 konkrete nächste Schritte für den Therapeuten)
+
+Formatiere als HTML mit <h3>, <p>, <ul>, <li> Tags. Keine Code-Blöcke. Maximal 500 Wörter."""
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 1500, "messages": [{"role": "user", "content": prompt}]},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        resp_data = resp.json()
+        _track_ai_usage("chief_agent_briefing", resp_data)
+        text = resp_data["content"][0]["text"].strip()
+        return text
+    except Exception as e:
+        _track_ai_error("chief_agent_briefing", str(e))
+        print("[WARN] Chief Agent briefing failed:", e)
+        return "<p class='warn'>KI-Briefing konnte nicht erstellt werden. Bitte erneut versuchen.</p>"
+
+
+def _chief_agent_answer(data: dict, question: str) -> str:
+    """Answer a therapist question about their patient data."""
+    if not ANTHROPIC_API_KEY:
+        return "Kein ANTHROPIC_API_KEY konfiguriert."
+
+    patients = data.get("patients", [])
+    summary = data.get("summary", {})
+
+    patient_info = ""
+    for p in patients:
+        patient_info += (
+            f"- {p['name']}: Score Ø{p['avg_score_7d']}, Trend {p['score_trend'] or '?'}, "
+            f"Check-ins {p['checkins_7d']}, Pattern: {p['last_pattern'] or '–'}, "
+            f"Stress Ø{p['stress_avg']}, Schlaf Ø{p['sleep_avg']}, Craving Ø{p['craving_avg']}, "
+            f"Outcomes: {p['outcomes_7d']}, Letzter Check-in: {p['last_day'] or '–'}\n"
+        )
+
+    prompt = f"""Du bist der KI-Chefagent eines Therapeuten. Du hast Zugang zu allen Patientendaten.
+Beantworte die Frage des Therapeuten direkt, konkret und auf Deutsch. Kein Smalltalk.
+
+ZUSAMMENFASSUNG:
+- Patienten gesamt: {summary.get('total_patients', 0)}
+- Aktive (7 Tage): {summary.get('active_patients_7d', 0)}
+- Check-ins (7 Tage): {summary.get('total_checkins_7d', 0)}
+- Score Ø: {summary.get('avg_score_7d', '–')}
+- Patterns: {json.dumps(summary.get('pattern_frequency', {}), ensure_ascii=False)}
+- Outcomes: {json.dumps(summary.get('outcome_distribution', {}), ensure_ascii=False)}
+
+PATIENTEN:
+{patient_info if patient_info else 'Keine Daten.'}
+
+FRAGE DES THERAPEUTEN:
+{question}
+
+Antworte als HTML mit <p>, <ul>, <li>, <b> Tags. Maximal 300 Wörter. Sei präzise und handlungsorientiert."""
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 800, "messages": [{"role": "user", "content": prompt}]},
+            timeout=20,
+        )
+        resp.raise_for_status()
+        resp_data = resp.json()
+        _track_ai_usage("chief_agent_chat", resp_data)
+        return resp_data["content"][0]["text"].strip()
+    except Exception as e:
+        _track_ai_error("chief_agent_chat", str(e))
+        return "<p class='warn'>Fehler bei der KI-Antwort. Bitte erneut versuchen.</p>"
+
+
+@app.get("/therapist/chief-agent", response_class=HTMLResponse)
+def chief_agent_dashboard(request: Request, db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    data = _chief_agent_collect_data(db, t.id)
+    summary = data.get("summary", {})
+    patients = data.get("patients", [])
+    risk_patients = data.get("risk_patients", [])
+
+    # KPI cards
+    avg_score = summary.get("avg_score_7d")
+    score_color = "#bbf7d0" if avg_score and avg_score >= 60 else "#fecaca" if avg_score and avg_score < 40 else "#f59e0b"
+
+    kpi_html = f"""
+    <div class="grid3" style="margin-bottom:20px">
+      <div class="kpi"><span class="small">Patienten</span><b>{summary.get('total_patients', 0)}</b></div>
+      <div class="kpi"><span class="small">Aktiv (7T)</span><b>{summary.get('active_patients_7d', 0)}</b></div>
+      <div class="kpi"><span class="small">Check-ins (7T)</span><b>{summary.get('total_checkins_7d', 0)}</b></div>
+    </div>
+    <div class="grid3" style="margin-bottom:20px">
+      <div class="kpi"><span class="small">Score Ø</span><b style="color:{score_color}">{avg_score or '–'}</b></div>
+      <div class="kpi"><span class="small">Risiko-Pat.</span><b style="color:{'#fecaca' if summary.get('risk_patients', 0) > 0 else '#bbf7d0'}">{summary.get('risk_patients', 0)}</b></div>
+      <div class="kpi"><span class="small">Outcomes</span><b style="font-size:14px">👍{summary.get('outcome_distribution', {}).get('better', 0)} 😐{summary.get('outcome_distribution', {}).get('same', 0)} 👎{summary.get('outcome_distribution', {}).get('worse', 0)}</b></div>
+    </div>
+    """
+
+    # Pattern frequency bars
+    pattern_freq = summary.get("pattern_frequency", {})
+    max_freq = max(pattern_freq.values()) if pattern_freq else 1
+    pattern_html = ""
+    for code, count in sorted(pattern_freq.items(), key=lambda x: -x[1]):
+        pct = int((count / max_freq) * 100)
+        label = PATTERNS.get(code, code)
+        pattern_html += f"""
+        <div style="margin:6px 0">
+          <div class="small" style="margin-bottom:2px">{label} ({count}x)</div>
+          <div style="height:6px;background:#1f2937;border-radius:999px">
+            <div style="height:6px;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:999px;width:{pct}%"></div>
+          </div>
+        </div>
+        """
+
+    # Risk alerts
+    risk_html = ""
+    for r in risk_patients:
+        risk_reason = []
+        if r.get("last_risk") == "high":
+            risk_reason.append("Hohes Risiko")
+        if r.get("days_since_last") and r["days_since_last"] >= 3:
+            risk_reason.append(f"{r['days_since_last']} Tage inaktiv")
+        risk_html += f"""
+        <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:12px;margin:8px 0">
+          <b style="color:#fecaca">{r['name']}</b>
+          <span class="small"> — {', '.join(risk_reason)}</span>
+          <div class="small" style="margin-top:4px">Score: {r.get('last_score', '–')} | Pattern: {r.get('last_pattern', '–')} | Letzter Check-in: {r.get('last_day', '–')}</div>
+        </div>
+        """
+
+    # Patient overview table
+    patient_rows = ""
+    for p in sorted(patients, key=lambda x: x.get("avg_score_7d") or 999):
+        s = p.get("avg_score_7d")
+        sc = "#bbf7d0" if s and s >= 60 else "#fecaca" if s and s < 40 else "#f59e0b"
+        trend_icon = "📈" if p.get("score_trend") == "steigend" else "📉" if p.get("score_trend") == "fallend" else "➡️"
+        patient_rows += f"""
+        <div class="kpi" style="margin-bottom:8px;display:grid;grid-template-columns:1fr auto;align-items:center">
+          <div>
+            <b>{p['name']}</b>
+            <div class="small">Check-ins: {p['checkins_7d']} | Pattern: {p.get('last_pattern') or '–'}</div>
+          </div>
+          <div style="text-align:right">
+            <span style="font-size:20px;font-weight:700;color:{sc}">{s or '–'}</span>
+            <span style="font-size:16px">{trend_icon}</span>
+          </div>
+        </div>
+        """
+
+    # AI Briefing (loaded via iframe/fetch or inline)
+    briefing = _chief_agent_briefing(data)
+
+    body = f"""
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <h1 style="margin:0">🧠 KI-Chefagent</h1>
+        <span class="pill" style="border-color:#6366f1;color:#a5b4fc">AI Powered</span>
+      </div>
+      <p class="small" style="margin-bottom:16px">
+        Dein intelligenter Assistent — analysiert alle Patientendaten und liefert Insights direkt.
+        <br><a href="/therapist">← Zum Dashboard</a>
+      </p>
+
+      <div class="hr"></div>
+
+      <!-- KPIs -->
+      <h2>📊 Überblick (letzte 7 Tage)</h2>
+      {kpi_html}
+
+      <div class="hr"></div>
+
+      <!-- AI BRIEFING -->
+      <h2>📋 KI-Briefing</h2>
+      <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:16px;padding:20px;margin:12px 0;line-height:1.7">
+        {briefing}
+      </div>
+
+      <div class="hr"></div>
+
+      <!-- RISK ALERTS -->
+      <h2>🚨 Sofort-Handlungsbedarf</h2>
+      {risk_html if risk_html else "<p class='small' style='color:#bbf7d0'>Keine Risiko-Patienten aktuell. Alles im grünen Bereich.</p>"}
+
+      <div class="hr"></div>
+
+      <!-- PATTERN FREQUENCY -->
+      <h2>🔍 Pattern-Häufigkeit (7 Tage)</h2>
+      {pattern_html if pattern_html else "<p class='small'>Keine Patterns erkannt.</p>"}
+
+      <div class="hr"></div>
+
+      <!-- PATIENT RANKING -->
+      <h2>👥 Patienten-Ranking (Score aufsteigend)</h2>
+      {patient_rows if patient_rows else "<p class='small'>Keine Patienten zugewiesen.</p>"}
+
+      <div class="hr"></div>
+
+      <!-- INTERACTIVE CHAT -->
+      <h2>💬 Frag den Chefagenten</h2>
+      <p class="small">Stelle Fragen zu deinen Patienten — der KI-Agent antwortet basierend auf allen Daten.</p>
+      <div id="chat-history" style="margin:12px 0"></div>
+      <form id="chief-chat-form" onsubmit="return askChief(event)">
+        <textarea id="chief-q" rows="2" placeholder="z.B. Welcher Patient macht die besten Fortschritte? Wer braucht mehr Aufmerksamkeit?" style="margin-bottom:8px"></textarea>
+        <button type="submit" id="chief-btn">Frage stellen</button>
+      </form>
+
+      <script>
+      async function askChief(e) {{
+        e.preventDefault();
+        const q = document.getElementById('chief-q').value.trim();
+        if (!q) return false;
+        const btn = document.getElementById('chief-btn');
+        const hist = document.getElementById('chat-history');
+        btn.disabled = true;
+        btn.textContent = 'Denke nach...';
+
+        // Add question bubble
+        hist.innerHTML += '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:12px;margin:8px 0"><b>Du:</b> ' + q.replace(/</g,'&lt;') + '</div>';
+
+        try {{
+          const resp = await fetch('/therapist/chief-agent/ask', {{
+            method: 'POST',
+            headers: {{'Content-Type': 'application/x-www-form-urlencoded'}},
+            body: 'question=' + encodeURIComponent(q),
+          }});
+          const html = await resp.text();
+          hist.innerHTML += '<div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.25);border-radius:12px;padding:12px;margin:8px 0;line-height:1.6"><b>🧠 Chefagent:</b><br>' + html + '</div>';
+        }} catch(err) {{
+          hist.innerHTML += '<div style="color:#fecaca;padding:8px">Fehler: ' + err.message + '</div>';
+        }}
+
+        document.getElementById('chief-q').value = '';
+        btn.disabled = false;
+        btn.textContent = 'Frage stellen';
+        hist.scrollIntoView({{behavior:'smooth', block:'end'}});
+        return false;
+      }}
+      </script>
+    """
+    return _page("KI-Chefagent", body, request=request)
+
+
+@app.post("/therapist/chief-agent/ask", response_class=HTMLResponse)
+def chief_agent_ask(request: Request, question: str = Form(...), db=Depends(get_db)):
+    t = require_therapist_login(request, db)
+    data = _chief_agent_collect_data(db, t.id)
+    answer = _chief_agent_answer(data, question.strip())
+    return HTMLResponse(answer)
 
 
 # =========================================================
