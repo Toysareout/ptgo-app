@@ -127,26 +127,12 @@ a{text-decoration:none;color:inherit}
 /* ── MORE VIEW ── */
 .more-grid{display:grid;grid-template-columns:1fr;gap:8px}
 
-/* ── MASTER AGENT VIEW ── */
-.agent-brain{text-align:center;padding:20px 0 24px;position:relative}
-.agent-orb{width:120px;height:120px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(0,240,255,.3),rgba(168,85,247,.2),rgba(255,45,142,.15),transparent 70%);border:1px solid rgba(0,240,255,.25);position:relative;animation:orbPulse 3s ease-in-out infinite}
-.agent-orb::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid rgba(0,240,255,.15);animation:orbSpin 8s linear infinite}
-.agent-orb::after{content:'';position:absolute;inset:20px;border-radius:50%;background:radial-gradient(circle,rgba(0,240,255,.15),transparent);animation:orbPulse 2s ease-in-out infinite alternate}
-@keyframes orbPulse{0%,100%{box-shadow:0 0 30px rgba(0,240,255,.2),0 0 60px rgba(168,85,247,.1)}50%{box-shadow:0 0 50px rgba(0,240,255,.35),0 0 80px rgba(168,85,247,.2)}}
-@keyframes orbSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-.agent-orb .orb-icon{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px}
-.agent-status{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin-bottom:4px}
-.agent-gen{font-size:11px;color:var(--dim);letter-spacing:1px}
-
-.evo-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px}
-.evo-stat{background:var(--surface);border:1px solid var(--border);padding:14px 8px;text-align:center}
-.evo-stat .ev-val{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;margin-bottom:4px}
-.evo-stat .ev-label{font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
-.ev-cyan{color:var(--cyan)}
-.ev-green{color:var(--green)}
-.ev-gold{color:var(--gold)}
-.ev-pink{color:var(--pink)}
-.ev-purple{color:var(--purple)}
+/* ── CEO AGENT VIEW ── */
+.revenue-hero{text-align:center;padding:24px 0 12px}
+.revenue-today{font-family:'Orbitron',sans-serif;font-size:clamp(36px,8vw,56px);font-weight:900;color:var(--green);letter-spacing:2px;line-height:1}
+.streak-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 20px}
+.streak-num{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--gold)}
+.streak-label{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
 
 .neural-input-wrap{position:relative;margin-bottom:20px}
 .neural-input{width:100%;background:var(--surface);border:1px solid rgba(0,240,255,.2);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:14px 50px 14px 16px;outline:none;transition:all .3s;min-height:48px;resize:none}
@@ -165,8 +151,6 @@ a{text-decoration:none;color:inherit}
 .thought.t-agent .t-label{color:var(--purple)}
 .thought .t-text{font-size:12px;line-height:1.6;color:var(--text)}
 .thought .t-meta{font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:1px}
-.thought .t-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
-.thought .t-tag{font-family:'Orbitron',sans-serif;font-size:7px;padding:2px 6px;border:1px solid rgba(0,240,255,.2);color:var(--cyan);letter-spacing:1px}
 .revenue-row{display:flex;gap:8px;margin-bottom:8px}
 .revenue-input{flex:1;background:var(--surface);border:1px solid rgba(45,255,168,.2);color:var(--green);font-family:'Orbitron',sans-serif;font-size:16px;padding:12px 16px;outline:none;transition:border-color .3s}
 .revenue-input:focus{border-color:var(--green);box-shadow:var(--glow-green)}
@@ -181,20 +165,6 @@ a{text-decoration:none;color:inherit}
 .directive .dir-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:700}
 .directive .dir-sub{font-size:11px;color:var(--gold);margin-top:8px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
 
-.sys-monitor{margin-top:16px}
-.sys-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:4px;font-size:11px}
-.sys-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;animation:pulse 2s infinite}
-.sys-dot.online{background:var(--green)}
-.sys-dot.learning{background:var(--gold);animation:pulse 1s infinite}
-.sys-dot.standby{background:var(--dim)}
-.sys-name{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;flex:1;color:var(--text)}
-.sys-val{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);letter-spacing:1px}
-
-.evo-log{margin-top:16px}
-.evo-entry{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(26,26,46,.5);font-size:11px}
-.evo-time{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);flex-shrink:0;width:50px;letter-spacing:1px}
-.evo-msg{color:var(--dim);line-height:1.4;flex:1}
-.evo-msg b{color:var(--cyan);font-weight:400}
 
 /* ── FADE ── */
 .fade{animation:fadeIn .3s ease}
@@ -391,49 +361,34 @@ a{text-decoration:none;color:inherit}
     <div class="view" id="v-agent">
       <div class="fade">
 
-        <!-- CEO HEADER -->
-        <div class="agent-brain">
-          <div class="agent-orb"><div class="orb-icon">👁️</div></div>
-          <div class="agent-status">CEO Agent <span id="agentStatus">Online</span></div>
-          <div class="agent-gen">Gen <span id="agentGen">0</span> · IQ <span id="statIQ">100</span> · <span id="agentEvo">0</span> Cycles</div>
+        <!-- REVENUE: THE ONLY NUMBER THAT MATTERS -->
+        <div class="revenue-hero">
+          <div class="revenue-today" id="statRevenue">€0</div>
+          <div class="revenue-bar-wrap"><div class="revenue-bar" id="revenueBar" style="width:0%"></div></div>
+          <div class="revenue-label" id="revenueLabel">0% von €333.333 Tagesziel</div>
         </div>
 
-        <!-- REVENUE TRACKER -->
-        <div class="evo-stats">
-          <div class="evo-stat"><div class="ev-val ev-green" id="statRevenue">0</div><div class="ev-label">€ Heute</div></div>
-          <div class="evo-stat"><div class="ev-val ev-gold" id="statTarget">333.333</div><div class="ev-label">€ Tagesziel</div></div>
-          <div class="evo-stat"><div class="ev-val ev-cyan" id="statStreak">0</div><div class="ev-label">Tage Streak</div></div>
-        </div>
-
-        <!-- DAILY REVENUE INPUT -->
         <div class="revenue-row">
-          <input type="number" class="revenue-input" id="revenueInput" placeholder="€ verdient heute..." min="0">
+          <input type="number" class="revenue-input" id="revenueInput" placeholder="€ verdient..." min="0">
           <button class="revenue-btn" id="revenueLog">LOG</button>
         </div>
-        <div class="revenue-bar-wrap"><div class="revenue-bar" id="revenueBar" style="width:0%"></div></div>
-        <div class="revenue-label" id="revenueLabel">0% vom Tagesziel</div>
 
-        <!-- CEO INPUT -->
-        <div class="section-label">Sag mir was los ist</div>
+        <div class="streak-row">
+          <div class="streak-num" id="statStreak">0</div>
+          <div class="streak-label">Tage Streak</div>
+        </div>
+
+        <!-- DIRECTIVE -->
+        <div class="directive" id="directive"></div>
+
+        <!-- INPUT -->
         <div class="neural-input-wrap">
-          <textarea class="neural-input" id="neuralInput" placeholder="Was ist gerade dein Problem, dein Plan, dein nächster Move?" rows="2"></textarea>
+          <textarea class="neural-input" id="neuralInput" placeholder="Was ist dein Problem?" rows="1"></textarea>
           <button class="neural-send" id="neuralSend">→</button>
         </div>
 
-        <!-- THOUGHT STREAM -->
+        <!-- STREAM -->
         <div class="thought-stream" id="thoughtStream"></div>
-
-        <!-- DAILY DIRECTIVE -->
-        <div class="section-label">Tagesbefehl</div>
-        <div class="directive" id="directive"></div>
-
-        <!-- STATS -->
-        <div class="section-label">Agent Stats</div>
-        <div class="evo-stats">
-          <div class="evo-stat"><div class="ev-val ev-cyan" id="statThoughts">0</div><div class="ev-label">Inputs</div></div>
-          <div class="evo-stat"><div class="ev-val ev-purple" id="statPatterns">0</div><div class="ev-label">Patterns</div></div>
-          <div class="evo-stat"><div class="ev-val ev-pink" id="statDays">0</div><div class="ev-label">Tage aktiv</div></div>
-        </div>
 
       </div>
     </div>
@@ -595,26 +550,10 @@ renderIdeas();
 // ══════════════════════════════════════════════════
 // ── CEO AGENT V3 — Zuckerberg × Musk × Hormozi ──
 // ══════════════════════════════════════════════════
-const AGENT_KEY='ttao_ceo_agent';
 const THOUGHTS_KEY='ttao_thoughts';
 const REVENUE_KEY='ttao_revenue';
-const MONTHLY_TARGET=10000000; // €10M/month
-const DAILY_TARGET=Math.round(MONTHLY_TARGET/30); // €333.333/day
+const DAILY_TARGET=333333; // €10M/month ÷ 30
 
-function getAgent(){
-  const BORN=new Date('2026-01-01T00:00:00').getTime();
-  const hoursSinceBorn=Math.floor((Date.now()-BORN)/(1000*60*60));
-  const baseEvo=hoursSinceBorn*12;
-  const def={born:BORN,gen:Math.floor(baseEvo/100)+1,evo:baseEvo,iq:100+Math.floor(baseEvo/10),patterns:['stress','motivation','geld','beziehung','gesundheit','mindset','strategie','kreativität','disziplin','wachstum'],lastEvo:Date.now()};
-  try{
-    const stored=JSON.parse(localStorage.getItem(AGENT_KEY));
-    if(!stored)return def;
-    const missed=Math.floor((Date.now()-stored.lastEvo)/(1000*60*60))*12;
-    if(missed>0){stored.evo+=missed;stored.gen=Math.floor(stored.evo/100)+1;stored.iq=100+stored.patterns.length*5+Math.floor(stored.evo/10)+getThoughts().length*2;stored.lastEvo=Date.now();localStorage.setItem(AGENT_KEY,JSON.stringify(stored))}
-    return stored;
-  }catch(e){return def}
-}
-function saveAgent(a){localStorage.setItem(AGENT_KEY,JSON.stringify(a))}
 function getThoughts(){try{return JSON.parse(localStorage.getItem(THOUGHTS_KEY))||[]}catch(e){return[]}}
 function saveThoughts(t){localStorage.setItem(THOUGHTS_KEY,JSON.stringify(t))}
 function getRevenue(){try{return JSON.parse(localStorage.getItem(REVENUE_KEY))||{}}catch(e){return{}}}
@@ -708,46 +647,11 @@ const CEO_COMMANDS={
 };
 
 function agentRespond(patterns){
-  const h=new Date().getHours();
-  const todayRev=getTodayRevenue();
   const p=patterns[0];
   const pool=CEO_COMMANDS[p]||CEO_COMMANDS.allgemein;
-  let cmd=pool[Math.floor(Math.random()*pool.length)];
-
-  // Time-aware prefix
-  if(h>=22||h<5)cmd='Es ist nach 22 Uhr. Schlaf oder plane morgen. Kein Hustle ohne Recovery. Aber: '+cmd;
-  else if(h<8)cmd='Morgenstunde. Dein Cortisol-Peak. Goldene Zeit. '+cmd;
-
-  // Revenue-aware suffix
-  if(todayRev===0&&h>=12)cmd+=' Du hast heute noch €0 geloggt. Ändere das.';
-  else if(todayRev>0)cmd+=' Stand heute: €'+todayRev.toLocaleString('de-DE')+' geloggt. Weiter.';
-
-  return cmd;
+  return pool[Math.floor(Math.random()*pool.length)];
 }
 
-// Auto-evolution: runs every time you open the Agent tab
-function evolveAgent(){
-  const agent=getAgent();
-  const now=Date.now();
-  const hoursSinceEvo=(now-agent.lastEvo)/(1000*60*60);
-
-  if(hoursSinceEvo>=1){
-    const cycles=Math.min(Math.floor(hoursSinceEvo),100000);
-    agent.evo+=cycles;
-    agent.gen=Math.floor(agent.evo/100)+1;
-
-    // IQ grows based on thoughts and patterns
-    const thoughts=getThoughts();
-    const uniquePatterns=new Set();
-    thoughts.forEach(t=>{if(t.patterns)t.patterns.forEach(p=>uniquePatterns.add(p))});
-    agent.patterns=[...uniquePatterns];
-    agent.iq=100+thoughts.length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
-
-    agent.lastEvo=now;
-    saveAgent(agent);
-  }
-  return agent;
-}
 
 // Daily directives based on time of day + revenue
 const DIRECTIVES=[
@@ -769,51 +673,35 @@ function getDirective(){
 }
 
 function renderAgent(){
-  const agent=evolveAgent();
   const thoughts=getThoughts();
   const todayRev=getTodayRevenue();
   const streak=getStreak();
-  const daysSinceBorn=Math.floor((Date.now()-agent.born)/(1000*60*60*24));
 
-  // Header stats
-  document.getElementById('agentGen').textContent=agent.gen;
-  document.getElementById('agentEvo').textContent=agent.evo.toLocaleString('de-DE');
-  document.getElementById('statIQ').textContent=agent.iq;
-
-  // Revenue stats
-  document.getElementById('statRevenue').textContent=todayRev.toLocaleString('de-DE');
-  document.getElementById('statTarget').textContent=DAILY_TARGET.toLocaleString('de-DE');
+  // Revenue — the only real number
+  document.getElementById('statRevenue').textContent='€'+todayRev.toLocaleString('de-DE');
   document.getElementById('statStreak').textContent=streak;
-
-  // Revenue bar
   const pct=Math.min(100,Math.round(todayRev/DAILY_TARGET*100));
   document.getElementById('revenueBar').style.width=pct+'%';
-  document.getElementById('revenueLabel').textContent=pct+'% vom Tagesziel (€'+DAILY_TARGET.toLocaleString('de-DE')+')';
-
-  // Bottom stats
-  document.getElementById('statThoughts').textContent=thoughts.length;
-  document.getElementById('statPatterns').textContent=agent.patterns.length;
-  document.getElementById('statDays').textContent=daysSinceBorn;
+  document.getElementById('revenueLabel').textContent=pct+'% von €'+DAILY_TARGET.toLocaleString('de-DE')+' Tagesziel';
 
   // Directive
   const dir=getDirective();
   document.getElementById('directive').innerHTML=`<div class="dir-text">${dir.text}</div><div class="dir-sub">${dir.sub}</div>`;
 
-  // Thought stream
+  // Thought stream — last 15
   const stream=document.getElementById('thoughtStream');
-  const recent=thoughts.slice(0,20);
+  const recent=thoughts.slice(0,15);
   if(recent.length){
     stream.innerHTML=recent.map(t=>{
       const time=new Date(t.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-      const tags=t.patterns?t.patterns.map(p=>`<span class="t-tag">${p}</span>`).join(''):'';
       if(t.type==='user'){
-        return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${tags?`<div class="t-tags">${tags}</div>`:''}</div>`;
+        return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
       }else{
-        return `<div class="thought t-agent"><div class="t-label">CEO Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
+        return `<div class="thought t-agent"><div class="t-label">Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
       }
     }).join('');
   }else{
-    stream.innerHTML='<div class="idea-empty">Noch keine Inputs. Sag mir was los ist. Ich sag dir was du tun sollst.</div>';
+    stream.innerHTML='<div class="idea-empty">Sag mir was los ist.</div>';
   }
 }
 
@@ -834,16 +722,6 @@ function submitThought(){
 
   saveThoughts(thoughts);
   input.value='';
-
-  // Trigger evolution
-  const agent=getAgent();
-  agent.evo+=patterns.length;
-  const uniquePatterns=new Set(agent.patterns);
-  patterns.forEach(p=>uniquePatterns.add(p));
-  agent.patterns=[...uniquePatterns];
-  agent.iq=100+thoughts.length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
-  agent.lastEvo=Date.now();
-  saveAgent(agent);
 
   renderAgent();
 
@@ -884,17 +762,7 @@ navBtns.forEach(btn=>{
   });
 });
 
-// Auto-evolve in background every 30 seconds
-setInterval(()=>{
-  const agent=getAgent();
-  agent.evo++;
-  agent.iq=100+getThoughts().length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
-  agent.lastEvo=Date.now();
-  saveAgent(agent);
-  if(document.getElementById('v-agent').classList.contains('active'))renderAgent();
-},30000);
-
-// Init agent on load
+// Init
 renderAgent();
 </script>
 </body>
