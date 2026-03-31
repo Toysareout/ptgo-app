@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="/manifest.json">
+<title>TTAO — Command Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow:hidden;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{text-decoration:none;color:inherit}
+
+/* ── APP SHELL ── */
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;z-index:10}
+.topbar-brand{font-family:'Orbitron',sans-serif;font-weight:900;font-size:15px;letter-spacing:3px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim);letter-spacing:1px}
+.topbar-dot{width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── VIEWS ── */
+.views{flex:1;overflow:hidden;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;padding:24px 16px 24px;opacity:0;pointer-events:none;transition:opacity .2s}
+.view.active{opacity:1;pointer-events:auto}
+
+/* ── BOTTOM NAV ── */
+.nav{display:flex;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom);z-index:10}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:color .2s;position:relative}
+.nav-btn.active{color:var(--cyan)}
+.nav-btn.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--cyan)}
+.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── HOME VIEW ── */
+.greeting{font-family:'Orbitron',sans-serif;font-size:clamp(22px,5vw,32px);font-weight:900;letter-spacing:2px;margin-bottom:4px}
+.greeting-sub{font-size:12px;color:var(--dim);margin-bottom:28px;letter-spacing:1px}
+.core-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.core-card{display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--surface);border:1px solid var(--border);padding:20px 12px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.core-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.5}
+.core-card:hover{transform:translateY(-2px)}
+.core-card:active{transform:scale(.97)}
+.core-card .ic{font-size:28px;margin-bottom:10px}
+.core-card .nm{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:4px}
+.core-card .ds{font-size:10px;color:var(--dim);line-height:1.4}
+.cc-cyan{border-color:rgba(0,240,255,.2)}.cc-cyan::before{background:var(--cyan)}.cc-cyan:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.cc-pink{border-color:rgba(255,45,142,.2)}.cc-pink::before{background:var(--pink)}.cc-pink:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
+.cc-gold{border-color:rgba(201,168,76,.2)}.cc-gold::before{background:var(--gold)}.cc-gold:hover{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.cc-green{border-color:rgba(45,255,168,.2)}.cc-green::before{background:var(--green)}.cc-green:hover{border-color:var(--green);box-shadow:var(--glow-green)}
+.cc-purple{border-color:rgba(168,85,247,.2)}.cc-purple::before{background:var(--purple)}.cc-purple:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,.3)}
+.cc-red{border-color:rgba(255,68,68,.2)}.cc-red::before{background:var(--red)}.cc-red:hover{border-color:var(--red);box-shadow:0 0 20px rgba(255,68,68,.3)}
+
+.section-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.quick-link{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:all .2s;cursor:pointer}
+.quick-link:hover{border-color:var(--cyan);background:var(--surface2)}
+.quick-link:active{transform:scale(.98)}
+.quick-link .ql-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.quick-link .ql-text{flex:1;min-width:0}
+.quick-link .ql-name{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text)}
+.quick-link .ql-desc{font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.quick-link .ql-arrow{color:var(--dim);font-size:14px;flex-shrink:0}
+
+/* ── MASTERY VIEW ── */
+.mastery-card{display:block;background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:10px;transition:all .25s;position:relative;overflow:hidden}
+.mastery-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.5}
+.mastery-card:hover{transform:translateY(-2px)}
+.mastery-card:active{transform:scale(.98)}
+.mastery-card .mc-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.mastery-card .mc-icon{font-size:24px}
+.mastery-card .mc-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px}
+.mastery-card .mc-desc{font-size:11px;color:var(--dim);line-height:1.5}
+.mc-gold{border-color:rgba(201,168,76,.2)}.mc-gold::before{background:var(--gold)}.mc-gold:hover{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.mc-pink{border-color:rgba(255,45,142,.2)}.mc-pink::before{background:var(--pink)}.mc-pink:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
+.mc-cyan{border-color:rgba(0,240,255,.2)}.mc-cyan::before{background:var(--cyan)}.mc-cyan:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.mc-green{border-color:rgba(45,255,168,.2)}.mc-green::before{background:var(--green)}.mc-green:hover{border-color:var(--green);box-shadow:var(--glow-green)}
+.mc-purple{border-color:rgba(168,85,247,.2)}.mc-purple::before{background:var(--purple)}.mc-purple:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,.3)}
+
+/* ── IDEAS VIEW ── */
+.idea-input-wrap{display:flex;gap:8px;margin-bottom:20px}
+.idea-input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px 16px;outline:none;transition:border-color .3s}
+.idea-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.idea-input::placeholder{color:var(--dim)}
+.idea-btn{background:var(--cyan);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;padding:12px 20px;cursor:pointer;font-weight:700;transition:opacity .2s;flex-shrink:0}
+.idea-btn:hover{opacity:.85}
+.idea-btn:active{transform:scale(.95)}
+
+.idea-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.idea-filter{background:none;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:6px 12px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.idea-filter.active{border-color:var(--cyan);color:var(--cyan)}
+.idea-filter:hover{border-color:var(--cyan);color:var(--cyan)}
+
+.idea-card{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:8px;position:relative;transition:all .2s}
+.idea-card:hover{border-color:rgba(0,240,255,.3)}
+.idea-card .idea-text{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
+.idea-card .idea-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--dim)}
+.idea-card .idea-date{letter-spacing:1px}
+.idea-status{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:3px 8px;border:1px solid;text-transform:uppercase;cursor:pointer;transition:all .2s}
+.idea-status:hover{opacity:.7}
+.is-inbox{border-color:var(--dim);color:var(--dim)}
+.is-testing{border-color:var(--gold);color:var(--gold)}
+.is-promoted{border-color:var(--green);color:var(--green)}
+.is-killed{border-color:var(--red);color:var(--red)}
+.idea-delete{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;opacity:0;transition:all .2s;padding:4px}
+.idea-card:hover .idea-delete{opacity:1}
+.idea-delete:hover{color:var(--red)}
+.idea-empty{text-align:center;padding:48px 20px;color:var(--dim);font-size:12px;letter-spacing:1px}
+.idea-count{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:16px}
+.idea-count b{color:var(--cyan)}
+
+/* ── MORE VIEW ── */
+.more-grid{display:grid;grid-template-columns:1fr;gap:8px}
+
+/* ── FADE ── */
+.fade{animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── RESPONSIVE ── */
+@media(min-width:600px){
+  .view{padding:32px 24px}
+  .core-grid{grid-template-columns:repeat(3,1fr);gap:12px}
+}
+@media(min-width:900px){
+  .view{max-width:720px;margin:0 auto;padding:32px 0}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand">TTAO</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="topbar-time"><span class="topbar-dot"></span><span id="clock"></span></div>
+    </div>
+  </div>
+
+  <!-- VIEWS -->
+  <div class="views">
+
+    <!-- ═══════════ HOME ═══════════ -->
+    <div class="view active" id="v-home">
+      <div class="fade">
+        <div class="greeting" id="greeting">Command Hub</div>
+        <div class="greeting-sub" id="greetingSub">Alles. Ein Ort. Kein Bullshit.</div>
+
+        <div class="core-grid">
+          <a href="/nerve" class="core-card cc-cyan">
+            <div class="ic">🧠</div>
+            <div class="nm">Nerve</div>
+            <div class="ds">KI-Gehirn</div>
+          </a>
+          <a href="/ai-coaching.html" class="core-card cc-purple">
+            <div class="ic">🤖</div>
+            <div class="nm">AI Coach</div>
+            <div class="ds">Transformation</div>
+          </a>
+          <a href="/mastery" class="core-card cc-gold">
+            <div class="ic">⚡</div>
+            <div class="nm">Mastery</div>
+            <div class="ds">Daily System</div>
+          </a>
+          <a href="/heal" class="core-card cc-green">
+            <div class="ic">🌿</div>
+            <div class="nm">Healing</div>
+            <div class="ds">PTGO Method</div>
+          </a>
+          <a href="/intelligence" class="core-card cc-pink">
+            <div class="ic">📡</div>
+            <div class="nm">Intel</div>
+            <div class="ds">Command Center</div>
+          </a>
+          <a href="/mastery-income" class="core-card cc-green">
+            <div class="ic">💰</div>
+            <div class="nm">Income</div>
+            <div class="ds">€5K/Tag</div>
+          </a>
+        </div>
+
+        <div class="section-label">Schnellzugriff</div>
+
+        <a href="/mastery-today" class="quick-link">
+          <div class="ql-icon">📋</div>
+          <div class="ql-text"><div class="ql-name">Heute</div><div class="ql-desc">Tages-Actionplan & Checklist</div></div>
+          <div class="ql-arrow">→</div>
+        </a>
+        <a href="/pain-assistant" class="quick-link">
+          <div class="ql-icon">💬</div>
+          <div class="ql-text"><div class="ql-name">Pain Assistant</div><div class="ql-desc">KI Schmerz-Analyse Chat</div></div>
+          <div class="ql-arrow">→</div>
+        </a>
+        <a href="/coaching" class="quick-link">
+          <div class="ql-icon">🎯</div>
+          <div class="ql-text"><div class="ql-name">Coaching Engine</div><div class="ql-desc">Check-in & Progress</div></div>
+          <div class="ql-arrow">→</div>
+        </a>
+        <a href="/chief-agent" class="quick-link">
+          <div class="ql-icon">🧑‍✈️</div>
+          <div class="ql-text"><div class="ql-name">KI-Chefagent</div><div class="ql-desc">Executive Intelligence</div></div>
+          <div class="ql-arrow">→</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════ MASTERY ═══════════ -->
+    <div class="view" id="v-mastery">
+      <div class="fade">
+        <div class="greeting" style="font-size:22px">Mastery</div>
+        <div class="greeting-sub">Wissen ist Macht. Anwendung ist Kraft.</div>
+
+        <a href="/mastery-rollo" class="mastery-card mc-pink">
+          <div class="mc-top"><div class="mc-icon">🔴</div><div class="mc-name">Rollo Tomassi</div></div>
+          <div class="mc-desc">9 Iron Rules — The Rational Male. SMV Pillars, 5 Bücher, Glossar.</div>
+        </a>
+
+        <a href="/mastery-tate" class="mastery-card mc-gold">
+          <div class="mc-top"><div class="mc-icon">🏆</div><div class="mc-name">Andrew Tate</div></div>
+          <div class="mc-desc">41 Tenets of Tateism — The Tate Bible. Philosophie & Mindset.</div>
+        </a>
+
+        <a href="/mastery-tagesplan" class="mastery-card mc-purple">
+          <div class="mc-top"><div class="mc-icon">⏱️</div><div class="mc-name">Tagesplan</div></div>
+          <div class="mc-desc">Billionaire Schedule — Musk, Bezos, Hormozi, Huberman. 5-Min-Blöcke.</div>
+        </a>
+
+        <a href="/mastery-income" class="mastery-card mc-green">
+          <div class="mc-top"><div class="mc-icon">💰</div><div class="mc-name">Income Engine</div></div>
+          <div class="mc-desc">€5.000/Tag Roadmap — 4 Phasen, Hebel, KPIs.</div>
+        </a>
+
+        <a href="/mastery-today" class="mastery-card mc-cyan">
+          <div class="mc-top"><div class="mc-icon">📋</div><div class="mc-name">Heute</div></div>
+          <div class="mc-desc">Tages-Actionplan — Checklist, Done Counter, Wochenübersicht.</div>
+        </a>
+
+        <a href="/zeis" class="mastery-card mc-gold">
+          <div class="mc-top"><div class="mc-icon">📖</div><div class="mc-name">Zeis Protocol</div></div>
+          <div class="mc-desc">18 Schmerzverzerrungen — Alexander Zeis Framework.</div>
+        </a>
+
+        <a href="/flyer-psycho-schutz.html" class="mastery-card mc-pink">
+          <div class="mc-top"><div class="mc-icon">🛡️</div><div class="mc-name">Psycho-Schutzschild</div></div>
+          <div class="mc-desc">Manipulation erkennen, bevor sie wirkt.</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════ IDEAS ═══════════ -->
+    <div class="view" id="v-ideas">
+      <div class="fade">
+        <div class="greeting" style="font-size:22px">Idea Inbox</div>
+        <div class="greeting-sub">Park it. Test it. Kill it or ship it.</div>
+
+        <div class="idea-input-wrap">
+          <input type="text" class="idea-input" id="ideaInput" placeholder="Neue Idee..." maxlength="200">
+          <button class="idea-btn" id="ideaAdd">ADD</button>
+        </div>
+
+        <div class="idea-filters">
+          <button class="idea-filter active" data-filter="all">Alle</button>
+          <button class="idea-filter" data-filter="inbox">Inbox</button>
+          <button class="idea-filter" data-filter="testing">Testing</button>
+          <button class="idea-filter" data-filter="promoted">Promoted</button>
+          <button class="idea-filter" data-filter="killed">Killed</button>
+        </div>
+
+        <div class="idea-count" id="ideaCount"></div>
+        <div id="ideaList"></div>
+        <div class="idea-empty" id="ideaEmpty">Keine Ideen. Gut so — oder schlecht?</div>
+      </div>
+    </div>
+
+    <!-- ═══════════ MORE ═══════════ -->
+    <div class="view" id="v-more">
+      <div class="fade">
+        <div class="greeting" style="font-size:22px">Alles andere</div>
+        <div class="greeting-sub">Archive & Tools</div>
+
+        <div class="more-grid">
+          <a href="/heal-en" class="quick-link"><div class="ql-icon">🌍</div><div class="ql-text"><div class="ql-name">PTGO EN</div><div class="ql-desc">English Healing Page</div></div><div class="ql-arrow">→</div></a>
+          <a href="/heal-ultra" class="quick-link"><div class="ql-icon">💎</div><div class="ql-text"><div class="ql-name">PTGO Ultra</div><div class="ql-desc">Intensive Healing</div></div><div class="ql-arrow">→</div></a>
+          <a href="/live" class="quick-link"><div class="ql-icon">🎹</div><div class="ql-text"><div class="ql-name">Live Piano</div><div class="ql-desc">Booking & Events</div></div><div class="ql-arrow">→</div></a>
+          <a href="/musik" class="quick-link"><div class="ql-icon">🎵</div><div class="ql-text"><div class="ql-name">Musik</div><div class="ql-desc">Music & Movement</div></div><div class="ql-arrow">→</div></a>
+          <a href="/product" class="quick-link"><div class="ql-icon">📈</div><div class="ql-text"><div class="ql-name">Verkaufs-Tracker</div><div class="ql-desc">Sales KPIs & Tracking</div></div><div class="ql-arrow">→</div></a>
+          <a href="/admin" class="quick-link"><div class="ql-icon">📊</div><div class="ql-text"><div class="ql-name">Admin</div><div class="ql-desc">Bewerbungen Dashboard</div></div><div class="ql-arrow">→</div></a>
+          <a href="/bot-admin" class="quick-link"><div class="ql-icon">🤖</div><div class="ql-text"><div class="ql-name">Bot Admin</div><div class="ql-desc">Mission Control</div></div><div class="ql-arrow">→</div></a>
+          <a href="/master-control" class="quick-link"><div class="ql-icon">🚀</div><div class="ql-text"><div class="ql-name">Master Control</div><div class="ql-desc">Bordcomputer</div></div><div class="ql-arrow">→</div></a>
+          <a href="/mein-dashboard.html" class="quick-link"><div class="ql-icon">🏠</div><div class="ql-text"><div class="ql-name">Mein Dashboard</div><div class="ql-desc">AZ Command Center</div></div><div class="ql-arrow">→</div></a>
+          <a href="/landing.html" class="quick-link"><div class="ql-icon">🚪</div><div class="ql-text"><div class="ql-name">Landing Page</div><div class="ql-desc">PTGO Marketing</div></div><div class="ql-arrow">→</div></a>
+          <a href="/" class="quick-link"><div class="ql-icon">🌐</div><div class="ql-text"><div class="ql-name">Portal</div><div class="ql-desc">Nerve Center Eingang</div></div><div class="ql-arrow">→</div></a>
+          <a href="/impressum" class="quick-link"><div class="ql-icon">⚖️</div><div class="ql-text"><div class="ql-name">Impressum</div><div class="ql-desc">Legal & Datenschutz</div></div><div class="ql-arrow">→</div></a>
+        </div>
+
+        <div class="section-label" style="margin-top:28px">Dev Tools</div>
+        <div class="more-grid">
+          <a href="/setup-supabase" class="quick-link"><div class="ql-icon">🗄️</div><div class="ql-text"><div class="ql-name">Supabase Setup</div><div class="ql-desc">Database Init</div></div><div class="ql-arrow">→</div></a>
+          <a href="/vercel-setup.html" class="quick-link"><div class="ql-icon">▲</div><div class="ql-text"><div class="ql-name">Vercel Setup</div><div class="ql-desc">Deployment Config</div></div><div class="ql-arrow">→</div></a>
+          <a href="/archive" class="quick-link"><div class="ql-icon">🗂️</div><div class="ql-text"><div class="ql-name">Full Archive</div><div class="ql-desc">Alle 31 Module als Grid</div></div><div class="ql-arrow">→</div></a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" data-view="v-home">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" data-view="v-mastery">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Mastery
+    </button>
+    <button class="nav-btn" data-view="v-ideas">
+      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
+      Ideas
+    </button>
+    <button class="nav-btn" data-view="v-more">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      Mehr
+    </button>
+  </nav>
+
+</div>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+updateClock();setInterval(updateClock,30000);
+
+// ── GREETING ──
+(function(){
+  const h=new Date().getHours();
+  const g=document.getElementById('greeting');
+  if(h<6)g.textContent='Night Mode';
+  else if(h<12)g.textContent='Guten Morgen';
+  else if(h<18)g.textContent='Let\'s Work';
+  else g.textContent='Abend-Check';
+})();
+
+// ── NAV ──
+const navBtns=document.querySelectorAll('.nav-btn');
+const views=document.querySelectorAll('.view');
+navBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const target=btn.dataset.view;
+    navBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    views.forEach(v=>{
+      v.classList.remove('active');
+      if(v.id===target)v.classList.add('active');
+    });
+    // Reset scroll
+    document.getElementById(target).scrollTop=0;
+  });
+});
+
+// ── IDEAS SYSTEM (localStorage) ──
+const STORE_KEY='ttao_ideas';
+
+function getIdeas(){
+  try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch(e){return[]}
+}
+function saveIdeas(ideas){localStorage.setItem(STORE_KEY,JSON.stringify(ideas))}
+
+const statusCycle=['inbox','testing','promoted','killed'];
+const statusLabels={inbox:'Inbox',testing:'Testing',promoted:'Promoted',killed:'Killed'};
+const statusClass={inbox:'is-inbox',testing:'is-testing',promoted:'is-promoted',killed:'is-killed'};
+
+let currentFilter='all';
+
+function renderIdeas(){
+  const ideas=getIdeas();
+  const list=document.getElementById('ideaList');
+  const empty=document.getElementById('ideaEmpty');
+  const countEl=document.getElementById('ideaCount');
+
+  const filtered=currentFilter==='all'?ideas:ideas.filter(i=>i.status===currentFilter);
+
+  countEl.innerHTML=`<b>${filtered.length}</b> / ${ideas.length} IDEEN`;
+
+  if(filtered.length===0){
+    list.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  list.innerHTML=filtered.map((idea,idx)=>{
+    const realIdx=ideas.indexOf(idea);
+    const date=new Date(idea.created).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const days=Math.floor((Date.now()-idea.created)/(1000*60*60*24));
+    const daysText=days===0?'heute':days===1?'gestern':`${days}d`;
+    return `<div class="idea-card">
+      <button class="idea-delete" onclick="deleteIdea(${realIdx})" title="Löschen">×</button>
+      <div class="idea-text">${escHtml(idea.text)}</div>
+      <div class="idea-meta">
+        <span class="idea-date">${date} · ${daysText}</span>
+        <button class="idea-status ${statusClass[idea.status]}" onclick="cycleStatus(${realIdx})">${statusLabels[idea.status]}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function addIdea(){
+  const input=document.getElementById('ideaInput');
+  const text=input.value.trim();
+  if(!text)return;
+  const ideas=getIdeas();
+  ideas.unshift({text,status:'inbox',created:Date.now()});
+  saveIdeas(ideas);
+  input.value='';
+  renderIdeas();
+}
+
+window.cycleStatus=function(idx){
+  const ideas=getIdeas();
+  const current=ideas[idx].status;
+  const next=statusCycle[(statusCycle.indexOf(current)+1)%statusCycle.length];
+  ideas[idx].status=next;
+  saveIdeas(ideas);
+  renderIdeas();
+};
+
+window.deleteIdea=function(idx){
+  const ideas=getIdeas();
+  ideas.splice(idx,1);
+  saveIdeas(ideas);
+  renderIdeas();
+};
+
+document.getElementById('ideaAdd').addEventListener('click',addIdea);
+document.getElementById('ideaInput').addEventListener('keydown',e=>{if(e.key==='Enter')addIdea()});
+
+// Filters
+document.querySelectorAll('.idea-filter').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.idea-filter').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter=btn.dataset.filter;
+    renderIdeas();
+  });
+});
+
+renderIdeas();
+</script>
+</body>
+</html>
