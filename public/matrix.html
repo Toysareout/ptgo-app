@@ -8,26 +8,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#030308;--green:#2dffa8;--text:#e0ddd4;--dim:#555568}
+:root{--bg:#030308;--green:#2dffa8;--gold:#c9a84c;--text:#e0ddd4;--dim:#555568;--surface:#0a0a14;--border:#1a1a2e}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
 ::selection{background:var(--green);color:var(--bg)}
+a{text-decoration:none}
 
 .page{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 24px;position:relative}
 .page::before{content:'';position:absolute;top:20%;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(45,255,168,.04),transparent 70%);pointer-events:none}
 
 .title{font-family:'Orbitron',sans-serif;font-size:clamp(48px,12vw,96px);font-weight:900;letter-spacing:6px;line-height:1;margin-bottom:32px;color:var(--text)}
-
 .line{font-size:clamp(15px,3vw,20px);color:var(--dim);max-width:480px;line-height:1.8;margin-bottom:48px}
-
 .price{font-family:'Orbitron',sans-serif;font-size:clamp(32px,6vw,56px);font-weight:900;color:var(--green);margin-bottom:6px}
 .price-note{font-size:11px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;margin-bottom:40px}
 
-.cta{font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,15px);letter-spacing:4px;padding:20px 56px;background:var(--text);color:var(--bg);font-weight:700;cursor:pointer;transition:all .15s;border:none;text-transform:uppercase}
-.cta:hover{background:var(--green);transform:translateY(-2px);box-shadow:0 0 60px rgba(45,255,168,.25)}
+.btns{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;max-width:360px}
+.cta{display:block;width:100%;font-family:'Orbitron',sans-serif;font-size:clamp(12px,2vw,15px);letter-spacing:4px;padding:20px 32px;background:var(--green);color:var(--bg);font-weight:700;cursor:pointer;transition:all .15s;border:none;text-transform:uppercase;text-align:center}
+.cta:hover{transform:translateY(-2px);box-shadow:0 0 60px rgba(45,255,168,.25)}
 .cta:active{transform:scale(.97)}
+.cta-wa{background:none;border:1px solid var(--dim);color:var(--dim);font-size:clamp(10px,1.5vw,12px);letter-spacing:3px;padding:16px 32px}
+.cta-wa:hover{border-color:var(--text);color:var(--text);transform:translateY(-2px)}
 
 .foot{position:absolute;bottom:24px;font-size:10px;color:var(--dim);letter-spacing:2px}
-.foot a{color:var(--dim);text-decoration:none}
+.foot a{color:var(--dim)}
 </style>
 </head>
 <body>
@@ -37,19 +39,26 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
   <p class="line">KI-Betriebssystem. Täglich gefüttert. Sagt dir was du tun sollst. Du handelst.</p>
   <div class="price">€4.997</div>
   <div class="price-note">Einmalig · Lifetime · 14 Tage Garantie</div>
-  <button class="cta" onclick="buyMatrix()">Zugang</button>
+  <div class="btns">
+    <button class="cta" id="buyBtn" onclick="buyMatrix()">Jetzt starten</button>
+    <a class="cta cta-wa" href="https://wa.me/491234567890?text=Ich%20will%20THE%20MATRIX.%20Erz%C3%A4hl%20mir%20mehr." target="_blank" rel="noopener">Erst reden — WhatsApp</a>
+  </div>
   <div class="foot"><a href="/impressum">Impressum</a></div>
 </div>
 
 <script>
 async function buyMatrix(){
-  const b=document.querySelector('.cta');
+  const b=document.getElementById('buyBtn');
   b.textContent='...';b.disabled=true;
   try{
     const r=await fetch('/api/create-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({item_type:'session',item_name:'THE MATRIX — Lifetime Access',price:4997,quantity:1})});
     const d=await r.json();
     if(d.url)window.location.href=d.url;else throw 0;
-  }catch(e){b.textContent='ZUGANG';b.disabled=false}
+  }catch(e){
+    // Fallback: WhatsApp if Stripe fails
+    window.open('https://wa.me/491234567890?text=Ich%20will%20THE%20MATRIX%20kaufen.','_blank');
+    b.textContent='JETZT STARTEN';b.disabled=false;
+  }
 }
 </script>
 </body>

@@ -6,6 +6,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const ALLOWED_ORIGINS = [
   'https://thetoysareout.com',
   'https://www.thetoysareout.com',
+  'https://ptgo-app.vercel.app',
   'http://localhost:8888',
   'http://127.0.0.1:8888',
 ];
