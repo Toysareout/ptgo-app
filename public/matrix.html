@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<title>THE MATRIX — Dein Betriebssystem für €10M</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--border:#1a1a2e;--cyan:#00f0ff;--green:#2dffa8;--gold:#c9a84c;--red:#ff4444;--text:#e0ddd4;--dim:#666680}
+html{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;scroll-behavior:smooth}
+body{overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+a{color:var(--cyan);text-decoration:none}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;position:relative}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 30%,rgba(0,240,255,.06),transparent 60%);pointer-events:none}
+.hero-pre{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:6px;color:var(--dim);text-transform:uppercase;margin-bottom:16px}
+.hero-title{font-family:'Orbitron',sans-serif;font-size:clamp(36px,8vw,72px);font-weight:900;letter-spacing:4px;line-height:1.1;margin-bottom:20px;background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:clamp(14px,2.5vw,18px);color:var(--dim);max-width:600px;line-height:1.8;margin-bottom:40px}
+.hero-sub b{color:var(--text)}
+.hero-price{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:900;color:var(--green);margin-bottom:8px}
+.hero-price-sub{font-size:12px;color:var(--dim);letter-spacing:2px;margin-bottom:32px}
+.hero-cta{display:inline-block;font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:3px;padding:18px 48px;background:var(--green);color:var(--bg);font-weight:700;cursor:pointer;transition:all .2s;border:none;text-transform:uppercase}
+.hero-cta:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(45,255,168,.3)}
+.hero-cta:active{transform:scale(.97)}
+.hero-note{font-size:11px;color:var(--dim);margin-top:16px;letter-spacing:1px}
+
+/* SECTIONS */
+.sec{max-width:720px;margin:0 auto;padding:80px 20px}
+.sec-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;margin-bottom:12px}
+.sec-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,4vw,32px);font-weight:900;letter-spacing:2px;margin-bottom:24px;line-height:1.3}
+.sec-text{font-size:14px;color:var(--dim);line-height:1.8;margin-bottom:16px}
+.sec-text b{color:var(--text)}
+
+/* PROBLEM */
+.problem-card{background:rgba(255,68,68,.04);border:1px solid rgba(255,68,68,.2);padding:24px;margin-bottom:12px}
+.problem-card .pc-x{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--red);letter-spacing:2px;margin-bottom:8px}
+.problem-card .pc-text{font-size:13px;color:var(--dim);line-height:1.6}
+
+/* WHAT YOU GET */
+.module{background:var(--surface);border:1px solid var(--border);padding:24px;margin-bottom:12px;position:relative;overflow:hidden}
+.module::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan);opacity:.5}
+.module .mod-name{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:8px}
+.module .mod-desc{font-size:12px;color:var(--dim);line-height:1.6}
+
+/* NUMBERS */
+.num-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0}
+.num-card{background:var(--surface);border:1px solid var(--border);padding:20px 12px;text-align:center}
+.num-card .num{font-family:'Orbitron',sans-serif;font-size:clamp(24px,4vw,36px);font-weight:900;color:var(--green)}
+.num-card .num-label{font-size:10px;color:var(--dim);margin-top:6px;letter-spacing:1px;text-transform:uppercase}
+
+/* FAQ */
+.faq{border:1px solid var(--border);margin-bottom:8px}
+.faq-q{padding:16px 20px;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;color:var(--text);display:flex;justify-content:space-between;align-items:center;transition:color .2s}
+.faq-q:hover{color:var(--cyan)}
+.faq-a{padding:0 20px;max-height:0;overflow:hidden;transition:all .3s;font-size:12px;color:var(--dim);line-height:1.7}
+.faq.open .faq-a{padding:0 20px 16px;max-height:300px}
+.faq.open .faq-q{color:var(--cyan)}
+
+/* FINAL CTA */
+.final{text-align:center;padding:80px 20px;border-top:1px solid var(--border)}
+.final-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,4vw,28px);font-weight:900;letter-spacing:2px;margin-bottom:12px}
+.final-text{font-size:13px;color:var(--dim);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;line-height:1.7}
+
+/* FOOTER */
+.foot{text-align:center;padding:40px 20px;font-size:10px;color:var(--dim);letter-spacing:1px}
+.foot a{color:var(--dim)}
+
+@media(max-width:500px){.num-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-pre">Limitiert auf 20 Plätze</div>
+  <h1 class="hero-title">THE MATRIX</h1>
+  <p class="hero-sub">Du bekommst <b>mein komplettes Betriebssystem</b> — das gleiche System mit dem ich mein Leben, mein Business und meine Gesundheit steuere. KI-gestützt. Täglich aktualisiert. <b>Direkt aus meinem Gehirn in deins.</b></p>
+  <div class="hero-price">€4.997</div>
+  <div class="hero-price-sub">Einmalig · Lifetime Access · Keine monatlichen Kosten</div>
+  <button class="hero-cta" onclick="buyMatrix()">JETZT ZUGANG SICHERN</button>
+  <div class="hero-note">Sichere Zahlung via Stripe · Sofortiger Zugang</div>
+</section>
+
+<!-- ═══ PROBLEM ═══ -->
+<section class="sec">
+  <div class="sec-label">Das Problem</div>
+  <h2 class="sec-title">Du konsumierst. Du verdienst nicht.</h2>
+  <div class="problem-card"><div class="pc-x">✗ PROBLEM 1</div><div class="pc-text">Du liest Bücher, schaust YouTube, hörst Podcasts — aber dein Kontostand bleibt gleich. Wissen ohne System ist Entertainment.</div></div>
+  <div class="problem-card"><div class="pc-x">✗ PROBLEM 2</div><div class="pc-text">Du hast keine Tagesstruktur die auf Ergebnis optimiert ist. Du reagierst auf den Tag statt ihn zu kontrollieren.</div></div>
+  <div class="problem-card"><div class="pc-x">✗ PROBLEM 3</div><div class="pc-text">Du hast keinen Zugang zu jemandem der den Weg bereits gegangen ist und dir sagt was du HEUTE tun sollst — nicht was du irgendwann tun könntest.</div></div>
+</section>
+
+<!-- ═══ SOLUTION ═══ -->
+<section class="sec">
+  <div class="sec-label">Die Lösung</div>
+  <h2 class="sec-title">Ein System das für dich denkt.</h2>
+  <p class="sec-text">THE MATRIX ist kein Kurs. Kein Coaching. Kein PDF.<br><br>Es ist ein <b>lebendes KI-Betriebssystem</b> das ich jeden Tag mit meinen Erkenntnissen, Strategien und Befehlen füttere. Du loggst dich ein, tippst was dich beschäftigt, und das System sagt dir <b>genau was du tun sollst</b>.<br><br>Die gleichen Frameworks die Musk, Hormozi, Bezos, Tomassi und Tate nutzen — destilliert in <b>einen Befehl pro Situation</b>.</p>
+</section>
+
+<!-- ═══ WAS DU BEKOMMST ═══ -->
+<section class="sec">
+  <div class="sec-label">Was du bekommst</div>
+  <h2 class="sec-title">Das komplette System.</h2>
+
+  <div class="module"><div class="mod-name">CEO Agent</div><div class="mod-desc">Dein persönlicher KI-Berater. Tipp dein Problem ein — bekomme einen direkten Befehl. Pattern-Erkennung über 10 Lebensbereiche: Geld, Stress, Beziehung, Gesundheit, Mindset, Strategie, Kreativität, Disziplin, Wachstum, Motivation.</div></div>
+
+  <div class="module"><div class="mod-name">Revenue Tracker</div><div class="mod-desc">Tägliches Revenue-Logging mit Fortschrittsbalken. Streak-System. Dein Geld wird sichtbar — oder dein Nicht-Verdienen wird unerträglich sichtbar.</div></div>
+
+  <div class="module"><div class="mod-name">Cash Machine</div><div class="mod-desc">12 erforschte High-Revenue Geschäftsideen basierend auf dem deutschen Markt. Mit konkreten €-Zahlen, Erklärung warum JETZT, und dem EINEN ersten Schritt den du heute machen kannst.</div></div>
+
+  <div class="module"><div class="mod-name">Mastery Bibliothek</div><div class="mod-desc">Rollo Tomassi — 9 Iron Rules komplett. Andrew Tate — 41 Tenets komplett. Income Engine — €10M Roadmap. Billionaire Tagesplan nach Musk, Bezos, Hormozi, Huberman, Dalio. Alles destilliert. Kein Füllmaterial.</div></div>
+
+  <div class="module"><div class="mod-name">Pain & Trauma System</div><div class="mod-desc">PTGO Method — das therapeutische Framework für Körper und Psyche. KI-Schmerzanalyse. Muster-Erkennung. Evidenzbasierte Sofort-Interventionen. Was Therapeuten €150/Stunde berechnen — hier 24/7 verfügbar.</div></div>
+
+  <div class="module"><div class="mod-name">Idea Inbox</div><div class="mod-desc">Dein Ideen-Management-System. Neue Ideen landen in der Inbox, durchlaufen Testing, werden promoted oder gekillt. Kein Shiny Object Syndrome mehr.</div></div>
+
+  <div class="module"><div class="mod-name">Tägliche Direktive</div><div class="mod-desc">Jeden Tag, basierend auf Uhrzeit und deinem Revenue-Stand, bekommst du einen konkreten Tagesbefehl mit Quelle (Musk, Hormozi, Bezos, Tate, Huberman). Kein Motivations-Blabla — eine Anweisung.</div></div>
+
+  <div class="module"><div class="mod-name">Lifetime Updates</div><div class="mod-desc">Ich füttere das System täglich mit neuen Erkenntnissen, Strategien und Befehlen. Was ich lerne, lernst du. Was ich verdiene, zeige ich dir wie. Das System wird jeden Tag besser.</div></div>
+</section>
+
+<!-- ═══ NUMBERS ═══ -->
+<section class="sec">
+  <div class="sec-label">In Zahlen</div>
+  <h2 class="sec-title">Was andere dafür zahlen.</h2>
+  <div class="num-grid">
+    <div class="num-card"><div class="num">€200</div><div class="num-label">/Stunde Coaching</div></div>
+    <div class="num-card"><div class="num">€5.000</div><div class="num-label">Mastermind/Jahr</div></div>
+    <div class="num-card"><div class="num">€997</div><div class="num-label">Online-Kurs</div></div>
+  </div>
+  <p class="sec-text">Du bekommst alles zusammen — Coaching-Befehle, Mastermind-Frameworks, Kurs-Inhalte — in einem einzigen System. <b>Einmalig €4.997. Kein Abo. Für immer.</b></p>
+  <p class="sec-text">Wenn dir eine einzige Cash Machine Idee €5.000 im Monat bringt, hast du das Investment in <b>30 Tagen</b> zurück. Alles danach ist Gewinn.</p>
+</section>
+
+<!-- ═══ FÜR WEN ═══ -->
+<section class="sec">
+  <div class="sec-label">Für wen</div>
+  <h2 class="sec-title">Nicht für jeden.</h2>
+  <p class="sec-text"><b>THE MATRIX ist für dich wenn:</b></p>
+  <p class="sec-text">→ Du bereit bist jeden Tag Revenue zu loggen und dich der Wahrheit zu stellen<br>→ Du Befehle willst, keine Ratschläge<br>→ Du verstehst dass €4.997 nichts ist wenn das System dir €10.000+ pro Monat bringt<br>→ Du aufgehört hast nach der perfekten Strategie zu suchen und anfangen willst zu HANDELN</p>
+  <p class="sec-text"><b>THE MATRIX ist NICHT für dich wenn:</b></p>
+  <p class="sec-text">→ Du einen netten Coach willst der dich bestätigt<br>→ Du glaubst dass Erfolg über Nacht kommt<br>→ Du dein Geld lieber für den nächsten Online-Kurs ausgibst den du nie abschließt</p>
+</section>
+
+<!-- ═══ FAQ ═══ -->
+<section class="sec">
+  <div class="sec-label">FAQ</div>
+  <h2 class="sec-title">Fragen.</h2>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Ist das ein Abo?<span>+</span></div><div class="faq-a">Nein. Einmalige Zahlung. Lifetime Access. Keine versteckten Kosten.</div></div>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Wie bekomme ich Zugang?<span>+</span></div><div class="faq-a">Nach der Zahlung bekommst du sofort Zugang zum kompletten System. Login via Email. Funktioniert auf Handy, Tablet und Desktop.</div></div>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Was wenn es mir nicht gefällt?<span>+</span></div><div class="faq-a">Wenn du innerhalb von 14 Tagen keinen Wert siehst, bekommst du dein Geld zurück. Keine Fragen. Aber: Wer das System 14 Tage lang nutzt, gibt es nicht zurück.</div></div>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Brauche ich Vorkenntnisse?<span>+</span></div><div class="faq-a">Nein. Das System sagt dir was du tun sollst. Du brauchst nur die Bereitschaft es zu tun.</div></div>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Warum €4.997?<span>+</span></div><div class="faq-a">Weil Menschen die €4.997 investieren auch handeln. Wer €29 für einen Kurs zahlt, schaut das erste Video und vergisst es. Wer €4.997 investiert, will sein Geld zurück — und holt es sich.</div></div>
+
+  <div class="faq" onclick="this.classList.toggle('open')"><div class="faq-q">Wird das System aktualisiert?<span>+</span></div><div class="faq-a">Täglich. Ich füttere das System mit allem was ich lerne, verdiene und entdecke. Dein Zugang beinhaltet alle zukünftigen Updates.</div></div>
+</section>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="final">
+  <div class="sec-label">Entscheide dich</div>
+  <h2 class="final-title">Rote Pille oder blaue Pille?</h2>
+  <p class="final-text">Du kannst morgen aufwachen und weitermachen wie bisher. Oder du kannst morgen aufwachen und ein System haben das dir sagt was du tun sollst um €333.333 am Tag zu verdienen.</p>
+  <button class="hero-cta" onclick="buyMatrix()">JETZT ZUGANG SICHERN — €4.997</button>
+  <div class="hero-note" style="margin-top:16px">Limitiert auf 20 Plätze · 14 Tage Geld-zurück-Garantie</div>
+</section>
+
+<footer class="foot">
+  THETOYSAREOUT · <a href="/impressum">Impressum & Datenschutz</a>
+</footer>
+
+<script>
+async function buyMatrix(){
+  const btn=document.querySelectorAll('.hero-cta');
+  btn.forEach(b=>{b.textContent='WIRD GELADEN...';b.disabled=true});
+  try{
+    const res=await fetch('/api/create-checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({item_type:'session',item_name:'THE MATRIX — Lifetime Access',price:4997,quantity:1})
+    });
+    const data=await res.json();
+    if(data.url)window.location.href=data.url;
+    else throw new Error(data.error||'Checkout failed');
+  }catch(e){
+    btn.forEach(b=>{b.textContent='JETZT ZUGANG SICHERN';b.disabled=false});
+    alert('Fehler beim Checkout. Bitte versuche es erneut.');
+  }
+}
+</script>
+</body>
+</html>
