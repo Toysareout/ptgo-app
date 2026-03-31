@@ -8,806 +8,279 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="/manifest.json">
-<title>TTAO — Command Hub | Master Agent</title>
+<title>ZEIS</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
-  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
-  --text:#e0ddd4;--dim:#666680;
-  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
-  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
-  --safe-bottom:env(safe-area-inset-bottom,0px);
-}
+:root{--bg:#030308;--surface:#0a0a14;--border:#1a1a2e;--green:#2dffa8;--gold:#c9a84c;--cyan:#00f0ff;--text:#e0ddd4;--dim:#555568;--safe-bottom:env(safe-area-inset-bottom,0px)}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow:hidden;-webkit-tap-highlight-color:transparent}
-::selection{background:var(--cyan);color:var(--bg)}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-a{text-decoration:none;color:inherit}
+::selection{background:var(--green);color:var(--bg)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border)}
 
-/* ── APP SHELL ── */
-.app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+/* GATE */
+#gate{position:fixed;inset:0;z-index:99;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+#gate.gone{display:none}
+.g-title{font-family:'Orbitron',sans-serif;font-size:clamp(48px,12vw,72px);font-weight:900;color:var(--text);letter-spacing:8px}
+.g-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:240px;text-align:center;outline:none;transition:border-color .3s;-webkit-appearance:none}
+.g-input:focus{border-color:var(--green)}
+.g-input::placeholder{color:var(--dim)}
+.g-err{color:#ff4444;font-size:11px;min-height:16px}
 
-/* ── TOPBAR ── */
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;z-index:10}
-.topbar-brand{font-family:'Orbitron',sans-serif;font-weight:900;font-size:15px;letter-spacing:3px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.topbar-time{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim);letter-spacing:1px}
-.topbar-dot{width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block;margin-right:6px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* APP */
+#app{display:none;height:100vh;height:100dvh;flex-direction:column}
+#app.on{display:flex}
 
-/* ── VIEWS ── */
-.views{flex:1;overflow:hidden;position:relative}
-.view{position:absolute;inset:0;overflow-y:auto;padding:24px 16px 24px;opacity:0;pointer-events:none;transition:opacity .2s}
-.view.active{opacity:1;pointer-events:auto}
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border);flex-shrink:0}
+.hdr-z{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;letter-spacing:6px}
+.hdr-rev{font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:var(--green)}
 
-/* ── BOTTOM NAV ── */
-.nav{display:flex;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;padding-bottom:var(--safe-bottom);z-index:10}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:color .2s;position:relative}
-.nav-btn.active{color:var(--cyan)}
-.nav-btn.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:var(--cyan)}
-.nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+/* SCROLL AREA */
+.flow{flex:1;overflow-y:auto;padding:20px 20px 8px}
 
-/* ── HOME VIEW ── */
-.greeting{font-family:'Orbitron',sans-serif;font-size:clamp(22px,5vw,32px);font-weight:900;letter-spacing:2px;margin-bottom:4px}
-.greeting-sub{font-size:12px;color:var(--dim);margin-bottom:28px;letter-spacing:1px}
-.core-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
-.core-card{display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--surface);border:1px solid var(--border);padding:20px 12px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
-.core-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.5}
-.core-card:hover{transform:translateY(-2px)}
-.core-card:active{transform:scale(.97)}
-.core-card .ic{font-size:28px;margin-bottom:10px}
-.core-card .nm{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:4px}
-.core-card .ds{font-size:10px;color:var(--dim);line-height:1.4}
-.cc-cyan{border-color:rgba(0,240,255,.2)}.cc-cyan::before{background:var(--cyan)}.cc-cyan:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
-.cc-pink{border-color:rgba(255,45,142,.2)}.cc-pink::before{background:var(--pink)}.cc-pink:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
-.cc-gold{border-color:rgba(201,168,76,.2)}.cc-gold::before{background:var(--gold)}.cc-gold:hover{border-color:var(--gold);box-shadow:var(--glow-gold)}
-.cc-green{border-color:rgba(45,255,168,.2)}.cc-green::before{background:var(--green)}.cc-green:hover{border-color:var(--green);box-shadow:var(--glow-green)}
-.cc-purple{border-color:rgba(168,85,247,.2)}.cc-purple::before{background:var(--purple)}.cc-purple:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,.3)}
-.cc-red{border-color:rgba(255,68,68,.2)}.cc-red::before{background:var(--red)}.cc-red:hover{border-color:var(--red);box-shadow:0 0 20px rgba(255,68,68,.3)}
+/* REVENUE BLOCK */
+.rev-block{margin-bottom:16px}
+.rev-big{font-family:'Orbitron',sans-serif;font-size:clamp(28px,7vw,44px);font-weight:900;color:var(--green);text-align:center;margin-bottom:4px}
+.rev-bar{height:3px;background:var(--surface);margin-bottom:4px}
+.rev-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .6s}
+.rev-label{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);text-align:right;letter-spacing:2px;margin-bottom:4px}
+.rev-row{display:flex;gap:8px}
+.rev-input{flex:1;background:var(--surface);border:1px solid rgba(45,255,168,.15);color:var(--green);font-family:'Orbitron',sans-serif;font-size:15px;padding:12px 14px;outline:none;transition:border-color .3s;-webkit-appearance:none}
+.rev-input:focus{border-color:var(--green)}
+.rev-input::placeholder{color:var(--dim);font-family:'Space Mono',monospace;font-size:11px}
+.rev-btn{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;padding:12px 18px;cursor:pointer;font-weight:700}
+.streak{text-align:center;margin:8px 0 16px}
+.streak span{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--gold);letter-spacing:3px}
 
-.section-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:24px 0 12px;display:flex;align-items:center;gap:8px}
-.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+/* DIRECTIVE */
+.dir{background:rgba(201,168,76,.04);border:1px solid rgba(201,168,76,.2);padding:18px;margin-bottom:16px;position:relative}
+.dir::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)}
+.dir-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;margin-bottom:6px}
+.dir-text{font-size:13px;color:var(--text);line-height:1.8;font-weight:700}
 
-.quick-link{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin-bottom:8px;transition:all .2s;cursor:pointer}
-.quick-link:hover{border-color:var(--cyan);background:var(--surface2)}
-.quick-link:active{transform:scale(.98)}
-.quick-link .ql-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
-.quick-link .ql-text{flex:1;min-width:0}
-.quick-link .ql-name{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text)}
-.quick-link .ql-desc{font-size:10px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.quick-link .ql-arrow{color:var(--dim);font-size:14px;flex-shrink:0}
+/* STREAM */
+.stream{margin-bottom:8px}
+.msg{padding:14px;margin-bottom:6px;border:1px solid var(--border);background:var(--surface);animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.u{border-left:2px solid var(--dim)}
+.msg.z{border-left:2px solid var(--green);background:rgba(45,255,168,.03)}
+.msg .ml{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.msg.u .ml{color:var(--dim)}
+.msg.z .ml{color:var(--green)}
+.msg .mt{font-size:12px;line-height:1.8;color:var(--text)}
+.empty{text-align:center;padding:32px 16px;color:var(--dim);font-size:12px;line-height:1.8}
 
-/* ── MASTERY VIEW ── */
-.mastery-card{display:block;background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:10px;transition:all .25s;position:relative;overflow:hidden}
-.mastery-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;opacity:.5}
-.mastery-card:hover{transform:translateY(-2px)}
-.mastery-card:active{transform:scale(.98)}
-.mastery-card .mc-top{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.mastery-card .mc-icon{font-size:24px}
-.mastery-card .mc-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px}
-.mastery-card .mc-desc{font-size:11px;color:var(--dim);line-height:1.5}
-.mc-gold{border-color:rgba(201,168,76,.2)}.mc-gold::before{background:var(--gold)}.mc-gold:hover{border-color:var(--gold);box-shadow:var(--glow-gold)}
-.mc-pink{border-color:rgba(255,45,142,.2)}.mc-pink::before{background:var(--pink)}.mc-pink:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
-.mc-cyan{border-color:rgba(0,240,255,.2)}.mc-cyan::before{background:var(--cyan)}.mc-cyan:hover{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
-.mc-green{border-color:rgba(45,255,168,.2)}.mc-green::before{background:var(--green)}.mc-green:hover{border-color:var(--green);box-shadow:var(--glow-green)}
-.mc-purple{border-color:rgba(168,85,247,.2)}.mc-purple::before{background:var(--purple)}.mc-purple:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,.3)}
-
-/* ── IDEAS VIEW ── */
-.idea-input-wrap{display:flex;gap:8px;margin-bottom:20px}
-.idea-input{flex:1;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px 16px;outline:none;transition:border-color .3s}
-.idea-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
-.idea-input::placeholder{color:var(--dim)}
-.idea-btn{background:var(--cyan);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;padding:12px 20px;cursor:pointer;font-weight:700;transition:opacity .2s;flex-shrink:0}
-.idea-btn:hover{opacity:.85}
-.idea-btn:active{transform:scale(.95)}
-
-.idea-filters{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.idea-filter{background:none;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:6px 12px;cursor:pointer;transition:all .2s;text-transform:uppercase}
-.idea-filter.active{border-color:var(--cyan);color:var(--cyan)}
-.idea-filter:hover{border-color:var(--cyan);color:var(--cyan)}
-
-.idea-card{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:8px;position:relative;transition:all .2s}
-.idea-card:hover{border-color:rgba(0,240,255,.3)}
-.idea-card .idea-text{font-size:13px;color:var(--text);line-height:1.5;margin-bottom:8px}
-.idea-card .idea-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--dim)}
-.idea-card .idea-date{letter-spacing:1px}
-.idea-status{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:3px 8px;border:1px solid;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.idea-status:hover{opacity:.7}
-.is-inbox{border-color:var(--dim);color:var(--dim)}
-.is-testing{border-color:var(--gold);color:var(--gold)}
-.is-promoted{border-color:var(--green);color:var(--green)}
-.is-killed{border-color:var(--red);color:var(--red)}
-.idea-delete{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer;opacity:0;transition:all .2s;padding:4px}
-.idea-card:hover .idea-delete{opacity:1}
-.idea-delete:hover{color:var(--red)}
-.idea-empty{text-align:center;padding:48px 20px;color:var(--dim);font-size:12px;letter-spacing:1px}
-.idea-count{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);letter-spacing:2px;margin-bottom:16px}
-.idea-count b{color:var(--cyan)}
-
-/* ── MORE VIEW ── */
-.more-grid{display:grid;grid-template-columns:1fr;gap:8px}
-
-/* ── CEO AGENT VIEW ── */
-.revenue-hero{text-align:center;padding:24px 0 12px}
-.revenue-today{font-family:'Orbitron',sans-serif;font-size:clamp(36px,8vw,56px);font-weight:900;color:var(--green);letter-spacing:2px;line-height:1}
-.streak-row{display:flex;align-items:center;justify-content:center;gap:8px;margin:12px 0 20px}
-.streak-num{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--gold)}
-.streak-label{font-size:10px;color:var(--dim);letter-spacing:2px;text-transform:uppercase}
-
-.neural-input-wrap{position:relative;margin-bottom:20px}
-.neural-input{width:100%;background:var(--surface);border:1px solid rgba(0,240,255,.2);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:14px 50px 14px 16px;outline:none;transition:all .3s;min-height:48px;resize:none}
-.neural-input:focus{border-color:var(--cyan);box-shadow:0 0 30px rgba(0,240,255,.15),inset 0 0 20px rgba(0,240,255,.03)}
-.neural-input::placeholder{color:var(--dim);font-style:italic}
-.neural-send{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--cyan);border:none;color:var(--bg);width:34px;height:34px;cursor:pointer;font-size:16px;font-weight:700;transition:all .2s;display:flex;align-items:center;justify-content:center}
-.neural-send:hover{opacity:.8}
-.neural-send:active{transform:translateY(-50%) scale(.9)}
-
-.thought-stream{max-height:320px;overflow-y:auto;margin-bottom:16px}
-.thought{background:var(--surface);border:1px solid var(--border);padding:14px;margin-bottom:6px;animation:fadeIn .3s ease;position:relative}
-.thought.t-user{border-left:2px solid var(--cyan)}
-.thought.t-agent{border-left:2px solid var(--purple);background:rgba(168,85,247,.03)}
-.thought .t-label{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
-.thought.t-user .t-label{color:var(--cyan)}
-.thought.t-agent .t-label{color:var(--purple)}
-.thought .t-text{font-size:12px;line-height:1.6;color:var(--text)}
-.thought .t-meta{font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:1px}
-.revenue-row{display:flex;gap:8px;margin-bottom:8px}
-.revenue-input{flex:1;background:var(--surface);border:1px solid rgba(45,255,168,.2);color:var(--green);font-family:'Orbitron',sans-serif;font-size:16px;padding:12px 16px;outline:none;transition:border-color .3s}
-.revenue-input:focus{border-color:var(--green);box-shadow:var(--glow-green)}
-.revenue-input::placeholder{color:var(--dim);font-family:'Space Mono',monospace;font-size:12px}
-.revenue-btn{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;padding:12px 20px;cursor:pointer;font-weight:700;transition:opacity .2s}
-.revenue-btn:hover{opacity:.8}
-.revenue-bar-wrap{height:4px;background:var(--surface2);margin-bottom:4px;overflow:hidden}
-.revenue-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .5s ease}
-.revenue-label{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:20px;text-align:right}
-.directive{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.3);padding:20px;margin-bottom:16px;position:relative}
-.directive::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)}
-.directive .dir-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:700}
-.directive .dir-sub{font-size:11px;color:var(--gold);margin-top:8px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
-.cash-card{background:rgba(45,255,168,.04);border:1px solid rgba(45,255,168,.25);padding:20px;margin-bottom:10px;position:relative}
-.cash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)}
-.cash-card .cash-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:8px}
-.cash-card .cash-rev{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--gold);margin-bottom:10px;letter-spacing:1px}
-.cash-card .cash-desc{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:10px}
-.cash-card .cash-step{font-size:12px;color:var(--cyan);line-height:1.6;font-weight:700}
-.cash-next{width:100%;background:none;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:10px;cursor:pointer;transition:all .2s;margin-bottom:16px}
-.cash-next:hover{border-color:var(--green);color:var(--green)}
-
-
-/* ── FADE ── */
-.fade{animation:fadeIn .3s ease}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-
-/* ── RESPONSIVE ── */
-@media(min-width:600px){
-  .view{padding:32px 24px}
-  .core-grid{grid-template-columns:repeat(3,1fr);gap:12px}
-}
-@media(min-width:900px){
-  .view{max-width:720px;margin:0 auto;padding:32px 0}
-}
+/* INPUT BAR */
+.bar{display:flex;gap:8px;padding:12px 20px;padding-bottom:calc(12px + var(--safe-bottom));border-top:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.bar textarea{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px;outline:none;resize:none;min-height:44px;max-height:80px;transition:border-color .3s}
+.bar textarea:focus{border-color:var(--green)}
+.bar textarea::placeholder{color:var(--dim)}
+.bar-send{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;width:48px;cursor:pointer;flex-shrink:0;transition:opacity .2s}
+.bar-send:hover{opacity:.8}
+.bar-send:active{transform:scale(.93)}
 </style>
 </head>
 <body>
 
-<div class="app">
+<div id="gate">
+  <div class="g-title">ZEIS</div>
+  <input type="password" class="g-input" id="pw" placeholder="Code" autofocus>
+  <div class="g-err" id="err"></div>
+</div>
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="topbar-brand">TTAO</div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <div class="topbar-time"><span class="topbar-dot"></span><span id="clock"></span></div>
-    </div>
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-z">ZEIS</div>
+    <div class="hdr-rev" id="hdrRev">€0</div>
   </div>
 
-  <!-- VIEWS -->
-  <div class="views">
+  <div class="flow" id="flow">
 
-    <!-- ═══════════ HOME ═══════════ -->
-    <div class="view active" id="v-home">
-      <div class="fade">
-        <div class="greeting" id="greeting">Command Hub</div>
-        <div class="greeting-sub" id="greetingSub">Alles. Ein Ort. Kein Bullshit.</div>
-
-        <div class="core-grid">
-          <a href="/nerve" class="core-card cc-cyan">
-            <div class="ic">🧠</div>
-            <div class="nm">Nerve</div>
-            <div class="ds">KI-Gehirn</div>
-          </a>
-          <a href="/ai-coaching.html" class="core-card cc-purple">
-            <div class="ic">🤖</div>
-            <div class="nm">AI Coach</div>
-            <div class="ds">Transformation</div>
-          </a>
-          <a href="/mastery" class="core-card cc-gold">
-            <div class="ic">⚡</div>
-            <div class="nm">Mastery</div>
-            <div class="ds">Daily System</div>
-          </a>
-          <a href="/heal" class="core-card cc-green">
-            <div class="ic">🌿</div>
-            <div class="nm">Healing</div>
-            <div class="ds">PTGO Method</div>
-          </a>
-          <a href="/intelligence" class="core-card cc-pink">
-            <div class="ic">📡</div>
-            <div class="nm">Intel</div>
-            <div class="ds">Command Center</div>
-          </a>
-          <a href="/mastery-income" class="core-card cc-green">
-            <div class="ic">💰</div>
-            <div class="nm">Income</div>
-            <div class="ds">€5K/Tag</div>
-          </a>
-        </div>
-
-        <div class="section-label">Schnellzugriff</div>
-
-        <a href="/mastery-today" class="quick-link">
-          <div class="ql-icon">📋</div>
-          <div class="ql-text"><div class="ql-name">Heute</div><div class="ql-desc">Tages-Actionplan & Checklist</div></div>
-          <div class="ql-arrow">→</div>
-        </a>
-        <a href="/pain-assistant" class="quick-link">
-          <div class="ql-icon">💬</div>
-          <div class="ql-text"><div class="ql-name">Pain Assistant</div><div class="ql-desc">KI Schmerz-Analyse Chat</div></div>
-          <div class="ql-arrow">→</div>
-        </a>
-        <a href="/coaching" class="quick-link">
-          <div class="ql-icon">🎯</div>
-          <div class="ql-text"><div class="ql-name">Coaching Engine</div><div class="ql-desc">Check-in & Progress</div></div>
-          <div class="ql-arrow">→</div>
-        </a>
-        <a href="/chief-agent" class="quick-link">
-          <div class="ql-icon">🧑‍✈️</div>
-          <div class="ql-text"><div class="ql-name">KI-Chefagent</div><div class="ql-desc">Executive Intelligence</div></div>
-          <div class="ql-arrow">→</div>
-        </a>
+    <div class="rev-block">
+      <div class="rev-big" id="revBig">€0</div>
+      <div class="rev-bar"><div class="rev-fill" id="revFill" style="width:0%"></div></div>
+      <div class="rev-label" id="revLabel"></div>
+      <div class="rev-row">
+        <input type="number" class="rev-input" id="revIn" placeholder="€ verdient..." min="0">
+        <button class="rev-btn" id="revBtn">LOG</button>
       </div>
+      <div class="streak"><span id="streakText"></span></div>
     </div>
 
-    <!-- ═══════════ MASTERY ═══════════ -->
-    <div class="view" id="v-mastery">
-      <div class="fade">
-        <div class="greeting" style="font-size:22px">Mastery</div>
-        <div class="greeting-sub">Wissen ist Macht. Anwendung ist Kraft.</div>
+    <div class="dir" id="dir"></div>
 
-        <a href="/mastery-rollo" class="mastery-card mc-pink">
-          <div class="mc-top"><div class="mc-icon">🔴</div><div class="mc-name">Rollo Tomassi</div></div>
-          <div class="mc-desc">9 Iron Rules — The Rational Male. SMV Pillars, 5 Bücher, Glossar.</div>
-        </a>
-
-        <a href="/mastery-tate" class="mastery-card mc-gold">
-          <div class="mc-top"><div class="mc-icon">🏆</div><div class="mc-name">Andrew Tate</div></div>
-          <div class="mc-desc">41 Tenets of Tateism — The Tate Bible. Philosophie & Mindset.</div>
-        </a>
-
-        <a href="/mastery-tagesplan" class="mastery-card mc-purple">
-          <div class="mc-top"><div class="mc-icon">⏱️</div><div class="mc-name">Tagesplan</div></div>
-          <div class="mc-desc">Billionaire Schedule — Musk, Bezos, Hormozi, Huberman. 5-Min-Blöcke.</div>
-        </a>
-
-        <a href="/mastery-income" class="mastery-card mc-green">
-          <div class="mc-top"><div class="mc-icon">💰</div><div class="mc-name">Income Engine</div></div>
-          <div class="mc-desc">€5.000/Tag Roadmap — 4 Phasen, Hebel, KPIs.</div>
-        </a>
-
-        <a href="/mastery-today" class="mastery-card mc-cyan">
-          <div class="mc-top"><div class="mc-icon">📋</div><div class="mc-name">Heute</div></div>
-          <div class="mc-desc">Tages-Actionplan — Checklist, Done Counter, Wochenübersicht.</div>
-        </a>
-
-        <a href="/zeis" class="mastery-card mc-gold">
-          <div class="mc-top"><div class="mc-icon">📖</div><div class="mc-name">Zeis Protocol</div></div>
-          <div class="mc-desc">18 Schmerzverzerrungen — Alexander Zeis Framework.</div>
-        </a>
-
-        <a href="/flyer-psycho-schutz.html" class="mastery-card mc-pink">
-          <div class="mc-top"><div class="mc-icon">🛡️</div><div class="mc-name">Psycho-Schutzschild</div></div>
-          <div class="mc-desc">Manipulation erkennen, bevor sie wirkt.</div>
-        </a>
-      </div>
-    </div>
-
-    <!-- ═══════════ IDEAS ═══════════ -->
-    <div class="view" id="v-ideas">
-      <div class="fade">
-        <div class="greeting" style="font-size:22px">Idea Inbox</div>
-        <div class="greeting-sub">Park it. Test it. Kill it or ship it.</div>
-
-        <div class="idea-input-wrap">
-          <input type="text" class="idea-input" id="ideaInput" placeholder="Neue Idee..." maxlength="200">
-          <button class="idea-btn" id="ideaAdd">ADD</button>
-        </div>
-
-        <div class="idea-filters">
-          <button class="idea-filter active" data-filter="all">Alle</button>
-          <button class="idea-filter" data-filter="inbox">Inbox</button>
-          <button class="idea-filter" data-filter="testing">Testing</button>
-          <button class="idea-filter" data-filter="promoted">Promoted</button>
-          <button class="idea-filter" data-filter="killed">Killed</button>
-        </div>
-
-        <div class="idea-count" id="ideaCount"></div>
-        <div id="ideaList"></div>
-        <div class="idea-empty" id="ideaEmpty">Keine Ideen. Gut so — oder schlecht?</div>
-      </div>
-    </div>
-
-    <!-- ═══════════ MORE ═══════════ -->
-    <div class="view" id="v-more">
-      <div class="fade">
-        <div class="greeting" style="font-size:22px">Alles andere</div>
-        <div class="greeting-sub">Archive & Tools</div>
-
-        <div class="more-grid">
-          <a href="/heal-en" class="quick-link"><div class="ql-icon">🌍</div><div class="ql-text"><div class="ql-name">PTGO EN</div><div class="ql-desc">English Healing Page</div></div><div class="ql-arrow">→</div></a>
-          <a href="/heal-ultra" class="quick-link"><div class="ql-icon">💎</div><div class="ql-text"><div class="ql-name">PTGO Ultra</div><div class="ql-desc">Intensive Healing</div></div><div class="ql-arrow">→</div></a>
-          <a href="/live" class="quick-link"><div class="ql-icon">🎹</div><div class="ql-text"><div class="ql-name">Live Piano</div><div class="ql-desc">Booking & Events</div></div><div class="ql-arrow">→</div></a>
-          <a href="/musik" class="quick-link"><div class="ql-icon">🎵</div><div class="ql-text"><div class="ql-name">Musik</div><div class="ql-desc">Music & Movement</div></div><div class="ql-arrow">→</div></a>
-          <a href="/product" class="quick-link"><div class="ql-icon">📈</div><div class="ql-text"><div class="ql-name">Verkaufs-Tracker</div><div class="ql-desc">Sales KPIs & Tracking</div></div><div class="ql-arrow">→</div></a>
-          <a href="/admin" class="quick-link"><div class="ql-icon">📊</div><div class="ql-text"><div class="ql-name">Admin</div><div class="ql-desc">Bewerbungen Dashboard</div></div><div class="ql-arrow">→</div></a>
-          <a href="/bot-admin" class="quick-link"><div class="ql-icon">🤖</div><div class="ql-text"><div class="ql-name">Bot Admin</div><div class="ql-desc">Mission Control</div></div><div class="ql-arrow">→</div></a>
-          <a href="/master-control" class="quick-link"><div class="ql-icon">🚀</div><div class="ql-text"><div class="ql-name">Master Control</div><div class="ql-desc">Bordcomputer</div></div><div class="ql-arrow">→</div></a>
-          <a href="/mein-dashboard.html" class="quick-link"><div class="ql-icon">🏠</div><div class="ql-text"><div class="ql-name">Mein Dashboard</div><div class="ql-desc">AZ Command Center</div></div><div class="ql-arrow">→</div></a>
-          <a href="/landing.html" class="quick-link"><div class="ql-icon">🚪</div><div class="ql-text"><div class="ql-name">Landing Page</div><div class="ql-desc">PTGO Marketing</div></div><div class="ql-arrow">→</div></a>
-          <a href="/" class="quick-link"><div class="ql-icon">🌐</div><div class="ql-text"><div class="ql-name">Portal</div><div class="ql-desc">Nerve Center Eingang</div></div><div class="ql-arrow">→</div></a>
-          <a href="/impressum" class="quick-link"><div class="ql-icon">⚖️</div><div class="ql-text"><div class="ql-name">Impressum</div><div class="ql-desc">Legal & Datenschutz</div></div><div class="ql-arrow">→</div></a>
-        </div>
-
-        <div class="section-label" style="margin-top:28px">Dev Tools</div>
-        <div class="more-grid">
-          <a href="/setup-supabase" class="quick-link"><div class="ql-icon">🗄️</div><div class="ql-text"><div class="ql-name">Supabase Setup</div><div class="ql-desc">Database Init</div></div><div class="ql-arrow">→</div></a>
-          <a href="/vercel-setup.html" class="quick-link"><div class="ql-icon">▲</div><div class="ql-text"><div class="ql-name">Vercel Setup</div><div class="ql-desc">Deployment Config</div></div><div class="ql-arrow">→</div></a>
-          <a href="/archive" class="quick-link"><div class="ql-icon">🗂️</div><div class="ql-text"><div class="ql-name">Full Archive</div><div class="ql-desc">Alle 31 Module als Grid</div></div><div class="ql-arrow">→</div></a>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════ CEO AGENT ═══════════ -->
-    <div class="view" id="v-agent">
-      <div class="fade">
-
-        <!-- REVENUE: THE ONLY NUMBER THAT MATTERS -->
-        <div class="revenue-hero">
-          <div class="revenue-today" id="statRevenue">€0</div>
-          <div class="revenue-bar-wrap"><div class="revenue-bar" id="revenueBar" style="width:0%"></div></div>
-          <div class="revenue-label" id="revenueLabel">0% von €333.333 Tagesziel</div>
-        </div>
-
-        <div class="revenue-row">
-          <input type="number" class="revenue-input" id="revenueInput" placeholder="€ verdient..." min="0">
-          <button class="revenue-btn" id="revenueLog">LOG</button>
-        </div>
-
-        <div class="streak-row">
-          <div class="streak-num" id="statStreak">0</div>
-          <div class="streak-label">Tage Streak</div>
-        </div>
-
-        <!-- DIRECTIVE -->
-        <div class="directive" id="directive"></div>
-
-        <!-- INPUT -->
-        <div class="neural-input-wrap">
-          <textarea class="neural-input" id="neuralInput" placeholder="Was ist dein Problem?" rows="1"></textarea>
-          <button class="neural-send" id="neuralSend">→</button>
-        </div>
-
-        <!-- STREAM -->
-        <div class="thought-stream" id="thoughtStream"></div>
-
-        <!-- CASH MACHINE -->
-        <div class="section-label">Cash Machine — Dein Geld-Move heute</div>
-        <div class="cash-card" id="cashCard"></div>
-        <button class="cash-next" id="cashNext">Nächste Idee →</button>
-
-      </div>
+    <div class="stream" id="stream">
+      <div class="empty" id="empty">Was beschäftigt dich gerade?<br>Schreib es. ZEIS sagt dir was du tun sollst.</div>
     </div>
 
   </div>
 
-  <!-- BOTTOM NAV -->
-  <nav class="nav">
-    <button class="nav-btn active" data-view="v-home">
-      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      Home
-    </button>
-    <button class="nav-btn" data-view="v-agent">
-      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><circle cx="12" cy="10" r="3" fill="none"/><path d="M12 15c-3 0-5 1.5-5 3v1h10v-1c0-1.5-2-3-5-3z" fill="none"/></svg>
-      Agent
-    </button>
-    <button class="nav-btn" data-view="v-mastery">
-      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      Mastery
-    </button>
-    <button class="nav-btn" data-view="v-ideas">
-      <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><line x1="9" y1="21" x2="15" y2="21"/></svg>
-      Ideas
-    </button>
-    <button class="nav-btn" data-view="v-more">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-      Mehr
-    </button>
-  </nav>
-
+  <div class="bar">
+    <textarea id="input" placeholder="Was ist los?" rows="1"></textarea>
+    <button class="bar-send" id="send">→</button>
+  </div>
 </div>
 
 <script>
-// ── CLOCK ──
-function updateClock(){
-  const d=new Date();
-  document.getElementById('clock').textContent=d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-}
-updateClock();setInterval(updateClock,30000);
+const PASS='zeis2026';
+const TARGET=333333;
+const RK='z_rev';
+const MK='z_msg';
 
-// ── GREETING ──
-(function(){
-  const h=new Date().getHours();
-  const g=document.getElementById('greeting');
-  if(h<6)g.textContent='Night Mode';
-  else if(h<12)g.textContent='Guten Morgen';
-  else if(h<18)g.textContent='Let\'s Work';
-  else g.textContent='Abend-Check';
-})();
-
-// ── NAV ──
-const navBtns=document.querySelectorAll('.nav-btn');
-const views=document.querySelectorAll('.view');
-navBtns.forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    const target=btn.dataset.view;
-    navBtns.forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    views.forEach(v=>{
-      v.classList.remove('active');
-      if(v.id===target)v.classList.add('active');
-    });
-    // Reset scroll
-    document.getElementById(target).scrollTop=0;
-  });
+// ── GATE ──
+const gate=document.getElementById('gate');
+const pwEl=document.getElementById('pw');
+if(localStorage.getItem('z_in')==='1'){gate.classList.add('gone');document.getElementById('app').classList.add('on');boot()}
+pwEl.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if(pwEl.value===PASS){localStorage.setItem('z_in','1');gate.classList.add('gone');document.getElementById('app').classList.add('on');boot()}
+    else{document.getElementById('err').textContent='Falscher Code.';pwEl.value=''}
+  }
 });
 
-// ── IDEAS SYSTEM (localStorage) ──
-const STORE_KEY='ttao_ideas';
+// ── DATA ──
+function gR(){try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}}
+function sR(r){localStorage.setItem(RK,JSON.stringify(r))}
+function gM(){try{return JSON.parse(localStorage.getItem(MK))||[]}catch(e){return[]}}
+function sM(m){localStorage.setItem(MK,JSON.stringify(m))}
+function td(){return new Date().toISOString().slice(0,10)}
+function tR(){return gR()[td()]||0}
+function streak(){const r=gR();let s=0;const d=new Date();for(let i=1;i<=365;i++){d.setDate(d.getDate()-1);if(r[d.toISOString().slice(0,10)]>0)s++;else break}if(tR()>0)s++;return s}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
-function getIdeas(){
-  try{return JSON.parse(localStorage.getItem(STORE_KEY))||[]}catch(e){return[]}
-}
-function saveIdeas(ideas){localStorage.setItem(STORE_KEY,JSON.stringify(ideas))}
-
-const statusCycle=['inbox','testing','promoted','killed'];
-const statusLabels={inbox:'Inbox',testing:'Testing',promoted:'Promoted',killed:'Killed'};
-const statusClass={inbox:'is-inbox',testing:'is-testing',promoted:'is-promoted',killed:'is-killed'};
-
-let currentFilter='all';
-
-function renderIdeas(){
-  const ideas=getIdeas();
-  const list=document.getElementById('ideaList');
-  const empty=document.getElementById('ideaEmpty');
-  const countEl=document.getElementById('ideaCount');
-
-  const filtered=currentFilter==='all'?ideas:ideas.filter(i=>i.status===currentFilter);
-
-  countEl.innerHTML=`<b>${filtered.length}</b> / ${ideas.length} IDEEN`;
-
-  if(filtered.length===0){
-    list.innerHTML='';
-    empty.style.display='block';
-    return;
-  }
-  empty.style.display='none';
-
-  list.innerHTML=filtered.map((idea,idx)=>{
-    const realIdx=ideas.indexOf(idea);
-    const date=new Date(idea.created).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
-    const days=Math.floor((Date.now()-idea.created)/(1000*60*60*24));
-    const daysText=days===0?'heute':days===1?'gestern':`${days}d`;
-    return `<div class="idea-card">
-      <button class="idea-delete" onclick="deleteIdea(${realIdx})" title="Löschen">×</button>
-      <div class="idea-text">${escHtml(idea.text)}</div>
-      <div class="idea-meta">
-        <span class="idea-date">${date} · ${daysText}</span>
-        <button class="idea-status ${statusClass[idea.status]}" onclick="cycleStatus(${realIdx})">${statusLabels[idea.status]}</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-
-function addIdea(){
-  const input=document.getElementById('ideaInput');
-  const text=input.value.trim();
-  if(!text)return;
-  const ideas=getIdeas();
-  ideas.unshift({text,status:'inbox',created:Date.now()});
-  saveIdeas(ideas);
-  input.value='';
-  renderIdeas();
-}
-
-window.cycleStatus=function(idx){
-  const ideas=getIdeas();
-  const current=ideas[idx].status;
-  const next=statusCycle[(statusCycle.indexOf(current)+1)%statusCycle.length];
-  ideas[idx].status=next;
-  saveIdeas(ideas);
-  renderIdeas();
+// ── PATTERNS ──
+const P={
+  stress:['stress','druck','burnout','überlastet','erschöpft','müde','kaputt','overwhelm','fertig','genervt','überfordert'],
+  geld:['geld','money','verdien','umsatz','kunde','client','sales','business','income','cash','profit','revenue','verkauf','preis','angebot'],
+  beziehung:['frau','frauen','beziehung','dating','liebe','sex','trennung','freundin','single','partner','ehe','familie'],
+  gesundheit:['schmerz','schlaf','krank','training','gym','körper','rücken','kopf','sport','pain','müde','energie','essen'],
+  angst:['angst','zweifel','unsicher','sorge','panik','blockade','stuck','fear','versagen','scheitern','risiko'],
+  disziplin:['prokrastin','faul','aufschieb','keine lust','unmotiviert','abgelenkt','focus','disziplin','aufhör','durchhalten'],
+  strategie:['plan','strategie','ziel','richtung','entscheid','wohin','nächster schritt','fokus','priorit','vision'],
+  idee:['idee','projekt','bauen','app','content','kreativ','innovation','produkt','launch']
 };
+function detect(t){const l=t.toLowerCase();for(const[k,w]of Object.entries(P)){if(w.some(x=>l.includes(x)))return k}return'x'}
 
-window.deleteIdea=function(idx){
-  const ideas=getIdeas();
-  ideas.splice(idx,1);
-  saveIdeas(ideas);
-  renderIdeas();
-};
-
-document.getElementById('ideaAdd').addEventListener('click',addIdea);
-document.getElementById('ideaInput').addEventListener('keydown',e=>{if(e.key==='Enter')addIdea()});
-
-// Filters
-document.querySelectorAll('.idea-filter').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.idea-filter').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    currentFilter=btn.dataset.filter;
-    renderIdeas();
-  });
-});
-
-renderIdeas();
-
-// ══════════════════════════════════════════════════
-// ── CEO AGENT V3 — Zuckerberg × Musk × Hormozi ──
-// ══════════════════════════════════════════════════
-const THOUGHTS_KEY='ttao_thoughts';
-const REVENUE_KEY='ttao_revenue';
-const DAILY_TARGET=333333; // €10M/month ÷ 30
-
-function getThoughts(){try{return JSON.parse(localStorage.getItem(THOUGHTS_KEY))||[]}catch(e){return[]}}
-function saveThoughts(t){localStorage.setItem(THOUGHTS_KEY,JSON.stringify(t))}
-function getRevenue(){try{return JSON.parse(localStorage.getItem(REVENUE_KEY))||{}}catch(e){return{}}}
-function saveRevenue(r){localStorage.setItem(REVENUE_KEY,JSON.stringify(r))}
-function todayKey(){return new Date().toISOString().slice(0,10)}
-function getTodayRevenue(){return getRevenue()[todayKey()]||0}
-function getStreak(){const r=getRevenue();let s=0;const d=new Date();for(let i=1;i<=365;i++){d.setDate(d.getDate()-1);if(r[d.toISOString().slice(0,10)]>0)s++;else break}if(getTodayRevenue()>0)s++;return s}
-
-// Pattern detection keywords
-const PATTERN_MAP={
-  'stress':['stress','überlastet','druck','burnout','anspannung','angespannt','überfordert','müde','erschöpft','kaputt','fertig','overwhelm'],
-  'motivation':['motivation','antrieb','energie','power','feuer','drive','hustle','grind','lust','bock','ready','los','action'],
-  'geld':['geld','money','income','revenue','umsatz','profit','cash','reich','5000','verdien','kunde','client','sales','business','startup'],
-  'beziehung':['beziehung','frau','frauen','relationship','dating','liebe','attraction','smv','sex','tinder','girl','sie','freundin'],
-  'gesundheit':['gesundheit','schmerz','pain','schlaf','sleep','körper','body','training','gym','sport','krank','rücken','kopf','nacken'],
-  'mindset':['mindset','denken','glauben','fear','angst','zweifel','confidence','frame','unsicher','sorge','panik','blockade','stuck'],
-  'strategie':['strategie','plan','ziel','goal','roadmap','next step','fokus','focus','priorit','entscheid','richtung','wohin'],
-  'kreativität':['idee','kreativ','creative','innovation','neu','build','bauen','content','projekt','app','website','design','musik'],
-  'disziplin':['disziplin','routine','habit','gewohnheit','aufstehen','morgen','konsistent','prokrastin','faul','aufschieb','später'],
-  'wachstum':['wachstum','growth','evolution','besser','level up','upgrade','transform','lernen','learn','skill','entwickl']
-};
-
-function detectPatterns(text){
-  const lower=text.toLowerCase();
-  const found=[];
-  for(const [pattern,keywords] of Object.entries(PATTERN_MAP)){
-    if(keywords.some(k=>lower.includes(k)))found.push(pattern);
-  }
-  return found.length?found:['allgemein'];
-}
-
-// CEO COMMANDS — Direct orders. No philosophy. Revenue-focused.
-const CEO_COMMANDS={
+// ── ZEIS ENGINE — First Principles. Zerlegen. Neu denken. Handeln. ──
+const Z={
   stress:[
-    'Stress ist ein Signal, kein Problem. Du hast 2 Optionen: Handle oder eliminiere die Quelle. Entscheide dich in 10 Sekunden.',
-    'Cortisol blockiert dein Denken. Steh auf, 3 tiefe Atemzüge, setz dich wieder hin. Dann die eine Sache die Geld bringt.',
-    'Jede Minute die du im Stress verbringst kostet dich €231. Das ist dein Stundensatz bei €10M/Monat. Handle oder lass es.'
-  ],
-  motivation:[
-    'Motivation ist irrelevant. Milliardäre arbeiten nicht wenn sie Lust haben. Sie arbeiten. Punkt. Starte jetzt.',
-    'Du hast genau 90 Minuten Deep Work bevor das Dopamin-Fenster schließt. Was ist die €10.000-Aufgabe? Mach sie.',
-    'Musk schläft 6h und baut Raketen. Du hast keine Ausrede. Die nächsten 25 Minuten gehören deiner wichtigsten Aufgabe.'
+    'Zerlegen: Was genau stresst dich? Nicht "alles" — EIN Auslöser. Schreib ihn auf.\nNeu denken: Musst du das wirklich tun? Oder glaubst du nur dass du musst?\nHandeln: Streiche es oder erledige es. Jetzt.',
+    'Stress ist ein System-Fehler. Du versuchst zu viel gleichzeitig. Ein Mensch, eine Aufgabe, ein Zeitblock. Lösch 3 Dinge von deiner Liste. Sofort.',
+    'Alte Annahme: "Ich muss das alles schaffen." Wahrheit: Du musst nur die EINE Sache schaffen die alles andere überflüssig macht. Welche ist das?'
   ],
   geld:[
-    'Du willst €10M/Monat. Das sind €333.333/Tag. Was hast du HEUTE getan das diesem Ziel dient? Wenn nichts — starte JETZT.',
-    'Hormozi: Value = Dream Outcome × Wahrscheinlichkeit ÷ Zeit × Aufwand. Welchen Faktor kannst du HEUTE verdoppeln?',
-    'Schreib 10 Menschen an die dein Problem haben. Heute. Nicht morgen. 10 DMs, 10 Emails, 10 Calls. Pick one.',
-    'Frag dich: Verkaufe ich etwas das €10.000+ wert ist? Wenn nein, bau es. Wenn ja, verkauf es an mehr Menschen.',
-    'Jeder Euro den du nicht heute verdienst ist ein Euro den du NIE verdienst. Dieser Tag kommt nicht zurück.'
+    'Zerlegen: Geld = jemand bezahlt dich für ein gelöstes Problem. Welches Problem löst du? Für wen?\nNeu denken: Löst du ein €10 oder ein €10.000 Problem?\nHandeln: Schreib JETZT eine Nachricht an jemanden mit dem teuren Problem.',
+    'Alte Annahme: "Ich muss erst alles fertig bauen." Wahrheit: Verkaufe bevor du baust. Frag 3 Menschen ob sie zahlen würden. Heute.',
+    'Geld fließt zu dem der Wert liefert. Nicht zu dem der am härtesten arbeitet. Wo lieferst du gerade Wert? Wo nicht? Eliminiere alles ohne Wertschöpfung.',
+    'Dein nächster Kunde ist eine Nachricht entfernt. Nicht eine Website. Nicht ein Funnel. Eine ehrliche Nachricht: "Ich kann X für dich lösen." Schick sie.',
+    'Was kostet eine Stunde deiner Zeit? Bei €10M/Jahr = €4.800/Stunde. Ist das was du GERADE tust €4.800/Stunde wert? Wenn nein — sofort wechseln.'
   ],
   beziehung:[
-    'Dein Nettowert bestimmt deinen Marktwert. Erst die Mission, dann der Rest. Zurück an die Arbeit.',
-    'Frame = Realität. Du bestimmst die Regeln. Nicht sie, nicht die Gesellschaft, nicht deine Angst. DU.',
-    'Die beste Beziehungs-Strategie: Werde so wertvoll dass sie zu dir kommen. SMV ist King. Arbeite dran.'
+    'Zerlegen: Was willst du wirklich? Aufmerksamkeit? Bestätigung? Verbindung?\nNeu denken: Suchst du bei jemand anderem was du dir selbst nicht geben kannst?\nHandeln: Definiere deinen Wert unabhängig von anderen.',
+    'Alte Annahme: "Ich muss die richtige Person finden." Wahrheit: Werde die richtige Person. Alles andere folgt.',
+    'Anziehung ist kein Zufall — es ist ein System. Dein Wert bestimmt deine Optionen. Was erhöht deinen Wert? Pick one. Verbessere es diese Woche.'
   ],
   gesundheit:[
-    'Dein Körper ist dein Unternehmen. Wenn er ausfällt, fällt alles aus. 7h Schlaf, Wasser, Bewegung. Nicht verhandelbar.',
-    'Schmerz ignorieren kostet dich Performance. 10 Minuten Mobility jetzt. Dein €10M-Körper braucht Wartung.',
-    'Huberman-Protokoll: Morgensonne 10min, Koffein erst nach 90min, kalt duschen 2min. Mach eins davon JETZT.'
+    'Zerlegen: Dein Körper ist ein System. Schlaf, Ernährung, Bewegung, Stress. Welches System ist kaputt?\nNeu denken: Nicht Symptome behandeln — Ursache finden.\nHandeln: Fix das EINE kaputte System heute.',
+    'Alte Annahme: "Ich habe keine Zeit für Gesundheit." Wahrheit: Ohne Gesundheit hast du keine Zeit für NICHTS. Was änderst du heute Abend?',
+    'Schmerz ist Information. Nicht der Feind. Was sagt dein Körper? Hör 5 Minuten zu. Das ist dein Diagnose-Report.'
   ],
-  mindset:[
-    'Angst ist der Kompass. Was auch immer du vermeidest — das ist genau die Sache die du tun musst. Tu sie. Jetzt.',
-    'Du bist nicht deine Gedanken. Du bist der CEO der entscheidet welche Gedanken Ressourcen bekommen. Kill den Rest.',
-    'Bezos: "Ich wollte mit 80 nicht bereuen es nicht versucht zu haben." Was wirst DU bereuen? Mach es heute.'
-  ],
-  strategie:[
-    'Delete → Simplify → Accelerate → Automate. In dieser Reihenfolge. Was kannst du JETZT löschen?',
-    '80/20: 20% deiner Aktivitäten bringen 80% deines Umsatzes. Was sind die 20%? Mach NUR die.',
-    'Dein Strategie-Meeting mit dir selbst: 1) Wo stehe ich? 2) Wo will ich hin? 3) Was ist der EINE nächste Schritt?'
-  ],
-  kreativität:[
-    'Ideen ohne Execution sind wertlos. Die Idee geht in die Inbox. In 7 Tagen entscheidest du: Build or Kill.',
-    'Validiere bevor du baust. Frag 5 Leute ob sie zahlen würden. Wenn 3 ja sagen: build. Sonst: kill.',
-    'Zuckerberg baut nicht jede Idee. Er baut die EINE die eine Milliarde Menschen betrifft. Was ist deine?'
+  angst:[
+    'Zerlegen: Wovor genau hast du Angst? Was passiert im schlimmsten Fall? Schreib es auf.\nNeu denken: Kannst du damit leben? Ja.\nHandeln: Die Angst ist eine Lüge. Tu die Sache. 5-4-3-2-1.',
+    'Alte Annahme: "Ich muss mich sicher fühlen bevor ich handle." Wahrheit: Sicherheit kommt NACH dem Handeln. Nie davor.',
+    'Angst und Aufregung sind das GLEICHE Signal. Gleicher Puls, gleiche Hormone. Der Unterschied ist deine Interpretation. Interpretiere es als Aufregung. Handle.'
   ],
   disziplin:[
-    'Du prokrastinierst weil die Aufgabe zu groß ist. Mach sie kleiner. Was sind die ersten 2 Minuten? Mach DAS.',
-    'Disziplin = Freiheit. Jede Gewohnheit die du automatisierst gibt dir Kapazität für die €10M-Arbeit.',
-    'Timer auf 25 Minuten. Eine Aufgabe. Kein Handy. Kein Tab-Wechsel. Kein Bullshit. Starte den Timer JETZT.'
+    'Zerlegen: Du prokrastinierst nicht weil du faul bist. Du prokrastinierst weil die Aufgabe unklar ist.\nNeu denken: Was sind die ERSTEN 2 Minuten?\nHandeln: Mach nur die 2 Minuten. Der Rest kommt von allein.',
+    'Alte Annahme: "Ich brauche Motivation." Wahrheit: Motivation kommt NACH dem Anfangen. Timer auf 25 Minuten. Los.',
+    'Willenskraft ist endlich. Jede Entscheidung verbraucht sie. Lösung: Automatisiere Entscheidungen. Gleiche Routine. Gleiche Regeln. Keine Ausnahmen.'
   ],
-  wachstum:[
-    '1% pro Tag = 37x pro Jahr. Aber nur wenn du es JEDEN Tag machst. Was ist dein 1% heute?',
-    'Lerne nicht mehr Theorie. Wende das an was du bereits weißt. Wissen ohne Umsetzung ist Netflix für Schlaue.',
-    'Die unbequeme Sache die du seit Tagen aufschiebst — DAS ist dein Wachstum. Mach sie in den nächsten 30 Minuten.'
+  strategie:[
+    'Zerlegen: Wo willst du hin? Wo bist du? Was ist die Lücke?\nNeu denken: Ist dein Plan ein 10% Plan oder ein 10x Plan?\nHandeln: Was wäre der 10x Move? Tu den.',
+    'Pläne sind wertlos. Planning ist alles. Der ERSTE Schritt zeigt dir den zweiten. Mach den ersten. In 5 Minuten.',
+    'Delete → Simplify → Accelerate → Automate. Die meisten starten bei Accelerate. Starte bei Delete. Was streichst du JETZT?'
   ],
-  allgemein:[
-    'Sag mir was dich gerade beschäftigt. Geld? Stress? Strategie? Beziehung? Je konkreter, desto brutaler mein Befehl.',
-    'Du hast heute noch Stunden übrig. Was machst du damit? €333.333 verdienen sich nicht von allein.',
-    'Jeder Gedanke den du hier eintippst statt zu HANDELN kostet dich Geld. Tipp schnell, dann handle.'
+  idee:[
+    'Zerlegen: Löst die Idee ein Problem? Zahlt jemand dafür?\nNeu denken: Nicht bauen — validieren.\nHandeln: Frag 3 Menschen ob sie zahlen würden. Antwort = Wahrheit.',
+    'Die schlechteste Idee die du umsetzt schlägt die beste Idee die du nicht umsetzt. 48 Stunden. Ship or kill.',
+    'Eine Idee die niemand kauft ist ein Hobby. Ein Problem das jemand bezahlt ist ein Business. Was ist das Problem des KUNDEN?'
+  ],
+  x:[
+    'Schreib konkreter. Was ist dein EIGENTLICHES Problem? Nicht das Symptom — die Ursache.',
+    'Jeder Moment in dem du nachdenkst statt handelst ist ein Moment in dem sich nichts ändert. Was tust du JETZT?',
+    'Zerlege es: Was beschäftigt dich? Geld? Beziehung? Gesundheit? Angst? Schreib das Wort. ZEIS sagt dir was du tun sollst.'
   ]
 };
 
-function agentRespond(patterns){
-  const p=patterns[0];
-  const pool=CEO_COMMANDS[p]||CEO_COMMANDS.allgemein;
-  return pool[Math.floor(Math.random()*pool.length)];
-}
-
-
-// Daily directives based on time of day + revenue
-const DIRECTIVES=[
-  {h:[5,6,7,8],text:'Morgenstunde = Goldstunde. Cortisol-Peak. Dein Gehirn ist jetzt 3x schneller. Nutze es für die härteste Aufgabe.',sub:'MUSK: "I work from 7am to midnight, 7 days a week."'},
-  {h:[9,10,11],text:'Deep Work Block. Kein Meeting, kein Social Media, kein Chat. 3 Stunden ununterbrochene Wertschöpfung.',sub:'ZUCKERBERG: "Move fast and break things."'},
-  {h:[12,13],text:'Mittagscheck: Hast du heute schon Revenue generiert? Wenn nein — die nächste Stunde gehört dem Verkauf.',sub:'HORMOZI: "$100M Offers — make them an offer so good they feel stupid saying no."'},
-  {h:[14,15,16,17],text:'Nachmittagsblock. Calls, Deals, Follow-ups. Jeder Kontakt ist ein potenzieller €10K Deal. Handle entsprechend.',sub:'BEZOS: "Your margin is my opportunity."'},
-  {h:[18,19,20],text:'Abend-Sprint. Was ist heute noch offen? Eine Sache abschließen bevor du aufhörst. EINE.',sub:'TATE: "Work hard in silence. Let success make the noise."'},
-  {h:[21,22,23,0,1,2,3,4],text:'Recovery-Modus. Plan morgen. Schlaf 7h. Dein €10M-Gehirn braucht Reset. Morgen dominierst du.',sub:'HUBERMAN: "Sleep is the foundation of all mental and physical performance."'}
+// ── DIRECTIVES ──
+const D=[
+  {h:[5,6,7,8],t:'Morgens ist dein Gehirn 3x schneller. Nutze es für das Problem das du seit Tagen aufschiebst. Nicht Email. Nicht Social Media. Das EINE Problem.'},
+  {h:[9,10,11],t:'Deep Work Block. Eine Aufgabe. Null Ablenkung. Die nächsten 3 Stunden entscheiden ob dieser Tag zählt oder nicht.'},
+  {h:[12,13],t:'Hälfte des Tages rum. Hast du heute Wert geliefert? Nicht gearbeitet — WERT GELIEFERT. Wenn nein, die nächste Stunde gehört dem Kunden.'},
+  {h:[14,15,16,17],t:'Jeder Mensch in deinem Netzwerk hat ein Problem das du lösen kannst. Ein Call. Eine Nachricht. Ein Angebot. Jetzt.'},
+  {h:[18,19,20],t:'Eine Sache heute FERTIG machen. Nicht anfangen — FERTIG. Der Unterschied zwischen dir von gestern und dir von morgen: Abschluss.'},
+  {h:[21,22,23,0,1,2,3,4],t:'Recovery ist keine Schwäche. Es ist System-Wartung. Ohne 7h Schlaf verlierst du morgen 30% Kapazität. Plan morgen. Schlaf jetzt.'}
 ];
-
-function getDirective(){
+function getDir(){
   const h=new Date().getHours();
-  const rev=getTodayRevenue();
-  const d=DIRECTIVES.find(d=>d.h.includes(h))||DIRECTIVES[DIRECTIVES.length-1];
-  let text=d.text;
-  if(rev>0)text=`€${rev.toLocaleString('de-DE')} heute geloggt. Gut. Aber nicht genug. ${text}`;
-  return{text,sub:d.sub};
+  const d=D.find(d=>d.h.includes(h))||D[5];
+  const r=tR();
+  return r>0?`€${r.toLocaleString('de-DE')} heute. Gut. Weiter.\n\n${d.t}`:d.t;
 }
 
-function renderAgent(){
-  const thoughts=getThoughts();
-  const todayRev=getTodayRevenue();
-  const streak=getStreak();
+function respond(t){const p=detect(t);const c=Z[p];return c[Math.floor(Math.random()*c.length)]}
 
-  // Revenue — the only real number
-  document.getElementById('statRevenue').textContent='€'+todayRev.toLocaleString('de-DE');
-  document.getElementById('statStreak').textContent=streak;
-  const pct=Math.min(100,Math.round(todayRev/DAILY_TARGET*100));
-  document.getElementById('revenueBar').style.width=pct+'%';
-  document.getElementById('revenueLabel').textContent=pct+'% von €'+DAILY_TARGET.toLocaleString('de-DE')+' Tagesziel';
+// ── RENDER ──
+function render(){
+  const rev=tR(),s=streak(),msgs=gM(),pct=Math.min(100,Math.round(rev/TARGET*100));
+  document.getElementById('hdrRev').textContent='€'+rev.toLocaleString('de-DE');
+  document.getElementById('revBig').textContent='€'+rev.toLocaleString('de-DE');
+  document.getElementById('revFill').style.width=pct+'%';
+  document.getElementById('revLabel').textContent=pct+'% von €'+TARGET.toLocaleString('de-DE');
+  document.getElementById('streakText').textContent=s>0?s+' TAGE STREAK':'TAG 1';
+  document.getElementById('dir').innerHTML=`<div class="dir-label">Dein Befehl</div><div class="dir-text">${getDir().replace(/\n/g,'<br>')}</div>`;
 
-  // Directive
-  const dir=getDirective();
-  document.getElementById('directive').innerHTML=`<div class="dir-text">${dir.text}</div><div class="dir-sub">${dir.sub}</div>`;
-
-  // Thought stream — last 15
-  const stream=document.getElementById('thoughtStream');
-  const recent=thoughts.slice(0,15);
+  const stream=document.getElementById('stream');
+  const empty=document.getElementById('empty');
+  const recent=msgs.slice(0,30);
   if(recent.length){
-    stream.innerHTML=recent.map(t=>{
-      const time=new Date(t.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
-      if(t.type==='user'){
-        return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
-      }else{
-        return `<div class="thought t-agent"><div class="t-label">Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
-      }
+    empty.style.display='none';
+    stream.innerHTML=recent.map(m=>{
+      const t=new Date(m.ts).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      return`<div class="msg ${m.w==='u'?'u':'z'}"><div class="ml">${m.w==='u'?'DU':'ZEIS'} · ${t}</div><div class="mt">${esc(m.text)}</div></div>`;
     }).join('');
-  }else{
-    stream.innerHTML='<div class="idea-empty">Sag mir was los ist.</div>';
-  }
+  }else{empty.style.display='block'}
 }
 
-function submitThought(){
-  const input=document.getElementById('neuralInput');
-  const text=input.value.trim();
-  if(!text)return;
-
-  const patterns=detectPatterns(text);
-  const thoughts=getThoughts();
-
-  // Add user thought
-  thoughts.unshift({type:'user',text,patterns,ts:Date.now()});
-
-  // CEO responds with direct command
-  const cmd=agentRespond(patterns);
-  thoughts.unshift({type:'agent',text:cmd,ts:Date.now()+1});
-
-  saveThoughts(thoughts);
-  input.value='';
-
-  renderAgent();
-
-  // Scroll to top of stream
-  document.getElementById('thoughtStream').scrollTop=0;
+// ── SUBMIT ──
+function submit(){
+  const el=document.getElementById('input');
+  const t=el.value.trim();if(!t)return;
+  const msgs=gM();
+  msgs.unshift({w:'u',text:t,ts:Date.now()});
+  msgs.unshift({w:'z',text:respond(t),ts:Date.now()+1});
+  sM(msgs);el.value='';render();
+  document.getElementById('flow').scrollTop=document.querySelector('.stream').offsetTop-80;
 }
 
-document.getElementById('neuralSend').addEventListener('click',submitThought);
-document.getElementById('neuralInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitThought()}
-});
-
-// Revenue logging
-document.getElementById('revenueLog').addEventListener('click',function(){
-  const input=document.getElementById('revenueInput');
-  const val=parseFloat(input.value);
-  if(!val||val<=0)return;
-  const rev=getRevenue();
-  rev[todayKey()]=(rev[todayKey()]||0)+val;
-  saveRevenue(rev);
-  input.value='';
-  // Agent acknowledges
-  const thoughts=getThoughts();
-  const total=rev[todayKey()];
-  const pct=Math.round(total/DAILY_TARGET*100);
-  thoughts.unshift({type:'agent',text:`€${val.toLocaleString('de-DE')} geloggt. Tagesstand: €${total.toLocaleString('de-DE')} (${pct}% vom Ziel). ${pct<10?'Das ist nichts. Mehr.':pct<50?'Anfang gemacht. Verdoppeln.':pct<100?'Auf dem Weg. Nicht aufhören.':'TAGESZIEL ERREICHT. Jetzt überperformen.'}`,ts:Date.now()});
-  saveThoughts(thoughts);
-  renderAgent();
-});
-document.getElementById('revenueInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter')document.getElementById('revenueLog').click();
-});
-
-// Render agent on tab switch
-navBtns.forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    if(btn.dataset.view==='v-agent')setTimeout(renderAgent,50);
-  });
-});
-
-// ── CASH MACHINE — Real opportunities, real numbers ──
-const CASH_IDEAS=[
-  {title:'KI-Chatbot für deutsche Arztpraxen',rev:'€3.000-8.000 Setup + €500/Monat pro Praxis',desc:'Du hast bereits WhatsApp + Twilio laufen. Deutsche Praxen brauchen: Terminbuchung, Patientenaufnahme, FAQ via WhatsApp. Kein Download nötig. 80% der Patienten bevorzugen WhatsApp.',step:'ERSTER SCHRITT: Schreib heute 5 Arztpraxen in deiner Stadt an. Biete einen kostenlosen Demo-Bot an. Du baust ihn in 2 Tagen.'},
-  {title:'PTGO White-Label an Reha-Kliniken',rev:'€500-2.000/Monat pro Klinik · 10 Kliniken = €20.000/Monat',desc:'Du hast das Produkt bereits gebaut. Check-in Flow, Pain Map, Pattern Detection, Action Library. Deutsche Reha-Kliniken brauchen digitale Outcome-Messung — die Krankenkassen fordern es.',step:'ERSTER SCHRITT: Erstelle ein 1-Seiten-PDF mit Screenshots deiner App. Schick es an 10 Reha-Kliniken per Email. Heute.'},
-  {title:'KI-Dokumentation für Therapeuten',rev:'€150-300/Monat pro Therapeut · 50 Therapeuten = €15.000/Monat',desc:'Therapeuten verbringen 30-40% ihrer Zeit mit Dokumentation. Dein Claude-API kann Sitzungsnotizen in strukturierte Kassenanträge umwandeln. DSGVO-konform. Auf Deutsch. Fast kein Wettbewerb.',step:'ERSTER SCHRITT: Bau einen Prototyp der eine Sitzungsnotiz in ein ICD-10 Formular umwandelt. 1 Tag Arbeit. Dann zeig es einem Therapeuten.'},
-  {title:'KI-Audit für Mittelstand',rev:'€5.000-8.000 pro Audit · 2-3/Monat = €24.000/Monat',desc:'Deutsche Mittelständler wissen: Sie brauchen KI. Aber haben null Ahnung wo anfangen. Du gehst rein, mappst Workflows, zeigst wo KI spart. Lieferst einen Report mit ROI.',step:'ERSTER SCHRITT: Schreib auf LinkedIn einen Post: "Ich helfe Unternehmen KI einzusetzen. Die ersten 3 Audits mache ich zum halben Preis." Heute posten.'},
-  {title:'Schmerzcoaching-Programm (12 Wochen)',rev:'€1.500-3.000 pro Teilnehmer · 15er Kohorte = €45.000',desc:'23 Mio Deutsche haben chronische Schmerzen. Wartezeit Schmerztherapie: 6-12 Monate. Dein PTGO-System + wöchentliche Calls + KI-Aktionspläne = Premium-Programm.',step:'ERSTER SCHRITT: Schreib einen Instagram/Facebook Post über chronische Schmerzen. Biete ein kostenloses 15-Min Gespräch an. Sammle 5 Interessenten diese Woche.'},
-  {title:'"KI für Therapeuten" Online-Kurs',rev:'€497-997 pro Enrollment · 100 Enrollments = €99.700',desc:'Therapeuten sind neugierig auf KI aber verängstigt (Datenschutz, Ethik, Berufsordnung). Ein deutschsprachiger Kurs von jemandem mit klinischer UND technischer Expertise = Premium.',step:'ERSTER SCHRITT: Nimm ein 10-Min Loom-Video auf: "3 Wege wie KI deinen Praxisalltag verändert." Teile es in Therapeuten-Facebook-Gruppen.'},
-  {title:'KI-Agent-Agentur für DACH',rev:'€10.000-50.000 pro Projekt',desc:'Unternehmen wollen autonome KI-Agenten: Emails beantworten, Rechnungen verarbeiten, Reports generieren. Du baust mit Python + Claude API. Deutsche Datenschutz-Kompetenz = dein Moat.',step:'ERSTER SCHRITT: Bau einen Demo-Agenten der eine Inbox automatisch sortiert und beantwortet. Zeig ihn auf LinkedIn. 1 Video reicht.'},
-  {title:'WhatsApp-Erinnerungsbot für Praxen',rev:'€49-149/Monat pro Praxis · 200 Praxen = €29.800/Monat',desc:'Simpelstes Produkt: Praxis verbindet Kalender. Patient kriegt WhatsApp-Erinnerung, kann bestätigen/absagen, Formulare vorher ausfüllen. Kein App-Download. Deutschland läuft noch auf Telefon.',step:'ERSTER SCHRITT: Nutze deinen bestehenden Twilio-Stack. Bau einen MVP in 3 Tagen. Geh zu deinem eigenen Zahnarzt und zeig es ihm.'},
-  {title:'Corporate Wellness KI-Plattform',rev:'€5-15 pro Mitarbeiter/Monat · 500 MA Firma = €7.500/Monat',desc:'Deutsche Firmen sind gesetzlich verpflichtet zur Gefährdungsbeurteilung psychischer Belastungen. Dein Check-in System (Mood, Stress, Sleep) = perfektes Tool dafür. Anonymisiert + aggregiert für HR.',step:'ERSTER SCHRITT: Erstelle eine B2B Landing Page. Schreib 5 HR-Leiter auf LinkedIn an mit: "Wie löst ihr aktuell die psychische Gefährdungsbeurteilung?"'},
-  {title:'DiGA-Zertifizierung für PTGO',rev:'€200-500 pro Patient pro Quartal · bezahlt von Krankenkassen',desc:'DiGA = Digitale Gesundheitsanwendung. Einmal zertifiziert, MÜSSEN Krankenkassen deine App erstatten. Weniger als 60 Apps im Verzeichnis. Schmerz und Mental Health = Priorität. PTGO ist schon 70% da.',step:'ERSTER SCHRITT: Lies die BfArM DiGA-Anforderungen durch. Mach eine Gap-Analyse: Was fehlt PTGO noch? Das ist dein €1M/Jahr Ticket.'},
-  {title:'AI Localization Service',rev:'€5.000-15.000 pro Projekt · 3/Monat = €45.000/Monat',desc:'US AI-Firmen expandieren nach Europa. Sie brauchen keine Übersetzung — sie brauchen kulturelle Adaptation von Prompts, UI-Texten, Conversation Flows auf Deutsch. Kein Übersetzer kann das.',step:'ERSTER SCHRITT: Finde 5 US AI-Startups die gerade nach Europa expandieren (ProductHunt, YC, LinkedIn). Schreib den CEO an: "Your German prompts suck. I can fix them."'},
-  {title:'Productized Consulting: KI-Praxis aufbauen',rev:'€5.000-15.000 pro Client · 2/Monat = €30.000/Monat',desc:'Andere Coaches und Therapeuten wollen auch KI nutzen. Du baust ihnen ihr System: Check-in Bot, WhatsApp Integration, Stripe, alles fertig. Done-with-you Paket.',step:'ERSTER SCHRITT: Nimm dein PTGO-Setup und dokumentiere den Prozess als Angebot. Poste: "Ich baue dir deine KI-Coaching-Praxis in 2 Wochen."'}
-];
-
-let cashIdx=parseInt(localStorage.getItem('ttao_cash_idx')||'0');
-
-function renderCash(){
-  const idea=CASH_IDEAS[cashIdx%CASH_IDEAS.length];
-  document.getElementById('cashCard').innerHTML=`<div class="cash-title">${idea.title}</div><div class="cash-rev">${idea.rev}</div><div class="cash-desc">${idea.desc}</div><div class="cash-step">${idea.step}</div>`;
+// ── REVENUE ──
+function logRev(){
+  const el=document.getElementById('revIn');
+  const v=parseFloat(el.value);if(!v||v<=0)return;
+  const r=gR();r[td()]=(r[td()]||0)+v;sR(r);
+  const total=r[td()],pct=Math.round(total/TARGET*100);
+  const msgs=gM();
+  msgs.unshift({w:'z',text:`€${v.toLocaleString('de-DE')} geloggt. Stand: €${total.toLocaleString('de-DE')} (${pct}%). ${pct<5?'Anfang. Mehr.':pct<50?'Weiter.':pct<100?'Push.':'Tagesziel. Überperformen.'}`,ts:Date.now()});
+  sM(msgs);el.value='';render();
 }
 
-document.getElementById('cashNext').addEventListener('click',()=>{
-  cashIdx++;
-  localStorage.setItem('ttao_cash_idx',cashIdx);
-  renderCash();
-});
-
-renderCash();
-
-// Init
-renderAgent();
+function boot(){
+  render();
+  document.getElementById('send').addEventListener('click',submit);
+  document.getElementById('input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submit()}});
+  document.getElementById('revBtn').addEventListener('click',logRev);
+  document.getElementById('revIn').addEventListener('keydown',e=>{if(e.key==='Enter')logRev()});
+}
 </script>
 </body>
 </html>
