@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>THETOYSAREOUT — Nerve Center | Dein KI-Gehirn</title>
+<meta name="description" content="THETOYSAREOUT Nerve Center — KI-gestütztes Wissensmanagement, tägliche Strategiefragen, Situationsanalyse und Patienten-Intelligenz.">
+<meta name="robots" content="noindex,nofollow">
+<meta property="og:title" content="THETOYSAREOUT — Nerve Center">
+<meta property="og:description" content="Dein persoenliches KI-Gehirn — Wissen, Strategie, Evolution">
+<link rel="canonical" href="https://thetoysareout.com/">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* ── PASSWORD GATE ── */
+#gate{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:24px}
+#gate.hidden{display:none}
+#gate canvas{position:absolute;inset:0;z-index:0}
+.gate-box{position:relative;z-index:1;text-align:center}
+.gate-title{font-family:'Orbitron',sans-serif;font-size:clamp(28px,5vw,48px);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+.gate-sub{color:var(--dim);font-size:12px;letter-spacing:3px;text-transform:uppercase;margin-bottom:32px}
+.gate-input{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:16px;padding:14px 20px;width:280px;border-radius:2px;text-align:center;outline:none;transition:border-color .3s}
+.gate-input:focus{border-color:var(--cyan);box-shadow:var(--glow-cyan)}
+.gate-input::placeholder{color:var(--dim)}
+.gate-btn{margin-top:16px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:2px;padding:12px 40px;cursor:pointer;transition:all .3s}
+.gate-btn:hover{background:var(--cyan);color:var(--bg)}
+.gate-error{color:var(--red);font-size:12px;margin-top:12px;min-height:16px}
+
+/* ── MAIN LAYOUT ── */
+#app{display:none;height:100vh;flex-direction:column}
+#app.active{display:flex}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.topbar-title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;letter-spacing:3px}
+.topbar-title span{color:var(--cyan)}
+.topbar-stats{display:flex;gap:16px;font-size:11px;color:var(--dim)}
+.topbar-stats .stat{display:flex;align-items:center;gap:4px}
+.topbar-stats .stat b{color:var(--cyan);font-size:13px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:12px;color:var(--dim)}
+.btn-logout{background:none;border:1px solid var(--border);color:var(--dim);font-size:11px;padding:6px 12px;cursor:pointer;font-family:'Space Mono',monospace;transition:all .3s}
+.btn-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* CONTENT */
+.content{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR BOOKSHELF */
+.shelf{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0;padding:8px 0}
+.shelf-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;color:var(--dim);padding:16px 16px 8px;text-transform:uppercase}
+.book{display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;border-left:3px solid transparent;transition:all .25s;position:relative}
+.book:hover{background:rgba(255,255,255,.03)}
+.book.active{background:rgba(0,240,255,.05);border-left-color:var(--cyan)}
+.book-spine{width:6px;height:40px;border-radius:1px;flex-shrink:0}
+.book-info{flex:1;min-width:0}
+.book-title{font-size:12px;font-weight:700;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-desc{font-size:10px;color:var(--dim);margin-top:2px}
+.book-badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-family:'Orbitron',sans-serif;font-size:9px;background:var(--surface2);padding:2px 6px;border-radius:2px;color:var(--cyan)}
+
+/* MAIN PANEL */
+.panel{flex:1;overflow-y:auto;padding:32px;position:relative}
+.panel-header{margin-bottom:24px}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:clamp(20px,3vw,28px);font-weight:900;letter-spacing:2px}
+.panel-subtitle{color:var(--dim);font-size:12px;margin-top:4px;letter-spacing:1px}
+
+/* MODULE: HOME */
+.home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:24px}
+.home-card{background:var(--surface);border:1px solid var(--border);padding:24px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.home-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.home-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.home-card h3{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:1px;margin-bottom:8px}
+.home-card p{font-size:12px;color:var(--dim);line-height:1.6}
+.home-card .card-stat{font-family:'Orbitron',sans-serif;font-size:24px;margin-top:12px}
+
+/* MODULE SECTIONS */
+.section{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px}
+.section-title{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:2px;color:var(--dim);margin-bottom:12px;text-transform:uppercase}
+
+/* FORMS */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.field input,.field textarea,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px 12px;outline:none;resize:vertical;transition:border-color .3s}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--cyan)}
+.field textarea{min-height:100px}
+
+.btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:10px 24px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.btn:hover{background:var(--cyan);color:var(--bg)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.btn.secondary{border-color:var(--border);color:var(--dim)}
+.btn.secondary:hover{border-color:var(--text);color:var(--text)}
+.btn.danger{border-color:var(--red);color:var(--red)}.btn.danger:hover{background:var(--red);color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+/* LISTS */
+.item{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px;transition:border-color .3s;cursor:pointer}
+.item:hover{border-color:var(--cyan)}
+.item-title{font-size:13px;font-weight:700}
+.item-meta{font-size:10px;color:var(--dim);margin-top:4px}
+.item-content{font-size:12px;color:var(--dim);margin-top:8px;line-height:1.6}
+.item-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:9px;padding:2px 8px;border:1px solid var(--border);color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+
+/* QUESTION CARDS */
+.q-card{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-bottom:8px}
+.q-card.answered{border-left:3px solid var(--green)}
+.q-number{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:2px}
+.q-text{font-size:13px;margin:8px 0;line-height:1.6}
+.q-answer{background:var(--surface);padding:12px;margin-top:8px;font-size:12px;border-left:2px solid var(--green)}
+.q-insight{background:rgba(0,240,255,.05);padding:12px;margin-top:8px;font-size:11px;color:var(--cyan);border-left:2px solid var(--cyan)}
+.q-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:10px;margin-top:8px;outline:none;resize:vertical;min-height:60px}
+.q-input:focus{border-color:var(--cyan)}
+
+/* SITUATION ANALYSIS */
+.analysis-phase{padding:16px;border:1px solid var(--border);margin-bottom:8px}
+.phase-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;margin-bottom:8px}
+.phase-content{font-size:12px;line-height:1.7;color:var(--dim)}
+.phase-content strong{color:var(--text)}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:4px;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.status::before{content:'';width:6px;height:6px;border-radius:50%}
+.status.pending::before{background:var(--gold)}.status.complete::before{background:var(--green)}.status.researching::before{background:var(--cyan)}
+
+/* LOADING */
+.loading{text-align:center;padding:40px;color:var(--dim);font-size:12px}
+.loading::after{content:'';display:block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--cyan);border-radius:50%;margin:12px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--cyan);color:var(--cyan);font-size:12px;padding:12px 20px;z-index:9999;transform:translateY(100px);opacity:0;transition:all .4s cubic-bezier(.16,1,.3,1)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px 20px;color:var(--dim)}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:.3}
+.empty p{font-size:12px;line-height:1.6}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .shelf{width:60px;overflow:visible}
+  .shelf .book-info,.shelf .book-badge,.shelf .shelf-label{display:none}
+  .shelf .book{padding:12px 0;justify-content:center}
+  .panel{padding:16px}
+  .home-grid{grid-template-columns:1fr}
+  .topbar-stats{display:none}
+}
+
+/* GRAIN */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+</style>
+</head>
+<body>
+
+<!-- GRAIN OVERLAY -->
+<canvas id="grain"></canvas>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <canvas id="gate-bg"></canvas>
+  <div class="gate-box">
+    <div class="gate-title">NERVE CENTER</div>
+    <div class="gate-sub">Persoenliches KI-Gehirn</div>
+    <input type="password" class="gate-input" id="gate-pw" placeholder="Zugangsformel" onkeydown="if(event.key==='Enter')tryGate()">
+    <br>
+    <button class="gate-btn" onclick="tryGate()">ZUGANG</button>
+    <div class="gate-error" id="gate-err"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="topbar-title">NERVE <span>CENTER</span></div>
+      <div class="topbar-stats" id="topbar-stats"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-time" id="topbar-time"></div>
+      <button class="btn-logout" onclick="logout()">LOGOUT</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- BOOKSHELF SIDEBAR -->
+    <nav class="shelf" id="shelf">
+      <div class="shelf-label">Zentrale</div>
+
+      <div class="book active" data-mod="home" onclick="openMod('home')">
+        <div class="book-spine" style="background:var(--cyan)"></div>
+        <div class="book-info"><div class="book-title">HOME</div><div class="book-desc">Uebersicht</div></div>
+      </div>
+
+      <div class="book" onclick="window.location.href='/coaching'">
+        <div class="book-spine" style="background:linear-gradient(180deg,var(--cyan),var(--pink))"></div>
+        <div class="book-info"><div class="book-title">COACHING ENGINE</div><div class="book-desc">Alles in Einem</div></div>
+      </div>
+
+      <div class="shelf-label">Tools</div>
+
+      <div class="book" onclick="window.open('/heal','_blank')">
+        <div class="book-spine" style="background:var(--green)"></div>
+        <div class="book-info"><div class="book-title">PTGO</div><div class="book-desc">Heal Sessions</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/musik','_blank')">
+        <div class="book-spine" style="background:var(--pink);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">MUSIK</div><div class="book-desc">THETOYSAREOUT</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/bot-admin','_blank')">
+        <div class="book-spine" style="background:var(--gold);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BOT ADMIN</div><div class="book-desc">WhatsApp Bot</div></div>
+      </div>
+
+      <div class="book" onclick="window.open('/admin','_blank')">
+        <div class="book-spine" style="background:var(--dim);opacity:.5"></div>
+        <div class="book-info"><div class="book-title">BEWERBUNGEN</div><div class="book-desc">Admin Panel</div></div>
+      </div>
+
+      <div class="shelf-label">System</div>
+
+      <div class="book" onclick="window.location.href='/master-control'">
+        <div class="book-spine" style="background:linear-gradient(180deg,var(--cyan),var(--orange))"></div>
+        <div class="book-info"><div class="book-title">MASTER CONTROL</div><div class="book-desc">Bordcomputer</div></div>
+        <div class="book-badge">NEW</div>
+      </div>
+    </nav>
+
+    <!-- MAIN PANEL -->
+    <main class="panel" id="panel"></main>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════
+   NERVE CENTER — Client Logic
+   ══════════════════════════════════════════ */
+
+const API='/.netlify/functions/nerve-brain';
+const PW_HASH='a7e0d6b5f1c3e2a4b8d9f0c1e2a3b4c5'; // placeholder, real check below
+
+// ── PASSWORD GATE ──
+function hashPw(s){
+  // Simple hash for client-side gate; not crypto-secure but prevents casual access
+  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h;
+}
+const CORRECT_HASH=hashPw('1+1 ist eins');
+
+function tryGate(){
+  const val=document.getElementById('gate-pw').value.trim();
+  if(hashPw(val)===CORRECT_HASH){
+    sessionStorage.setItem('nerve_auth','1');
+    document.getElementById('gate').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    init();
+  } else {
+    document.getElementById('gate-err').textContent='Falsche Formel. Versuche es erneut.';
+    document.getElementById('gate-pw').value='';
+    document.getElementById('gate-pw').focus();
+  }
+}
+
+function logout(){
+  sessionStorage.removeItem('nerve_auth');
+  location.reload();
+}
+
+// Auto-login if session exists
+if(sessionStorage.getItem('nerve_auth')==='1'){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.add('active');
+  requestAnimationFrame(()=>init());
+}
+
+// ── GRAIN ──
+(function(){
+  const c=document.getElementById('grain'),ctx=c.getContext('2d');
+  function r(){c.width=window.innerWidth;c.height=window.innerHeight}
+  function d(){const im=ctx.createImageData(c.width,c.height);for(let i=0;i<im.data.length;i+=4){const v=Math.random()*255;im.data[i]=im.data[i+1]=im.data[i+2]=v;im.data[i+3]=12}ctx.putImageData(im,0,0);requestAnimationFrame(d)}
+  window.addEventListener('resize',r);r();d();
+})();
+
+// ── GATE BACKGROUND ANIMATION ──
+(function(){
+  const c=document.getElementById('gate-bg'),ctx=c.getContext('2d');
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight}
+  const particles=[];
+  for(let i=0;i<60;i++) particles.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*2+.5,c:['#00f0ff','#ff2d8e','#2dffa8'][Math.floor(Math.random()*3)]});
+  function draw(){
+    ctx.fillStyle='rgba(3,3,8,.15)';ctx.fillRect(0,0,c.width,c.height);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=c.width;if(p.x>c.width)p.x=0;if(p.y<0)p.y=c.height;if(p.y>c.height)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=p.c;ctx.globalAlpha=.4;ctx.fill();ctx.globalAlpha=1;
+    });
+    // Draw connections
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[i].x-particles[j].x,dy=particles[i].y-particles[j].y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<120){ctx.beginPath();ctx.moveTo(particles[i].x,particles[i].y);ctx.lineTo(particles[j].x,particles[j].y);ctx.strokeStyle=particles[i].c;ctx.globalAlpha=.08*(1-d/120);ctx.stroke();ctx.globalAlpha=1}
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',resize);resize();draw();
+})();
+
+// ── API HELPER ──
+async function api(action, params={}){
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...params})});
+  if(!res.ok) throw new Error((await res.json()).error||'API Fehler');
+  return res.json();
+}
+
+// ── TOAST ──
+function toast(msg,dur=3000){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── CLOCK ──
+function updateClock(){
+  const d=new Date();
+  document.getElementById('topbar-time').textContent=
+    d.toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'})+' '+
+    d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── MODULE ROUTER ──
+let currentMod='home';
+function openMod(mod){
+  currentMod=mod;
+  document.querySelectorAll('.book').forEach(b=>b.classList.toggle('active',b.dataset.mod===mod));
+  render();
+}
+
+// ── INIT ──
+async function init(){
+  updateClock();setInterval(updateClock,30000);
+  loadStats();
+  render();
+}
+
+async function loadStats(){
+  try{
+    const s=await api('stats');
+    document.getElementById('topbar-stats').innerHTML=
+      `<div class="stat"><b>${s.knowledge}</b> Wissen</div>`+
+      `<div class="stat"><b>${s.situations}</b> Analysen</div>`;
+  }catch(e){console.warn('Stats:',e)}
+}
+
+// ── RENDER ──
+function render(){
+  const p=document.getElementById('panel');
+  switch(currentMod){
+    case 'home': renderHome(p);break;
+    case 'vault': case 'daily': case 'analyze': case 'patients':
+      window.location.href='/coaching';break;
+    default: p.innerHTML='<div class="empty"><div class="empty-icon">?</div><p>Unbekanntes Modul</p></div>';
+  }
+}
+
+// ══════ HOME ══════
+function renderHome(p){
+  p.innerHTML=`
+    <div class="panel-header">
+      <div class="panel-title">NERVE CENTER</div>
+      <div class="panel-subtitle">Dein persoenliches KI-Gehirn — alles an einem Ort</div>
+    </div>
+
+    <!-- HERO: COACHING ENGINE -->
+    <div class="home-card" onclick="window.location.href='/coaching'" style="grid-column:1/-1;padding:32px 28px;cursor:pointer;border-color:rgba(0,240,255,.3);margin-bottom:24px">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--pink),var(--green))"></div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">
+        <div style="width:56px;height:56px;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-size:22px;color:var(--cyan);box-shadow:var(--glow-cyan)">⚡</div>
+        <div>
+          <h3 style="font-size:20px;letter-spacing:3px;margin:0">COACHING ENGINE</h3>
+          <p style="font-size:10px;color:var(--cyan);letter-spacing:2px;margin:4px 0 0">v2090 · DEEP INTELLIGENCE PLATFORM</p>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px">
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--cyan)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">NEURAL COACH</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">KI-Chat mit 12 Buechern</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--purple)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">PREDICTIVE ENGINE</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">Morgen-Prognose</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--green)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">SPEED CHECK-IN</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">15 Sekunden Mood-Scan</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--pink)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">MULTIPLAYER</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">Battles & Leaderboard</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--gold)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">POWER SCORE</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">Eine Zahl fuer alles</p>
+        </div>
+        <div style="background:var(--surface2);padding:10px;border-left:2px solid var(--dim)">
+          <p style="font-size:9px;color:var(--dim);letter-spacing:1px;margin:0">+15 MODULE</p>
+          <p style="font-size:11px;color:var(--text);margin:4px 0 0">Bio, Network, Vault...</p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <p style="font-size:11px;color:var(--dim);margin:0">Gamification · Voice Input · A/B Testing · AES-256 · Offline-first</p>
+        <div style="font-family:Orbitron,sans-serif;font-size:13px;letter-spacing:2px;color:var(--cyan);border:1px solid var(--cyan);padding:8px 20px;transition:all .3s">STARTEN →</div>
+      </div>
+    </div>
+
+    <!-- OTHER TOOLS -->
+    <div style="margin-bottom:12px">
+      <p style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:3px">WEITERE TOOLS</p>
+    </div>
+    <div class="home-grid">
+      <div class="home-card" onclick="window.open('/heal','_blank')" style="--c:var(--green)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)"></div>
+        <h3>PTGO METHOD</h3>
+        <p>Pain &middot; Trauma &middot; Growth &middot; Outcome. Premium 1:1 Heal Sessions.</p>
+      </div>
+      <div class="home-card" onclick="window.open('/live','_blank')" style="--c:var(--gold)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)"></div>
+        <h3>LIVE PIANO</h3>
+        <p>Live-Erlebnisse buchen und verwalten. Dein kuenstlerisches Standbein.</p>
+      </div>
+      <div class="home-card" onclick="window.open('/musik','_blank')" style="--c:var(--pink)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink)"></div>
+        <h3>MUSIK</h3>
+        <p>THETOYSAREOUT — Beats, Produktion, Releases.</p>
+      </div>
+      <div class="home-card" onclick="window.open('/bot-admin','_blank')" style="--c:var(--dim)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--dim)"></div>
+        <h3>BOT ADMIN</h3>
+        <p>WhatsApp Bot Steuerung und Monitoring.</p>
+      </div>
+      <div class="home-card" onclick="window.location.href='/master-control'" style="--c:var(--cyan)">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--orange))"></div>
+        <h3>MASTER CONTROL</h3>
+        <p>Bordcomputer — Token Usage, Kosten, System Status, AI Intelligence.</p>
+        <div class="card-stat" style="color:var(--cyan)">$$$</div>
+      </div>
+    </div>`;
+}
+
+// ══════ OLD MODULES — Now in Coaching Engine ══════
+// Vault, Daily 10, Analyzer, Patienten-KI all consolidated into /coaching
+
+// ── HELPERS ──
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function timeAgo(d){
+  if(!d)return '';
+  const s=Math.floor((Date.now()-new Date(d).getTime())/1000);
+  if(s<60)return 'gerade eben';if(s<3600)return Math.floor(s/60)+'m';if(s<86400)return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+</script>
+</body>
+</html>

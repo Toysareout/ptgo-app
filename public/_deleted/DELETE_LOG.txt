@@ -1,0 +1,43 @@
+/* ═══════════════════════════════════════════════════
+   DELETED FILES — MUSK PROTOCOL
+   "The best part is no part."
+
+   Alles hier wurde bewusst aus der App entfernt.
+   Dateien bleiben erhalten falls man sie braucht.
+   ═══════════════════════════════════════════════════ */
+
+DATUM: 2026-03-31
+
+WARUM: 4 Einstiegspunkte, 3 davon redundant.
+       Keine klare Nutzerführung. Verwirrend.
+       Musk-Regel: One door. One app.
+
+───────────────────────────────────────────────────
+
+1. index-old-nerve.html  (ehemals /)
+   WAS: Nerve Center mit Password Gate, Sidebar Bookshelf
+   WARUM GELÖSCHT: Wurde ersetzt durch /hub als neue Startseite.
+   Nerve Center bleibt erreichbar unter /nerve.
+
+2. portal.html  (ehemals /portal)
+   WAS: Split-Screen "Wähle deine Welt" — Musik vs. Healing
+   WARUM GELÖSCHT: Zweiter Eingang der niemanden weiterbringt.
+   Beide Welten sind jetzt direkt im Hub erreichbar.
+
+3. ostern.html  (ehemals /ostern)
+   WAS: Oster Reset Box — Saisonale Gamification
+   WARUM GELÖSCHT: Ostern ist vorbei. Saisonaler Content
+   gehört nicht permanent in die App.
+
+4. meerjungfrauen-spiel.html  (ehemals /meerjungfrauen-spiel)
+   WAS: Meerjungfrauen Würfel-Abenteuer — Kinder-Spiel
+   WARUM GELÖSCHT: Hat nichts mit TTAO/PTGO zu tun.
+   Schönes Projekt, aber falscher Ort.
+
+───────────────────────────────────────────────────
+
+TOTAL GELÖSCHT: 4 Dateien
+TOTAL VORHER:   33 Seiten + 4 Einstiegspunkte
+TOTAL NACHHER:  29 Seiten + 1 Einstiegspunkt (/)
+
+NÄCHSTE RUNDE: Coaching Engine vs AI Coaching zusammenlegen?
