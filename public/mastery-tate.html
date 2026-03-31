@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>ANDREW TATE — Cheat Sheet</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--orange:#ff8c00;--glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);--glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);--glow-orange:0 0 20px rgba(255,140,0,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.15;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:720px;margin:0 auto;padding:20px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:16px;background:linear-gradient(135deg,var(--orange),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);border:1px solid var(--gold);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.back-link{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--dim);border:1px solid var(--border);padding:5px 10px;letter-spacing:1px;transition:all .3s;text-decoration:none}
+.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+h1{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;letter-spacing:2px;line-height:1.2;margin:8px 0 12px}
+h2{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:2px;margin:20px 0 10px;color:var(--text);text-transform:uppercase}
+p{color:var(--dim);line-height:1.6;margin-bottom:8px;font-size:12px}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:20px 0}
+.fade-in{animation:fadeIn .3s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s}
+.nav-btn.active{color:var(--cyan)}.nav-btn:hover{color:var(--cyan)}
+
+/* Collapsible Tenets */
+details.rule{background:var(--surface);border:1px solid rgba(255,140,0,.2);margin-bottom:8px;position:relative;overflow:hidden}
+details.rule::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.4}
+details.rule summary{padding:14px 16px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.rule summary::-webkit-details-marker{display:none}
+details.rule summary::after{content:'▼';font-size:9px;color:var(--dim);transition:transform .2s}
+details.rule[open] summary::after{transform:rotate(180deg)}
+.rule-num{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--orange);letter-spacing:2px}
+.rule-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--orange);margin-top:2px}
+.rule-body{padding:0 16px 14px;border-top:1px solid rgba(255,140,0,.1)}
+.rule-desc{font-size:11px;color:var(--dim);line-height:1.6;margin:10px 0 8px}
+.practice-box{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);padding:10px;margin-top:6px}
+.practice-label{font-family:'Orbitron',sans-serif;font-size:8px;color:var(--gold);letter-spacing:2px;margin-bottom:3px}
+.practice-text{font-size:10px;color:var(--gold);line-height:1.5}
+
+/* Pillars compact */
+.smv-row{background:var(--surface);border:1px solid rgba(168,85,247,.15);padding:14px 16px;margin-bottom:8px;position:relative;overflow:hidden}
+.smv-row::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.3}
+.smv-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.smv-name{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:var(--purple)}
+.smv-pct{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;color:var(--gold)}
+.smv-bar{height:3px;background:var(--border);margin-bottom:8px}
+.smv-fill{height:3px;background:var(--purple)}
+.smv-acts{font-size:10px;color:var(--dim);line-height:1.5}
+
+/* Books compact */
+.book{background:var(--surface);margin-bottom:8px;position:relative;overflow:hidden}
+.book::before{content:'';position:absolute;top:0;left:0;bottom:0;width:3px}
+.book-1::before{background:var(--orange)}.book-2::before{background:var(--gold)}
+.book-inner{padding:14px 16px 14px 18px}
+.book-title{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.book-1 .book-title{color:var(--orange)}.book-2 .book-title{color:var(--gold)}
+.book-concept{font-size:10px;color:var(--dim);margin:3px 0;line-height:1.5;padding-left:10px;border-left:1px solid var(--border)}
+
+/* Glossary */
+.gloss{display:grid;gap:0}
+.gloss-item{padding:8px 0;border-bottom:1px solid rgba(26,26,46,.6)}
+.gloss-item:last-child{border-bottom:none}
+.gloss-term{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--orange);letter-spacing:1px}
+.gloss-def{font-size:10px;color:var(--dim);line-height:1.5;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+<div class="wrap fade-in">
+
+<div class="top">
+  <a href="/mastery" class="back-link">← HUB</a>
+  <div class="brand">ANDREW TATE</div>
+  <span class="pill">CHEAT SHEET</span>
+</div>
+
+<div style="text-align:center;margin:0 0 20px">
+  <div style="font-size:40px">⚡</div>
+  <h1>THE TATE BIBLE</h1>
+  <p>41 Tenets · 2 Bücher · Kern-Prinzipien · Glossar — buchgetreu</p>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- 41 TENETS OF TATEISM -->
+<!-- ═══════════════════════════════════════ -->
+<h2 style="color:var(--orange)">⚔️ TENETS OF TATEISM</h2>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #1</div><div class="rule-title">Werde so fähig und mächtig wie möglich</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Ich glaube dass Männer den göttlichen Auftrag haben, so fähig, mächtig und kompetitiv wie möglich zu werden in diesem Leben. Mittelmäßigkeit ist keine Option – dein Potenzial voll auszuschöpfen ist Pflicht.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Frage dich: In welchem Bereich bist du heute besser als gestern? Identifiziere EINE Fähigkeit und arbeite 30 Minuten daran.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #5</div><div class="rule-title">Schütze und versorge deine Leute</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Männer haben die heilige Pflicht, die wichtigen Menschen in ihrem Leben zu beschützen und zu versorgen. Wer diese Verantwortung nicht tragen kann, hat seine Arbeit noch nicht getan.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Überprüfe heute: Sind die Menschen die dir wichtig sind versorgt? Was kannst du konkret tun um ihre Situation zu verbessern?</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #12</div><div class="rule-title">Ehrenwort halten — tu was du sagst</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Ein Mann hat die heilige Pflicht, zu seinem Wort zu stehen und exakt das zu tun was er sagt. Dein Wort ist deine Währung. Brich es einmal und du verlierst alles.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Gib heute keine Versprechen die du nicht halten kannst. Und halte JEDES Versprechen das du gibst – egal wie klein.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #13</div><div class="rule-title">Das Leben ist schwer — werde stark</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Das Leben eines Mannes ist schwer und er hat die heilige Pflicht, stark genug zu werden um diese Härte zu bewältigen. Schwäche ist eine Wahl. Stärke auch.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Tu heute bewusst etwas Unbequemes. Kalt duschen, extra Satz im Training, das schwierige Gespräch führen.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #14</div><div class="rule-title">Persönliche Verantwortung für dein Leben</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Männer sind persönlich verantwortlich für ihre Handlungen und für die Ergebnisse die sie in ihrem Leben erzielen. Niemand schuldet dir etwas. Wo du stehst ist das Resultat deiner Entscheidungen.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Hör auf Ausreden zu suchen. Frage dich bei jedem Problem: Was ist MEIN Anteil? Was kann ICH ändern?</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #15</div><div class="rule-title">Disziplin in allen Dingen</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Emotionale Kontrolle und die vitale Notwendigkeit, diszipliniert und professionell in allen Dingen zu werden. Motivation kommt und geht. Disziplin bleibt. Disziplin IST Freiheit.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Halte heute JEDEN Plan ein den du dir vorgenommen hast. Kein Verhandeln mit dir selbst. Kein Aufweichen.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #16</div><div class="rule-title">Aus Position der Stärke handeln</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Männer haben die heilige Pflicht, alles im Leben aus einer Position der Stärke heraus anzugehen. Nie aus Angst, nie aus Verzweiflung, nie aus Schwäche verhandeln oder handeln.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Wo handelst du aus Angst statt aus Stärke? Identifiziere eine Situation und ändere deine Haltung darin.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #18</div><div class="rule-title">Schwächen erkennen und überwinden</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Es liegt an mir, meine eigenen Schwächen und Limitierungen schonungslos zu identifizieren und eifrig daran zu arbeiten, sie zu überwinden und in allen Bereichen fähiger zu werden.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Schreibe deine 3 größten Schwächen auf. Wähle EINE und beginne heute aktiv daran zu arbeiten.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #20</div><div class="rule-title">Forme deinen Körper zur stärksten Version</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Jeder Mann hat die heilige Pflicht, seinen physischen Körper in die stärkste, widerstandsfähigste und fähigste Version seiner selbst zu formen. Dein Körper ist dein erstes Werkzeug.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Trainiere heute. Keine Ausreden. Krafttraining, Kampfsport, Cardio – egal was, aber BEWEGE dich mit Intensität.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #21</div><div class="rule-title">Trainiere täglich — körperlich und mental</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Männer haben die heilige Pflicht, sich selbst jeden Tag rigoros zu trainieren – sowohl physisch als auch mental. Der Körper ohne Geist ist leer. Der Geist ohne Körper ist schwach.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Kombiniere heute: 1h körperliches Training + 30min mentales Training (Lesen, Lernen, Strategie).</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #25</div><div class="rule-title">Wohlstand aufbauen und Gutes tun</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Ich glaube an den Erwerb von Wohlstand und Überfluss um mein Leben zu verbessern und Gutes für die Menschen zu tun die mir wichtig sind. Geld ist Freiheit. Geld ist Optionen. Geld ist Impact.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Arbeite heute mindestens 2h an etwas das direkt Umsatz generiert. Nicht planen, nicht lernen – VERDIENEN.</div></div>
+  </div>
+</details>
+
+<details class="rule">
+  <summary><div><div class="rule-num">TENET #41</div><div class="rule-title">Jeden Tag dem maximalen Impact widmen</div></div></summary>
+  <div class="rule-body">
+    <div class="rule-desc">Jeden Tag widme ich mich aufs Neue dem Ziel, den größtmöglichen positiven Impact in der Welt zu schaffen und die Arbeit zu tun die nötig ist, um eine größere männliche Exzellenz in allen Bereichen zu erreichen.</div>
+    <div class="practice-box"><div class="practice-label">DAILY PRACTICE</div><div class="practice-text">Frage dich heute Abend: Was war mein größter Impact heute? War es genug? Was mache ich morgen besser?</div></div>
+  </div>
+</details>
+
+<div class="hr"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- KERN-PRINZIPIEN -->
+<!-- ═══════════════════════════════════════ -->
+<h2 style="color:var(--purple)">📊 KERN-PRINZIPIEN — DEIN FUNDAMENT</h2>
+
+<div class="smv-row">
+  <div class="smv-head"><span class="smv-name">💪 KÖRPER</span><span class="smv-pct">25%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:25%"></div></div>
+  <div class="smv-acts">Tägliches Krafttraining · Kampfsport-Erfahrung · KFA unter 15% · Nur hochwertige Nahrung</div>
+</div>
+
+<div class="smv-row">
+  <div class="smv-head"><span class="smv-name">💰 WEALTH</span><span class="smv-pct">30%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:30%"></div></div>
+  <div class="smv-acts">Multiple Einkommensströme · Sparen ist sinnlos – mehr VERDIENEN · Investieren in Krisen · Finanzielle Freiheit</div>
+</div>
+
+<div class="smv-row">
+  <div class="smv-head"><span class="smv-name">🧠 MINDSET</span><span class="smv-pct">25%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:25%"></div></div>
+  <div class="smv-acts">Disziplin über Motivation · Emotionale Kontrolle · Massives Ego ohne Arroganz · Keine Opfermentalität</div>
+</div>
+
+<div class="smv-row">
+  <div class="smv-head"><span class="smv-name">⚔️ ACTION</span><span class="smv-pct">20%</span></div>
+  <div class="smv-bar"><div class="smv-fill" style="width:20%"></div></div>
+  <div class="smv-acts">Speed schlägt Perfektion · Risiko eingehen · Execution über Planung · Unbequemes tun</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- BOOKS -->
+<!-- ═══════════════════════════════════════ -->
+<h2 style="color:var(--cyan)">📚 BÜCHER — KEY TAKEAWAYS</h2>
+
+<div class="book book-1"><div class="book-inner">
+  <div class="book-title">BUCH 1 — THE TATE BIBLE (2022)</div>
+  <div class="book-concept">Die Wahrheit über dein Ego – dein Ego ist dein Treibstoff, nicht dein Feind</div>
+  <div class="book-concept">50 Dinge die jeder Mann tun sollte – professioneller Kampf, Herz gebrochen, Mutter in Rente schicken</div>
+  <div class="book-concept">Warum du nie reich sein wirst – falsche Freunde, falscher Fokus, falsche Prioritäten</div>
+  <div class="book-concept">Das G-Mindset – glaube du bist der verdammte Mann, egal was kommt</div>
+  <div class="book-concept">Das Geheimnis von schnellem Geld – Speed und Execution statt Jahre an Planung</div>
+  <div class="book-concept">Wie Sklaven denken – Gehorsam, Compliance, Komfortzone als Gefängnis</div>
+  <div class="book-concept">Stell dir das Leben als Millionär vor – Visualisierung als Werkzeug</div>
+</div></div>
+
+<div class="book book-2"><div class="book-inner">
+  <div class="book-title">BUCH 2 — THE NEW TESTAMENT (2023)</div>
+  <div class="book-concept">Warum die meisten Menschen Loser sind – Komfort über Ambition gewählt</div>
+  <div class="book-concept">Verdiene deinen Status – niemand schuldet dir Respekt, du musst ihn dir erarbeiten</div>
+  <div class="book-concept">Traurigkeit umarmen – Schmerz als Katalysator für Wachstum nutzen</div>
+  <div class="book-concept">Warum Sparen sinnlos ist – fokussiere auf MEHR VERDIENEN statt weniger ausgeben</div>
+  <div class="book-concept">Ein Business von Null starten – kein Kapital nötig, nur Hustle und Speed</div>
+  <div class="book-concept">Wie deine Vergangenheit egal ist – nur was du JETZT tust zählt</div>
+  <div class="book-concept">Die 41 Tenets of Tateism – das tägliche Regelwerk für männliche Exzellenz</div>
+</div></div>
+
+<div class="hr"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- GLOSSARY -->
+<!-- ═══════════════════════════════════════ -->
+<h2 style="color:var(--gold)">🔑 GLOSSAR</h2>
+
+<div style="background:var(--surface);border:1px solid var(--border);padding:14px 16px">
+<div class="gloss">
+  <div class="gloss-item"><span class="gloss-term">THE MATRIX</span><div class="gloss-def">Das System das dich klein, gehorsam und konsumierend hält. Gesellschaftliche Konditionierung die Mittelmäßigkeit normalisiert.</div></div>
+  <div class="gloss-item"><span class="gloss-term">G MINDSET</span><div class="gloss-def">Glaube du bist der Mann. Absolutes Selbstvertrauen als Fundament für alles. Nicht Arroganz – Überzeugung.</div></div>
+  <div class="gloss-item"><span class="gloss-term">ESCAPE</span><div class="gloss-def">Aus dem System ausbrechen. Finanzielle, mentale und soziale Unabhängigkeit erreichen.</div></div>
+  <div class="gloss-item"><span class="gloss-term">TOP G</span><div class="gloss-def">Die beste Version eines Mannes. Physisch stark, finanziell frei, mental unerschütterlich.</div></div>
+  <div class="gloss-item"><span class="gloss-term">SPEED</span><div class="gloss-def">Schnelles Handeln schlägt perfekte Planung. Execution ist alles. Wer zögert verliert.</div></div>
+  <div class="gloss-item"><span class="gloss-term">ABUNDANCE</span><div class="gloss-def">Mehr verdienen statt weniger ausgeben. Knappheitsdenken ist Sklavendenken. Denke in Überfluss.</div></div>
+  <div class="gloss-item"><span class="gloss-term">DISCIPLINE</span><div class="gloss-def">Das Fundament für alles. Motivation ist temporär. Disziplin ist permanent. Disziplin IST Freiheit.</div></div>
+  <div class="gloss-item"><span class="gloss-term">BROTHERHOOD</span><div class="gloss-def">Männliche Bruderschaft ist essentiell für mentale Gesundheit, Glück und Erfolg. Umgib dich mit Kriegern.</div></div>
+  <div class="gloss-item"><span class="gloss-term">FRAME</span><div class="gloss-def">Deine mentale Realität kontrollieren. Wer den Frame hält, bestimmt die Dynamik jeder Interaktion.</div></div>
+  <div class="gloss-item"><span class="gloss-term">COMPETENCE</span><div class="gloss-def">Fähigkeit als Währung. Je kompetenter du bist, desto wertvoller bist du. Lerne. Trainiere. Meistere.</div></div>
+</div>
+</div>
+
+<div class="hr"></div>
+
+<!-- KEY QUOTE -->
+<div style="background:var(--surface2);border:1px solid var(--border);padding:20px;text-align:center;position:relative">
+  <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.5"></div>
+  <p style="font-size:13px;color:var(--text);font-style:italic;line-height:1.7;margin-bottom:8px">"Your mind must be stronger than your feelings."</p>
+  <p class="small" style="color:var(--orange)">— Andrew Tate</p>
+</div>
+
+<div class="hr"></div>
+<p class="small" style="text-align:center">
+  <a href="/mastery">← HUB</a> · <a href="/mastery-rollo">ROLLO</a> · <a href="/mastery-tagesplan">TAGESPLAN</a> · <a href="/mastery-income">INCOME</a> · <a href="/mastery-today">HEUTE</a>
+</p>
+
+</div>
+
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn">HOME</a>
+  <a href="/coaching" class="nav-btn">COACHING</a>
+  <a href="/mastery" class="nav-btn active">MASTERY</a>
+  <a href="/nerve" class="nav-btn">NERVE</a>
+  <a href="/intelligence" class="nav-btn">INTEL</a>
+</div></nav>
+
+<script>
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+</script>
+</body>
+</html>
