@@ -164,6 +164,14 @@ a{text-decoration:none;color:inherit}
 .directive::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)}
 .directive .dir-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:700}
 .directive .dir-sub{font-size:11px;color:var(--gold);margin-top:8px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
+.cash-card{background:rgba(45,255,168,.04);border:1px solid rgba(45,255,168,.25);padding:20px;margin-bottom:10px;position:relative}
+.cash-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--green)}
+.cash-card .cash-title{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--green);letter-spacing:1px;margin-bottom:8px}
+.cash-card .cash-rev{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--gold);margin-bottom:10px;letter-spacing:1px}
+.cash-card .cash-desc{font-size:12px;color:var(--text);line-height:1.7;margin-bottom:10px}
+.cash-card .cash-step{font-size:12px;color:var(--cyan);line-height:1.6;font-weight:700}
+.cash-next{width:100%;background:none;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:10px;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.cash-next:hover{border-color:var(--green);color:var(--green)}
 
 
 /* ── FADE ── */
@@ -389,6 +397,11 @@ a{text-decoration:none;color:inherit}
 
         <!-- STREAM -->
         <div class="thought-stream" id="thoughtStream"></div>
+
+        <!-- CASH MACHINE -->
+        <div class="section-label">Cash Machine — Dein Geld-Move heute</div>
+        <div class="cash-card" id="cashCard"></div>
+        <button class="cash-next" id="cashNext">Nächste Idee →</button>
 
       </div>
     </div>
@@ -761,6 +774,37 @@ navBtns.forEach(btn=>{
     if(btn.dataset.view==='v-agent')setTimeout(renderAgent,50);
   });
 });
+
+// ── CASH MACHINE — Real opportunities, real numbers ──
+const CASH_IDEAS=[
+  {title:'KI-Chatbot für deutsche Arztpraxen',rev:'€3.000-8.000 Setup + €500/Monat pro Praxis',desc:'Du hast bereits WhatsApp + Twilio laufen. Deutsche Praxen brauchen: Terminbuchung, Patientenaufnahme, FAQ via WhatsApp. Kein Download nötig. 80% der Patienten bevorzugen WhatsApp.',step:'ERSTER SCHRITT: Schreib heute 5 Arztpraxen in deiner Stadt an. Biete einen kostenlosen Demo-Bot an. Du baust ihn in 2 Tagen.'},
+  {title:'PTGO White-Label an Reha-Kliniken',rev:'€500-2.000/Monat pro Klinik · 10 Kliniken = €20.000/Monat',desc:'Du hast das Produkt bereits gebaut. Check-in Flow, Pain Map, Pattern Detection, Action Library. Deutsche Reha-Kliniken brauchen digitale Outcome-Messung — die Krankenkassen fordern es.',step:'ERSTER SCHRITT: Erstelle ein 1-Seiten-PDF mit Screenshots deiner App. Schick es an 10 Reha-Kliniken per Email. Heute.'},
+  {title:'KI-Dokumentation für Therapeuten',rev:'€150-300/Monat pro Therapeut · 50 Therapeuten = €15.000/Monat',desc:'Therapeuten verbringen 30-40% ihrer Zeit mit Dokumentation. Dein Claude-API kann Sitzungsnotizen in strukturierte Kassenanträge umwandeln. DSGVO-konform. Auf Deutsch. Fast kein Wettbewerb.',step:'ERSTER SCHRITT: Bau einen Prototyp der eine Sitzungsnotiz in ein ICD-10 Formular umwandelt. 1 Tag Arbeit. Dann zeig es einem Therapeuten.'},
+  {title:'KI-Audit für Mittelstand',rev:'€5.000-8.000 pro Audit · 2-3/Monat = €24.000/Monat',desc:'Deutsche Mittelständler wissen: Sie brauchen KI. Aber haben null Ahnung wo anfangen. Du gehst rein, mappst Workflows, zeigst wo KI spart. Lieferst einen Report mit ROI.',step:'ERSTER SCHRITT: Schreib auf LinkedIn einen Post: "Ich helfe Unternehmen KI einzusetzen. Die ersten 3 Audits mache ich zum halben Preis." Heute posten.'},
+  {title:'Schmerzcoaching-Programm (12 Wochen)',rev:'€1.500-3.000 pro Teilnehmer · 15er Kohorte = €45.000',desc:'23 Mio Deutsche haben chronische Schmerzen. Wartezeit Schmerztherapie: 6-12 Monate. Dein PTGO-System + wöchentliche Calls + KI-Aktionspläne = Premium-Programm.',step:'ERSTER SCHRITT: Schreib einen Instagram/Facebook Post über chronische Schmerzen. Biete ein kostenloses 15-Min Gespräch an. Sammle 5 Interessenten diese Woche.'},
+  {title:'"KI für Therapeuten" Online-Kurs',rev:'€497-997 pro Enrollment · 100 Enrollments = €99.700',desc:'Therapeuten sind neugierig auf KI aber verängstigt (Datenschutz, Ethik, Berufsordnung). Ein deutschsprachiger Kurs von jemandem mit klinischer UND technischer Expertise = Premium.',step:'ERSTER SCHRITT: Nimm ein 10-Min Loom-Video auf: "3 Wege wie KI deinen Praxisalltag verändert." Teile es in Therapeuten-Facebook-Gruppen.'},
+  {title:'KI-Agent-Agentur für DACH',rev:'€10.000-50.000 pro Projekt',desc:'Unternehmen wollen autonome KI-Agenten: Emails beantworten, Rechnungen verarbeiten, Reports generieren. Du baust mit Python + Claude API. Deutsche Datenschutz-Kompetenz = dein Moat.',step:'ERSTER SCHRITT: Bau einen Demo-Agenten der eine Inbox automatisch sortiert und beantwortet. Zeig ihn auf LinkedIn. 1 Video reicht.'},
+  {title:'WhatsApp-Erinnerungsbot für Praxen',rev:'€49-149/Monat pro Praxis · 200 Praxen = €29.800/Monat',desc:'Simpelstes Produkt: Praxis verbindet Kalender. Patient kriegt WhatsApp-Erinnerung, kann bestätigen/absagen, Formulare vorher ausfüllen. Kein App-Download. Deutschland läuft noch auf Telefon.',step:'ERSTER SCHRITT: Nutze deinen bestehenden Twilio-Stack. Bau einen MVP in 3 Tagen. Geh zu deinem eigenen Zahnarzt und zeig es ihm.'},
+  {title:'Corporate Wellness KI-Plattform',rev:'€5-15 pro Mitarbeiter/Monat · 500 MA Firma = €7.500/Monat',desc:'Deutsche Firmen sind gesetzlich verpflichtet zur Gefährdungsbeurteilung psychischer Belastungen. Dein Check-in System (Mood, Stress, Sleep) = perfektes Tool dafür. Anonymisiert + aggregiert für HR.',step:'ERSTER SCHRITT: Erstelle eine B2B Landing Page. Schreib 5 HR-Leiter auf LinkedIn an mit: "Wie löst ihr aktuell die psychische Gefährdungsbeurteilung?"'},
+  {title:'DiGA-Zertifizierung für PTGO',rev:'€200-500 pro Patient pro Quartal · bezahlt von Krankenkassen',desc:'DiGA = Digitale Gesundheitsanwendung. Einmal zertifiziert, MÜSSEN Krankenkassen deine App erstatten. Weniger als 60 Apps im Verzeichnis. Schmerz und Mental Health = Priorität. PTGO ist schon 70% da.',step:'ERSTER SCHRITT: Lies die BfArM DiGA-Anforderungen durch. Mach eine Gap-Analyse: Was fehlt PTGO noch? Das ist dein €1M/Jahr Ticket.'},
+  {title:'AI Localization Service',rev:'€5.000-15.000 pro Projekt · 3/Monat = €45.000/Monat',desc:'US AI-Firmen expandieren nach Europa. Sie brauchen keine Übersetzung — sie brauchen kulturelle Adaptation von Prompts, UI-Texten, Conversation Flows auf Deutsch. Kein Übersetzer kann das.',step:'ERSTER SCHRITT: Finde 5 US AI-Startups die gerade nach Europa expandieren (ProductHunt, YC, LinkedIn). Schreib den CEO an: "Your German prompts suck. I can fix them."'},
+  {title:'Productized Consulting: KI-Praxis aufbauen',rev:'€5.000-15.000 pro Client · 2/Monat = €30.000/Monat',desc:'Andere Coaches und Therapeuten wollen auch KI nutzen. Du baust ihnen ihr System: Check-in Bot, WhatsApp Integration, Stripe, alles fertig. Done-with-you Paket.',step:'ERSTER SCHRITT: Nimm dein PTGO-Setup und dokumentiere den Prozess als Angebot. Poste: "Ich baue dir deine KI-Coaching-Praxis in 2 Wochen."'}
+];
+
+let cashIdx=parseInt(localStorage.getItem('ttao_cash_idx')||'0');
+
+function renderCash(){
+  const idea=CASH_IDEAS[cashIdx%CASH_IDEAS.length];
+  document.getElementById('cashCard').innerHTML=`<div class="cash-title">${idea.title}</div><div class="cash-rev">${idea.rev}</div><div class="cash-desc">${idea.desc}</div><div class="cash-step">${idea.step}</div>`;
+}
+
+document.getElementById('cashNext').addEventListener('click',()=>{
+  cashIdx++;
+  localStorage.setItem('ttao_cash_idx',cashIdx);
+  renderCash();
+});
+
+renderCash();
 
 // Init
 renderAgent();
