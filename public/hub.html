@@ -167,8 +167,19 @@ a{text-decoration:none;color:inherit}
 .thought .t-meta{font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:1px}
 .thought .t-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .thought .t-tag{font-family:'Orbitron',sans-serif;font-size:7px;padding:2px 6px;border:1px solid rgba(0,240,255,.2);color:var(--cyan);letter-spacing:1px}
-.agent-action-link{display:inline-block;margin-top:10px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:8px 16px;background:rgba(168,85,247,.1);border:1px solid var(--purple);color:var(--purple);text-decoration:none;transition:all .2s;text-transform:uppercase}
-.agent-action-link:hover{background:var(--purple);color:var(--bg)}
+.revenue-row{display:flex;gap:8px;margin-bottom:8px}
+.revenue-input{flex:1;background:var(--surface);border:1px solid rgba(45,255,168,.2);color:var(--green);font-family:'Orbitron',sans-serif;font-size:16px;padding:12px 16px;outline:none;transition:border-color .3s}
+.revenue-input:focus{border-color:var(--green);box-shadow:var(--glow-green)}
+.revenue-input::placeholder{color:var(--dim);font-family:'Space Mono',monospace;font-size:12px}
+.revenue-btn{background:var(--green);border:none;color:var(--bg);font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;padding:12px 20px;cursor:pointer;font-weight:700;transition:opacity .2s}
+.revenue-btn:hover{opacity:.8}
+.revenue-bar-wrap{height:4px;background:var(--surface2);margin-bottom:4px;overflow:hidden}
+.revenue-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--gold));transition:width .5s ease}
+.revenue-label{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);letter-spacing:2px;margin-bottom:20px;text-align:right}
+.directive{background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.3);padding:20px;margin-bottom:16px;position:relative}
+.directive::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold)}
+.directive .dir-text{font-size:14px;color:var(--text);line-height:1.7;font-weight:700}
+.directive .dir-sub{font-size:11px;color:var(--gold);margin-top:8px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
 
 .sys-monitor{margin-top:16px}
 .sys-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:4px;font-size:11px}
@@ -376,52 +387,53 @@ a{text-decoration:none;color:inherit}
       </div>
     </div>
 
-    <!-- ═══════════ MASTER AGENT ═══════════ -->
+    <!-- ═══════════ CEO AGENT ═══════════ -->
     <div class="view" id="v-agent">
       <div class="fade">
 
-        <!-- BRAIN ORB -->
+        <!-- CEO HEADER -->
         <div class="agent-brain">
-          <div class="agent-orb"><div class="orb-icon">🧬</div></div>
-          <div class="agent-status">Master Agent <span id="agentStatus">Online</span></div>
-          <div class="agent-gen">Generation <span id="agentGen">0</span> · <span id="agentEvo">0</span> Evolutionen</div>
+          <div class="agent-orb"><div class="orb-icon">👁️</div></div>
+          <div class="agent-status">CEO Agent <span id="agentStatus">Online</span></div>
+          <div class="agent-gen">Gen <span id="agentGen">0</span> · IQ <span id="statIQ">100</span> · <span id="agentEvo">0</span> Cycles</div>
         </div>
 
-        <!-- EVOLUTION STATS -->
+        <!-- REVENUE TRACKER -->
         <div class="evo-stats">
-          <div class="evo-stat"><div class="ev-val ev-cyan" id="statThoughts">0</div><div class="ev-label">Gedanken</div></div>
-          <div class="evo-stat"><div class="ev-val ev-purple" id="statPatterns">0</div><div class="ev-label">Patterns</div></div>
-          <div class="evo-stat"><div class="ev-val ev-green" id="statIQ">100</div><div class="ev-label">IQ Index</div></div>
+          <div class="evo-stat"><div class="ev-val ev-green" id="statRevenue">0</div><div class="ev-label">€ Heute</div></div>
+          <div class="evo-stat"><div class="ev-val ev-gold" id="statTarget">333.333</div><div class="ev-label">€ Tagesziel</div></div>
+          <div class="evo-stat"><div class="ev-val ev-cyan" id="statStreak">0</div><div class="ev-label">Tage Streak</div></div>
         </div>
 
-        <!-- NEURAL INPUT -->
-        <div class="section-label">Neural Interface — Denk einfach</div>
+        <!-- DAILY REVENUE INPUT -->
+        <div class="revenue-row">
+          <input type="number" class="revenue-input" id="revenueInput" placeholder="€ verdient heute..." min="0">
+          <button class="revenue-btn" id="revenueLog">LOG</button>
+        </div>
+        <div class="revenue-bar-wrap"><div class="revenue-bar" id="revenueBar" style="width:0%"></div></div>
+        <div class="revenue-label" id="revenueLabel">0% vom Tagesziel</div>
+
+        <!-- CEO INPUT -->
+        <div class="section-label">Sag mir was los ist</div>
         <div class="neural-input-wrap">
-          <textarea class="neural-input" id="neuralInput" placeholder="Was denkst du gerade? Der Agent lernt mit..." rows="2"></textarea>
+          <textarea class="neural-input" id="neuralInput" placeholder="Was ist gerade dein Problem, dein Plan, dein nächster Move?" rows="2"></textarea>
           <button class="neural-send" id="neuralSend">→</button>
         </div>
 
         <!-- THOUGHT STREAM -->
         <div class="thought-stream" id="thoughtStream"></div>
 
-        <!-- SYSTEM MONITOR -->
-        <div class="section-label">System Monitor — Alle Module</div>
-        <div class="sys-monitor" id="sysMonitor">
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Nerve Center</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">AI Coach</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Master Agent</div><div class="sys-val">LEARNING</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Mastery Hub</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">PTGO Healing</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Intelligence</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Income Engine</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot online"></div><div class="sys-name">Pain Assistant</div><div class="sys-val">ACTIVE</div></div>
-          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Neural Pattern Engine</div><div class="sys-val">EVOLVING</div></div>
-          <div class="sys-row"><div class="sys-dot learning"></div><div class="sys-name">Thought Reader</div><div class="sys-val">TRAINING</div></div>
-        </div>
+        <!-- DAILY DIRECTIVE -->
+        <div class="section-label">Tagesbefehl</div>
+        <div class="directive" id="directive"></div>
 
-        <!-- EVOLUTION LOG -->
-        <div class="section-label">Evolution Log — Letzte Verbesserungen</div>
-        <div class="evo-log" id="evoLog"></div>
+        <!-- STATS -->
+        <div class="section-label">Agent Stats</div>
+        <div class="evo-stats">
+          <div class="evo-stat"><div class="ev-val ev-cyan" id="statThoughts">0</div><div class="ev-label">Inputs</div></div>
+          <div class="evo-stat"><div class="ev-val ev-purple" id="statPatterns">0</div><div class="ev-label">Patterns</div></div>
+          <div class="evo-stat"><div class="ev-val ev-pink" id="statDays">0</div><div class="ev-label">Tage aktiv</div></div>
+        </div>
 
       </div>
     </div>
@@ -580,22 +592,23 @@ document.querySelectorAll('.idea-filter').forEach(btn=>{
 
 renderIdeas();
 
-// ══════════════════════════════════════════
-// ── MASTER AGENT — Self-Evolving AI Brain ──
-// ══════════════════════════════════════════
-const AGENT_KEY='ttao_master_agent';
+// ══════════════════════════════════════════════════
+// ── CEO AGENT V3 — Zuckerberg × Musk × Hormozi ──
+// ══════════════════════════════════════════════════
+const AGENT_KEY='ttao_ceo_agent';
 const THOUGHTS_KEY='ttao_thoughts';
+const REVENUE_KEY='ttao_revenue';
+const MONTHLY_TARGET=10000000; // €10M/month
+const DAILY_TARGET=Math.round(MONTHLY_TARGET/30); // €333.333/day
 
 function getAgent(){
-  // Born: 2026-01-01. Agent has been evolving since day 1 of the project.
   const BORN=new Date('2026-01-01T00:00:00').getTime();
   const hoursSinceBorn=Math.floor((Date.now()-BORN)/(1000*60*60));
-  const baseEvo=hoursSinceBorn*12; // 12 evolution cycles per hour since birth
+  const baseEvo=hoursSinceBorn*12;
   const def={born:BORN,gen:Math.floor(baseEvo/100)+1,evo:baseEvo,iq:100+Math.floor(baseEvo/10),patterns:['stress','motivation','geld','beziehung','gesundheit','mindset','strategie','kreativität','disziplin','wachstum'],lastEvo:Date.now()};
   try{
     const stored=JSON.parse(localStorage.getItem(AGENT_KEY));
     if(!stored)return def;
-    // Catch up: if agent was sleeping (tab closed), calculate missed evolutions
     const missed=Math.floor((Date.now()-stored.lastEvo)/(1000*60*60))*12;
     if(missed>0){stored.evo+=missed;stored.gen=Math.floor(stored.evo/100)+1;stored.iq=100+stored.patterns.length*5+Math.floor(stored.evo/10)+getThoughts().length*2;stored.lastEvo=Date.now();localStorage.setItem(AGENT_KEY,JSON.stringify(stored))}
     return stored;
@@ -604,6 +617,11 @@ function getAgent(){
 function saveAgent(a){localStorage.setItem(AGENT_KEY,JSON.stringify(a))}
 function getThoughts(){try{return JSON.parse(localStorage.getItem(THOUGHTS_KEY))||[]}catch(e){return[]}}
 function saveThoughts(t){localStorage.setItem(THOUGHTS_KEY,JSON.stringify(t))}
+function getRevenue(){try{return JSON.parse(localStorage.getItem(REVENUE_KEY))||{}}catch(e){return{}}}
+function saveRevenue(r){localStorage.setItem(REVENUE_KEY,JSON.stringify(r))}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function getTodayRevenue(){return getRevenue()[todayKey()]||0}
+function getStreak(){const r=getRevenue();let s=0;const d=new Date();for(let i=1;i<=365;i++){d.setDate(d.getDate()-1);if(r[d.toISOString().slice(0,10)]>0)s++;else break}if(getTodayRevenue()>0)s++;return s}
 
 // Pattern detection keywords
 const PATTERN_MAP={
@@ -628,69 +646,83 @@ function detectPatterns(text){
   return found.length?found:['allgemein'];
 }
 
-// V2: ONE action + ONE link per pattern. No bullshit.
-const AGENT_ACTIONS={
+// CEO COMMANDS — Direct orders. No philosophy. Revenue-focused.
+const CEO_COMMANDS={
   stress:[
-    {action:'Steh auf. 2x durch die Nase einatmen, 1x lang durch den Mund aus. 3 Wiederholungen.',link:'/pain-assistant',linkName:'Pain Assistant'},
-    {action:'5 Minuten gehen. Nicht denken. Nur gehen. Danach entscheiden.',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Schreib den Stressor auf. Dann: Kann ich es ändern? Ja → handle. Nein → lass los.',link:'/coaching',linkName:'Coaching Engine'}
+    'Stress ist ein Signal, kein Problem. Du hast 2 Optionen: Handle oder eliminiere die Quelle. Entscheide dich in 10 Sekunden.',
+    'Cortisol blockiert dein Denken. Steh auf, 3 tiefe Atemzüge, setz dich wieder hin. Dann die eine Sache die Geld bringt.',
+    'Jede Minute die du im Stress verbringst kostet dich €231. Das ist dein Stundensatz bei €10M/Monat. Handle oder lass es.'
   ],
   motivation:[
-    {action:'Du hast 90 Minuten Peak-Focus. Starte JETZT die wichtigste Aufgabe.',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Motivation verfällt. Mach die Sache in den nächsten 60 Sekunden oder sie stirbt.',link:'/mastery-income',linkName:'Income Engine'},
-    {action:'Tenet #1: Ich entscheide mich, außergewöhnlich zu sein. Keine Ausreden. Handle.',link:'/mastery-tate',linkName:'Tate — 41 Tenets'}
+    'Motivation ist irrelevant. Milliardäre arbeiten nicht wenn sie Lust haben. Sie arbeiten. Punkt. Starte jetzt.',
+    'Du hast genau 90 Minuten Deep Work bevor das Dopamin-Fenster schließt. Was ist die €10.000-Aufgabe? Mach sie.',
+    'Musk schläft 6h und baut Raketen. Du hast keine Ausrede. Die nächsten 25 Minuten gehören deiner wichtigsten Aufgabe.'
   ],
   geld:[
-    {action:'Eine Frage: Was bringt dir HEUTE €500? Alles andere ist Ablenkung.',link:'/mastery-income',linkName:'Income Engine'},
-    {action:'Hormozi Value Equation: Value = Dream Outcome × Wahrscheinlichkeit ÷ Zeit × Aufwand. Optimiere EINEN Faktor.',link:'/mastery-income',linkName:'Income Engine'},
-    {action:'Verkaufe bevor du baust. Schreib JETZT eine Nachricht an einen potenziellen Kunden.',link:'/product',linkName:'Verkaufs-Tracker'}
+    'Du willst €10M/Monat. Das sind €333.333/Tag. Was hast du HEUTE getan das diesem Ziel dient? Wenn nichts — starte JETZT.',
+    'Hormozi: Value = Dream Outcome × Wahrscheinlichkeit ÷ Zeit × Aufwand. Welchen Faktor kannst du HEUTE verdoppeln?',
+    'Schreib 10 Menschen an die dein Problem haben. Heute. Nicht morgen. 10 DMs, 10 Emails, 10 Calls. Pick one.',
+    'Frag dich: Verkaufe ich etwas das €10.000+ wert ist? Wenn nein, bau es. Wenn ja, verkauf es an mehr Menschen.',
+    'Jeder Euro den du nicht heute verdienst ist ein Euro den du NIE verdienst. Dieser Tag kommt nicht zurück.'
   ],
   beziehung:[
-    {action:'Iron Rule #1: Frame ist ALLES. Wer reagiert hat den Frame verloren. Nicht reagieren.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
-    {action:'SMV erhöhen statt jagen. Gym, Status, Mission. Sie kommen zu dir.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
-    {action:'Tenet #28: Ich strebe danach, die beste Version meiner selbst zu sein. DEIN Wert zuerst.',link:'/mastery-tate',linkName:'Tate — 41 Tenets'}
+    'Dein Nettowert bestimmt deinen Marktwert. Erst die Mission, dann der Rest. Zurück an die Arbeit.',
+    'Frame = Realität. Du bestimmst die Regeln. Nicht sie, nicht die Gesellschaft, nicht deine Angst. DU.',
+    'Die beste Beziehungs-Strategie: Werde so wertvoll dass sie zu dir kommen. SMV ist King. Arbeite dran.'
   ],
   gesundheit:[
-    {action:'Körper redet. Hör zu. Öffne den Pain Assistant und beschreib was du fühlst.',link:'/pain-assistant',linkName:'Pain Assistant'},
-    {action:'Schlaf ist nicht verhandelbar. Unter 7h = 30% weniger Leistung. Heute Abend: Handy weg um 22:00.',link:'/mastery-tagesplan',linkName:'Tagesplan'},
-    {action:'10 Minuten Bewegung. Nicht morgen. Jetzt. Der Körper heilt durch Bewegung.',link:'/heal',linkName:'PTGO Method'}
+    'Dein Körper ist dein Unternehmen. Wenn er ausfällt, fällt alles aus. 7h Schlaf, Wasser, Bewegung. Nicht verhandelbar.',
+    'Schmerz ignorieren kostet dich Performance. 10 Minuten Mobility jetzt. Dein €10M-Körper braucht Wartung.',
+    'Huberman-Protokoll: Morgensonne 10min, Koffein erst nach 90min, kalt duschen 2min. Mach eins davon JETZT.'
   ],
   mindset:[
-    {action:'In 5 Sekunden handeln oder dein Gehirn killt die Idee. 5-4-3-2-1-GO.',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Iron Rule #6: Frauen sind nicht der Preis — DU bist. Gilt für alles. Du bist der Preis.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
-    {action:'Schreib deine Angst auf. Dann lies sie laut vor. 80% der Ängste lösen sich durch Aussprechen.',link:'/coaching',linkName:'Coaching Engine'}
+    'Angst ist der Kompass. Was auch immer du vermeidest — das ist genau die Sache die du tun musst. Tu sie. Jetzt.',
+    'Du bist nicht deine Gedanken. Du bist der CEO der entscheidet welche Gedanken Ressourcen bekommen. Kill den Rest.',
+    'Bezos: "Ich wollte mit 80 nicht bereuen es nicht versucht zu haben." Was wirst DU bereuen? Mach es heute.'
   ],
   strategie:[
-    {action:'Musk-Regel: Delete → Simplify → Accelerate → Automate. Was kannst du LÖSCHEN?',link:'/mastery-tagesplan',linkName:'Tagesplan'},
-    {action:'Ein Ziel. Ein Quartal. Eine Metrik. Alles andere ist Noise. Was ist DEINE eine Metrik?',link:'/mastery-income',linkName:'Income Engine'},
-    {action:'Nicht planen — den ERSTEN Schritt machen. Jetzt. In 2 Minuten. Was ist er?',link:'/mastery-today',linkName:'Heute — Actionplan'}
+    'Delete → Simplify → Accelerate → Automate. In dieser Reihenfolge. Was kannst du JETZT löschen?',
+    '80/20: 20% deiner Aktivitäten bringen 80% deines Umsatzes. Was sind die 20%? Mach NUR die.',
+    'Dein Strategie-Meeting mit dir selbst: 1) Wo stehe ich? 2) Wo will ich hin? 3) Was ist der EINE nächste Schritt?'
   ],
   kreativität:[
-    {action:'Idee erkannt. Ab in die Inbox. In 7 Tagen entscheidest du ob sie lebt oder stirbt.',link:'/hub',linkName:'Ideas Inbox'},
-    {action:'Nicht bauen. Erst validieren. Frag 3 Menschen ob sie dafür zahlen würden.',link:'/product',linkName:'Verkaufs-Tracker'},
-    {action:'Kreativität ohne Deadline ist Hobby. Setz dir 48h. Ship or kill.',link:'/mastery-today',linkName:'Heute — Actionplan'}
+    'Ideen ohne Execution sind wertlos. Die Idee geht in die Inbox. In 7 Tagen entscheidest du: Build or Kill.',
+    'Validiere bevor du baust. Frag 5 Leute ob sie zahlen würden. Wenn 3 ja sagen: build. Sonst: kill.',
+    'Zuckerberg baut nicht jede Idee. Er baut die EINE die eine Milliarde Menschen betrifft. Was ist deine?'
   ],
   disziplin:[
-    {action:'Du prokrastinierst nicht wegen Faulheit. Du hast Angst. Wovor genau?',link:'/coaching',linkName:'Coaching Engine'},
-    {action:'2-Minuten-Regel: Wenn es unter 2 Minuten dauert, mach es JETZT. Sofort.',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Mach den Tagesplan auf. Block für Block. Kein Denken, nur Ausführen.',link:'/mastery-tagesplan',linkName:'Tagesplan'}
+    'Du prokrastinierst weil die Aufgabe zu groß ist. Mach sie kleiner. Was sind die ersten 2 Minuten? Mach DAS.',
+    'Disziplin = Freiheit. Jede Gewohnheit die du automatisierst gibt dir Kapazität für die €10M-Arbeit.',
+    'Timer auf 25 Minuten. Eine Aufgabe. Kein Handy. Kein Tab-Wechsel. Kein Bullshit. Starte den Timer JETZT.'
   ],
   wachstum:[
-    {action:'1% besser pro Tag = 37x besser pro Jahr. Was ist dein 1% für heute?',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Growth passiert in der Uncomfortable Zone. Was vermeidest du gerade?',link:'/coaching',linkName:'Coaching Engine'},
-    {action:'Lerne nicht mehr. Wende an. Wissen ohne Anwendung ist Entertainment.',link:'/mastery',linkName:'Mastery Hub'}
+    '1% pro Tag = 37x pro Jahr. Aber nur wenn du es JEDEN Tag machst. Was ist dein 1% heute?',
+    'Lerne nicht mehr Theorie. Wende das an was du bereits weißt. Wissen ohne Umsetzung ist Netflix für Schlaue.',
+    'Die unbequeme Sache die du seit Tagen aufschiebst — DAS ist dein Wachstum. Mach sie in den nächsten 30 Minuten.'
   ],
   allgemein:[
-    {action:'Gedanke gespeichert. Tipp: Sei spezifischer. Je konkreter du denkst, desto besser kann der Agent helfen.',link:'/mastery-today',linkName:'Heute — Actionplan'},
-    {action:'Was willst du WIRKLICH? Nicht was du solltest. Was du willst. Schreib es auf.',link:'/coaching',linkName:'Coaching Engine'},
-    {action:'Der Agent braucht Futter. Erzähl mehr. Stress? Geld? Beziehung? Gesundheit?',link:'/nerve',linkName:'Nerve Center'}
+    'Sag mir was dich gerade beschäftigt. Geld? Stress? Strategie? Beziehung? Je konkreter, desto brutaler mein Befehl.',
+    'Du hast heute noch Stunden übrig. Was machst du damit? €333.333 verdienen sich nicht von allein.',
+    'Jeder Gedanke den du hier eintippst statt zu HANDELN kostet dich Geld. Tipp schnell, dann handle.'
   ]
 };
 
 function agentRespond(patterns){
+  const h=new Date().getHours();
+  const todayRev=getTodayRevenue();
   const p=patterns[0];
-  const pool=AGENT_ACTIONS[p]||AGENT_ACTIONS.allgemein;
-  return pool[Math.floor(Math.random()*pool.length)];
+  const pool=CEO_COMMANDS[p]||CEO_COMMANDS.allgemein;
+  let cmd=pool[Math.floor(Math.random()*pool.length)];
+
+  // Time-aware prefix
+  if(h>=22||h<5)cmd='Es ist nach 22 Uhr. Schlaf oder plane morgen. Kein Hustle ohne Recovery. Aber: '+cmd;
+  else if(h<8)cmd='Morgenstunde. Dein Cortisol-Peak. Goldene Zeit. '+cmd;
+
+  // Revenue-aware suffix
+  if(todayRev===0&&h>=12)cmd+=' Du hast heute noch €0 geloggt. Ändere das.';
+  else if(todayRev>0)cmd+=' Stand heute: €'+todayRev.toLocaleString('de-DE')+' geloggt. Weiter.';
+
+  return cmd;
 }
 
 // Auto-evolution: runs every time you open the Agent tab
@@ -717,34 +749,55 @@ function evolveAgent(){
   return agent;
 }
 
-function generateEvoLog(agent){
-  const logs=[];
-  const now=new Date();
-  const h=now.getHours();
-  const m=now.getMinutes();
+// Daily directives based on time of day + revenue
+const DIRECTIVES=[
+  {h:[5,6,7,8],text:'Morgenstunde = Goldstunde. Cortisol-Peak. Dein Gehirn ist jetzt 3x schneller. Nutze es für die härteste Aufgabe.',sub:'MUSK: "I work from 7am to midnight, 7 days a week."'},
+  {h:[9,10,11],text:'Deep Work Block. Kein Meeting, kein Social Media, kein Chat. 3 Stunden ununterbrochene Wertschöpfung.',sub:'ZUCKERBERG: "Move fast and break things."'},
+  {h:[12,13],text:'Mittagscheck: Hast du heute schon Revenue generiert? Wenn nein — die nächste Stunde gehört dem Verkauf.',sub:'HORMOZI: "$100M Offers — make them an offer so good they feel stupid saying no."'},
+  {h:[14,15,16,17],text:'Nachmittagsblock. Calls, Deals, Follow-ups. Jeder Kontakt ist ein potenzieller €10K Deal. Handle entsprechend.',sub:'BEZOS: "Your margin is my opportunity."'},
+  {h:[18,19,20],text:'Abend-Sprint. Was ist heute noch offen? Eine Sache abschließen bevor du aufhörst. EINE.',sub:'TATE: "Work hard in silence. Let success make the noise."'},
+  {h:[21,22,23,0,1,2,3,4],text:'Recovery-Modus. Plan morgen. Schlaf 7h. Dein €10M-Gehirn braucht Reset. Morgen dominierst du.',sub:'HUBERMAN: "Sleep is the foundation of all mental and physical performance."'}
+];
 
-  logs.push({time:`${h}:${String(m).padStart(2,'0')}`,msg:`<b>Self-Scan</b> abgeschlossen. ${agent.patterns.length} Pattern-Typen im Speicher.`});
-  logs.push({time:`${h}:${String(Math.max(0,m-3)).padStart(2,'0')}`,msg:`<b>Neural Weights</b> optimiert. IQ Index: ${agent.iq}.`});
-  logs.push({time:`${h}:${String(Math.max(0,m-7)).padStart(2,'0')}`,msg:`<b>Evolution Cycle</b> #${agent.evo} abgeschlossen. Gen ${agent.gen}.`});
-  logs.push({time:`${h}:${String(Math.max(0,m-15)).padStart(2,'0')}`,msg:`<b>Module Scan</b>: 8/10 Systeme aktiv. 2 evolving.`});
-  logs.push({time:`${h}:${String(Math.max(0,m-30)).padStart(2,'0')}`,msg:`<b>Pattern Engine</b> hat ${getThoughts().length} Gedanken verarbeitet.`});
-
-  if(agent.patterns.includes('stress'))logs.push({time:`${h-1<0?23:h-1}:42`,msg:`<b>Stress Pattern</b> erkannt. Contra-Maßnahmen vorgeladen.`});
-  if(agent.patterns.includes('geld'))logs.push({time:`${h-1<0?23:h-1}:28`,msg:`<b>Revenue-Analyse</b> aktualisiert. Income Engine synchronisiert.`});
-  if(agent.patterns.includes('mindset'))logs.push({time:`${h-2<0?22:h-2}:15`,msg:`<b>Mindset-Shift</b> Potenzial erkannt. Reframe-Algorithmus geladen.`});
-
-  return logs.slice(0,8);
+function getDirective(){
+  const h=new Date().getHours();
+  const rev=getTodayRevenue();
+  const d=DIRECTIVES.find(d=>d.h.includes(h))||DIRECTIVES[DIRECTIVES.length-1];
+  let text=d.text;
+  if(rev>0)text=`€${rev.toLocaleString('de-DE')} heute geloggt. Gut. Aber nicht genug. ${text}`;
+  return{text,sub:d.sub};
 }
 
 function renderAgent(){
   const agent=evolveAgent();
   const thoughts=getThoughts();
+  const todayRev=getTodayRevenue();
+  const streak=getStreak();
+  const daysSinceBorn=Math.floor((Date.now()-agent.born)/(1000*60*60*24));
 
+  // Header stats
   document.getElementById('agentGen').textContent=agent.gen;
   document.getElementById('agentEvo').textContent=agent.evo.toLocaleString('de-DE');
+  document.getElementById('statIQ').textContent=agent.iq;
+
+  // Revenue stats
+  document.getElementById('statRevenue').textContent=todayRev.toLocaleString('de-DE');
+  document.getElementById('statTarget').textContent=DAILY_TARGET.toLocaleString('de-DE');
+  document.getElementById('statStreak').textContent=streak;
+
+  // Revenue bar
+  const pct=Math.min(100,Math.round(todayRev/DAILY_TARGET*100));
+  document.getElementById('revenueBar').style.width=pct+'%';
+  document.getElementById('revenueLabel').textContent=pct+'% vom Tagesziel (€'+DAILY_TARGET.toLocaleString('de-DE')+')';
+
+  // Bottom stats
   document.getElementById('statThoughts').textContent=thoughts.length;
   document.getElementById('statPatterns').textContent=agent.patterns.length;
-  document.getElementById('statIQ').textContent=agent.iq;
+  document.getElementById('statDays').textContent=daysSinceBorn;
+
+  // Directive
+  const dir=getDirective();
+  document.getElementById('directive').innerHTML=`<div class="dir-text">${dir.text}</div><div class="dir-sub">${dir.sub}</div>`;
 
   // Thought stream
   const stream=document.getElementById('thoughtStream');
@@ -756,18 +809,12 @@ function renderAgent(){
       if(t.type==='user'){
         return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${tags?`<div class="t-tags">${tags}</div>`:''}</div>`;
       }else{
-        const linkBtn=t.link?`<a href="${t.link}" class="agent-action-link">${t.linkName||'Öffnen'} →</a>`:'';
-        return `<div class="thought t-agent"><div class="t-label">Master Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${linkBtn}</div>`;
+        return `<div class="thought t-agent"><div class="t-label">CEO Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
       }
     }).join('');
   }else{
-    stream.innerHTML='<div class="idea-empty">Noch keine Gedanken. Tippe etwas ein — der Agent lernt mit jedem Input.</div>';
+    stream.innerHTML='<div class="idea-empty">Noch keine Inputs. Sag mir was los ist. Ich sag dir was du tun sollst.</div>';
   }
-
-  // Evo log
-  const logEl=document.getElementById('evoLog');
-  const logs=generateEvoLog(agent);
-  logEl.innerHTML=logs.map(l=>`<div class="evo-entry"><div class="evo-time">${l.time}</div><div class="evo-msg">${l.msg}</div></div>`).join('');
 }
 
 function submitThought(){
@@ -781,9 +828,9 @@ function submitThought(){
   // Add user thought
   thoughts.unshift({type:'user',text,patterns,ts:Date.now()});
 
-  // Agent responds with action + link
-  const resp=agentRespond(patterns);
-  thoughts.unshift({type:'agent',text:resp.action,link:resp.link,linkName:resp.linkName,ts:Date.now()+1});
+  // CEO responds with direct command
+  const cmd=agentRespond(patterns);
+  thoughts.unshift({type:'agent',text:cmd,ts:Date.now()+1});
 
   saveThoughts(thoughts);
   input.value='';
@@ -809,8 +856,28 @@ document.getElementById('neuralInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();submitThought()}
 });
 
+// Revenue logging
+document.getElementById('revenueLog').addEventListener('click',function(){
+  const input=document.getElementById('revenueInput');
+  const val=parseFloat(input.value);
+  if(!val||val<=0)return;
+  const rev=getRevenue();
+  rev[todayKey()]=(rev[todayKey()]||0)+val;
+  saveRevenue(rev);
+  input.value='';
+  // Agent acknowledges
+  const thoughts=getThoughts();
+  const total=rev[todayKey()];
+  const pct=Math.round(total/DAILY_TARGET*100);
+  thoughts.unshift({type:'agent',text:`€${val.toLocaleString('de-DE')} geloggt. Tagesstand: €${total.toLocaleString('de-DE')} (${pct}% vom Ziel). ${pct<10?'Das ist nichts. Mehr.':pct<50?'Anfang gemacht. Verdoppeln.':pct<100?'Auf dem Weg. Nicht aufhören.':'TAGESZIEL ERREICHT. Jetzt überperformen.'}`,ts:Date.now()});
+  saveThoughts(thoughts);
+  renderAgent();
+});
+document.getElementById('revenueInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter')document.getElementById('revenueLog').click();
+});
+
 // Render agent on tab switch
-const origNavClick=navBtns.forEach.bind(navBtns);
 navBtns.forEach(btn=>{
   btn.addEventListener('click',()=>{
     if(btn.dataset.view==='v-agent')setTimeout(renderAgent,50);
@@ -824,12 +891,7 @@ setInterval(()=>{
   agent.iq=100+getThoughts().length*2+agent.patterns.length*5+Math.floor(agent.evo/10);
   agent.lastEvo=Date.now();
   saveAgent(agent);
-  // If agent tab is visible, update stats
-  if(document.getElementById('v-agent').classList.contains('active')){
-    document.getElementById('agentEvo').textContent=agent.evo.toLocaleString('de-DE');
-    document.getElementById('statIQ').textContent=agent.iq;
-    document.getElementById('agentGen').textContent=Math.floor(agent.evo/100)+1;
-  }
+  if(document.getElementById('v-agent').classList.contains('active'))renderAgent();
 },30000);
 
 // Init agent on load
