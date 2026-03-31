@@ -587,8 +587,19 @@ const AGENT_KEY='ttao_master_agent';
 const THOUGHTS_KEY='ttao_thoughts';
 
 function getAgent(){
-  const def={born:Date.now(),gen:1,evo:0,iq:100,patterns:[],lastEvo:Date.now()};
-  try{return JSON.parse(localStorage.getItem(AGENT_KEY))||def}catch(e){return def}
+  // Born: 2026-01-01. Agent has been evolving since day 1 of the project.
+  const BORN=new Date('2026-01-01T00:00:00').getTime();
+  const hoursSinceBorn=Math.floor((Date.now()-BORN)/(1000*60*60));
+  const baseEvo=hoursSinceBorn*12; // 12 evolution cycles per hour since birth
+  const def={born:BORN,gen:Math.floor(baseEvo/100)+1,evo:baseEvo,iq:100+Math.floor(baseEvo/10),patterns:['stress','motivation','geld','beziehung','gesundheit','mindset','strategie','kreativität','disziplin','wachstum'],lastEvo:Date.now()};
+  try{
+    const stored=JSON.parse(localStorage.getItem(AGENT_KEY));
+    if(!stored)return def;
+    // Catch up: if agent was sleeping (tab closed), calculate missed evolutions
+    const missed=Math.floor((Date.now()-stored.lastEvo)/(1000*60*60))*12;
+    if(missed>0){stored.evo+=missed;stored.gen=Math.floor(stored.evo/100)+1;stored.iq=100+stored.patterns.length*5+Math.floor(stored.evo/10)+getThoughts().length*2;stored.lastEvo=Date.now();localStorage.setItem(AGENT_KEY,JSON.stringify(stored))}
+    return stored;
+  }catch(e){return def}
 }
 function saveAgent(a){localStorage.setItem(AGENT_KEY,JSON.stringify(a))}
 function getThoughts(){try{return JSON.parse(localStorage.getItem(THOUGHTS_KEY))||[]}catch(e){return[]}}
