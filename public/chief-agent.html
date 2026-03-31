@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>KI-CHEFAGENT — Executive Intelligence</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;
+  --cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--orange:#ff8c00;
+  --text:#e0ddd4;--dim:#666680;
+  --glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-pink:0 0 20px rgba(255,45,142,.3);
+  --glow-green:0 0 20px rgba(45,255,168,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+
+/* SCANLINE + GRAIN */
+#grain{position:fixed;inset:0;pointer-events:none;z-index:10000;opacity:.04}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.2;z-index:9999;animation:scanline 4s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:14px;background:linear-gradient(135deg,var(--purple),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.topbar-pill{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--purple);border:1px solid var(--purple);padding:3px 10px;letter-spacing:2px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.topbar-time{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--dim)}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--purple);box-shadow:0 0 8px var(--purple);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* CONTENT */
+.content{max-width:1200px;margin:0 auto;padding:20px 16px 100px}
+
+/* AGENT STATUS BAR */
+.agent-bar{background:var(--surface);border:1px solid var(--border);padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden}
+.agent-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--cyan),var(--purple));animation:shimmer 3s linear infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.agent-label{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;white-space:nowrap}
+.agent-status{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;padding:3px 10px;border:1px solid;white-space:nowrap}
+.agent-status.active{color:var(--green);border-color:var(--green)}
+.agent-status.loading{color:var(--orange);border-color:var(--orange);animation:pulse 1.5s infinite}
+.agent-status.error{color:var(--red);border-color:var(--red)}
+.agent-model{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--dim);margin-left:auto}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:2px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--border);padding:16px 14px;position:relative;overflow:hidden;transition:border-color .3s}
+.kpi:hover{border-color:rgba(168,85,247,.3)}
+.kpi-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}
+.kpi-value{font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;margin:4px 0 2px}
+.kpi-sub{font-size:10px;color:var(--dim)}
+
+/* SECTION HEADER */
+.sec-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* BRIEFING BOX */
+.briefing-box{background:var(--surface);border:1px solid var(--border);padding:24px 20px;margin-bottom:16px;position:relative;line-height:1.8;font-size:12px;white-space:pre-wrap}
+.briefing-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.6}
+.briefing-loading{text-align:center;padding:40px;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px}
+.briefing-loading::after{content:'';display:block;width:40px;height:40px;border:2px solid var(--border);border-top-color:var(--purple);border-radius:50%;margin:16px auto 0;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RISK ALERTS */
+.risk-card{background:var(--surface);border:1px solid rgba(255,68,68,.3);padding:14px 16px;margin-bottom:2px;position:relative;transition:all .3s}
+.risk-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red)}
+.risk-card:hover{border-color:var(--red);transform:translateX(4px)}
+.risk-name{font-weight:700;font-size:13px;color:var(--red)}
+.risk-detail{font-size:11px;color:var(--dim);margin-top:4px}
+.risk-reason{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;color:var(--orange);border:1px solid var(--orange);padding:2px 8px;display:inline-block;margin-top:6px}
+
+/* PATTERN BARS */
+.pattern-row{display:flex;align-items:center;gap:12px;margin:8px 0;padding:8px 12px;background:var(--surface);border:1px solid var(--border)}
+.pattern-label{font-size:11px;min-width:140px;white-space:nowrap}
+.pattern-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.pattern-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--purple),var(--cyan));transition:width 1s cubic-bezier(.16,1,.3,1)}
+.pattern-count{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;min-width:30px;text-align:right;color:var(--purple)}
+
+/* PATIENT LIST */
+.patient-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:2px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;transition:all .3s;cursor:default}
+.patient-card:hover{border-color:rgba(168,85,247,.3);transform:translateX(4px)}
+.patient-name{font-weight:700;font-size:13px}
+.patient-meta{font-size:10px;color:var(--dim);margin-top:3px}
+.patient-score{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900}
+.patient-trend{font-size:14px;margin-left:4px}
+.score-good{color:var(--green)}.score-mid{color:var(--gold)}.score-bad{color:var(--red)}
+
+/* OUTCOME PILLS */
+.outcome-grid{display:flex;gap:2px;margin-bottom:16px}
+.outcome-pill{flex:1;background:var(--surface);border:1px solid var(--border);padding:16px 14px;text-align:center}
+.outcome-emoji{font-size:24px;display:block;margin-bottom:4px}
+.outcome-count{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900}
+.outcome-label{font-size:9px;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin-top:2px}
+
+/* QUERY BOX */
+.query-section{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px;position:relative}
+.query-section::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple),transparent);opacity:.5}
+.query-header{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;color:var(--purple);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.query-input-wrap{display:flex;gap:8px}
+.query-input{flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px 16px;outline:none;transition:border-color .3s;resize:none;min-height:44px;max-height:120px}
+.query-input:focus{border-color:var(--purple);box-shadow:0 0 15px rgba(168,85,247,.15)}
+.query-input::placeholder{color:var(--dim)}
+.query-submit{background:transparent;border:1px solid var(--purple);color:var(--purple);font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:12px 24px;cursor:pointer;transition:all .3s;white-space:nowrap}
+.query-submit:hover{background:var(--purple);color:var(--bg)}
+.query-submit:disabled{opacity:.4;cursor:not-allowed}
+
+/* CHAT HISTORY */
+.chat-msg{padding:14px 16px;margin-bottom:2px;font-size:12px;line-height:1.7;white-space:pre-wrap;animation:fadeIn .3s ease-in}
+.chat-msg.user{background:rgba(168,85,247,.08);border:1px solid rgba(168,85,247,.25)}
+.chat-msg.agent{background:var(--surface);border:1px solid var(--border)}
+.chat-sender{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--purple);margin-bottom:6px;text-transform:uppercase}
+.chat-msg.user .chat-sender{color:var(--cyan)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px;color:var(--dim);font-size:11px;border:1px dashed var(--border);background:var(--surface)}
+
+/* BOTTOM NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:rgba(3,3,8,.95);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(10px);z-index:99}
+.nav-inner{max-width:720px;margin:0 auto;display:flex;overflow-x:auto;padding:0 10px;gap:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.nav-inner::-webkit-scrollbar{display:none}
+.nav-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;width:auto;margin:0;transition:color .3s;text-decoration:none}
+.nav-btn svg{width:20px;height:20px}
+.nav-btn.active{color:var(--purple)}
+.nav-btn:hover{color:var(--purple)}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .agent-bar{flex-direction:column;align-items:stretch}
+  .query-input-wrap{flex-direction:column}
+  .query-submit{padding:10px}
+  .outcome-grid{flex-wrap:wrap}
+  .outcome-pill{min-width:calc(33% - 2px)}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<canvas id="grain"></canvas>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="topbar-brand">PTGO</div>
+    <span class="topbar-pill">CHIEF AGENT</span>
+  </div>
+  <div class="topbar-right">
+    <span class="status-dot"></span>
+    <span class="topbar-time" id="clock">--:--:--</span>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- AGENT STATUS -->
+<div class="agent-bar">
+  <span class="agent-label">KI-Chefagent</span>
+  <span class="agent-status loading" id="agentStatus">INITIALISIERE</span>
+  <span class="agent-model">CLAUDE HAIKU 4.5 — EXECUTIVE ANALYST</span>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">Patienten</div>
+    <div class="kpi-value" id="kpiPatients">--</div>
+    <div class="kpi-sub">Gesamt zugewiesen</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Aktiv (7T)</div>
+    <div class="kpi-value" id="kpiActive" style="color:var(--cyan)">--</div>
+    <div class="kpi-sub">Check-in in 7 Tagen</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Check-ins</div>
+    <div class="kpi-value" id="kpiCheckins">--</div>
+    <div class="kpi-sub">Letzte 7 Tage</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Score Avg</div>
+    <div class="kpi-value" id="kpiScore">--</div>
+    <div class="kpi-sub">Recovery Score</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Risiko</div>
+    <div class="kpi-value" id="kpiRisk" style="color:var(--red)">--</div>
+    <div class="kpi-sub">Sofort-Handlungsbedarf</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">System</div>
+    <div class="kpi-value" id="kpiSystem" style="color:var(--green);font-size:14px">LOADING</div>
+    <div class="kpi-sub">Agent Status</div>
+  </div>
+</div>
+
+<!-- OUTCOMES -->
+<div class="sec-title">Outcome-Verteilung (7 Tage)</div>
+<div class="outcome-grid">
+  <div class="outcome-pill">
+    <span class="outcome-emoji">👍</span>
+    <div class="outcome-count" id="outBetter" style="color:var(--green)">--</div>
+    <div class="outcome-label">Besser</div>
+  </div>
+  <div class="outcome-pill">
+    <span class="outcome-emoji">😐</span>
+    <div class="outcome-count" id="outSame" style="color:var(--gold)">--</div>
+    <div class="outcome-label">Gleich</div>
+  </div>
+  <div class="outcome-pill">
+    <span class="outcome-emoji">👎</span>
+    <div class="outcome-count" id="outWorse" style="color:var(--red)">--</div>
+    <div class="outcome-label">Schlechter</div>
+  </div>
+</div>
+
+<!-- AI BRIEFING -->
+<div class="sec-title">KI Executive Briefing</div>
+<div class="briefing-box" id="briefingBox">
+  <div class="briefing-loading" id="briefingLoading">CHEFAGENT ANALYSIERT DATEN</div>
+</div>
+
+<!-- RISK ALERTS -->
+<div class="sec-title">Risiko-Alerts</div>
+<div id="riskContainer">
+  <div class="empty">Lade Risiko-Daten...</div>
+</div>
+
+<!-- PATTERN FREQUENCY -->
+<div class="sec-title">Pattern-Haeufigkeit (7 Tage)</div>
+<div id="patternContainer">
+  <div class="empty">Lade Pattern-Daten...</div>
+</div>
+
+<!-- PATIENT RANKING -->
+<div class="sec-title">Patienten-Ranking (Score aufsteigend)</div>
+<div id="patientContainer">
+  <div class="empty">Lade Patienten-Daten...</div>
+</div>
+
+<!-- CHAT -->
+<div class="sec-title">Frag den Chefagenten</div>
+<div id="chatHistory"></div>
+<div class="query-section">
+  <div class="query-header">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>
+    KI-CHEFAGENT — INTERAKTIV
+  </div>
+  <div class="query-input-wrap">
+    <textarea class="query-input" id="chatInput" placeholder="Frage stellen... z.B. 'Welcher Patient macht Fortschritte?' oder 'Wer braucht mehr Aufmerksamkeit?'" rows="1"></textarea>
+    <button class="query-submit" id="chatSubmit" onclick="askAgent()">FRAGEN</button>
+  </div>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="nav"><div class="nav-inner">
+  <a href="/portal" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1m-2 0h2"/></svg>HOME</a>
+  <a href="/coaching" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.3 24.3 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5"/></svg>COACHING</a>
+  <a href="/mastery" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>MASTERY</a>
+  <a href="/intelligence" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>INTEL</a>
+  <a href="/chief-agent" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z"/></svg>AGENT</a>
+</div></nav>
+
+<script>
+// ── CLOCK ──
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=now.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ── PATTERN LABELS ──
+const PATTERN_LABELS={
+  stress_overload:'Stress Overload',recovery_deficit:'Recovery Deficit',
+  upper_body_tension:'Upper Body Tension',neck_guarding:'Neck Guarding',
+  impulse_pattern:'Impulse Pattern',avoidance_pattern:'Avoidance Pattern',
+  low_mood:'Low Mood',balanced:'Balanced',
+};
+
+// ── STATE ──
+let cachedData=null;
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ── LOAD DATA ──
+async function loadData(){
+  const status=document.getElementById('agentStatus');
+  status.className='agent-status loading';status.textContent='DATEN LADEN';
+
+  try{
+    const res=await fetch('/api/chief-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get_data'})});
+    const data=await res.json();
+    cachedData=data;
+    renderKPIs(data);
+    renderRiskAlerts(data);
+    renderPatterns(data);
+    renderPatients(data);
+    status.className='agent-status active';status.textContent='AKTIV';
+    document.getElementById('kpiSystem').textContent='OPERATIONAL';
+    document.getElementById('kpiSystem').style.color='var(--green)';
+    return data;
+  }catch(e){
+    status.className='agent-status error';status.textContent='FEHLER';
+    document.getElementById('kpiSystem').textContent='ERROR';
+    document.getElementById('kpiSystem').style.color='var(--red)';
+    console.error('Data load failed:',e);
+    return null;
+  }
+}
+
+function renderKPIs(data){
+  const s=data.summary;
+  document.getElementById('kpiPatients').textContent=s.total_patients||0;
+  document.getElementById('kpiActive').textContent=s.active_7d||0;
+  document.getElementById('kpiCheckins').textContent=s.total_checkins_7d||0;
+
+  const score=s.avg_score;
+  const scoreEl=document.getElementById('kpiScore');
+  scoreEl.textContent=score!=null?score:'--';
+  scoreEl.style.color=score>=60?'var(--green)':score>=40?'var(--gold)':'var(--red)';
+
+  document.getElementById('kpiRisk').textContent=s.risk_count||0;
+
+  const od=s.outcome_distribution||{};
+  document.getElementById('outBetter').textContent=od.better||0;
+  document.getElementById('outSame').textContent=od.same||0;
+  document.getElementById('outWorse').textContent=od.worse||0;
+}
+
+function renderRiskAlerts(data){
+  const container=document.getElementById('riskContainer');
+  const rp=data.risk_patients||[];
+  if(!rp.length){
+    container.innerHTML='<div class="empty" style="border-color:var(--green);color:var(--green)">KEINE RISIKO-PATIENTEN — ALLES IM GRUENEN BEREICH</div>';
+    return;
+  }
+  container.innerHTML=rp.map(r=>{
+    const reasons=[];
+    if(r.last_risk==='high')reasons.push('HOHES RISIKO');
+    if(r.days_since>=3)reasons.push(r.days_since+' TAGE INAKTIV');
+    return `<div class="risk-card">
+      <div class="risk-name">${esc(r.name)}</div>
+      <div class="risk-detail">Score: ${r.last_score!=null?r.last_score:'–'} | Pattern: ${esc(r.last_pattern||'–')} | Letzter Check-in: ${esc(r.last_day||'–')}</div>
+      ${reasons.map(re=>'<span class="risk-reason">'+re+'</span> ').join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderPatterns(data){
+  const container=document.getElementById('patternContainer');
+  const pf=data.summary.pattern_frequency||{};
+  const entries=Object.entries(pf).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){container.innerHTML='<div class="empty">KEINE PATTERNS ERKANNT</div>';return;}
+  const max=entries[0][1];
+  container.innerHTML=entries.map(([code,count])=>{
+    const pct=Math.round(count/max*100);
+    const label=PATTERN_LABELS[code]||code;
+    return `<div class="pattern-row">
+      <div class="pattern-label">${esc(label)}</div>
+      <div class="pattern-track"><div class="pattern-fill" style="width:${pct}%"></div></div>
+      <div class="pattern-count">${count}x</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPatients(data){
+  const container=document.getElementById('patientContainer');
+  const pts=(data.patients||[]).slice().sort((a,b)=>(a.avg_score??999)-(b.avg_score??999));
+  if(!pts.length){container.innerHTML='<div class="empty">KEINE PATIENTEN ZUGEWIESEN</div>';return;}
+  container.innerHTML=pts.map(p=>{
+    const s=p.avg_score;
+    const sc=s>=60?'score-good':s>=40?'score-mid':'score-bad';
+    const trend=p.score_trend==='steigend'?'↑':p.score_trend==='fallend'?'↓':'→';
+    const trendColor=p.score_trend==='steigend'?'var(--green)':p.score_trend==='fallend'?'var(--red)':'var(--dim)';
+    return `<div class="patient-card">
+      <div>
+        <div class="patient-name">${esc(p.name)}</div>
+        <div class="patient-meta">Check-ins: ${p.checkins_7d} | Pattern: ${esc(p.last_pattern||'–')} | Stress Ø${p.stress_avg!=null?p.stress_avg:'–'} | Schlaf Ø${p.sleep_avg!=null?p.sleep_avg:'–'}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="patient-score ${sc}">${s!=null?s:'--'}</span>
+        <span class="patient-trend" style="color:${trendColor}">${trend}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── AI BRIEFING ──
+async function loadBriefing(){
+  const box=document.getElementById('briefingBox');
+  box.innerHTML='<div class="briefing-loading">CHEFAGENT ANALYSIERT DATEN</div>';
+  try{
+    const res=await fetch('/api/chief-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'briefing'})});
+    const data=await res.json();
+    box.textContent=data.text||data.error||'Keine Antwort';
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);text-align:center;padding:20px">BRIEFING FEHLGESCHLAGEN: '+esc(e.message)+'</div>';
+  }
+}
+
+// ── CHAT ──
+async function askAgent(){
+  const input=document.getElementById('chatInput');
+  const btn=document.getElementById('chatSubmit');
+  const hist=document.getElementById('chatHistory');
+  const q=input.value.trim();
+  if(!q)return;
+
+  btn.disabled=true;btn.textContent='ANALYSIERE...';
+
+  hist.innerHTML+=`<div class="chat-msg user"><div class="chat-sender">DU</div>${esc(q)}</div>`;
+
+  try{
+    const res=await fetch('/api/chief-agent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ask',question:q})});
+    const data=await res.json();
+    hist.innerHTML+=`<div class="chat-msg agent"><div class="chat-sender">KI-CHEFAGENT</div>${esc(data.text||data.error||'Keine Antwort')}</div>`;
+  }catch(e){
+    hist.innerHTML+=`<div class="chat-msg agent"><div class="chat-sender">FEHLER</div>${esc(e.message)}</div>`;
+  }
+
+  input.value='';
+  btn.disabled=false;btn.textContent='FRAGEN';
+  hist.lastElementChild.scrollIntoView({behavior:'smooth',block:'end'});
+}
+
+// Submit on Enter
+document.getElementById('chatInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askAgent();}
+});
+
+// Auto-resize
+document.getElementById('chatInput').addEventListener('input',function(){
+  this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px';
+});
+
+// ── GRAIN ──
+const gc=document.getElementById('grain'),gx=gc.getContext('2d');
+gc.width=256;gc.height=256;
+function grain(){const d=gx.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}gx.putImageData(d,0,0);requestAnimationFrame(grain)}grain();
+
+// ── INIT ──
+async function init(){
+  await loadData();
+  loadBriefing();
+}
+init();
+</script>
+</body>
+</html>
