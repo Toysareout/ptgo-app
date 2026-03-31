@@ -167,6 +167,8 @@ a{text-decoration:none;color:inherit}
 .thought .t-meta{font-size:9px;color:var(--dim);margin-top:6px;letter-spacing:1px}
 .thought .t-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .thought .t-tag{font-family:'Orbitron',sans-serif;font-size:7px;padding:2px 6px;border:1px solid rgba(0,240,255,.2);color:var(--cyan);letter-spacing:1px}
+.agent-action-link{display:inline-block;margin-top:10px;font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:8px 16px;background:rgba(168,85,247,.1);border:1px solid var(--purple);color:var(--purple);text-decoration:none;transition:all .2s;text-transform:uppercase}
+.agent-action-link:hover{background:var(--purple);color:var(--bg)}
 
 .sys-monitor{margin-top:16px}
 .sys-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);margin-bottom:4px;font-size:11px}
@@ -594,16 +596,16 @@ function saveThoughts(t){localStorage.setItem(THOUGHTS_KEY,JSON.stringify(t))}
 
 // Pattern detection keywords
 const PATTERN_MAP={
-  'stress':['stress','überlastet','druck','burnout','anspannung','angespannt','überfordert'],
-  'motivation':['motivation','antrieb','energie','power','feuer','drive','hustle','grind'],
-  'geld':['geld','money','income','revenue','umsatz','profit','cash','reich','5000'],
-  'beziehung':['beziehung','frau','frauen','relationship','dating','liebe','attraction','smv'],
-  'gesundheit':['gesundheit','schmerz','pain','schlaf','sleep','körper','body','training'],
-  'mindset':['mindset','denken','glauben','fear','angst','zweifel','confidence','frame'],
-  'strategie':['strategie','plan','ziel','goal','roadmap','next step','fokus','focus'],
-  'kreativität':['idee','kreativ','creative','innovation','neu','build','bauen','content'],
-  'disziplin':['disziplin','routine','habit','gewohnheit','aufstehen','morgen','konsistent'],
-  'wachstum':['wachstum','growth','evolution','besser','level up','upgrade','transform']
+  'stress':['stress','überlastet','druck','burnout','anspannung','angespannt','überfordert','müde','erschöpft','kaputt','fertig','overwhelm'],
+  'motivation':['motivation','antrieb','energie','power','feuer','drive','hustle','grind','lust','bock','ready','los','action'],
+  'geld':['geld','money','income','revenue','umsatz','profit','cash','reich','5000','verdien','kunde','client','sales','business','startup'],
+  'beziehung':['beziehung','frau','frauen','relationship','dating','liebe','attraction','smv','sex','tinder','girl','sie','freundin'],
+  'gesundheit':['gesundheit','schmerz','pain','schlaf','sleep','körper','body','training','gym','sport','krank','rücken','kopf','nacken'],
+  'mindset':['mindset','denken','glauben','fear','angst','zweifel','confidence','frame','unsicher','sorge','panik','blockade','stuck'],
+  'strategie':['strategie','plan','ziel','goal','roadmap','next step','fokus','focus','priorit','entscheid','richtung','wohin'],
+  'kreativität':['idee','kreativ','creative','innovation','neu','build','bauen','content','projekt','app','website','design','musik'],
+  'disziplin':['disziplin','routine','habit','gewohnheit','aufstehen','morgen','konsistent','prokrastin','faul','aufschieb','später'],
+  'wachstum':['wachstum','growth','evolution','besser','level up','upgrade','transform','lernen','learn','skill','entwickl']
 };
 
 function detectPatterns(text){
@@ -615,28 +617,69 @@ function detectPatterns(text){
   return found.length?found:['allgemein'];
 }
 
-// Agent responses based on patterns
-const AGENT_RESPONSES={
-  stress:['Pattern erkannt: STRESS OVERLOAD. Empfehlung: Physiological Sigh — 2x einatmen, 1x lang ausatmen. Sofort.','Cortisol-Spike detektiert. Dein Körper sendet Warnsignale. 5 Minuten Walk Reset aktivieren.','Stress-Muster wiederholt sich. Analysiere Trigger-Quellen. Eliminiere oder adaptiere.'],
-  motivation:['Dopamin-Level steigt. Nutze dieses Fenster für die wichtigste Aufgabe des Tages.','Motivation ist ein Lagging Indicator. Disziplin ist der Leading Indicator. Nutze beides.','Energy Peak erkannt. Iron Rule #1: Frame kontrollieren. Jetzt handeln.'],
-  geld:['Income Engine aktiviert. Frage: Was bringt heute €500? Fokus auf einen Hebel.','Revenue-Denken erkannt. Die 4 Phasen: Foundation → Traction → Scale → Empire. Wo stehst du?','Geld ist ein Score. Frage: Welches Problem löst du gerade für wie viele Menschen?'],
-  beziehung:['Intersexuelle Dynamiken erkannt. Iron Rule #3: Warte auf IOIs. Erzwinge nichts.','SMV-Analyse läuft. Die 5 Pillars: Physique, Game, Status, Resources, Personality.','Frame ist alles. Wer den Frame kontrolliert, kontrolliert die Interaktion.'],
-  gesundheit:['Körper-Signal erkannt. Pain ist Information, kein Feind. Was sagt der Schmerz?','Sleep Debt akkumuliert sich. Unter 7h = kognitive Degradierung von 30%. Priorität 1.','Somatische Marker aktiv. Dein Körper weiß mehr als dein Verstand. Hör zu.'],
-  mindset:['Kognitives Muster erkannt. Reframe: Was wäre wenn das Gegenteil wahr ist?','Fear = False Evidence Appearing Real. Der Agent empfiehlt: In 5 Sekunden handeln.','Mindset-Shift möglich. Du bist nicht deine Gedanken. Du bist der Beobachter.'],
-  strategie:['Strategisches Denken aktiviert. Die Musk-Regel: Delete → Simplify → Accelerate → Automate.','Plan erkannt. Aber Plans sind wertlos — Planning ist alles. Was ist der ERSTE Schritt?','Ziel-Analyse: Ist das ein 10x Ziel oder ein 10% Ziel? Nur 10x verändert die Strategie.'],
-  kreativität:['Creative Burst erkannt. Idee → Idea Inbox. NICHT direkt bauen. 7 Tage warten.','Innovation-Muster: Die besten Ideen kommen beim Gehen, Duschen oder nachts. Notiere sofort.','Kreativität × Execution = Impact. Ohne Execution ist es Tagträumerei.'],
-  disziplin:['Routine-Signal positiv. Konsistenz schlägt Intensität. Jeden Tag 1% besser.','Habit Stack erkannt. Morning: Wake → Move → Think → Build. Non-negotiable.','Disziplin ist Freiheit. Jede Entscheidung die du automatisierst, spart Willenskraft.'],
-  wachstum:['Evolution-Trigger erkannt. Der Agent wächst mit dir. Aktuelles Level wird angepasst.','Growth = Pain + Reflection. Ohne Reflexion ist Schmerz nur Schmerz.','Transformation läuft. Von jedem Gedanken lernt der Agent. Neural Pathways werden stärker.'],
-  allgemein:['Gedanke registriert. Neural Network verarbeitet... Muster werden analysiert.','Signal empfangen. Der Agent lernt. Jeder Gedanke macht das System intelligenter.','Input gespeichert. Verbindungen zu bestehenden Patterns werden hergestellt.']
+// V2: ONE action + ONE link per pattern. No bullshit.
+const AGENT_ACTIONS={
+  stress:[
+    {action:'Steh auf. 2x durch die Nase einatmen, 1x lang durch den Mund aus. 3 Wiederholungen.',link:'/pain-assistant',linkName:'Pain Assistant'},
+    {action:'5 Minuten gehen. Nicht denken. Nur gehen. Danach entscheiden.',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Schreib den Stressor auf. Dann: Kann ich es ändern? Ja → handle. Nein → lass los.',link:'/coaching',linkName:'Coaching Engine'}
+  ],
+  motivation:[
+    {action:'Du hast 90 Minuten Peak-Focus. Starte JETZT die wichtigste Aufgabe.',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Motivation verfällt. Mach die Sache in den nächsten 60 Sekunden oder sie stirbt.',link:'/mastery-income',linkName:'Income Engine'},
+    {action:'Tenet #1: Ich entscheide mich, außergewöhnlich zu sein. Keine Ausreden. Handle.',link:'/mastery-tate',linkName:'Tate — 41 Tenets'}
+  ],
+  geld:[
+    {action:'Eine Frage: Was bringt dir HEUTE €500? Alles andere ist Ablenkung.',link:'/mastery-income',linkName:'Income Engine'},
+    {action:'Hormozi Value Equation: Value = Dream Outcome × Wahrscheinlichkeit ÷ Zeit × Aufwand. Optimiere EINEN Faktor.',link:'/mastery-income',linkName:'Income Engine'},
+    {action:'Verkaufe bevor du baust. Schreib JETZT eine Nachricht an einen potenziellen Kunden.',link:'/product',linkName:'Verkaufs-Tracker'}
+  ],
+  beziehung:[
+    {action:'Iron Rule #1: Frame ist ALLES. Wer reagiert hat den Frame verloren. Nicht reagieren.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
+    {action:'SMV erhöhen statt jagen. Gym, Status, Mission. Sie kommen zu dir.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
+    {action:'Tenet #28: Ich strebe danach, die beste Version meiner selbst zu sein. DEIN Wert zuerst.',link:'/mastery-tate',linkName:'Tate — 41 Tenets'}
+  ],
+  gesundheit:[
+    {action:'Körper redet. Hör zu. Öffne den Pain Assistant und beschreib was du fühlst.',link:'/pain-assistant',linkName:'Pain Assistant'},
+    {action:'Schlaf ist nicht verhandelbar. Unter 7h = 30% weniger Leistung. Heute Abend: Handy weg um 22:00.',link:'/mastery-tagesplan',linkName:'Tagesplan'},
+    {action:'10 Minuten Bewegung. Nicht morgen. Jetzt. Der Körper heilt durch Bewegung.',link:'/heal',linkName:'PTGO Method'}
+  ],
+  mindset:[
+    {action:'In 5 Sekunden handeln oder dein Gehirn killt die Idee. 5-4-3-2-1-GO.',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Iron Rule #6: Frauen sind nicht der Preis — DU bist. Gilt für alles. Du bist der Preis.',link:'/mastery-rollo',linkName:'Rollo — Iron Rules'},
+    {action:'Schreib deine Angst auf. Dann lies sie laut vor. 80% der Ängste lösen sich durch Aussprechen.',link:'/coaching',linkName:'Coaching Engine'}
+  ],
+  strategie:[
+    {action:'Musk-Regel: Delete → Simplify → Accelerate → Automate. Was kannst du LÖSCHEN?',link:'/mastery-tagesplan',linkName:'Tagesplan'},
+    {action:'Ein Ziel. Ein Quartal. Eine Metrik. Alles andere ist Noise. Was ist DEINE eine Metrik?',link:'/mastery-income',linkName:'Income Engine'},
+    {action:'Nicht planen — den ERSTEN Schritt machen. Jetzt. In 2 Minuten. Was ist er?',link:'/mastery-today',linkName:'Heute — Actionplan'}
+  ],
+  kreativität:[
+    {action:'Idee erkannt. Ab in die Inbox. In 7 Tagen entscheidest du ob sie lebt oder stirbt.',link:'/hub',linkName:'Ideas Inbox'},
+    {action:'Nicht bauen. Erst validieren. Frag 3 Menschen ob sie dafür zahlen würden.',link:'/product',linkName:'Verkaufs-Tracker'},
+    {action:'Kreativität ohne Deadline ist Hobby. Setz dir 48h. Ship or kill.',link:'/mastery-today',linkName:'Heute — Actionplan'}
+  ],
+  disziplin:[
+    {action:'Du prokrastinierst nicht wegen Faulheit. Du hast Angst. Wovor genau?',link:'/coaching',linkName:'Coaching Engine'},
+    {action:'2-Minuten-Regel: Wenn es unter 2 Minuten dauert, mach es JETZT. Sofort.',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Mach den Tagesplan auf. Block für Block. Kein Denken, nur Ausführen.',link:'/mastery-tagesplan',linkName:'Tagesplan'}
+  ],
+  wachstum:[
+    {action:'1% besser pro Tag = 37x besser pro Jahr. Was ist dein 1% für heute?',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Growth passiert in der Uncomfortable Zone. Was vermeidest du gerade?',link:'/coaching',linkName:'Coaching Engine'},
+    {action:'Lerne nicht mehr. Wende an. Wissen ohne Anwendung ist Entertainment.',link:'/mastery',linkName:'Mastery Hub'}
+  ],
+  allgemein:[
+    {action:'Gedanke gespeichert. Tipp: Sei spezifischer. Je konkreter du denkst, desto besser kann der Agent helfen.',link:'/mastery-today',linkName:'Heute — Actionplan'},
+    {action:'Was willst du WIRKLICH? Nicht was du solltest. Was du willst. Schreib es auf.',link:'/coaching',linkName:'Coaching Engine'},
+    {action:'Der Agent braucht Futter. Erzähl mehr. Stress? Geld? Beziehung? Gesundheit?',link:'/nerve',linkName:'Nerve Center'}
+  ]
 };
 
 function agentRespond(patterns){
-  const responses=[];
-  patterns.forEach(p=>{
-    const pool=AGENT_RESPONSES[p]||AGENT_RESPONSES.allgemein;
-    responses.push(pool[Math.floor(Math.random()*pool.length)]);
-  });
-  return responses[0];
+  const p=patterns[0];
+  const pool=AGENT_ACTIONS[p]||AGENT_ACTIONS.allgemein;
+  return pool[Math.floor(Math.random()*pool.length)];
 }
 
 // Auto-evolution: runs every time you open the Agent tab
@@ -702,7 +745,8 @@ function renderAgent(){
       if(t.type==='user'){
         return `<div class="thought t-user"><div class="t-label">Du · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${tags?`<div class="t-tags">${tags}</div>`:''}</div>`;
       }else{
-        return `<div class="thought t-agent"><div class="t-label">Master Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div></div>`;
+        const linkBtn=t.link?`<a href="${t.link}" class="agent-action-link">${t.linkName||'Öffnen'} →</a>`:'';
+        return `<div class="thought t-agent"><div class="t-label">Master Agent · ${time}</div><div class="t-text">${escHtml(t.text)}</div>${linkBtn}</div>`;
       }
     }).join('');
   }else{
@@ -726,9 +770,9 @@ function submitThought(){
   // Add user thought
   thoughts.unshift({type:'user',text,patterns,ts:Date.now()});
 
-  // Agent responds
-  const response=agentRespond(patterns);
-  thoughts.unshift({type:'agent',text:response,ts:Date.now()+1});
+  // Agent responds with action + link
+  const resp=agentRespond(patterns);
+  thoughts.unshift({type:'agent',text:resp.action,link:resp.link,linkName:resp.linkName,ts:Date.now()+1});
 
   saveThoughts(thoughts);
   input.value='';
