@@ -66,6 +66,10 @@ SUBSCRIPTION_PRICE_EUR = 499  # cents = 4.99€
 REMINDER_LOOP_SECONDS = int(os.getenv("REMINDER_LOOP_SECONDS", "30"))
 THERAPIST_TOKEN_SECRET = os.getenv("THERAPIST_TOKEN_SECRET", APP_SECRET + "-therapist")
 
+# Supabase dual-write (Chief Agent)
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", os.getenv("SUPABASE_SERVICE_KEY", "")).strip()
+
 
 # =========================================================
 # DB
@@ -500,6 +504,107 @@ def _track_ai_error(feature: str, error: str, patient_id: int = None):
             db.close()
     except Exception:
         pass
+
+
+# =========================================================
+# SUPABASE DUAL-WRITE (Chief Agent)
+# =========================================================
+
+def _supabase_push(table: str, data: dict):
+    """Fire-and-forget push to Supabase. Never blocks the main app."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return
+    try:
+        requests.post(
+            f"{SUPABASE_URL}/rest/v1/{table}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            },
+            json=data,
+            timeout=5,
+        )
+    except Exception as e:
+        print(f"[SUPABASE] Push to {table} failed: {e}")
+
+
+def _supabase_upsert(table: str, data: dict):
+    """Upsert to Supabase (for sync)."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return False
+    try:
+        r = requests.post(
+            f"{SUPABASE_URL}/rest/v1/{table}",
+            headers={
+                "apikey": SUPABASE_SERVICE_KEY,
+                "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            },
+            json=data,
+            timeout=10,
+        )
+        return r.status_code < 300
+    except Exception:
+        return False
+
+
+def _sync_checkin_to_supabase(checkin: CheckIn, patient: Patient):
+    """Push a check-in + patient to Supabase in background thread."""
+    def _do():
+        # Ensure patient exists in Supabase
+        _supabase_upsert("patients", {
+            "id": patient.id,
+            "name": patient.name,
+            "phone": patient.phone,
+            "email": patient.email,
+            "therapist_id": patient.therapist_id,
+            "created_at": patient.created_at.isoformat() if patient.created_at else None,
+        })
+        # Push check-in
+        _supabase_push("checkins", {
+            "id": checkin.id,
+            "patient_id": checkin.patient_id,
+            "created_at": checkin.created_at.isoformat() if checkin.created_at else None,
+            "local_day": checkin.local_day,
+            "daily_state": checkin.daily_state,
+            "overall_text": checkin.overall_text,
+            "stress": checkin.stress,
+            "sleep": checkin.sleep,
+            "context_text": checkin.context_text,
+            "body": checkin.body,
+            "body_text": checkin.body_text,
+            "pain_region": checkin.pain_region,
+            "craving": checkin.craving,
+            "avoidance": checkin.avoidance,
+            "mental_text": checkin.mental_text,
+            "goal_text": checkin.goal_text,
+            "signals_json": checkin.signals_json,
+            "pattern_code": checkin.pattern_code,
+            "pattern_label": checkin.pattern_label,
+            "action_code": checkin.action_code,
+            "action_label": checkin.action_label,
+            "action_text": checkin.action_text,
+            "score": checkin.score,
+            "risk_level": checkin.risk_level,
+        })
+    threading.Thread(target=_do, daemon=True).start()
+
+
+def _sync_outcome_to_supabase(outcome: Outcome):
+    """Push outcome to Supabase in background."""
+    def _do():
+        _supabase_push("outcomes", {
+            "id": outcome.id,
+            "checkin_id": outcome.checkin_id,
+            "patient_id": outcome.patient_id,
+            "rating": outcome.rating,
+            "outcome_note": outcome.outcome_note,
+            "created_at": outcome.created_at.isoformat() if outcome.created_at else None,
+        })
+    threading.Thread(target=_do, daemon=True).start()
 
 
 # =========================================================
@@ -1903,6 +2008,9 @@ def checkin_voice_submit(
     db.commit()
     db.refresh(c)
 
+    # Supabase dual-write (Chief Agent)
+    _sync_checkin_to_supabase(c, p)
+
     # WhatsApp result
     try:
         msg = (
@@ -2068,6 +2176,10 @@ def outcome_post(checkin_id: int, request: Request, rating: str = Form(...), out
     o = Outcome(checkin_id=c.id, patient_id=p.id, rating=rating, outcome_note=outcome_note.strip())
     db.add(o)
     db.commit()
+    db.refresh(o)
+
+    # Supabase dual-write (Chief Agent)
+    _sync_outcome_to_supabase(o)
 
     emoji = {"better": "😌", "same": "😐", "worse": "😔"}.get(rating, "")
     body = f"""
@@ -3430,6 +3542,15 @@ def chief_agent_dashboard(request: Request, db=Depends(get_db)):
 
       <div class="hr"></div>
 
+      <!-- SYNC BUTTON -->
+      <h2>🔄 Daten-Sync</h2>
+      <p class="small">Alle bestehenden Daten nach Supabase pushen — damit der Vercel-Chefagent sie auch hat.</p>
+      <form method="post" action="/therapist/chief-agent/sync">
+        <button type="submit" style="background:linear-gradient(180deg,#6366f1,#4f46e5);font-size:14px;padding:12px">Jetzt synchronisieren</button>
+      </form>
+
+      <div class="hr"></div>
+
       <!-- INTERACTIVE CHAT -->
       <h2>💬 Frag den Chefagenten</h2>
       <p class="small">Stelle Fragen zu deinen Patienten — der KI-Agent antwortet basierend auf allen Daten.</p>
@@ -3481,6 +3602,78 @@ def chief_agent_ask(request: Request, question: str = Form(...), db=Depends(get_
     data = _chief_agent_collect_data(db, t.id)
     answer = _chief_agent_answer(data, question.strip())
     return HTMLResponse(answer)
+
+
+@app.post("/therapist/chief-agent/sync", response_class=HTMLResponse)
+def chief_agent_sync(request: Request, db=Depends(get_db)):
+    """One-click sync: push ALL existing data to Supabase for the Chief Agent."""
+    t = require_therapist_login(request, db)
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        return HTMLResponse("<h2>Fehler</h2><p>SUPABASE_URL und SUPABASE_SERVICE_KEY muessen gesetzt sein.</p><p><a href='/therapist/chief-agent'>Zurueck</a></p>")
+
+    # Sync therapist
+    _supabase_upsert("therapists", {
+        "id": t.id, "email": t.email, "name": t.name, "phone": t.phone or "",
+        "password_hash": "SYNCED", "created_at": t.created_at.isoformat() if t.created_at else None,
+    })
+
+    # Sync all patients
+    patients = db.query(Patient).filter(Patient.therapist_id == t.id).all()
+    synced_patients = 0
+    synced_checkins = 0
+    synced_outcomes = 0
+
+    for p in patients:
+        ok = _supabase_upsert("patients", {
+            "id": p.id, "name": p.name, "phone": p.phone, "email": p.email,
+            "therapist_id": p.therapist_id,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        })
+        if ok:
+            synced_patients += 1
+
+        # Sync all check-ins for this patient
+        checkins = db.query(CheckIn).filter(CheckIn.patient_id == p.id).all()
+        for c in checkins:
+            ok = _supabase_upsert("checkins", {
+                "id": c.id, "patient_id": c.patient_id,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "local_day": c.local_day, "daily_state": c.daily_state,
+                "overall_text": c.overall_text, "stress": c.stress, "sleep": c.sleep,
+                "context_text": c.context_text, "body": c.body, "body_text": c.body_text,
+                "pain_region": c.pain_region, "craving": c.craving, "avoidance": c.avoidance,
+                "mental_text": c.mental_text, "goal_text": c.goal_text,
+                "signals_json": c.signals_json, "pattern_code": c.pattern_code,
+                "pattern_label": c.pattern_label, "action_code": c.action_code,
+                "action_label": c.action_label, "action_text": c.action_text,
+                "score": c.score, "risk_level": c.risk_level,
+            })
+            if ok:
+                synced_checkins += 1
+
+        # Sync outcomes
+        outcomes = db.query(Outcome).filter(Outcome.patient_id == p.id).all()
+        for o in outcomes:
+            ok = _supabase_upsert("outcomes", {
+                "id": o.id, "checkin_id": o.checkin_id, "patient_id": o.patient_id,
+                "rating": o.rating, "outcome_note": o.outcome_note,
+                "created_at": o.created_at.isoformat() if o.created_at else None,
+            })
+            if ok:
+                synced_outcomes += 1
+
+    body = f"""
+      <h1>Sync abgeschlossen</h1>
+      <div class="grid3">
+        <div class="kpi"><span class="small">Patienten</span><b>{synced_patients}</b></div>
+        <div class="kpi"><span class="small">Check-ins</span><b>{synced_checkins}</b></div>
+        <div class="kpi"><span class="small">Outcomes</span><b>{synced_outcomes}</b></div>
+      </div>
+      <div class="hr"></div>
+      <p>Alle Daten wurden nach Supabase gepusht. Der KI-Chefagent hat jetzt Zugriff.</p>
+      <p><a href="/therapist/chief-agent">Zum Chefagent</a></p>
+    """
+    return _page("Sync Complete", body, request=request)
 
 
 # =========================================================

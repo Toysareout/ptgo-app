@@ -1,6 +1,6 @@
 // ============================================================
 // KI-CHEFAGENT — Executive Intelligence for Therapists
-// Aggregates patient data from Supabase + Claude AI analysis
+// Auto-bootstrap | Supabase data | Claude analysis | WhatsApp alerts
 // ============================================================
 
 const { createClient } = require('@supabase/supabase-js');
@@ -10,11 +10,62 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY || ''
 );
 
+const TWILIO_SID = process.env.TWILIO_ACCOUNT_SID || '';
+const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
+const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || '';
+const OWNER_PHONE = process.env.OWNER_WHATSAPP || process.env.TWILIO_WHATSAPP_TO || '';
+
 const headers = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
+
+// ── AUTO-BOOTSTRAP: create tables if they don't exist ──
+async function ensureTables() {
+  const sql = `
+    CREATE TABLE IF NOT EXISTS therapists (
+      id BIGSERIAL PRIMARY KEY, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+      phone TEXT, password_hash TEXT NOT NULL DEFAULT 'SYNCED',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS patients (
+      id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL, email_verified BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(), subscription_active BOOLEAN DEFAULT FALSE,
+      reminder_enabled BOOLEAN DEFAULT TRUE, reminder_time_local TEXT DEFAULT '08:00',
+      therapist_id BIGINT REFERENCES therapists(id)
+    );
+    CREATE TABLE IF NOT EXISTS checkins (
+      id BIGSERIAL PRIMARY KEY, patient_id BIGINT NOT NULL REFERENCES patients(id),
+      created_at TIMESTAMPTZ DEFAULT NOW(), local_day TEXT,
+      daily_state INTEGER, overall_text TEXT, stress INTEGER, sleep INTEGER,
+      context_text TEXT, body INTEGER, body_text TEXT, pain_map_json TEXT,
+      pain_region TEXT, pain_type TEXT, craving INTEGER, avoidance INTEGER,
+      mental_text TEXT, goal_text TEXT, signals_json TEXT,
+      pattern_code TEXT, pattern_label TEXT,
+      action_code TEXT, action_label TEXT, action_text TEXT,
+      score INTEGER DEFAULT 0, risk_level TEXT DEFAULT 'low'
+    );
+    CREATE TABLE IF NOT EXISTS outcomes (
+      id BIGSERIAL PRIMARY KEY, checkin_id BIGINT NOT NULL REFERENCES checkins(id),
+      patient_id BIGINT NOT NULL REFERENCES patients(id),
+      rating TEXT NOT NULL, outcome_note TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_checkins_patient ON checkins(patient_id);
+    CREATE INDEX IF NOT EXISTS idx_checkins_day ON checkins(local_day);
+    CREATE INDEX IF NOT EXISTS idx_outcomes_patient ON outcomes(patient_id);
+  `;
+  try {
+    await supabase.rpc('exec_sql', { sql_text: sql }).catch(() => {
+      // rpc might not exist — try raw SQL via PostgREST
+      // Tables are created via migration, this is just a safety net
+    });
+  } catch (e) {
+    // Silent — tables likely already exist
+  }
+}
 
 async function callClaude(prompt, systemPrompt, maxTokens = 2000) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -38,17 +89,40 @@ async function callClaude(prompt, systemPrompt, maxTokens = 2000) {
   return { text: data.content?.[0]?.text || data.error?.message || 'Keine Antwort' };
 }
 
+// ── WHATSAPP ALERT ──
+async function sendWhatsApp(to, body) {
+  if (!TWILIO_SID || !TWILIO_TOKEN || !TWILIO_FROM || !to) return false;
+  try {
+    const params = new URLSearchParams();
+    params.append('From', `whatsapp:${TWILIO_FROM}`);
+    params.append('To', `whatsapp:${to}`);
+    params.append('Body', body);
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + Buffer.from(`${TWILIO_SID}:${TWILIO_TOKEN}`).toString('base64'),
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+      }
+    );
+    return res.ok;
+  } catch (e) {
+    console.error('[WHATSAPP]', e.message);
+    return false;
+  }
+}
+
 function avg(arr) {
   if (!arr.length) return null;
   return Math.round(arr.reduce((a, b) => a + b, 0) / arr.length * 10) / 10;
 }
 
 async function collectPatientData() {
-  // Get all patients
   const { data: patients, error: pErr } = await supabase
-    .from('patients')
-    .select('id, name, phone, email, created_at, therapist_id')
-    .order('name');
+    .from('patients').select('id, name, phone, email, created_at, therapist_id').order('name');
 
   if (pErr || !patients || !patients.length) {
     return { patients: [], risk_patients: [], summary: { total_patients: 0, active_7d: 0, total_checkins_7d: 0, avg_score: null, pattern_frequency: {}, outcome_distribution: { better: 0, same: 0, worse: 0 }, risk_count: 0 } };
@@ -57,7 +131,6 @@ async function collectPatientData() {
   const now = new Date();
   const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-  // Get recent check-ins (last 7 days)
   const { data: recentCheckins } = await supabase
     .from('checkins')
     .select('id, patient_id, daily_state, stress, sleep, body, craving, avoidance, pattern_code, pattern_label, action_code, action_label, score, risk_level, local_day, created_at, mental_text, goal_text')
@@ -66,15 +139,11 @@ async function collectPatientData() {
 
   const checkins = recentCheckins || [];
 
-  // Get outcomes (last 7 days)
   const { data: recentOutcomes } = await supabase
-    .from('outcomes')
-    .select('id, patient_id, checkin_id, rating, outcome_note, created_at')
-    .gte('created_at', weekAgo);
+    .from('outcomes').select('id, patient_id, checkin_id, rating, outcome_note, created_at').gte('created_at', weekAgo);
 
   const outcomes = recentOutcomes || [];
 
-  // Aggregate per patient
   const patientData = [];
   const allPatterns = [];
   const allScores = [];
@@ -93,7 +162,6 @@ async function collectPatientData() {
     const avgCraving = avg(pCheckins.map(c => c.craving).filter(v => v != null));
     const avgAvoidance = avg(pCheckins.map(c => c.avoidance).filter(v => v != null));
 
-    // Trend
     let scoreTrend = null;
     if (scores.length >= 4) {
       const half = Math.floor(scores.length / 2);
@@ -102,14 +170,12 @@ async function collectPatientData() {
       scoreTrend = newer > older + 3 ? 'steigend' : newer < older - 3 ? 'fallend' : 'stabil';
     }
 
-    // Days since last
     let daysSince = null;
     if (pCheckins.length) {
       daysSince = Math.floor((now - new Date(pCheckins[0].created_at)) / (24 * 60 * 60 * 1000));
     }
 
     const last = pCheckins[0] || null;
-    const outcomeRatings = pOutcomes.map(o => o.rating);
 
     const entry = {
       name: p.name, phone: p.phone,
@@ -118,7 +184,7 @@ async function collectPatientData() {
       last_score: last?.score, last_risk: last?.risk_level,
       last_pattern: last?.pattern_label, last_day: last?.local_day,
       days_since: daysSince,
-      patterns, outcomes: outcomeRatings,
+      patterns, outcomes: pOutcomes.map(o => o.rating),
       stress_avg: avgStress, sleep_avg: avgSleep,
       craving_avg: avgCraving, avoidance_avg: avgAvoidance,
       mental_text: last?.mental_text || '', goal_text: last?.goal_text || '',
@@ -127,18 +193,16 @@ async function collectPatientData() {
 
     allPatterns.push(...patterns);
     allScores.push(...scores);
-    allOutcomes.push(...outcomeRatings);
+    allOutcomes.push(...pOutcomes.map(o => o.rating));
 
     if ((last && last.risk_level === 'high') || (daysSince != null && daysSince >= 3)) {
       riskPatients.push(entry);
     }
   }
 
-  // Pattern frequency
   const patternFreq = {};
   allPatterns.forEach(p => patternFreq[p] = (patternFreq[p] || 0) + 1);
 
-  // Outcome distribution
   const outcomeDist = { better: 0, same: 0, worse: 0 };
   allOutcomes.forEach(o => { if (outcomeDist[o] !== undefined) outcomeDist[o]++; });
 
@@ -159,6 +223,31 @@ async function collectPatientData() {
 
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers };
+
+  // Auto-bootstrap tables on first call
+  await ensureTables();
+
+  // GET = cron trigger → auto-alert
+  if (event.httpMethod === 'GET') {
+    const data = await collectPatientData();
+    const riskPatients = data.risk_patients;
+    if (!OWNER_PHONE || riskPatients.length === 0) {
+      return { statusCode: 200, headers, body: JSON.stringify({ message: 'No alerts needed', risk_count: riskPatients.length }) };
+    }
+    let riskInfo = '';
+    riskPatients.forEach(r => {
+      riskInfo += `- ${r.name}: Score ${r.last_score || '–'}, Pattern: ${r.last_pattern || '–'}, ${r.days_since} Tage seit letztem Check-in\n`;
+    });
+    const alertResult = await callClaude(
+      `Risiko-Patienten:\n${riskInfo}\n\nSchreibe eine kurze WhatsApp-Nachricht (max 160 Woerter) an den Therapeuten. Deutsch. Direkt. Handlungsorientiert.`,
+      'Du bist ein therapeutischer KI-Assistent.',
+      400
+    );
+    const alertMsg = `🧠 KI-CHEFAGENT MORGEN-ALERT\n\n${alertResult.text || 'Risiko-Patienten erkannt.'}\n\n→ https://ptgo-app.vercel.app/chief-agent`;
+    const sent = await sendWhatsApp(OWNER_PHONE, alertMsg);
+    return { statusCode: 200, headers, body: JSON.stringify({ sent, risk_count: riskPatients.length }) };
+  }
+
   if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   try {
@@ -211,6 +300,20 @@ EMPFEHLUNGEN
       const prompt = `DATEN:\n- Patienten gesamt: ${summary.total_patients}\n- Aktive (7 Tage): ${summary.active_7d}\n- Check-ins (7 Tage): ${summary.total_checkins_7d}\n- Score Ø: ${summary.avg_score || '–'}\n- Patterns: ${JSON.stringify(summary.pattern_frequency)}\n- Outcomes: ${JSON.stringify(summary.outcome_distribution)}\n- Risiko-Patienten: ${summary.risk_count}\n\nPATIENTEN-DETAILS:\n${patientDetails || 'Keine Daten.'}\n\nRISIKO-ALERTS:\n${riskDetails || 'Keine Risiko-Patienten.'}\n\nErstelle das Executive Briefing.`;
 
       const result = await callClaude(prompt, systemPrompt, 1500);
+
+      // ── PROAKTIVE WHATSAPP ALERTS bei Hochrisiko ──
+      if (riskPatients.length > 0 && OWNER_PHONE) {
+        let alertMsg = `🧠 KI-CHEFAGENT ALERT\n\n⚠️ ${riskPatients.length} Risiko-Patient(en):\n\n`;
+        riskPatients.forEach(r => {
+          const reasons = [];
+          if (r.last_risk === 'high') reasons.push('Hohes Risiko');
+          if (r.days_since >= 3) reasons.push(`${r.days_since}T inaktiv`);
+          alertMsg += `• ${r.name}: Score ${r.last_score || '–'} — ${reasons.join(', ')}\n`;
+        });
+        alertMsg += `\n📊 Gesamt: ${summary.total_patients} Pat. | Score Ø${summary.avg_score || '–'} | ${summary.total_checkins_7d} Check-ins (7T)\n\n→ Dashboard: https://ptgo-app.vercel.app/chief-agent`;
+        await sendWhatsApp(OWNER_PHONE, alertMsg);
+      }
+
       return { statusCode: 200, headers, body: JSON.stringify(result) };
     }
 
@@ -233,7 +336,30 @@ Sei praezise und handlungsorientiert. Maximal 300 Woerter.`;
       return { statusCode: 200, headers, body: JSON.stringify(result) };
     }
 
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown action. Use: get_data, briefing, ask' }) };
+    // ── PROACTIVE ALERT (can be called by cron) ──
+    if (action === 'alert') {
+      if (!OWNER_PHONE) return { statusCode: 200, headers, body: JSON.stringify({ message: 'No OWNER_PHONE configured' }) };
+      if (riskPatients.length === 0) return { statusCode: 200, headers, body: JSON.stringify({ message: 'No risk patients — all clear' }) };
+
+      // Generate AI alert summary
+      let riskInfo = '';
+      riskPatients.forEach(r => {
+        riskInfo += `- ${r.name}: Score ${r.last_score || '–'}, Pattern: ${r.last_pattern || '–'}, ${r.days_since} Tage seit letztem Check-in\n`;
+      });
+
+      const alertResult = await callClaude(
+        `Risiko-Patienten:\n${riskInfo}\n\nSchreibe eine kurze WhatsApp-Nachricht (max 160 Woerter) an den Therapeuten mit den wichtigsten Handlungsempfehlungen. Schreibe auf Deutsch. Sei direkt.`,
+        'Du bist ein therapeutischer KI-Assistent. Schreibe eine praegnante WhatsApp-Alert-Nachricht.',
+        400
+      );
+
+      const alertMsg = `🧠 KI-CHEFAGENT\n\n${alertResult.text || 'Risiko-Patienten erkannt. Bitte Dashboard pruefen.'}\n\n→ https://ptgo-app.vercel.app/chief-agent`;
+      const sent = await sendWhatsApp(OWNER_PHONE, alertMsg);
+
+      return { statusCode: 200, headers, body: JSON.stringify({ sent, risk_count: riskPatients.length }) };
+    }
+
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown action. Use: get_data, briefing, ask, alert' }) };
   } catch (err) {
     return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
