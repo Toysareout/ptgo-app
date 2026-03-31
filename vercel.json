@@ -29,6 +29,7 @@
     { "source": "/pain-assistant", "destination": "/pain-assistant.html" },
     { "source": "/intelligence", "destination": "/intelligence.html" },
     { "source": "/chief-agent", "destination": "/chief-agent.html" },
+    { "source": "/archive", "destination": "/archive.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [
