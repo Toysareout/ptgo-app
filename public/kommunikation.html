@@ -165,6 +165,14 @@ textarea{resize:vertical;min-height:60px}
 
       <button class="btn btn-primary" id="start-btn" disabled>ANALYSE STARTEN</button>
     </div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="margin:0">System-Check</label>
+        <button class="btn" id="test-btn" style="width:auto;margin:0;padding:8px 16px;font-size:10px;background:var(--surface);border:1px solid var(--border);color:var(--dim)">API TESTEN</button>
+      </div>
+      <div id="test-result" style="font-size:12px;color:var(--dim);margin-top:8px;display:none"></div>
+    </div>
   </div>
 
   <!-- LOADING -->
@@ -247,6 +255,33 @@ textarea{resize:vertical;min-height:60px}
   }
 
   nameInput.addEventListener('input', checkReady);
+
+  // ─── Test Button ───
+  const testBtn = document.getElementById('test-btn');
+  const testResult = document.getElementById('test-result');
+  testBtn.addEventListener('click', async () => {
+    testResult.style.display = 'block';
+    testResult.style.color = 'var(--dim)';
+    testResult.textContent = 'Teste...';
+    try {
+      const res = await fetch('/api/kommunikation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test' }),
+      });
+      const data = await res.json();
+      if (data.anthropic_key_configured) {
+        testResult.style.color = 'var(--green)';
+        testResult.textContent = 'API Key konfiguriert · Node ' + data.node_version + ' · Function OK';
+      } else {
+        testResult.style.color = 'var(--red)';
+        testResult.innerHTML = 'ANTHROPIC_API_KEY FEHLT!<br>→ Vercel Dashboard → Settings → Environment Variables → ANTHROPIC_API_KEY hinzufügen → Redeploy';
+      }
+    } catch (e) {
+      testResult.style.color = 'var(--red)';
+      testResult.textContent = 'Function nicht erreichbar: ' + e.message;
+    }
+  });
   function checkReady() {
     startBtn.disabled = !(chatText && nameInput.value.trim());
   }
