@@ -32,6 +32,7 @@
     { "source": "/matrix", "destination": "/matrix.html" },
     { "source": "/m", "destination": "/m.html" },
     { "source": "/archive", "destination": "/archive.html" },
+    { "source": "/kommunikation", "destination": "/kommunikation.html" },
     { "source": "/hub", "destination": "/hub.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
