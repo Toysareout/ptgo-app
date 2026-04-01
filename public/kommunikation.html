@@ -294,12 +294,24 @@ textarea{resize:vertical;min-height:60px}
 
   // ─── API Calls ───
   async function callAPI(body) {
-    const res = await fetch('/.netlify/functions/kommunikation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    return res.json();
+    try {
+      const res = await fetch('/api/kommunikation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('API Error:', res.status, errText);
+        return { error: 'API Fehler: ' + res.status + ' — ' + (errText || '').substring(0, 200) };
+      }
+      const data = await res.json();
+      console.log('API Response:', JSON.stringify(data).substring(0, 500));
+      return data;
+    } catch (e) {
+      console.error('Fetch Error:', e);
+      return { error: 'Verbindungsfehler: ' + e.message };
+    }
   }
 
   // ─── Start Analysis ───
@@ -331,11 +343,12 @@ textarea{resize:vertical;min-height:60px}
     let vossData = {};
     try {
       vossData = await callAPI({ action: 'voss_analysis', chatText: excerpt, therapistName, context });
+      if (vossData.error) console.warn('Voss Error:', vossData.error);
     } catch (e) {
       vossData = { error: e.message };
     }
 
-    // Musk Check
+    // Musk Check — only if Voss succeeded
     loadingPhase.textContent = 'Musk Protocol wird aktiviert...';
     let muskData = {};
     try {
@@ -355,6 +368,16 @@ textarea{resize:vertical;min-height:60px}
     // Score color
     const score = voss.overall_score || 0;
     const scoreColor = score < 40 ? 'var(--red)' : score < 70 ? 'var(--gold)' : 'var(--green)';
+
+    // Debug: show error if API failed
+    let apiErrorHTML = '';
+    if (voss.error) {
+      apiErrorHTML = `<div class="card" style="border-color:var(--red);margin-bottom:16px">
+        <div style="font-size:11px;color:var(--red);letter-spacing:1px;font-weight:700;margin-bottom:6px">API FEHLER</div>
+        <p style="color:var(--red);font-size:13px;line-height:1.5">${esc(voss.error)}</p>
+        ${voss.raw ? '<pre style="font-size:11px;color:var(--dim);margin-top:8px;white-space:pre-wrap;word-break:break-all">' + esc(voss.raw) + '</pre>' : ''}
+      </div>`;
+    }
 
     // Stats
     let senderHTML = '';
@@ -438,17 +461,11 @@ textarea{resize:vertical;min-height:60px}
         </div>`;
     }
 
-    // Error
-    let errorHTML = '';
-    if (voss.error) {
-      errorHTML = `<div class="card" style="border-color:var(--red)"><p style="color:var(--red);font-size:13px">${esc(voss.error)}</p></div>`;
-    }
-
     resultsEl.innerHTML = `
       <h1>Analyse-Ergebnis</h1>
       <div class="subtitle">CHRIS VOSS × ELITE LEVEL × MUSK CHECK</div>
 
-      ${errorHTML}
+      ${apiErrorHTML}
 
       <h2>Chat-Statistik</h2>
       <div class="kpi-grid">
