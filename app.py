@@ -8597,3 +8597,567 @@ async def game_snake(request: Request):
     </body></html>
     """
     return HTMLResponse(game_html)
+
+
+# =========================================================
+# PATIENT COMMUNICATION ANALYZER — Chris Voss Elite Engine
+# =========================================================
+# Upload WhatsApp-Exports → KI-Analyse mit Chris Voss Techniken
+# → Skill-Verbesserung → Pricing-Optimierung → Musk-Check
+
+import re as _re
+import io as _io
+
+
+# ---------- WhatsApp Chat Parser ----------
+
+def _parse_whatsapp_export(raw_text: str) -> list[dict]:
+    """Parse WhatsApp exported .txt into structured messages.
+    Supports formats:
+      - [DD.MM.YY, HH:MM:SS] Name: Message
+      - DD.MM.YY, HH:MM - Name: Message
+      - DD/MM/YYYY, HH:MM - Name: Message
+    """
+    patterns = [
+        _re.compile(r'\[(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.+)', _re.DOTALL),
+        _re.compile(r'(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)', _re.DOTALL),
+        _re.compile(r'(\d{1,2}/\d{1,2}/\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)', _re.DOTALL),
+    ]
+    messages = []
+    current = None
+    for line in raw_text.split('\n'):
+        matched = False
+        for pat in patterns:
+            m = pat.match(line.strip())
+            if m:
+                if current:
+                    messages.append(current)
+                current = {
+                    "timestamp": m.group(1).strip(),
+                    "sender": m.group(2).strip(),
+                    "text": m.group(3).strip(),
+                }
+                matched = True
+                break
+        if not matched and current and line.strip():
+            current["text"] += "\n" + line.strip()
+    if current:
+        messages.append(current)
+    return messages
+
+
+def _build_conversation_summary(messages: list[dict]) -> dict:
+    """Build stats from parsed messages."""
+    if not messages:
+        return {"total": 0, "senders": {}, "avg_length": 0, "duration_days": 0}
+    senders = {}
+    total_len = 0
+    for m in messages:
+        s = m["sender"]
+        senders.setdefault(s, {"count": 0, "total_chars": 0, "questions": 0, "emojis": 0})
+        senders[s]["count"] += 1
+        senders[s]["total_chars"] += len(m["text"])
+        if "?" in m["text"]:
+            senders[s]["questions"] += 1
+        total_len += len(m["text"])
+    return {
+        "total": len(messages),
+        "senders": senders,
+        "avg_length": total_len // max(len(messages), 1),
+    }
+
+
+# ---------- Chris Voss Analysis Dimensions ----------
+
+CHRIS_VOSS_DIMENSIONS = {
+    "tactical_empathy": {
+        "label": "Taktische Empathie",
+        "description": "Verständnis der Perspektive des Gegenübers demonstrieren, ohne zuzustimmen",
+        "techniques": ["Labeling", "Mirroring", "Akkusations-Audit"],
+    },
+    "calibrated_questions": {
+        "label": "Kalibrierte Fragen",
+        "description": "Offene Fragen, die den anderen zum Nachdenken bringen (Wie...? Was...?)",
+        "techniques": ["How-Fragen", "What-Fragen", "Implementierungs-Fragen"],
+    },
+    "mirroring": {
+        "label": "Spiegelung",
+        "description": "Die letzten 1-3 Wörter wiederholen, um Rapport aufzubauen",
+        "techniques": ["Wort-Spiegel", "Ton-Spiegel", "Emotions-Spiegel"],
+    },
+    "labeling": {
+        "label": "Labeling",
+        "description": "'Es scheint als ob...' / 'Es klingt so als...' — Emotionen benennen",
+        "techniques": ["Emotions-Label", "Situations-Label", "Dynamik-Label"],
+    },
+    "accusation_audit": {
+        "label": "Akkusations-Audit",
+        "description": "Negative Erwartungen vorwegnehmen und ansprechen",
+        "techniques": ["Vorwegnahme", "Entwaffnung", "Reset"],
+    },
+    "no_oriented": {
+        "label": "Nein-orientierte Fragen",
+        "description": "Fragen stellen, auf die 'Nein' die gewünschte Antwort ist",
+        "techniques": ["Ist es lächerlich...?", "Haben Sie aufgegeben...?", "Wäre es falsch...?"],
+    },
+    "late_night_dj": {
+        "label": "Late-Night-DJ-Stimme",
+        "description": "Ruhiger, tiefer, kontrollierter Ton — Vertrauen durch Stimme",
+        "techniques": ["Ton-Kontrolle", "Pausen", "Verlangsamung"],
+    },
+    "black_swan": {
+        "label": "Black Swans",
+        "description": "Unbekannte Informationen entdecken, die alles verändern",
+        "techniques": ["Überraschende Erkenntnisse", "Versteckte Motive", "Unausgesprochenes"],
+    },
+}
+
+PRICING_PRINCIPLES = {
+    "value_anchor": "Wert-Anker: Preis am transformativen Ergebnis messen, nicht an Zeit",
+    "loss_aversion": "Verlust-Aversion: Was kostet es, NICHT zu handeln?",
+    "scarcity": "Knappheit: Begrenzte Verfügbarkeit erzeugt Handlungsdruck",
+    "social_proof": "Social Proof: Ergebnisse anderer zeigen (anonymisiert)",
+    "price_bracketing": "Price Bracketing: 3 Optionen — der mittlere Preis wirkt rational",
+    "outcome_pricing": "Outcome Pricing: Preis am Ergebnis koppeln, nicht an Input",
+}
+
+
+# ---------- Claude API Calls ----------
+
+def _analyze_communication_voss(messages: list[dict], summary: dict) -> dict:
+    """Call Claude to analyze communication with Chris Voss framework."""
+    if not ANTHROPIC_API_KEY:
+        return {"error": "ANTHROPIC_API_KEY nicht konfiguriert"}
+
+    # Build conversation excerpt (max ~4000 chars for context)
+    conv_text = ""
+    for m in messages[-80:]:  # last 80 messages for analysis
+        conv_text += f"[{m['timestamp']}] {m['sender']}: {m['text']}\n"
+    if len(conv_text) > 6000:
+        conv_text = conv_text[-6000:]
+
+    sender_stats = ""
+    for name, stats in summary["senders"].items():
+        sender_stats += f"- {name}: {stats['count']} Nachrichten, {stats['total_chars']} Zeichen, {stats['questions']} Fragen\n"
+
+    prompt = f"""Du bist ein Elite-Kommunikationscoach, der auf Chris Voss' Verhandlungstechniken spezialisiert ist
+(aus "Never Split the Difference"). Analysiere den folgenden WhatsApp-Chatverlauf zwischen einem Therapeuten
+und einem Patienten.
+
+KOMMUNIKATIONSSTATISTIK:
+{sender_stats}
+Gesamt: {summary['total']} Nachrichten
+
+CHATVERLAUF:
+{conv_text}
+
+Analysiere EXAKT nach diesen 8 Chris Voss Dimensionen und bewerte jede von 0-100:
+
+1. TAKTISCHE EMPATHIE — Zeigt der Therapeut echtes Verständnis für die Welt des Patienten?
+2. KALIBRIERTE FRAGEN — Nutzt er "Wie...?" und "Was...?" Fragen statt geschlossener Fragen?
+3. SPIEGELUNG (Mirroring) — Wiederholt er Schlüsselwörter des Patienten?
+4. LABELING — Benennt er Emotionen mit "Es scheint als ob..." / "Es klingt so als..."?
+5. AKKUSATIONS-AUDIT — Nimmt er negative Erwartungen vorweg?
+6. NEIN-ORIENTIERTE FRAGEN — Nutzt er Fragen, bei denen "Nein" die gewünschte Antwort ist?
+7. LATE-NIGHT-DJ-STIMME — Ist der Ton ruhig, kontrolliert, vertrauensbildend (auch schriftlich erkennbar)?
+8. BLACK SWANS — Entdeckt er versteckte Informationen, die alles verändern?
+
+Für JEDE Dimension:
+- Score (0-100)
+- Was gut gemacht wurde (konkrete Beispiele aus dem Chat)
+- Was verbessert werden kann (konkrete Formulierungsvorschläge)
+- ELITE-LEVEL Vorschlag: Wie würde ein Weltklasse-Verhandler hier kommunizieren?
+
+Zusätzlich:
+- GESAMTSCORE (0-100)
+- TOP 3 STÄRKEN
+- TOP 3 VERBESSERUNGSPOTENZIALE mit konkreten Formulierungen
+- PRICING INSIGHT: Wie kann die Kommunikation den wahrgenommenen Wert maximieren?
+- EINZIGARTIGKEIT: Was macht diese Kommunikation einzigartig und was fehlt noch zur Weltklasse?
+
+Antworte als JSON:
+{{
+  "overall_score": <int>,
+  "dimensions": {{
+    "tactical_empathy": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "calibrated_questions": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "mirroring": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "labeling": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "accusation_audit": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "no_oriented": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "late_night_dj": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}},
+    "black_swan": {{"score": <int>, "good": "<text>", "improve": "<text>", "elite": "<text>"}}
+  }},
+  "top_strengths": ["<text>", "<text>", "<text>"],
+  "top_improvements": ["<text>", "<text>", "<text>"],
+  "pricing_insight": "<text>",
+  "uniqueness": "<text>",
+  "concrete_scripts": ["<formulierung1>", "<formulierung2>", "<formulierung3>"]
+}}
+
+NUR JSON ausgeben, kein weiterer Text."""
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 4000, "messages": [{"role": "user", "content": prompt}]},
+            timeout=60,
+        )
+        if resp.status_code == 200:
+            rj = resp.json()
+            _track_ai_usage("communication_voss_analysis", rj)
+            text = rj.get("content", [{}])[0].get("text", "{}")
+            # Extract JSON from response
+            json_match = _re.search(r'\{[\s\S]*\}', text)
+            if json_match:
+                return json.loads(json_match.group())
+            return {"error": "KI-Antwort konnte nicht geparst werden", "raw": text[:500]}
+        else:
+            _track_ai_error("communication_voss_analysis", f"HTTP {resp.status_code}")
+            return {"error": f"API Fehler: {resp.status_code}"}
+    except Exception as e:
+        _track_ai_error("communication_voss_analysis", str(e))
+        return {"error": str(e)}
+
+
+def _musk_check(analysis: dict, messages: list[dict]) -> dict:
+    """Ask Claude: Would Elon Musk build it differently?"""
+    if not ANTHROPIC_API_KEY:
+        return {"error": "ANTHROPIC_API_KEY nicht konfiguriert"}
+
+    analysis_summary = json.dumps(analysis, ensure_ascii=False)[:3000]
+
+    prompt = f"""Du bist Elon Musk. Du hast gerade diese Kommunikationsanalyse eines Therapeuten gesehen:
+
+{analysis_summary}
+
+Der Therapeut hat {len(messages)} WhatsApp-Nachrichten mit Patienten ausgetauscht.
+
+Beantworte BRUTAL EHRLICH aus Elon Musks Perspektive:
+
+1. FIRST PRINCIPLES: Was stimmt an der grundlegenden Annahme nicht? Was würdest du von Grund auf anders machen?
+2. 10X THINKING: Wie kann die Kommunikation nicht 10% besser, sondern 10x besser werden?
+3. AUTOMATION: Welche Teile der Kommunikation können/sollten automatisiert werden?
+4. SCALE: Wie kann dieser Therapeut von 1:1 zu 1:N skalieren ohne Qualitätsverlust?
+5. PRICING: Was wäre der Preis, wenn die Ergebnisse 10x besser wären? Wie kommt man dahin?
+6. SPEED: Was dauert zu lange? Wo wird Zeit verschwendet?
+7. KILLER FEATURE: Was fehlt komplett, das alles verändern würde?
+8. FINAL VERDICT: Würde ich investieren? Ja/Nein und warum?
+
+Antworte als JSON:
+{{
+  "first_principles": "<text>",
+  "ten_x_thinking": "<text>",
+  "automation": "<text>",
+  "scale": "<text>",
+  "pricing": "<text>",
+  "speed": "<text>",
+  "killer_feature": "<text>",
+  "final_verdict": "<text>",
+  "invest": <true/false>,
+  "one_line": "<Ein Satz der alles zusammenfasst>"
+}}
+
+NUR JSON."""
+
+    try:
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+            json={"model": "claude-haiku-4-5", "max_tokens": 2000, "messages": [{"role": "user", "content": prompt}]},
+            timeout=60,
+        )
+        if resp.status_code == 200:
+            rj = resp.json()
+            _track_ai_usage("communication_musk_check", rj)
+            text = rj.get("content", [{}])[0].get("text", "{}")
+            json_match = _re.search(r'\{[\s\S]*\}', text)
+            if json_match:
+                return json.loads(json_match.group())
+            return {"error": "Musk-Check konnte nicht geparst werden"}
+        else:
+            _track_ai_error("communication_musk_check", f"HTTP {resp.status_code}")
+            return {"error": f"API Fehler: {resp.status_code}"}
+    except Exception as e:
+        _track_ai_error("communication_musk_check", str(e))
+        return {"error": str(e)}
+
+
+# ---------- Routes ----------
+
+@app.get("/kommunikation", response_class=HTMLResponse)
+async def communication_analyzer_home(request: Request):
+    """Hauptseite — WhatsApp-Export hochladen."""
+    tid = request.session.get("therapist_id")
+    if not tid:
+        return RedirectResponse("/therapist/login", 303)
+
+    body = """
+    <h1 style="font-size:28px;">Kommunikations-Analyse</h1>
+    <p style="margin-bottom:6px;color:#f59e0b;font-size:13px;font-weight:600">CHRIS VOSS × ELITE LEVEL × MUSK CHECK</p>
+    <p>Lade deinen WhatsApp-Chatverlauf hoch und erhalte eine tiefgreifende Analyse deiner therapeutischen Kommunikation.</p>
+
+    <div class="hr"></div>
+
+    <h2>So geht's</h2>
+    <p>1. Öffne WhatsApp → Chat → ⋮ Mehr → Chat exportieren → Ohne Medien</p>
+    <p>2. Die exportierte .txt-Datei hier hochladen</p>
+    <p>3. KI analysiert nach 8 Chris Voss Dimensionen</p>
+    <p>4. Elon Musk prüft das Ergebnis</p>
+
+    <div class="hr"></div>
+
+    <form action="/kommunikation/analyze" method="post" enctype="multipart/form-data">
+      <label>WhatsApp-Export (.txt)</label>
+      <input type="file" name="chat_file" accept=".txt,.csv,.text" required
+             style="padding:14px;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.3);cursor:pointer;">
+
+      <label style="margin-top:16px">Dein Name im Chat (damit die KI weiß, wer du bist)</label>
+      <input type="text" name="therapist_name" placeholder="z.B. Sascha" required>
+
+      <label style="margin-top:16px">Kontext (optional)</label>
+      <textarea name="context" rows="3" placeholder="z.B. Patient mit chronischen Schmerzen, 3. Behandlungsmonat..."></textarea>
+
+      <button type="submit" style="margin-top:20px;">Analyse starten</button>
+    </form>
+
+    <div class="hr"></div>
+    <p class="small" style="text-align:center">
+      Powered by Chris Voss Framework × Claude AI × Musk Protocol<br>
+      <a href="/therapist">← Zurück zum Dashboard</a>
+    </p>
+    """
+    return _page("Kommunikations-Analyse", body, request)
+
+
+@app.post("/kommunikation/analyze", response_class=HTMLResponse)
+async def communication_analyze(request: Request):
+    """Parse upload, run Voss analysis + Musk check, show results."""
+    tid = request.session.get("therapist_id")
+    if not tid:
+        return RedirectResponse("/therapist/login", 303)
+
+    form = await request.form()
+    chat_file = form.get("chat_file")
+    therapist_name = form.get("therapist_name", "").strip()
+    context = form.get("context", "").strip()
+
+    if not chat_file or not hasattr(chat_file, "read"):
+        return _page("Fehler", "<h1>Keine Datei hochgeladen</h1><p><a href='/kommunikation'>Zurück</a></p>", request)
+
+    # Read uploaded file
+    try:
+        raw_bytes = await chat_file.read()
+        # Try UTF-8 first, fallback to latin-1
+        try:
+            raw_text = raw_bytes.decode("utf-8")
+        except UnicodeDecodeError:
+            raw_text = raw_bytes.decode("latin-1")
+    except Exception as e:
+        return _page("Fehler", f"<h1>Datei konnte nicht gelesen werden</h1><p>{e}</p><p><a href='/kommunikation'>Zurück</a></p>", request)
+
+    # Parse messages
+    messages = _parse_whatsapp_export(raw_text)
+    if not messages:
+        return _page("Fehler", "<h1>Keine Nachrichten erkannt</h1><p>Bitte exportiere den Chat als .txt Datei aus WhatsApp.</p><p><a href='/kommunikation'>Zurück</a></p>", request)
+
+    summary = _build_conversation_summary(messages)
+
+    # Identify senders
+    senders = list(summary["senders"].keys())
+    therapist_msgs = sum(1 for m in messages if therapist_name.lower() in m["sender"].lower()) if therapist_name else 0
+    patient_msgs = len(messages) - therapist_msgs
+
+    # Run both analyses
+    voss_analysis = _analyze_communication_voss(messages, summary)
+    musk_result = _musk_check(voss_analysis, messages)
+
+    # Build results page
+    error_html = ""
+    if "error" in voss_analysis:
+        error_html = f'<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);border-radius:12px;padding:14px;margin:12px 0;"><p style="color:#fca5a5;">{voss_analysis["error"]}</p></div>'
+
+    # Stats section
+    stats_html = f"""
+    <div class="grid3" style="margin:16px 0">
+      <div class="kpi"><span class="small">Nachrichten</span><b>{summary['total']}</b></div>
+      <div class="kpi"><span class="small">Teilnehmer</span><b>{len(senders)}</b></div>
+      <div class="kpi"><span class="small">Ø Länge</span><b>{summary['avg_length']} Z.</b></div>
+    </div>
+    """
+
+    # Sender breakdown
+    sender_html = ""
+    for name, stats in summary["senders"].items():
+        is_therapist = therapist_name.lower() in name.lower() if therapist_name else False
+        tag = ' <span style="color:#f59e0b;font-size:11px">(DU)</span>' if is_therapist else ''
+        pct = round(stats["count"] / max(summary["total"], 1) * 100)
+        sender_html += f"""
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">
+          <div><b>{name}</b>{tag}</div>
+          <div class="small">{stats['count']} Nachrichten ({pct}%) · {stats['questions']} Fragen</div>
+        </div>
+        """
+
+    # Overall Score
+    overall_score = voss_analysis.get("overall_score", 0)
+    score_color = "#ef4444" if overall_score < 40 else "#f59e0b" if overall_score < 70 else "#22c55e"
+    score_html = f"""
+    <div style="text-align:center;margin:24px 0">
+      <div style="font-size:64px;font-weight:800;color:{score_color}">{overall_score}</div>
+      <div class="small">VOSS ELITE SCORE / 100</div>
+    </div>
+    """
+
+    # Dimensions
+    dims_html = ""
+    dimensions = voss_analysis.get("dimensions", {})
+    for key, dim_data in dimensions.items():
+        if not isinstance(dim_data, dict):
+            continue
+        dim_info = CHRIS_VOSS_DIMENSIONS.get(key, {})
+        dim_score = dim_data.get("score", 0)
+        dim_color = "#ef4444" if dim_score < 40 else "#f59e0b" if dim_score < 70 else "#22c55e"
+        bar_width = max(dim_score, 2)
+        dims_html += f"""
+        <div style="margin:16px 0;padding:16px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><b>{dim_info.get('label', key)}</b></div>
+            <div style="font-size:20px;font-weight:700;color:{dim_color}">{dim_score}</div>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin:8px 0">
+            <div style="height:4px;background:{dim_color};border-radius:999px;width:{bar_width}%"></div>
+          </div>
+          <div style="font-size:13px;color:#6b7280;margin-bottom:6px">{dim_info.get('description', '')}</div>
+          <div style="margin-top:8px">
+            <div style="font-size:13px;margin:4px 0"><span style="color:#22c55e">✓</span> {dim_data.get('good', '—')}</div>
+            <div style="font-size:13px;margin:4px 0"><span style="color:#f59e0b">↑</span> {dim_data.get('improve', '—')}</div>
+            <div style="font-size:13px;margin:4px 0;padding:8px;background:rgba(99,102,241,.1);border-radius:8px;border:1px solid rgba(99,102,241,.3)">
+              <span style="color:#a5b4fc">★ ELITE:</span> {dim_data.get('elite', '—')}
+            </div>
+          </div>
+        </div>
+        """
+
+    # Top Strengths & Improvements
+    strengths = voss_analysis.get("top_strengths", [])
+    improvements = voss_analysis.get("top_improvements", [])
+    scripts = voss_analysis.get("concrete_scripts", [])
+
+    strengths_html = "".join(f'<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:#22c55e">✓</span> {s}</div>' for s in strengths)
+    improvements_html = "".join(f'<div style="padding:8px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:#f59e0b">↑</span> {s}</div>' for s in improvements)
+    scripts_html = "".join(f'<div style="padding:10px;margin:6px 0;background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.2);border-radius:10px;font-size:14px;font-style:italic">"{s}"</div>' for s in scripts)
+
+    # Pricing Insight
+    pricing_html = ""
+    pricing_insight = voss_analysis.get("pricing_insight", "")
+    if pricing_insight:
+        pricing_html = f"""
+        <div style="margin:20px 0">
+          <h2>Pricing-Optimierung</h2>
+          <div class="action-box">
+            <p style="color:#e5e7eb;font-size:14px">{pricing_insight}</p>
+          </div>
+        </div>
+        """
+
+    # Uniqueness
+    uniqueness_html = ""
+    uniqueness = voss_analysis.get("uniqueness", "")
+    if uniqueness:
+        uniqueness_html = f"""
+        <div style="margin:20px 0">
+          <h2>Einzigartigkeit</h2>
+          <div style="padding:16px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:14px">
+            <p style="color:#e5e7eb;font-size:14px">{uniqueness}</p>
+          </div>
+        </div>
+        """
+
+    # Musk Check Section
+    musk_html = ""
+    if "error" not in musk_result:
+        invest = musk_result.get("invest", False)
+        invest_color = "#22c55e" if invest else "#ef4444"
+        invest_text = "JA — ICH INVESTIERE" if invest else "NEIN — NOCH NICHT"
+        one_line = musk_result.get("one_line", "")
+
+        musk_sections = ""
+        musk_keys = [
+            ("first_principles", "First Principles"),
+            ("ten_x_thinking", "10X Thinking"),
+            ("automation", "Automation"),
+            ("scale", "Scale"),
+            ("pricing", "Pricing"),
+            ("speed", "Speed"),
+            ("killer_feature", "Killer Feature"),
+            ("final_verdict", "Final Verdict"),
+        ]
+        for mk, ml in musk_keys:
+            val = musk_result.get(mk, "")
+            if val:
+                musk_sections += f"""
+                <div style="padding:12px 0;border-bottom:1px solid var(--line)">
+                  <div style="font-size:12px;color:#f59e0b;font-weight:700;letter-spacing:1px;margin-bottom:4px">{ml.upper()}</div>
+                  <div style="font-size:14px;color:#e5e7eb">{val}</div>
+                </div>
+                """
+
+        musk_html = f"""
+        <div style="margin:30px 0">
+          <div class="hr"></div>
+          <div style="text-align:center;margin:20px 0">
+            <div style="font-size:12px;color:#6b7280;letter-spacing:2px;margin-bottom:8px">MUSK PROTOCOL</div>
+            <h2 style="font-size:24px;margin:0">Würde Elon investieren?</h2>
+            <div style="font-size:32px;font-weight:800;color:{invest_color};margin:12px 0">{invest_text}</div>
+            <p style="font-style:italic;color:#94a3b8">"{one_line}"</p>
+          </div>
+          {musk_sections}
+        </div>
+        """
+    elif "error" in musk_result:
+        musk_html = f'<div style="margin:20px 0"><h2>Musk Check</h2><p style="color:#fca5a5">{musk_result["error"]}</p></div>'
+
+    # Assemble full page
+    body = f"""
+    <h1 style="font-size:28px;">Analyse-Ergebnis</h1>
+    <p class="small" style="color:#f59e0b;font-weight:600">CHRIS VOSS × ELITE LEVEL × MUSK CHECK</p>
+
+    {error_html}
+
+    <div class="hr"></div>
+    <h2>Chat-Statistik</h2>
+    {stats_html}
+    {sender_html}
+
+    <div class="hr"></div>
+    {score_html}
+
+    <div class="hr"></div>
+    <h2>8 Dimensionen — Chris Voss Framework</h2>
+    {dims_html}
+
+    <div class="hr"></div>
+    <h2>Top 3 Stärken</h2>
+    {strengths_html}
+
+    <div class="hr"></div>
+    <h2>Top 3 Verbesserungen</h2>
+    {improvements_html}
+
+    <div class="hr"></div>
+    <h2>Konkrete Formulierungen zum Üben</h2>
+    {scripts_html}
+
+    {pricing_html}
+    {uniqueness_html}
+    {musk_html}
+
+    <div class="hr"></div>
+    <div style="text-align:center;margin:20px 0">
+      <a href="/kommunikation" class="btn" style="display:inline-block;width:auto;padding:14px 24px;">Neue Analyse starten</a>
+    </div>
+    <p class="small" style="text-align:center"><a href="/therapist">← Dashboard</a></p>
+    """
+    return _page("Analyse-Ergebnis", body, request)
