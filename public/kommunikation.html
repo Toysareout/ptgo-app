@@ -98,14 +98,14 @@ textarea{resize:vertical;min-height:60px}
   <div id="upload-section">
     <h1>Kommunikations-Analyse</h1>
     <div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div>
-    <div class="card">
-      <label>Anthropic API Key</label>
+    <div class="card" id="key-card" style="display:none">
+      <label>Anthropic API Key (einmalig)</label>
       <div class="key-row">
         <input type="password" id="api-key" placeholder="sk-ant-...">
         <button class="key-btn" id="save-key-btn">SPEICHERN</button>
       </div>
       <div class="key-status" id="key-status"></div>
-      <p style="font-size:11px;color:var(--dim);margin-top:8px">Key von <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> — wird lokal gespeichert</p>
+      <p style="font-size:11px;color:var(--dim);margin-top:8px">Key von <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> — wird lokal gespeichert, danach nie wieder noetig</p>
     </div>
     <div class="card">
       <label>WhatsApp-Export (.txt oder .zip)</label>
@@ -133,15 +133,16 @@ textarea{resize:vertical;min-height:60px}
   let chatText='',fileName='';
   const fileDrop=document.getElementById('file-drop'),fileInput=document.getElementById('file-input'),fileNameEl=document.getElementById('filename'),nameInput=document.getElementById('therapist-name'),contextInput=document.getElementById('context'),startBtn=document.getElementById('start-btn'),uploadSection=document.getElementById('upload-section'),loadingEl=document.getElementById('loading'),loadingPhase=document.getElementById('loading-phase'),resultsEl=document.getElementById('results'),apiKeyInput=document.getElementById('api-key'),saveKeyBtn=document.getElementById('save-key-btn'),keyStatus=document.getElementById('key-status');
 
-  // --- API Key Management ---
+  // --- API Key Management (invisible if already saved) ---
+  const keyCard=document.getElementById('key-card');
   function getKey(){return localStorage.getItem('ptgo_anthropic_key')||''}
   function saveKey(k){localStorage.setItem('ptgo_anthropic_key',k)}
   const saved=getKey();
-  if(saved){apiKeyInput.value=saved;keyStatus.style.color='var(--green)';keyStatus.textContent='Key gespeichert'}
+  if(!saved){keyCard.style.display='block'}
+  else{apiKeyInput.value=saved}
   saveKeyBtn.addEventListener('click',()=>{
     const k=apiKeyInput.value.trim();
-    if(k){saveKey(k);keyStatus.style.color='var(--green)';keyStatus.textContent='Key gespeichert'}
-    else{localStorage.removeItem('ptgo_anthropic_key');keyStatus.style.color='var(--red)';keyStatus.textContent='Key entfernt'}
+    if(k){saveKey(k);keyStatus.style.color='var(--green)';keyStatus.textContent='Gespeichert! Wird nie wieder abgefragt.';setTimeout(()=>{keyCard.style.display='none'},1500)}
     checkReady();
   });
   apiKeyInput.addEventListener('input',checkReady);
@@ -171,8 +172,9 @@ textarea{resize:vertical;min-height:60px}
 
   nameInput.addEventListener('input',checkReady);
   function checkReady(){
-    const hasKey=!!(apiKeyInput.value.trim()||getKey());
+    const hasKey=!!(getKey()||apiKeyInput.value.trim());
     startBtn.disabled=!(chatText&&nameInput.value.trim()&&hasKey);
+    if(!hasKey&&chatText&&nameInput.value.trim()){keyCard.style.display='block'}
   }
 
   // --- WhatsApp Parser ---
