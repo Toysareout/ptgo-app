@@ -28,7 +28,7 @@ h2{font-family:'Orbitron',sans-serif;font-size:14px;letter-spacing:2px;color:var
 .card{background:var(--surface);border:1px solid var(--border);padding:24px;margin-bottom:16px;position:relative}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--cyan);opacity:.3}
 label{display:block;font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-input[type="text"],input[type="password"],textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:12px 16px;outline:none;transition:border-color .3s}
+input[type="text"],textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:12px 16px;outline:none;transition:border-color .3s}
 input:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,240,255,.1)}
 textarea{resize:vertical;min-height:60px}
 .file-drop{border:2px dashed var(--border);padding:40px 20px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:16px}
@@ -80,11 +80,6 @@ textarea{resize:vertical;min-height:60px}
 .sender-you{color:var(--cyan);font-size:10px;letter-spacing:1px;margin-left:6px}
 .sender-stats{color:var(--dim);font-size:11px}
 .hr{height:1px;background:var(--border);margin:24px 0}
-.key-row{display:flex;gap:8px;align-items:center}
-.key-row input{flex:1}
-.key-btn{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:1px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);color:var(--dim);cursor:pointer;white-space:nowrap}
-.key-btn:hover{border-color:var(--cyan);color:var(--cyan)}
-.key-status{font-size:11px;margin-top:6px}
 @media(max-width:600px){.wrap{padding:24px 12px 60px}.kpi-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}.kpi .val{font-size:16px}.score-big .number{font-size:56px}.card{padding:16px}}
 </style>
 </head>
@@ -98,15 +93,6 @@ textarea{resize:vertical;min-height:60px}
   <div id="upload-section">
     <h1>Kommunikations-Analyse</h1>
     <div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div>
-    <div class="card" id="key-card" style="display:none">
-      <label>Anthropic API Key (einmalig)</label>
-      <div class="key-row">
-        <input type="password" id="api-key" placeholder="sk-ant-...">
-        <button class="key-btn" id="save-key-btn">SPEICHERN</button>
-      </div>
-      <div class="key-status" id="key-status"></div>
-      <p style="font-size:11px;color:var(--dim);margin-top:8px">Key von <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> — wird lokal gespeichert, danach nie wieder noetig</p>
-    </div>
     <div class="card">
       <label>WhatsApp-Export (.txt oder .zip)</label>
       <div class="file-drop" id="file-drop">
@@ -131,98 +117,39 @@ textarea{resize:vertical;min-height:60px}
 <script>
 (function(){
   let chatText='',fileName='';
-  const fileDrop=document.getElementById('file-drop'),fileInput=document.getElementById('file-input'),fileNameEl=document.getElementById('filename'),nameInput=document.getElementById('therapist-name'),contextInput=document.getElementById('context'),startBtn=document.getElementById('start-btn'),uploadSection=document.getElementById('upload-section'),loadingEl=document.getElementById('loading'),loadingPhase=document.getElementById('loading-phase'),resultsEl=document.getElementById('results'),apiKeyInput=document.getElementById('api-key'),saveKeyBtn=document.getElementById('save-key-btn'),keyStatus=document.getElementById('key-status');
+  const fileDrop=document.getElementById('file-drop'),fileInput=document.getElementById('file-input'),fileNameEl=document.getElementById('filename'),nameInput=document.getElementById('therapist-name'),contextInput=document.getElementById('context'),startBtn=document.getElementById('start-btn'),uploadSection=document.getElementById('upload-section'),loadingEl=document.getElementById('loading'),loadingPhase=document.getElementById('loading-phase'),resultsEl=document.getElementById('results');
 
-  // --- API Key Management (invisible if already saved) ---
-  const keyCard=document.getElementById('key-card');
-  function getKey(){return localStorage.getItem('ptgo_anthropic_key')||''}
-  function saveKey(k){localStorage.setItem('ptgo_anthropic_key',k)}
-  const saved=getKey();
-  if(!saved){keyCard.style.display='block'}
-  else{apiKeyInput.value=saved}
-  saveKeyBtn.addEventListener('click',()=>{
-    const k=apiKeyInput.value.trim();
-    if(k){saveKey(k);keyStatus.style.color='var(--green)';keyStatus.textContent='Gespeichert! Wird nie wieder abgefragt.';setTimeout(()=>{keyCard.style.display='none'},1500)}
-    checkReady();
-  });
-  apiKeyInput.addEventListener('input',checkReady);
-
-  // --- File handling ---
   fileDrop.addEventListener('click',()=>fileInput.click());
   fileDrop.addEventListener('dragover',e=>{e.preventDefault();fileDrop.classList.add('dragover')});
   fileDrop.addEventListener('dragleave',()=>fileDrop.classList.remove('dragover'));
   fileDrop.addEventListener('drop',e=>{e.preventDefault();fileDrop.classList.remove('dragover');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])});
   fileInput.addEventListener('change',()=>{if(fileInput.files.length)handleFile(fileInput.files[0])});
+  nameInput.addEventListener('input',checkReady);
 
   async function handleFile(file){
     if(file.name.toLowerCase().endsWith('.zip')||file.type==='application/zip'){
-      try{
-        const zip=await JSZip.loadAsync(file);let txt=null;
-        zip.forEach((p,e)=>{if(!e.dir&&p.toLowerCase().endsWith('.txt'))txt=e});
-        if(!txt){alert('Keine .txt in ZIP gefunden.');return}
-        chatText=await txt.async('string');fileName=file.name+' > '+txt.name;
-      }catch(e){alert('ZIP Fehler: '+e.message);return}
-    }else{
-      chatText=await new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsText(file,'UTF-8')});
-      fileName=file.name;
-    }
-    fileNameEl.textContent=fileName+' ('+(chatText.length/1024).toFixed(1)+' KB)';
-    fileNameEl.style.display='block';checkReady();
+      try{const zip=await JSZip.loadAsync(file);let txt=null;zip.forEach((p,e)=>{if(!e.dir&&p.toLowerCase().endsWith('.txt'))txt=e});if(!txt){alert('Keine .txt in ZIP');return}chatText=await txt.async('string');fileName=file.name+' > '+txt.name}catch(e){alert('ZIP Fehler: '+e.message);return}
+    }else{chatText=await new Promise((r,j)=>{const f=new FileReader();f.onload=e=>r(e.target.result);f.onerror=j;f.readAsText(file,'UTF-8')});fileName=file.name}
+    fileNameEl.textContent=fileName+' ('+(chatText.length/1024).toFixed(1)+' KB)';fileNameEl.style.display='block';checkReady();
   }
+  function checkReady(){startBtn.disabled=!(chatText&&nameInput.value.trim())}
 
-  nameInput.addEventListener('input',checkReady);
-  function checkReady(){
-    const hasKey=!!(getKey()||apiKeyInput.value.trim());
-    startBtn.disabled=!(chatText&&nameInput.value.trim()&&hasKey);
-    if(!hasKey&&chatText&&nameInput.value.trim()){keyCard.style.display='block'}
-  }
-
-  // --- WhatsApp Parser ---
   function parseWhatsApp(raw){
     const pats=[/^\[(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s];
     const msgs=[];let cur=null;
-    for(const line of raw.split('\n')){let ok=false;
-      for(const p of pats){const m=line.trim().match(p);if(m){if(cur)msgs.push(cur);cur={timestamp:m[1].trim(),sender:m[2].trim(),text:m[3].trim()};ok=true;break}}
-      if(!ok&&cur&&line.trim())cur.text+='\n'+line.trim();
-    }
+    for(const line of raw.split('\n')){let ok=false;for(const p of pats){const m=line.trim().match(p);if(m){if(cur)msgs.push(cur);cur={timestamp:m[1].trim(),sender:m[2].trim(),text:m[3].trim()};ok=true;break}}if(!ok&&cur&&line.trim())cur.text+='\n'+line.trim()}
     if(cur)msgs.push(cur);return msgs;
   }
+  function buildStats(msgs){const s={};let tl=0;for(const m of msgs){if(!s[m.sender])s[m.sender]={count:0,chars:0,questions:0};s[m.sender].count++;s[m.sender].chars+=m.text.length;if(m.text.includes('?'))s[m.sender].questions++;tl+=m.text.length}return{total:msgs.length,senders:s,avgLength:Math.round(tl/Math.max(msgs.length,1))}}
 
-  function buildStats(msgs){
-    const s={};let tl=0;
-    for(const m of msgs){if(!s[m.sender])s[m.sender]={count:0,chars:0,questions:0};s[m.sender].count++;s[m.sender].chars+=m.text.length;if(m.text.includes('?'))s[m.sender].questions++;tl+=m.text.length}
-    return{total:msgs.length,senders:s,avgLength:Math.round(tl/Math.max(msgs.length,1))};
+  async function callServer(body){
+    const res=await fetch('/api/kommunikation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok)throw new Error('Server '+res.status);
+    return res.json();
   }
 
-  // --- Direct Anthropic API Call ---
-  async function callClaude(systemPrompt,userPrompt,maxTokens){
-    const key=apiKeyInput.value.trim()||getKey();
-    if(!key)throw new Error('Kein API Key');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20241022',max_tokens:maxTokens,system:systemPrompt,messages:[{role:'user',content:userPrompt}]})
-    });
-    if(!resp.ok){const e=await resp.text();throw new Error('API '+resp.status+': '+e.substring(0,200))}
-    const data=await resp.json();
-    const text=data.content&&data.content[0]&&data.content[0].text;
-    if(!text)throw new Error('Keine Antwort');
-    return text;
-  }
-
-  function parseJSON(text){
-    try{return JSON.parse(text)}catch(e){}
-    const m=text.match(/\{[\s\S]*\}/);
-    if(m)return JSON.parse(m[0]);
-    throw new Error('Kein JSON gefunden');
-  }
-
-  // --- Start Analysis ---
   startBtn.addEventListener('click',async()=>{
     const tn=nameInput.value.trim(),ctx=contextInput.value.trim();
-    // Save key if entered
-    if(apiKeyInput.value.trim())saveKey(apiKeyInput.value.trim());
-
     uploadSection.style.display='none';loadingEl.style.display='block';
     loadingPhase.textContent='Chat wird geparst...';
     const msgs=parseWhatsApp(chatText);
@@ -231,63 +158,34 @@ textarea{resize:vertical;min-height:60px}
     let excerpt=msgs.slice(-80).map(m=>'['+m.timestamp+'] '+m.sender+': '+m.text).join('\n');
     if(excerpt.length>6000)excerpt=excerpt.slice(-6000);
 
-    // Voss Analysis
     loadingPhase.textContent='Chris Voss Analyse (8 Dimensionen)...';
     let voss={};
-    try{
-      const vossSystem='Du bist ein Elite-Kommunikationscoach, spezialisiert auf Chris Voss\x27 Verhandlungstechniken ("Never Split the Difference"). Analysiere therapeutische Kommunikation auf Weltklasse-Niveau. Antworte IMMER NUR mit validem JSON. Kein Markdown, kein Text davor oder danach. Kein ```json Block.';
-      const vossPrompt='Analysiere diesen WhatsApp-Chatverlauf. Der Therapeut heisst "'+tn+'".\n'+(ctx?'Kontext: '+ctx+'\n':'')+'\nCHATVERLAUF:\n'+excerpt.substring(0,6000)+'\n\nBewerte nach 8 Chris Voss Dimensionen (je 0-100):\n1. TAKTISCHE EMPATHIE\n2. KALIBRIERTE FRAGEN\n3. SPIEGELUNG\n4. LABELING\n5. AKKUSATIONS-AUDIT\n6. NEIN-ORIENTIERTE FRAGEN\n7. LATE-NIGHT-DJ\n8. BLACK SWANS\n\nPro Dimension: score (0-100), good (was gut war), improve (was besser geht), elite (Weltklasse-Vorschlag).\n\nAntworte NUR mit diesem JSON:\n{"overall_score":0,"dimensions":{"tactical_empathy":{"score":0,"good":"","improve":"","elite":""},"calibrated_questions":{"score":0,"good":"","improve":"","elite":""},"mirroring":{"score":0,"good":"","improve":"","elite":""},"labeling":{"score":0,"good":"","improve":"","elite":""},"accusation_audit":{"score":0,"good":"","improve":"","elite":""},"no_oriented":{"score":0,"good":"","improve":"","elite":""},"late_night_dj":{"score":0,"good":"","improve":"","elite":""},"black_swan":{"score":0,"good":"","improve":"","elite":""}},"top_strengths":["","",""],"top_improvements":["","",""],"pricing_insight":"","uniqueness":"","concrete_scripts":["","","",""]}';
-      const raw=await callClaude(vossSystem,vossPrompt,4000);
-      voss=parseJSON(raw);
-    }catch(e){voss={error:e.message}}
+    try{voss=await callServer({action:'voss_analysis',chatText:excerpt,therapistName:tn,context:ctx})}catch(e){voss={error:e.message}}
 
-    // Musk Check
     loadingPhase.textContent='Musk Protocol wird aktiviert...';
     let musk={};
-    try{
-      const muskSystem='Du bist Elon Musk. Brutal ehrlich, First-Principles-Denker, 10X-Mindset. Antworte NUR mit validem JSON. Kein Markdown, kein ```json Block.';
-      const muskPrompt='Kommunikationsanalyse eines Therapeuten:\n\n'+JSON.stringify(voss).substring(0,3000)+'\n\n'+msgs.length+' WhatsApp-Nachrichten.\n\nBeantworte als Elon Musk:\n1. FIRST PRINCIPLES\n2. 10X THINKING\n3. AUTOMATION\n4. SCALE\n5. PRICING\n6. SPEED\n7. KILLER FEATURE\n8. FINAL VERDICT: Investieren ja/nein?\n\nNUR dieses JSON:\n{"first_principles":"","ten_x_thinking":"","automation":"","scale":"","pricing":"","speed":"","killer_feature":"","final_verdict":"","invest":false,"one_line":""}';
-      const raw2=await callClaude(muskSystem,muskPrompt,2000);
-      musk=parseJSON(raw2);
-    }catch(e){musk={error:e.message}}
+    try{musk=await callServer({action:'musk_check',analysisData:voss,messageCount:msgs.length})}catch(e){musk={error:e.message}}
 
     loadingEl.style.display='none';
     renderResults(msgs,stats,tn,voss,musk);
   });
-  // --- Render Results ---
   function renderResults(msgs,stats,therapistName,voss,musk){
-    const tn=therapistName.toLowerCase();
-    const score=voss.overall_score||0;
+    const tn=therapistName.toLowerCase();const score=voss.overall_score||0;
     const scoreColor=score<40?'var(--red)':score<70?'var(--gold)':'var(--green)';
     let errHTML='';
-    if(voss.error)errHTML='<div class="card" style="border-color:var(--red);margin-bottom:16px"><div style="font-size:11px;color:var(--red);letter-spacing:1px;font-weight:700;margin-bottom:6px">API FEHLER</div><p style="color:var(--red);font-size:13px">'+esc(voss.error)+'</p></div>';
+    if(voss.error)errHTML='<div class="card" style="border-color:var(--red);margin-bottom:16px"><div style="font-size:11px;color:var(--red);letter-spacing:1px;font-weight:700;margin-bottom:6px">FEHLER</div><p style="color:var(--red);font-size:13px">'+esc(voss.error)+'</p>'+(voss.raw?'<pre style="font-size:11px;color:var(--dim);margin-top:8px;white-space:pre-wrap">'+esc(voss.raw)+'</pre>':'')+'</div>';
     let senderHTML='';
-    for(const[name,s]of Object.entries(stats.senders)){
-      const isT=name.toLowerCase().includes(tn);
-      const pct=Math.round(s.count/Math.max(stats.total,1)*100);
-      senderHTML+='<div class="sender-row"><div><span class="sender-name">'+esc(name)+'</span>'+(isT?'<span class="sender-you">DU</span>':'')+'</div><div class="sender-stats">'+s.count+' Nachr. ('+pct+'%) &middot; '+s.questions+' Fragen</div></div>';
-    }
+    for(const[name,s]of Object.entries(stats.senders)){const isT=name.toLowerCase().includes(tn);const pct=Math.round(s.count/Math.max(stats.total,1)*100);senderHTML+='<div class="sender-row"><div><span class="sender-name">'+esc(name)+'</span>'+(isT?'<span class="sender-you">DU</span>':'')+'</div><div class="sender-stats">'+s.count+' Nachr. ('+pct+'%) &middot; '+s.questions+' Fragen</div></div>'}
     const dimMeta={tactical_empathy:{label:'Taktische Empathie',desc:'Verstaendnis der Perspektive demonstrieren',color:'var(--cyan)'},calibrated_questions:{label:'Kalibrierte Fragen',desc:'Offene Wie/Was-Fragen statt geschlossener',color:'var(--green)'},mirroring:{label:'Spiegelung',desc:'Schluesselwoerter wiederholen fuer Rapport',color:'var(--purple)'},labeling:{label:'Labeling',desc:'"Es scheint als ob..." Emotionen benennen',color:'var(--pink)'},accusation_audit:{label:'Akkusations-Audit',desc:'Negative Erwartungen vorwegnehmen',color:'var(--gold)'},no_oriented:{label:'Nein-orientierte Fragen',desc:'Fragen wo "Nein" die gewuenschte Antwort ist',color:'var(--cyan)'},late_night_dj:{label:'Late-Night-DJ',desc:'Ruhiger, kontrollierter Ton',color:'var(--green)'},black_swan:{label:'Black Swans',desc:'Versteckte Informationen entdecken',color:'var(--pink)'}};
     let dimsHTML='';const dims=voss.dimensions||{};
-    for(const[key,meta]of Object.entries(dimMeta)){
-      const d=dims[key]||{};const ds=d.score||0;
-      const dc=ds<40?'var(--red)':ds<70?'var(--gold)':'var(--green)';
-      dimsHTML+='<div class="dim-card"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:'+meta.color+';opacity:.5"></div><div class="dim-header"><div class="dim-name">'+meta.label+'</div><div class="dim-score" style="color:'+dc+'">'+ds+'</div></div><div class="dim-bar"><div class="dim-bar-fill" style="width:'+Math.max(ds,2)+'%;background:'+dc+'"></div></div><div class="dim-desc">'+meta.desc+'</div><div class="dim-row"><span class="tag" style="color:var(--green)">GUT</span>'+esc(d.good||'—')+'</div><div class="dim-row"><span class="tag" style="color:var(--gold)">BESSER</span>'+esc(d.improve||'—')+'</div><div class="elite-box"><span class="tag" style="color:var(--purple)">ELITE</span>'+esc(d.elite||'—')+'</div></div>';
-    }
+    for(const[key,meta]of Object.entries(dimMeta)){const d=dims[key]||{};const ds=d.score||0;const dc=ds<40?'var(--red)':ds<70?'var(--gold)':'var(--green)';dimsHTML+='<div class="dim-card"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:'+meta.color+';opacity:.5"></div><div class="dim-header"><div class="dim-name">'+meta.label+'</div><div class="dim-score" style="color:'+dc+'">'+ds+'</div></div><div class="dim-bar"><div class="dim-bar-fill" style="width:'+Math.max(ds,2)+'%;background:'+dc+'"></div></div><div class="dim-desc">'+meta.desc+'</div><div class="dim-row"><span class="tag" style="color:var(--green)">GUT</span>'+esc(d.good||'---')+'</div><div class="dim-row"><span class="tag" style="color:var(--gold)">BESSER</span>'+esc(d.improve||'---')+'</div><div class="elite-box"><span class="tag" style="color:var(--purple)">ELITE</span>'+esc(d.elite||'---')+'</div></div>'}
     let strengthsHTML=(voss.top_strengths||[]).map(s=>'<div class="strength-item"><span style="color:var(--green)">&#10003;</span> '+esc(s)+'</div>').join('');
     let improvementsHTML=(voss.top_improvements||[]).map(s=>'<div class="improve-item"><span style="color:var(--gold)">&uarr;</span> '+esc(s)+'</div>').join('');
     let scriptsHTML=(voss.concrete_scripts||[]).map(s=>'<div class="script-item">"'+esc(s)+'"</div>').join('');
     let muskHTML='';
-    if(!musk.error){
-      const ic=musk.invest?'var(--green)':'var(--red)';
-      const it=musk.invest?'JA — ICH INVESTIERE':'NEIN — NOCH NICHT';
-      const mk=[['first_principles','FIRST PRINCIPLES'],['ten_x_thinking','10X THINKING'],['automation','AUTOMATION'],['scale','SCALE'],['pricing','PRICING'],['speed','SPEED'],['killer_feature','KILLER FEATURE'],['final_verdict','FINAL VERDICT']];
-      let mr=mk.map(([k,l])=>{const v=musk[k]||'';return v?'<div class="musk-row"><div class="musk-label" style="color:var(--gold)">'+l+'</div><div class="musk-text">'+esc(v)+'</div></div>':''}).join('');
-      muskHTML='<div class="musk-section"><div style="text-align:center;margin-bottom:16px"><div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:3px;margin-bottom:8px">MUSK PROTOCOL</div><h2 style="color:var(--text);font-size:18px;margin:0">Wuerde Elon investieren?</h2></div><div class="musk-verdict"><div class="invest" style="color:'+ic+'">'+it+'</div><div class="quote">"'+esc(musk.one_line||'')+'"</div></div>'+mr+'</div>';
-    }else if(musk.error){
-      muskHTML='<div class="musk-section"><p style="color:var(--red)">Musk-Check Fehler: '+esc(musk.error)+'</p></div>';
-    }
-    resultsEl.innerHTML='<h1>Analyse-Ergebnis</h1><div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div>'+errHTML+'<h2>Chat-Statistik</h2><div class="kpi-grid"><div class="kpi"><div class="val">'+stats.total+'</div><div class="lbl">NACHRICHTEN</div></div><div class="kpi"><div class="val">'+Object.keys(stats.senders).length+'</div><div class="lbl">TEILNEHMER</div></div><div class="kpi"><div class="val">'+stats.avgLength+'</div><div class="lbl">AVG ZEICHEN</div></div></div>'+senderHTML+'<div class="hr"></div><div class="score-big"><div class="number" style="color:'+scoreColor+'">'+score+'</div><div class="label">VOSS ELITE SCORE / 100</div></div><div class="hr"></div><h2>8 Dimensionen — Chris Voss</h2>'+dimsHTML+'<div class="hr"></div><h2>Top 3 Staerken</h2>'+strengthsHTML+'<div class="hr"></div><h2>Top 3 Verbesserungen</h2>'+improvementsHTML+'<div class="hr"></div><h2>Konkrete Formulierungen</h2>'+scriptsHTML+(voss.pricing_insight?'<div class="hr"></div><h2>Pricing-Optimierung</h2><div class="pricing-box">'+esc(voss.pricing_insight)+'</div>':'')+(voss.uniqueness?'<div class="hr"></div><h2>Einzigartigkeit</h2><div class="uniqueness-box">'+esc(voss.uniqueness)+'</div>':'')+muskHTML+'<div class="hr"></div><div style="text-align:center;margin:24px 0"><button class="btn btn-primary" style="width:auto;display:inline-block;padding:14px 32px" onclick="location.reload()">NEUE ANALYSE</button></div><div style="text-align:center"><a href="/archive" style="font-size:11px;color:var(--dim);letter-spacing:1px">ARCHIVE</a></div>';
+    if(!musk.error&&musk.first_principles){const ic=musk.invest?'var(--green)':'var(--red)';const it=musk.invest?'JA — ICH INVESTIERE':'NEIN — NOCH NICHT';const mk=[['first_principles','FIRST PRINCIPLES'],['ten_x_thinking','10X THINKING'],['automation','AUTOMATION'],['scale','SCALE'],['pricing','PRICING'],['speed','SPEED'],['killer_feature','KILLER FEATURE'],['final_verdict','FINAL VERDICT']];let mr=mk.map(([k,l])=>{const v=musk[k]||'';return v?'<div class="musk-row"><div class="musk-label" style="color:var(--gold)">'+l+'</div><div class="musk-text">'+esc(v)+'</div></div>':''}).join('');muskHTML='<div class="musk-section"><div style="text-align:center;margin-bottom:16px"><div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:3px;margin-bottom:8px">MUSK PROTOCOL</div><h2 style="color:var(--text);font-size:18px;margin:0">Wuerde Elon investieren?</h2></div><div class="musk-verdict"><div class="invest" style="color:'+ic+'">'+it+'</div><div class="quote">"'+esc(musk.one_line||'')+'"</div></div>'+mr+'</div>'}
+    else if(musk.error){muskHTML='<div class="musk-section"><p style="color:var(--red)">Musk-Check: '+esc(musk.error)+'</p></div>'}
+    resultsEl.innerHTML='<h1>Analyse-Ergebnis</h1><div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div>'+errHTML+'<h2>Chat-Statistik</h2><div class="kpi-grid"><div class="kpi"><div class="val">'+stats.total+'</div><div class="lbl">NACHRICHTEN</div></div><div class="kpi"><div class="val">'+Object.keys(stats.senders).length+'</div><div class="lbl">TEILNEHMER</div></div><div class="kpi"><div class="val">'+stats.avgLength+'</div><div class="lbl">AVG ZEICHEN</div></div></div>'+senderHTML+'<div class="hr"></div><div class="score-big"><div class="number" style="color:'+scoreColor+'">'+score+'</div><div class="label">VOSS ELITE SCORE / 100</div></div><div class="hr"></div><h2>8 Dimensionen</h2>'+dimsHTML+'<div class="hr"></div><h2>Top 3 Staerken</h2>'+strengthsHTML+'<div class="hr"></div><h2>Top 3 Verbesserungen</h2>'+improvementsHTML+'<div class="hr"></div><h2>Konkrete Formulierungen</h2>'+scriptsHTML+(voss.pricing_insight?'<div class="hr"></div><h2>Pricing</h2><div class="pricing-box">'+esc(voss.pricing_insight)+'</div>':'')+(voss.uniqueness?'<div class="hr"></div><h2>Einzigartigkeit</h2><div class="uniqueness-box">'+esc(voss.uniqueness)+'</div>':'')+muskHTML+'<div class="hr"></div><div style="text-align:center;margin:24px 0"><button class="btn btn-primary" style="width:auto;display:inline-block;padding:14px 32px" onclick="location.reload()">NEUE ANALYSE</button></div><div style="text-align:center"><a href="/archive" style="font-size:11px;color:var(--dim);letter-spacing:1px">ARCHIVE</a></div>';
     resultsEl.style.display='block';
   }
   function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
