@@ -8,6 +8,7 @@
 <title>VOSS COMMAND CENTER</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#030308;--surface:#0a0a14;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680}
@@ -63,6 +64,10 @@ textarea{resize:vertical;min-height:80px}
 .screenshots{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0}
 .screenshots img{width:100%;border:1px solid var(--border);cursor:pointer;transition:all .3s}
 .screenshots img:hover{border-color:var(--cyan);transform:scale(1.02)}
+.ocr-status{font-size:11px;color:var(--gold);margin:8px 0;padding:8px 12px;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2)}
+.ocr-text{font-size:11px;color:var(--dim);background:var(--bg);border:1px solid var(--border);padding:10px;margin:8px 0;max-height:150px;overflow-y:auto;white-space:pre-wrap;word-wrap:break-word}
+.screenshot-wrap{position:relative}
+.screenshot-wrap .ocr-badge{position:absolute;top:4px;right:4px;font-size:8px;background:var(--green);color:var(--bg);padding:2px 4px;font-family:'Orbitron',sans-serif;letter-spacing:1px}
 .img-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .img-modal img{max-width:95%;max-height:95%;object-fit:contain}
 .type-badge{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px;margin-left:8px}
@@ -335,8 +340,17 @@ function renderPatientView(id){
   // Last messages display
   let chatHTML='';
   let vossHTML='';
-  if(p.lastMessages&&p.lastMessages.length){
-    const last10=p.lastMessages.slice(-10);
+  // Merge chat messages + OCR screenshot texts for full context
+  let allMessages=p.lastMessages?[...p.lastMessages]:[];
+  const scrTexts=p.screenshotTexts||[];
+  if(scrTexts.length){
+    scrTexts.forEach(st=>{
+      allMessages.push({ts:st.date,sender:p.name+' (Screenshot)',text:st.text});
+    });
+  }
+
+  if(allMessages.length){
+    const last10=(p.lastMessages||[]).slice(-10);
     chatHTML='<h2>Letzte Nachrichten</h2>';
     chatHTML+=last10.map(m=>{
       const isMe=myName&&m.sender.toLowerCase().includes(myName.toLowerCase());
@@ -344,14 +358,15 @@ function renderPatientView(id){
     }).join('');
 
     if(p.type==='rollo'){
+      const rollo=generateRolloResponse(allMessages,p.name,myName);
       // ROLLO TOMASSI MODE
-      const rollo=generateRolloResponse(p.lastMessages,p.name,myName);
+      const rollo=generateRolloResponse(allMessages,p.name,myName);
       vossHTML='<h2 style="color:var(--pink)">ROLLO TOMASSI ANTWORTET</h2><div class="rollo-msg"><div class="rollo-label">DEINE NAECHSTE NACHRICHT — 1:1 SENDEN</div><pre id="voss-main">'+esc(rollo.main)+'</pre><button class="copy-btn" onclick="copyText(\'voss-main\')">KOPIEREN</button></div>';
       vossHTML+='<h2 style="color:var(--pink)">FOLLOW-UP STRATEGIE</h2><div class="rollo-msg"><div class="rollo-label">FOLLOW-UP REGEL</div><pre id="voss-follow">'+esc(rollo.followUp)+'</pre></div>';
       vossHTML+='<h2 style="color:var(--pink)">FRAME-ANALYSE</h2><div class="rollo-msg"><div class="rollo-label">IRON RULE</div><pre id="voss-frame">'+esc(rollo.frame)+'</pre></div>';
     }else{
       // CHRIS VOSS MODE
-      const voss=generateVossResponse(p.lastMessages,p.name,myName,uploads);
+      const voss=generateVossResponse(allMessages,p.name,myName,uploads);
       vossHTML='<h2 style="color:var(--green)">CHRIS VOSS ANTWORTET</h2><div class="voss-msg"><div class="voss-label">DEINE NAECHSTE NACHRICHT — 1:1 SENDEN</div><pre id="voss-main">'+esc(voss.main)+'</pre><button class="copy-btn" onclick="copyText(\'voss-main\')">KOPIEREN</button></div>';
       vossHTML+='<h2 style="color:var(--gold)">FOLLOW-UP (24h keine Antwort)</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">FOLLOW-UP</div><pre id="voss-follow">'+esc(voss.followUp)+'</pre><button class="copy-btn" onclick="copyText(\'voss-follow\')">KOPIEREN</button></div>';
       vossHTML+='<h2 style="color:var(--gold)">PREIS-GESPRAECH</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">PREIS SCRIPT</div><pre id="voss-price">'+esc(voss.price)+'</pre><button class="copy-btn" onclick="copyText(\'voss-price\')">KOPIEREN</button></div>';
@@ -367,11 +382,20 @@ function renderPatientView(id){
   const typeBadge=p.type==='rollo'?'<span class="type-badge type-rollo">ROLLO</span>':'<span class="type-badge type-voss">VOSS</span>';
   const analyzeLabel=p.type==='rollo'?'ROLLO ANTWORTET':'VOSS ANTWORTET';
 
-  // Screenshots gallery
+  // Screenshots gallery with OCR text
   let screenshotHTML='';
   const screenshots=p.screenshots||[];
+  const ocrTexts=p.ocrTexts||[];
   if(screenshots.length){
-    screenshotHTML='<h2>Screenshots ('+screenshots.length+')</h2><div class="screenshots">'+screenshots.map((s,i)=>'<img src="'+s+'" onclick="showImg(\''+s.replace(/'/g,"\\'")+'\')" alt="Screenshot '+(i+1)+'">').join('')+'</div>';
+    screenshotHTML='<h2>Screenshots ('+screenshots.length+')</h2><div class="screenshots">'+screenshots.map((s,i)=>{
+      const hasOcr=ocrTexts[i]&&ocrTexts[i].length>5;
+      return '<div class="screenshot-wrap"><img src="'+s+'" onclick="showImg(\''+i+'\',\''+id+'\')" alt="Screenshot '+(i+1)+'">'+(hasOcr?'<div class="ocr-badge">OCR</div>':'')+'</div>';
+    }).join('')+'</div>';
+    // Show combined OCR text
+    const allOcr=ocrTexts.filter(t=>t&&t.length>5).join('\n---\n');
+    if(allOcr){
+      screenshotHTML+='<h2>Erkannter Text aus Screenshots</h2><div class="ocr-text">'+esc(allOcr)+'</div>';
+    }
   }
 
   app.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px"><span class="back" onclick="renderDashboard()">← ZURUECK</span><h1 style="margin:0">'+esc(p.name)+typeBadge+'</h1></div>'
@@ -393,43 +417,76 @@ function renderPatientView(id){
   }
 }
 
-function handleImages(files,patientId){
-  Array.from(files).forEach(file=>{
-    if(!file.type.startsWith('image/'))return;
-    const reader=new FileReader();
-    reader.onload=e=>{
-      updatePatient(patientId,p=>{
-        if(!p.screenshots)p.screenshots=[];
-        // Limit to ~50 screenshots to avoid localStorage overflow
-        if(p.screenshots.length>=50){p.screenshots.shift()}
-        p.screenshots.push(e.target.result);
-      });
-      renderPatientView(patientId);
-    };
-    // Compress: resize to max 800px wide
-    const img=new Image();
-    img.onload=()=>{
-      const canvas=document.createElement('canvas');
-      const maxW=800;const scale=Math.min(1,maxW/img.width);
-      canvas.width=img.width*scale;canvas.height=img.height*scale;
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-      const compressed=canvas.toDataURL('image/jpeg',0.7);
-      updatePatient(patientId,p=>{
-        if(!p.screenshots)p.screenshots=[];
-        if(p.screenshots.length>=50)p.screenshots.shift();
-        p.screenshots.push(compressed);
-      });
-      renderPatientView(patientId);
-    };
-    img.src=URL.createObjectURL(file);
-  });
+async function handleImages(files,patientId){
+  const fileArr=Array.from(files).filter(f=>f.type.startsWith('image/'));
+  if(!fileArr.length)return;
+
+  // Show OCR status
+  const statusEl=document.createElement('div');
+  statusEl.className='ocr-status';
+  statusEl.textContent='Screenshots werden verarbeitet + Text wird erkannt...';
+  const imgDrop=document.getElementById('img-drop');
+  if(imgDrop)imgDrop.parentElement.appendChild(statusEl);
+
+  for(let fi=0;fi<fileArr.length;fi++){
+    const file=fileArr[fi];
+    statusEl.textContent='Bild '+(fi+1)+'/'+fileArr.length+': Komprimiere...';
+
+    // Compress image
+    const compressed=await new Promise(resolve=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const maxW=800;const scale=Math.min(1,maxW/img.width);
+        canvas.width=img.width*scale;canvas.height=img.height*scale;
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',0.7));
+      };
+      img.src=URL.createObjectURL(file);
+    });
+
+    // Run OCR
+    statusEl.textContent='Bild '+(fi+1)+'/'+fileArr.length+': OCR Texterkennung laeuft...';
+    let ocrText='';
+    try{
+      const result=await Tesseract.recognize(compressed,'deu',{logger:m=>{
+        if(m.status==='recognizing text')statusEl.textContent='Bild '+(fi+1)+'/'+fileArr.length+': OCR '+Math.round((m.progress||0)*100)+'%';
+      }});
+      ocrText=(result.data.text||'').trim();
+    }catch(e){
+      console.warn('OCR failed:',e);
+      ocrText='';
+    }
+
+    // Save screenshot + OCR text
+    updatePatient(patientId,p=>{
+      if(!p.screenshots)p.screenshots=[];
+      if(!p.ocrTexts)p.ocrTexts=[];
+      if(p.screenshots.length>=50){p.screenshots.shift();p.ocrTexts.shift()}
+      p.screenshots.push(compressed);
+      p.ocrTexts.push(ocrText);
+      // Also feed OCR text into lastMessages as pseudo-messages
+      if(ocrText.length>10){
+        if(!p.screenshotTexts)p.screenshotTexts=[];
+        p.screenshotTexts.push({date:new Date().toISOString().slice(0,10),text:ocrText});
+      }
+    });
+  }
+
+  statusEl.textContent='Fertig! '+fileArr.length+' Screenshot(s) verarbeitet.';
+  setTimeout(()=>{renderPatientView(patientId)},800);
 }
 
-window.showImg=function(src){
+window.showImg=function(idx,patientId){
+  const p=getPatient(patientId);
+  if(!p)return;
+  const src=p.screenshots[idx];
+  const ocrText=(p.ocrTexts||[])[idx]||'';
   const modal=document.createElement('div');
   modal.className='img-modal';
-  modal.innerHTML='<img src="'+src+'">';
-  modal.onclick=()=>modal.remove();
+  modal.innerHTML='<div style="text-align:center;max-width:95%;max-height:95%"><img src="'+src+'" style="max-width:100%;max-height:80vh;object-fit:contain">'
+    +(ocrText.length>5?'<div style="margin-top:12px;padding:12px;background:rgba(0,0,0,.8);font-size:11px;color:var(--text);max-height:20vh;overflow-y:auto;text-align:left;white-space:pre-wrap">'+esc(ocrText)+'</div>':'')+'</div>';
+  modal.onclick=e=>{if(e.target===modal)modal.remove()};
   document.body.appendChild(modal);
 };
 
