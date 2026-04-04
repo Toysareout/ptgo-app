@@ -346,7 +346,71 @@ textarea{resize:vertical;min-height:60px}
       'Du schreibst mehr als dein Patient ('+tCount+' vs '+pMsgs.length+') — das zeigt Engagement, aber Elite-Therapeuten lassen den Patienten 60-70% des Gespraechs fuehren. Weniger schreiben, tiefere Fragen stellen.':
       'Dein Patient schreibt mehr als du ('+pMsgs.length+' vs '+tCount+') — gutes Zeichen! Du gibst Raum. Jetzt die Qualitaet deiner Antworten auf Elite-Level bringen.';
 
-    return{overall_score:overall,dimensions:dims,top_strengths:top3,top_improvements:bottom3,pricing_insight:priceInsight,uniqueness:uniqueness,concrete_scripts:scripts,_tChars:tMsgs.reduce((a,m)=>a+m.text.length,0),responseInsight:responseInsight,avgResponseMin:avgResponseMin,fastReplies:fastReplies,slowReplies:slowReplies,responseTimes:responseTimes.length,flowInsight:flowInsight,flowTrend:flowTrend,reactionInsight:reactionInsight,bestReaction:bestReaction};
+    // ─── FAZIT: 1:1 COPY-PASTE VORLAGE ───
+    // Analysiere den Patienten-Kontext fuer personalisierte Vorlage
+    const lastPatientMsgs=pMsgs.slice(-5);
+    const lastPatientText=lastPatientMsgs.map(m=>m.text).join(' ').toLowerCase();
+    const patientName=pMsgs.length?pMsgs[0].sender:'Patient';
+
+    // Erkennung: Was beschaeftigt den Patienten?
+    const hasSchmerz=lastPatientText.match(/schmerz|weh|aua|tut|sticht|brennt|zieht|drueck|druck|verspann|blockier|steif/);
+    const hasAngst=lastPatientText.match(/angst|sorge|panik|furcht|bange|unwohl|unsicher|nervoes|nerv/);
+    const hasSchlaf=lastPatientText.match(/schlaf|muede|wach|nacht|ruh|erhol|energie|erschoepf/);
+    const hasStress=lastPatientText.match(/stress|druck|ueberford|viel|schaff|anstreng|belast|hektisch|renn/);
+    const hasPositiv=lastPatientText.match(/besser|gut|freue|schoen|toll|super|fortschritt|geschafft|klappt|hilft/);
+    const hasFrust=lastPatientText.match(/frust|genervt|satt|reicht|bringt nichts|sinnlos|aufgeben|keine lust|hoffnung/);
+
+    // Welche Voss-Technik braucht der Patient am meisten?
+    const weakDims=sorted.slice(-3).map(([k])=>k);
+
+    // Baue den Fazit-Text
+    let fazitParts=[];
+
+    // OPENER: Akkusations-Audit + Labeling
+    if(hasSchmerz){
+      fazitParts.push('Ich weiss, das klingt vielleicht wie etwas, das du schon hundert Mal gehoert hast — und vielleicht denkst du, dass ich auch nur der naechste bin, der dir sagt "es wird besser." Aber ich moechte ehrlich mit dir sein.');
+      fazitParts.push('Es klingt so, als ob der Schmerz nicht nur koerperlich ist. Es klingt so, als ob er dir etwas wegnimmt — vielleicht Schlaf, vielleicht Geduld, vielleicht das Gefuehl, dass es jemals aufhoert.');
+    }else if(hasAngst){
+      fazitParts.push('Ich weiss, dass es Mut braucht, ueberhaupt darueber zu sprechen. Und vielleicht denkst du: "Bringt das ueberhaupt was?" Ich moechte dir sagen — allein dass du es aussprichst, veraendert schon etwas.');
+      fazitParts.push('Es scheint, als ob da eine Unsicherheit ist, die tiefer geht als das, was man von aussen sieht. Als ob du staendig auf etwas wartest, das vielleicht nie kommt — oder vielleicht gerade deshalb Angst hast, weil es kommen koennte.');
+    }else if(hasFrust){
+      fazitParts.push('Ich hoere, was du sagst. Und ich werde dir jetzt nicht sagen "bleib dran" oder "es wird schon." Das waere unfair. Was ich dir sagen will: Ich verstehe, warum du frustriert bist. Jeder waere das an deiner Stelle.');
+      fazitParts.push('Es klingt so, als ob du nicht nur muede bist von den Schmerzen — sondern muede davon, immer wieder zu hoffen und dann enttaeuscht zu werden. Das ist nachvollziehbar. Zu 100 Prozent.');
+    }else if(hasPositiv){
+      fazitParts.push('Das, was du mir gerade beschreibst — das ist nicht "ein bisschen besser." Das ist ein echter Fortschritt. Und ich moechte sicherstellen, dass du das auch so siehst. Weil Patienten wie du oft ihre eigenen Erfolge kleinreden.');
+      fazitParts.push('Es scheint, als ob sich etwas verschoben hat. Nicht nur koerperlich, sondern in deiner Haltung. Du sprichst anders darueber als noch vor ein paar Wochen. Das ist bemerkenswert.');
+    }else{
+      fazitParts.push('Ich weiss nicht, ob das jetzt der richtige Moment ist, aber ich moechte dir etwas sagen, das ich schon laenger denke. Du machst das besser, als du glaubst. Und ich sage das nicht um nett zu sein — ich sage es, weil ich es sehe.');
+      fazitParts.push('Es scheint, als ob du gerade an einem Punkt bist, wo sich entscheidet, wie es weitergeht. Und ich moechte, dass du weisst: Ich bin da. Nicht als jemand, der dir sagt was du tun sollst, sondern als jemand, der zuhoert.');
+    }
+
+    // MITTE: Kalibrierte Frage + Black Swan
+    fazitParts.push('');
+    if(hasSchmerz||hasStress){
+      fazitParts.push('Was muesste passieren, damit du sagst: Ja, jetzt hat sich wirklich etwas veraendert? Nicht theoretisch — ganz konkret, in deinem Alltag?');
+    }else if(hasSchlaf){
+      fazitParts.push('Wie sieht ein guter Tag fuer dich aus — von morgens bis abends? Beschreib mir das mal, als waere es schon so.');
+    }else{
+      fazitParts.push('Was ist die eine Sache, die du dir wuenschst, die du aber noch niemandem gesagt hast? Nicht weil es ein Geheimnis ist — sondern weil du dachtest, es hoert eh keiner richtig zu.');
+    }
+
+    // CLOSE: Wert-Anker + Next Step
+    fazitParts.push('');
+    fazitParts.push('Ich arbeite nur mit Patienten, bei denen ich weiss, dass ich wirklich etwas bewirken kann. Und bei dir sehe ich das. Nicht weil es einfach wird, sondern weil du die Art Mensch bist, der sich durchbeisst — auch wenn es schwer ist.');
+    fazitParts.push('');
+    fazitParts.push('Mein Vorschlag: Wir machen das strukturiert. Ein Plan, der auf DICH zugeschnitten ist. Kein Standard-Programm. Dafuer brauche ich eines von dir — dass du mir sagst, was du wirklich willst. Nicht was du denkst, was ich hoeren will.');
+    fazitParts.push('');
+    fazitParts.push('Waere es schlimm, wenn wir da jetzt den naechsten Schritt machen?');
+
+    const fazitText=fazitParts.join('\n');
+
+    // Erstelle auch eine kurze Nachfolge-Nachricht
+    const followUp='Falls der Patient nicht antwortet (nach 24h):\n\n"Hey '+patientName.split(' ')[0]+', ich wollte nur kurz nachfragen — nicht um zu draengen, sondern weil mir wichtig ist, wie es dir geht. Wenn jetzt nicht der richtige Moment ist, ist das voellig okay. Ich bin da, wenn du bereit bist."';
+
+    // Erstelle Preisgespraech-Vorlage
+    const priceScript='Wenn es um den Preis geht:\n\n"Ich verstehe, dass das eine Investition ist. Und ich wuerde dir nie sagen, dass du das machen MUSST. Was ich dir sagen kann: Patienten, die diesen Weg mit mir gegangen sind, berichten nach 4-6 Wochen von Veraenderungen, die sie vorher fuer unmoeglich gehalten haben. Die Frage ist nicht, ob du es dir leisten kannst — die Frage ist, was es dich KOSTET, wenn sich nichts aendert. Nicht in Geld, sondern in Lebensqualitaet, Schlaf, Energie, Beziehungen. Was denkst du — waere es das wert, das mal auszuprobieren?"';
+
+    return{overall_score:overall,dimensions:dims,top_strengths:top3,top_improvements:bottom3,pricing_insight:priceInsight,uniqueness:uniqueness,concrete_scripts:scripts,_tChars:tMsgs.reduce((a,m)=>a+m.text.length,0),responseInsight:responseInsight,avgResponseMin:avgResponseMin,fastReplies:fastReplies,slowReplies:slowReplies,responseTimes:responseTimes.length,flowInsight:flowInsight,flowTrend:flowTrend,reactionInsight:reactionInsight,bestReaction:bestReaction,fazitText:fazitText,followUp:followUp,priceScript:priceScript,patientName:patientName};
   }
 
   // ─── MUSK CHECK — Client-Side ───
@@ -448,6 +512,17 @@ textarea{resize:vertical;min-height:60px}
     +'<div class="hr"></div><h2>Konkrete Formulierungen</h2>'+scriptsHTML
     +'<div class="hr"></div><h2>Pricing</h2><div class="pricing-box">'+esc(voss.pricing_insight)+'</div>'
     +'<div class="hr"></div><h2>Einzigartigkeit</h2><div class="uniqueness-box">'+esc(voss.uniqueness)+'</div>'
+    +'<div class="hr"></div><h2 style="color:var(--green)">FAZIT — Deine naechste Nachricht an '+esc(voss.patientName)+'</h2>'
+    +'<div style="background:rgba(45,255,168,.05);border:2px solid rgba(45,255,168,.3);padding:24px;margin:12px 0;position:relative">'
+    +'<div style="font-size:10px;color:var(--green);letter-spacing:2px;margin-bottom:12px">1:1 COPY-PASTE — JETZT SENDEN</div>'
+    +'<pre style="font-family:Space Mono,monospace;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-wrap:break-word;margin:0">'+esc(voss.fazitText)+'</pre>'
+    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'fazit-raw\').textContent);this.textContent=\'KOPIERT!\';this.style.borderColor=\'var(--green)\';this.style.color=\'var(--green)\'" style="margin-top:16px;padding:12px 24px;background:transparent;border:1px solid var(--border);color:var(--dim);font-family:Orbitron,sans-serif;font-size:11px;letter-spacing:2px;cursor:pointer;width:100%">IN ZWISCHENABLAGE KOPIEREN</button>'
+    +'<div id="fazit-raw" style="display:none">'+esc(voss.fazitText)+'</div>'
+    +'</div>'
+    +'<div class="hr"></div><h2 style="color:var(--gold)">Follow-Up Nachricht (falls keine Antwort)</h2>'
+    +'<div class="pricing-box"><pre style="font-family:Space Mono,monospace;font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-wrap:break-word;margin:0">'+esc(voss.followUp)+'</pre></div>'
+    +'<div class="hr"></div><h2 style="color:var(--gold)">Preis-Gespraech Script</h2>'
+    +'<div class="pricing-box"><pre style="font-family:Space Mono,monospace;font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;word-wrap:break-word;margin:0">'+esc(voss.priceScript)+'</pre></div>'
     +muskHTML
     +'<div class="hr"></div><div style="text-align:center;margin:24px 0"><button class="btn btn-primary" style="width:auto;display:inline-block;padding:14px 32px" onclick="location.reload()">NEUE ANALYSE</button></div><div style="text-align:center"><a href="/archive" style="font-size:11px;color:var(--dim);letter-spacing:1px">ARCHIVE</a></div>';
     resultsEl.style.display='block';
