@@ -60,7 +60,18 @@ textarea{resize:vertical;min-height:80px}
 .chat-ts{font-size:9px;color:var(--dim);margin-top:2px}
 .hr{height:1px;background:var(--border);margin:20px 0}
 .hidden{display:none}
-@media(max-width:600px){.wrap{padding:24px 12px 60px}.card{padding:16px}.p-card{padding:12px 16px}}
+.screenshots{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin:12px 0}
+.screenshots img{width:100%;border:1px solid var(--border);cursor:pointer;transition:all .3s}
+.screenshots img:hover{border-color:var(--cyan);transform:scale(1.02)}
+.img-modal{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.img-modal img{max-width:95%;max-height:95%;object-fit:contain}
+.type-badge{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;padding:3px 8px;border-radius:2px;margin-left:8px}
+.type-voss{background:rgba(0,240,255,.15);color:var(--cyan);border:1px solid rgba(0,240,255,.3)}
+.type-rollo{background:rgba(255,45,142,.15);color:var(--pink);border:1px solid rgba(255,45,142,.3)}
+.rollo-msg{background:rgba(255,45,142,.05);border:2px solid rgba(255,45,142,.3);padding:20px;margin:12px 0}
+.rollo-msg pre{font-family:'Space Mono',monospace;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-wrap:break-word;margin:0}
+.rollo-label{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--pink);letter-spacing:2px;margin-bottom:10px}
+@media(max-width:600px){.wrap{padding:24px 12px 60px}.card{padding:16px}.p-card{padding:12px 16px}.screenshots{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}}
 </style>
 </head>
 <body>
@@ -185,21 +196,134 @@ function generateVossResponse(lastMsgs, patientName, myName, history){
   return{main,followUp,price};
 }
 
+// ─── ROLLO TOMASSI RESPONSE GENERATOR ───
+function generateRolloResponse(lastMsgs, contactName, myName){
+  const patientMsgs=lastMsgs.filter(m=>!m.sender.toLowerCase().includes(myName.toLowerCase())).slice(-5);
+  if(!patientMsgs.length) return{main:'Kein Kontext gefunden.',followUp:'',frame:''};
+  const lastText=patientMsgs.map(m=>m.text).join(' ');
+  const lt=lastText.toLowerCase();
+  const cFirst=contactName.split(' ')[0];
+  const short=lastText.length<50;
+
+  // Detect context
+  const flaky=lt.match(/vielleicht|mal schauen|weiss nicht|keine zeit|spaeter|busy|stress|geht nicht|kann nicht|muss schauen/);
+  const interested=lt.match(/ja|klar|gerne|okay|wann|wo|freue|lust|cool|nice|super|unbedingt/);
+  const testing=lt.match(/warum|wieso|denkst du|findest du|meinst du|glaubst du|sicher|wirklich|ernst/);
+  const emotional=lt.match(/vermiss|denke an|fuehl|mag dich|lieb|sehnsucht|traurig|einsam|brauche/);
+  const disrespect=lt.match(/egal|whatever|nerv|lass mich|geh weg|kein bock|interessiert mich nicht|lol|haha ok/);
+  const question=lt.match(/\?/);
+
+  // Extract last words for mirroring
+  const lastSentence=patientMsgs[patientMsgs.length-1].text;
+
+  let parts=[];
+
+  // ─── IRON RULE: Frame Control ───
+  if(disrespect){
+    // Iron Rule #1: Frame is everything
+    parts.push('Alles klar.');
+    parts.push('');
+    parts.push('Ich investiere meine Zeit nur in Menschen, die das auch zu schaetzen wissen. Kein Vorwurf — nur Klarheit.');
+    // No follow-up. Abundance.
+    return{main:parts.join('\n'),followUp:'[KEIN FOLLOW-UP. Abundance Mentality. Du schreibst nicht nochmal. Wenn sie will, kommt sie.]',frame:'IRON RULE #1 — Frame. Du kontrollierst den Frame oder du verlierst ihn. Hier wurde dein Frame getestet. Die einzig richtige Antwort: Rueckzug mit Wuerde. Kein Erklaeren, kein Rechtfertigen.'};
+  }
+
+  if(flaky){
+    // Iron Rule #3: Any pursuit must be on your terms
+    parts.push('Kein Stress.');
+    parts.push('');
+    parts.push('Ich hab diese Woche eh einiges vor. Wenn du Zeit hast, meld dich. Wenn nicht — auch gut.');
+    return{main:parts.join('\n'),followUp:'[KEIN FOLLOW-UP. Wer "vielleicht" sagt, sagt nein. Naechste.]',frame:'IRON RULE #3 — Immer zu deinen Bedingungen. "Vielleicht" ist ein Nein. Abundance Mentality: Du hast Optionen. Zeig das durch Gleichgueltigkeit, nicht durch Worte.'};
+  }
+
+  if(emotional){
+    // Don't mirror emotion. Stay grounded.
+    parts.push('Ich hoere dich.');
+    parts.push('');
+    parts.push('Aber ich sage dir was — Gefuehle sind Momentaufnahmen. Was zaehlt ist, was du TUST. Nicht was du fuehlst.');
+    parts.push('');
+    parts.push('Was willst du konkret? Nicht was du fuehlst — was du WILLST.');
+    return{main:parts.join('\n'),followUp:'[Warte 48h. Wenn sie schreibt: kurz, warm, aber nicht emotional. Frame halten.]',frame:'ROLLO RULE: Emotionale Kongruenz ist eine Falle. Wenn du emotional reagierst, verlierst du den Frame. Bleib rational. Sei der Fels, nicht die Welle.'};
+  }
+
+  if(testing){
+    // Shit test / fitness test
+    parts.push('Interessante Frage.');
+    parts.push('');
+    if(lt.includes('wirklich')||lt.includes('ernst')){
+      parts.push('Du kennst mich. Ich sage was ich meine. Und ich meine was ich sage.');
+    }else{
+      parts.push('Aber die bessere Frage waere: Was denkst DU? Ich bin nicht hier um dich zu ueberzeugen.');
+    }
+    return{main:parts.join('\n'),followUp:'[Kein Follow-Up nach Shit-Tests. Bestanden = Anziehung steigt. Durchgefallen = Attraction sinkt.]',frame:'SHIT TEST ERKANNT. Rollo: "Frauen testen deinen Frame unbewusst. Die richtige Antwort ist nie Erklaerung. Sondern: Amused Mastery oder Agree & Amplify."'};
+  }
+
+  if(interested){
+    // IOI (Indicator of Interest) — but don't overinvest
+    parts.push('Gut.');
+    parts.push('');
+    if(lt.includes('wann')||lt.includes('wo')){
+      parts.push('Donnerstag, 19 Uhr. Ich schick dir die Location.');
+    }else{
+      parts.push('Ich hab '+['Donnerstag','Freitag','Samstag'][Math.floor(Math.random()*3)]+' was frei. Passt dir das?');
+    }
+    return{main:parts.join('\n'),followUp:'[Wenn keine Antwort in 24h: Einmal nachfragen, dann next. "Hey, brauch ne Antwort bis heute Abend — sonst verplan ich den Abend anders."]',frame:'IOI ERKANNT. Rollo: "Setze den Termin. Sei direkt. Keine Optionen geben — du gibst den Rahmen vor. Wer fragt hat den Frame."'};
+  }
+
+  if(short){
+    // Low effort message — match energy or less
+    parts.push('.');
+    return{main:'👍',followUp:'[Match die Energie. Kurze Antwort = kurze Antwort. Investiere nie mehr als sie.]',frame:'LOW EFFORT erkannt. Iron Rule #4: "Never invest more than she does." Ein Emoji oder ein Wort. Mehr nicht. Wer mehr investiert, verliert.'};
+  }
+
+  // Default: Outcome Independence
+  if(question){
+    parts.push('Gute Frage.');
+    parts.push('');
+    parts.push('Aber ich geb dir keine Antwort die du hoeren willst. Ich geb dir die Wahrheit.');
+    parts.push('');
+    parts.push('Lass uns das bei nem Kaffee besprechen. Face to face. Nicht ueber Text.');
+  }else{
+    parts.push('Verstehe.');
+    parts.push('');
+    parts.push('Ich sag dir was ich denke, wenn wir uns sehen. Manche Dinge gehoeren nicht in eine Textnachricht.');
+  }
+
+  return{main:parts.join('\n'),followUp:'[48h Regel. Nicht vorher schreiben. Wenn sie nicht schreibt — hat sie sich disqualifiziert. Naechste.]',frame:'OUTCOME INDEPENDENCE. Rollo: "Der Mann der bereit ist wegzugehen, hat die meiste Macht." Zeig durch dein Verhalten, nicht durch Worte.'};
+}
+
 // ─── VIEWS ───
 function renderDashboard(){
-  const patients=getPatients();
-  let cards='';
-  if(patients.length){
-    cards=patients.map(p=>{
-      const uploads=p.uploads||[];
+  const all=getPatients();
+  const patients=all.filter(p=>p.type!=='rollo');
+  const contacts=all.filter(p=>p.type==='rollo');
+
+  function makeCards(list){
+    if(!list.length) return '<div class="card card-static" style="text-align:center;padding:24px"><p style="color:var(--dim)">Noch keine Eintraege.</p></div>';
+    return list.map(p=>{
+      const uploads=p.uploads||[];const screenshots=p.screenshots||[];
       const lastDate=uploads.length?uploads[uploads.length-1].date:'—';
-      return '<div class="card p-card" onclick="openPatient(\''+p.id+'\')"><div><div class="p-name">'+esc(p.name)+'</div><div class="p-meta">Letzter Upload: '+lastDate+'</div></div><div class="p-count">'+uploads.length+'</div></div>';
+      const badge=p.type==='rollo'?'<span class="type-badge type-rollo">ROLLO</span>':'<span class="type-badge type-voss">VOSS</span>';
+      return '<div class="card p-card" onclick="openPatient(\''+p.id+'\')"><div><div class="p-name">'+esc(p.name)+badge+'</div><div class="p-meta">Uploads: '+uploads.length+' · Screenshots: '+screenshots.length+' · Letzter: '+lastDate+'</div></div><div class="p-count">'+uploads.length+'</div></div>';
     }).join('');
-  }else{
-    cards='<div class="card card-static" style="text-align:center;padding:40px"><p style="color:var(--dim)">Noch keine Patienten. Lege den ersten an.</p></div>';
   }
-  app.innerHTML='<h1>Patienten-Akten</h1><div class="sub">CHRIS VOSS COMMAND CENTER</div>'+cards+'<div class="hr"></div><h2>Neuer Patient</h2><div class="card card-static"><label>Patientenname</label><input type="text" id="new-name" placeholder="z.B. Bettina Breiteneder"><label style="margin-top:12px">Dein Name im Chat</label><input type="text" id="my-name" placeholder="z.B. THETOYSAREOUT oder Zeis" value="'+(localStorage.getItem('voss_my_name')||'')+'"><button class="btn btn-primary" onclick="addPatient()">PATIENT ANLEGEN</button></div>';
+
+  app.innerHTML='<h1>Command Center</h1><div class="sub">PATIENTEN = CHRIS VOSS · KONTAKTE = ROLLO TOMASSI</div>'
+    +'<h2 style="color:var(--cyan)">Patienten (Chris Voss)</h2>'+makeCards(patients)
+    +'<h2 style="color:var(--pink)">Kontakte (Rollo Tomassi)</h2>'+makeCards(contacts)
+    +'<div class="hr"></div><h2>Neue Akte anlegen</h2><div class="card card-static">'
+    +'<label>Name</label><input type="text" id="new-name" placeholder="z.B. Bettina Breiteneder">'
+    +'<label style="margin-top:12px">Dein Name im Chat</label><input type="text" id="my-name" placeholder="z.B. THETOYSAREOUT oder Zeis" value="'+(localStorage.getItem('voss_my_name')||'')+'">'
+    +'<label style="margin-top:12px">Typ</label><div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-sm btn-primary" id="type-voss-btn" onclick="setType(\'voss\')" style="flex:1">PATIENT (Voss)</button><button class="btn btn-sm btn-outline" id="type-rollo-btn" onclick="setType(\'rollo\')" style="flex:1">KONTAKT (Rollo)</button></div>'
+    +'<button class="btn btn-primary" onclick="addPatient()">AKTE ANLEGEN</button></div>';
 }
+let newType='voss';
+window.setType=function(t){
+  newType=t;
+  const vb=document.getElementById('type-voss-btn'),rb=document.getElementById('type-rollo-btn');
+  if(t==='voss'){vb.className='btn btn-sm btn-primary';rb.className='btn btn-sm btn-outline'}
+  else{rb.className='btn btn-sm btn-primary';vb.className='btn btn-sm btn-outline';rb.style.background='linear-gradient(135deg,var(--pink),var(--purple))'}
+};
 window.openPatient=function(id){renderPatientView(id)};
 
 function renderPatientView(id){
@@ -219,11 +343,19 @@ function renderPatientView(id){
       return '<div class="chat-bubble '+(isMe?'chat-t':'chat-p')+'">'+esc(m.text)+'<div class="chat-ts">'+esc(m.sender)+' — '+esc(m.ts)+'</div></div>';
     }).join('');
 
-    // Generate Voss Response
-    const voss=generateVossResponse(p.lastMessages,p.name,myName,uploads);
-    vossHTML='<h2 style="color:var(--green)">CHRIS VOSS ANTWORTET</h2><div class="voss-msg"><div class="voss-label">DEINE NAECHSTE NACHRICHT — 1:1 SENDEN</div><pre id="voss-main">'+esc(voss.main)+'</pre><button class="copy-btn" onclick="copyText(\'voss-main\')">KOPIEREN</button></div>';
-    vossHTML+='<h2 style="color:var(--gold)">FOLLOW-UP (24h keine Antwort)</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">FOLLOW-UP</div><pre id="voss-follow">'+esc(voss.followUp)+'</pre><button class="copy-btn" onclick="copyText(\'voss-follow\')">KOPIEREN</button></div>';
-    vossHTML+='<h2 style="color:var(--gold)">PREIS-GESPRAECH</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">PREIS SCRIPT</div><pre id="voss-price">'+esc(voss.price)+'</pre><button class="copy-btn" onclick="copyText(\'voss-price\')">KOPIEREN</button></div>';
+    if(p.type==='rollo'){
+      // ROLLO TOMASSI MODE
+      const rollo=generateRolloResponse(p.lastMessages,p.name,myName);
+      vossHTML='<h2 style="color:var(--pink)">ROLLO TOMASSI ANTWORTET</h2><div class="rollo-msg"><div class="rollo-label">DEINE NAECHSTE NACHRICHT — 1:1 SENDEN</div><pre id="voss-main">'+esc(rollo.main)+'</pre><button class="copy-btn" onclick="copyText(\'voss-main\')">KOPIEREN</button></div>';
+      vossHTML+='<h2 style="color:var(--pink)">FOLLOW-UP STRATEGIE</h2><div class="rollo-msg"><div class="rollo-label">FOLLOW-UP REGEL</div><pre id="voss-follow">'+esc(rollo.followUp)+'</pre></div>';
+      vossHTML+='<h2 style="color:var(--pink)">FRAME-ANALYSE</h2><div class="rollo-msg"><div class="rollo-label">IRON RULE</div><pre id="voss-frame">'+esc(rollo.frame)+'</pre></div>';
+    }else{
+      // CHRIS VOSS MODE
+      const voss=generateVossResponse(p.lastMessages,p.name,myName,uploads);
+      vossHTML='<h2 style="color:var(--green)">CHRIS VOSS ANTWORTET</h2><div class="voss-msg"><div class="voss-label">DEINE NAECHSTE NACHRICHT — 1:1 SENDEN</div><pre id="voss-main">'+esc(voss.main)+'</pre><button class="copy-btn" onclick="copyText(\'voss-main\')">KOPIEREN</button></div>';
+      vossHTML+='<h2 style="color:var(--gold)">FOLLOW-UP (24h keine Antwort)</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">FOLLOW-UP</div><pre id="voss-follow">'+esc(voss.followUp)+'</pre><button class="copy-btn" onclick="copyText(\'voss-follow\')">KOPIEREN</button></div>';
+      vossHTML+='<h2 style="color:var(--gold)">PREIS-GESPRAECH</h2><div class="voss-msg" style="border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.03)"><div class="voss-label" style="color:var(--gold)">PREIS SCRIPT</div><pre id="voss-price">'+esc(voss.price)+'</pre><button class="copy-btn" onclick="copyText(\'voss-price\')">KOPIEREN</button></div>';
+    }
   }
 
   // Upload history
@@ -232,14 +364,74 @@ function renderPatientView(id){
     histHTML='<h2>Upload-Verlauf</h2>'+uploads.map((u,i)=>'<div class="card card-static" style="padding:12px 16px;cursor:default"><div style="display:flex;justify-content:space-between"><span style="font-size:12px">'+esc(u.date)+'</span><span style="font-size:11px;color:var(--dim)">'+u.msgCount+' Nachrichten</span></div></div>').join('');
   }
 
-  app.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px"><span class="back" onclick="renderDashboard()">← ZURUECK</span><h1 style="margin:0">'+esc(p.name)+'</h1></div>'
-    +'<div class="card card-static"><label>Neuen Chat-Verlauf hochladen (.txt / .zip)</label><div class="file-drop" id="file-drop"><div style="font-size:28px;margin-bottom:8px">📄</div><div style="font-size:11px;color:var(--dim)">Datei ablegen oder klicken</div><div class="fn" id="fn"></div><input type="file" id="fi" accept=".txt,.csv,.text,.zip"></div><button class="btn btn-green" id="upload-btn" disabled onclick="processUpload(\''+id+'\')">CHAT ANALYSIEREN — VOSS ANTWORTET</button></div>'
-    +vossHTML+chatHTML+'<div class="hr"></div>'+histHTML
-    +'<div class="hr"></div><button class="btn btn-outline" onclick="if(confirm(\'Patient loeschen?\'))deletePatient(\''+id+'\')">PATIENT LOESCHEN</button>';
+  const typeBadge=p.type==='rollo'?'<span class="type-badge type-rollo">ROLLO</span>':'<span class="type-badge type-voss">VOSS</span>';
+  const analyzeLabel=p.type==='rollo'?'ROLLO ANTWORTET':'VOSS ANTWORTET';
+
+  // Screenshots gallery
+  let screenshotHTML='';
+  const screenshots=p.screenshots||[];
+  if(screenshots.length){
+    screenshotHTML='<h2>Screenshots ('+screenshots.length+')</h2><div class="screenshots">'+screenshots.map((s,i)=>'<img src="'+s+'" onclick="showImg(\''+s.replace(/'/g,"\\'")+'\')" alt="Screenshot '+(i+1)+'">').join('')+'</div>';
+  }
+
+  app.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px"><span class="back" onclick="renderDashboard()">← ZURUECK</span><h1 style="margin:0">'+esc(p.name)+typeBadge+'</h1></div>'
+    +'<div class="card card-static"><label>Chat-Verlauf hochladen (.txt / .zip)</label><div class="file-drop" id="file-drop"><div style="font-size:28px;margin-bottom:8px">📄</div><div style="font-size:11px;color:var(--dim)">Datei ablegen oder klicken</div><div class="fn" id="fn"></div><input type="file" id="fi" accept=".txt,.csv,.text,.zip"></div><button class="btn btn-green" id="upload-btn" disabled onclick="processUpload(\''+id+'\')">ANALYSIEREN — '+analyzeLabel+'</button></div>'
+    +'<div class="card card-static"><label>Screenshots hochladen (Bilder)</label><div class="file-drop" id="img-drop"><div style="font-size:28px;margin-bottom:8px">📸</div><div style="font-size:11px;color:var(--dim)">Bilder ablegen oder klicken (mehrere moeglich)</div><input type="file" id="img-input" accept="image/*" multiple></div></div>'
+    +vossHTML+chatHTML+screenshotHTML+'<div class="hr"></div>'+histHTML
+    +'<div class="hr"></div><button class="btn btn-outline" onclick="if(confirm(\'Akte loeschen?\'))deletePatient(\''+id+'\')">AKTE LOESCHEN</button>';
 
   // File handling
   setupFileHandling(id);
+  // Screenshot handling
+  const imgDrop=$('img-drop'),imgInput=$('img-input');
+  if(imgDrop){
+    imgDrop.addEventListener('click',()=>imgInput.click());
+    imgDrop.addEventListener('dragover',e=>{e.preventDefault();imgDrop.classList.add('dragover')});
+    imgDrop.addEventListener('dragleave',()=>imgDrop.classList.remove('dragover'));
+    imgDrop.addEventListener('drop',e=>{e.preventDefault();imgDrop.classList.remove('dragover');handleImages(e.dataTransfer.files,id)});
+    imgInput.addEventListener('change',()=>handleImages(imgInput.files,id));
+  }
 }
+
+function handleImages(files,patientId){
+  Array.from(files).forEach(file=>{
+    if(!file.type.startsWith('image/'))return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      updatePatient(patientId,p=>{
+        if(!p.screenshots)p.screenshots=[];
+        // Limit to ~50 screenshots to avoid localStorage overflow
+        if(p.screenshots.length>=50){p.screenshots.shift()}
+        p.screenshots.push(e.target.result);
+      });
+      renderPatientView(patientId);
+    };
+    // Compress: resize to max 800px wide
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const maxW=800;const scale=Math.min(1,maxW/img.width);
+      canvas.width=img.width*scale;canvas.height=img.height*scale;
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      const compressed=canvas.toDataURL('image/jpeg',0.7);
+      updatePatient(patientId,p=>{
+        if(!p.screenshots)p.screenshots=[];
+        if(p.screenshots.length>=50)p.screenshots.shift();
+        p.screenshots.push(compressed);
+      });
+      renderPatientView(patientId);
+    };
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+window.showImg=function(src){
+  const modal=document.createElement('div');
+  modal.className='img-modal';
+  modal.innerHTML='<img src="'+src+'">';
+  modal.onclick=()=>modal.remove();
+  document.body.appendChild(modal);
+};
 
 let pendingChat='';
 function setupFileHandling(patientId){
@@ -285,7 +477,7 @@ window.addPatient=function(){
   if(myName)localStorage.setItem('voss_my_name',myName);
   const ps=getPatients();
   const id='p_'+Date.now();
-  ps.push({id,name,myName,uploads:[],lastMessages:[]});
+  ps.push({id,name,myName,type:newType,uploads:[],lastMessages:[],screenshots:[]});
   savePatients(ps);
   renderDashboard();
 };
