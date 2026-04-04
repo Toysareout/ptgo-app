@@ -103,21 +103,16 @@ textarea{resize:vertical;min-height:60px}
       </div>
       <label>Dein Name im Chat</label>
       <input type="text" id="therapist-name" placeholder="z.B. Sascha" style="margin-bottom:16px">
-      <label>Kontext (optional)</label>
-      <textarea id="context" rows="2" placeholder="z.B. Patient mit chronischen Schmerzen..."></textarea>
       <button class="btn btn-primary" id="start-btn" disabled>ANALYSE STARTEN</button>
     </div>
   </div>
-  <div class="loading" id="loading">
-    <div class="spinner"></div>
-    <div class="phase" id="loading-phase">Chat wird geparst...</div>
-  </div>
+  <div class="loading" id="loading"><div class="spinner"></div><div class="phase" id="loading-phase">Analyse laeuft...</div></div>
   <div class="results" id="results"></div>
 </div>
 <script>
 (function(){
   let chatText='',fileName='';
-  const fileDrop=document.getElementById('file-drop'),fileInput=document.getElementById('file-input'),fileNameEl=document.getElementById('filename'),nameInput=document.getElementById('therapist-name'),contextInput=document.getElementById('context'),startBtn=document.getElementById('start-btn'),uploadSection=document.getElementById('upload-section'),loadingEl=document.getElementById('loading'),loadingPhase=document.getElementById('loading-phase'),resultsEl=document.getElementById('results');
+  const fileDrop=document.getElementById('file-drop'),fileInput=document.getElementById('file-input'),fileNameEl=document.getElementById('filename'),nameInput=document.getElementById('therapist-name'),startBtn=document.getElementById('start-btn'),uploadSection=document.getElementById('upload-section'),loadingEl=document.getElementById('loading'),loadingPhase=document.getElementById('loading-phase'),resultsEl=document.getElementById('results');
 
   fileDrop.addEventListener('click',()=>fileInput.click());
   fileDrop.addEventListener('dragover',e=>{e.preventDefault();fileDrop.classList.add('dragover')});
@@ -134,46 +129,169 @@ textarea{resize:vertical;min-height:60px}
   }
   function checkReady(){startBtn.disabled=!(chatText&&nameInput.value.trim())}
 
+  // ─── WhatsApp Parser ───
   function parseWhatsApp(raw){
     const pats=[/^\[(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s];
     const msgs=[];let cur=null;
     for(const line of raw.split('\n')){let ok=false;for(const p of pats){const m=line.trim().match(p);if(m){if(cur)msgs.push(cur);cur={timestamp:m[1].trim(),sender:m[2].trim(),text:m[3].trim()};ok=true;break}}if(!ok&&cur&&line.trim())cur.text+='\n'+line.trim()}
     if(cur)msgs.push(cur);return msgs;
   }
-  function buildStats(msgs){const s={};let tl=0;for(const m of msgs){if(!s[m.sender])s[m.sender]={count:0,chars:0,questions:0};s[m.sender].count++;s[m.sender].chars+=m.text.length;if(m.text.includes('?'))s[m.sender].questions++;tl+=m.text.length}return{total:msgs.length,senders:s,avgLength:Math.round(tl/Math.max(msgs.length,1))}}
 
-  async function callServer(body){
-    const res=await fetch('/api/kommunikation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!res.ok)throw new Error('Server '+res.status);
-    return res.json();
+  // ─── CHRIS VOSS ENGINE — 100% Client-Side ───
+  function analyzeVoss(msgs, therapistName){
+    const tn=therapistName.toLowerCase();
+    const tMsgs=msgs.filter(m=>m.sender.toLowerCase().includes(tn));
+    const pMsgs=msgs.filter(m=>!m.sender.toLowerCase().includes(tn));
+    const tText=tMsgs.map(m=>m.text.toLowerCase()).join(' ');
+    const tTexts=tMsgs.map(m=>m.text.toLowerCase());
+    const pTexts=pMsgs.map(m=>m.text.toLowerCase());
+    const tCount=tMsgs.length||1;
+
+    // 1. TAKTISCHE EMPATHIE — Verstaendnis zeigen
+    const empathyWords=['verstehe','nachvollziehen','kann mir vorstellen','das klingt','hoert sich an','das muss','schwer','nicht einfach','belastend','anstrengend','herausfordernd','fuer dich','bei dir','nachvollziehbar','verstaendlich','total klar','absolut','ganz normal','wichtig'];
+    let empathyHits=0;
+    tTexts.forEach(t=>{empathyWords.forEach(w=>{if(t.includes(w))empathyHits++})});
+    const empathyScore=Math.min(100,Math.round((empathyHits/tCount)*35+15));
+    const empathyExamples=[];
+    tMsgs.forEach(m=>{empathyWords.forEach(w=>{if(m.text.toLowerCase().includes(w)&&empathyExamples.length<2)empathyExamples.push('"'+m.text.substring(0,80)+'..."')})});
+
+    // 2. KALIBRIERTE FRAGEN — Wie/Was statt Ja/Nein
+    const calibrated=tTexts.filter(t=>t.match(/^(wie|was|welche|woran|womit|wodurch|woher|wozu|inwiefern)\s/)||t.includes('wie gehst du')||t.includes('was denkst')||t.includes('wie fuehlt')||t.includes('was wuerdest')).length;
+    const closedQ=tTexts.filter(t=>t.match(/^(hast du|bist du|kannst du|willst du|muss|soll ich|ist das|war das|geht es)\s/)).length;
+    const totalQ=tTexts.filter(t=>t.includes('?')).length||1;
+    const calibratedRatio=calibrated/totalQ;
+    const calibratedScore=Math.min(100,Math.round(calibratedRatio*100+calibrated*5));
+
+    // 3. SPIEGELUNG — Woerter des Patienten wiederholen
+    let mirrorHits=0;
+    const patientKeywords=new Set();
+    pTexts.forEach(t=>{t.split(/\s+/).filter(w=>w.length>4).forEach(w=>patientKeywords.add(w))});
+    tTexts.forEach(t=>{patientKeywords.forEach(kw=>{if(t.includes(kw))mirrorHits++})});
+    const mirrorScore=Math.min(100,Math.round((mirrorHits/tCount)*8+10));
+
+    // 4. LABELING — Emotionen benennen
+    const labelPatterns=['es scheint','es klingt','das klingt nach','es wirkt','ich hoere','ich spuere','das hoert sich an','du wirkst','du scheinst','du klingst','scheint so','man merkt','ich merke'];
+    let labelHits=0;
+    tTexts.forEach(t=>{labelPatterns.forEach(p=>{if(t.includes(p))labelHits++})});
+    const labelScore=Math.min(100,Math.round(labelHits/tCount*80+5));
+
+    // 5. AKKUSATIONS-AUDIT — Negative Erwartungen vorwegnehmen
+    const auditPatterns=['das mag jetzt','vielleicht klingt das','ich weiss das ist','das ist vielleicht','entschuldige','tut mir leid','ich weiss nicht ob','das mag seltsam','nicht boese sein','nicht falsch verstehen','wahrscheinlich nervig','darf ich ehrlich'];
+    let auditHits=0;
+    tTexts.forEach(t=>{auditPatterns.forEach(p=>{if(t.includes(p))auditHits++})});
+    const auditScore=Math.min(100,Math.round(auditHits/tCount*90+5));
+
+    // 6. NEIN-ORIENTIERTE FRAGEN
+    const noPatterns=['waere es falsch','waere es schlimm','ist es laecherlich','hast du aufgegeben','waere es zu viel','stoert es dich','ist es unmoeglich','wuerdest du dagegen'];
+    let noHits=0;
+    tTexts.forEach(t=>{noPatterns.forEach(p=>{if(t.includes(p))noHits++})});
+    const noScore=Math.min(100,Math.round(noHits/tCount*100+3));
+
+    // 7. LATE-NIGHT-DJ — Ruhiger Ton
+    const exclamations=tTexts.filter(t=>t.includes('!')).length;
+    const caps=tTexts.filter(t=>(t.match(/[A-Z]{3,}/g)||[]).length>0).length;
+    const avgLen=tText.length/tCount;
+    const calmRatio=1-(exclamations+caps)/(tCount*2);
+    const djScore=Math.min(100,Math.round(calmRatio*50+Math.min(avgLen/3,30)+10));
+
+    // 8. BLACK SWANS — Tiefe Fragen, unerwartete Erkenntnisse
+    const deepPatterns=['erzaehl mir mehr','was steckt dahinter','was meinst du damit','interessant','spannend','das wusste ich nicht','aha','wirklich','im ernst','wie kam es dazu','was hat sich veraendert','seit wann','gibt es noch etwas','was noch'];
+    let deepHits=0;
+    tTexts.forEach(t=>{deepPatterns.forEach(p=>{if(t.includes(p))deepHits++})});
+    const bsScore=Math.min(100,Math.round(deepHits/tCount*60+8));
+
+    const scores={tactical_empathy:empathyScore,calibrated_questions:calibratedScore,mirroring:mirrorScore,labeling:labelScore,accusation_audit:auditScore,no_oriented:noScore,late_night_dj:djScore,black_swan:bsScore};
+    const overall=Math.round(Object.values(scores).reduce((a,b)=>a+b,0)/8);
+
+    // Generate insights
+    const sorted=Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+    const dimLabels={tactical_empathy:'Taktische Empathie',calibrated_questions:'Kalibrierte Fragen',mirroring:'Spiegelung',labeling:'Labeling',accusation_audit:'Akkusations-Audit',no_oriented:'Nein-orientierte Fragen',late_night_dj:'Late-Night-DJ Stimme',black_swan:'Black Swans'};
+
+    const goodTips={tactical_empathy:'Du zeigst Verstaendnis durch Worte wie "verstehe", "nachvollziehbar" — das baut Vertrauen auf.',calibrated_questions:'Du nutzt offene Wie/Was-Fragen ('+calibrated+' gefunden) — das aktiviert den Patienten zum Nachdenken.',mirroring:'Du greifst '+mirrorHits+' Mal Begriffe des Patienten auf — das zeigt aktives Zuhoeren.',labeling:'Du benennst Emotionen ('+labelHits+' Mal) — das validiert den Patienten.',accusation_audit:'Du nimmst moegliche Bedenken vorweg — das entschaerft Widerstand.',no_oriented:'Du nutzt Nein-orientierte Fragen — das gibt dem Patienten Kontrolle.',late_night_dj:'Dein Schreibton ist ruhig und kontrolliert — wenig Ausrufezeichen, angemessene Laenge.',black_swan:'Du stellst tiefgehende Fragen und zeigst echte Neugier.'};
+
+    const improveTips={tactical_empathy:'Nutze mehr "Ich kann mir vorstellen, dass..." und "Das muss ... sein" — zeige dass du die WELT des Patienten betrittst, nicht nur seine Worte hoerst.',calibrated_questions:'Ersetze geschlossene Fragen ("Geht es dir besser?") durch "Wie hat sich das fuer dich veraendert?" — der Patient denkt tiefer nach.',mirroring:'Wiederhole die letzten 2-3 Worte des Patienten als Frage. Patient: "Ich kann nachts nicht schlafen." Du: "Nicht schlafen?" — das oeffnet.',labeling:'Starte Saetze mit "Es klingt so als ob..." oder "Es scheint als wuerdest du..." — das zeigt emotionale Intelligenz auf Elitelevel.',accusation_audit:'Beginne schwierige Themen mit: "Das klingt jetzt vielleicht hart, aber..." oder "Du wirst vielleicht denken, dass ich uebertreibe..." — entwaffnet sofort.',no_oriented:'Statt "Moechtest du darueber reden?" frage "Waere es schlimm, wenn wir kurz darueber sprechen?" — "Nein" = Zustimmung.',late_night_dj:'Verlaengere deine Nachrichten leicht. Nutze Pausen (...). Weniger Emojis. Der Ton soll wie ein ruhiger Radiomodrator um 2 Uhr nachts klingen.',black_swan:'Frage oefter "Was hat sich seit unserem letzten Gespraech veraendert?" und "Gibt es etwas, das du noch nie jemandem erzaehlt hast?" — dort liegen die Black Swans.'};
+
+    const eliteTips={tactical_empathy:'ELITE: "Ich moechte sicherstellen, dass ich das richtig verstehe — du sagst nicht nur, dass es weh tut, sondern dass sich dein ganzes Leben drum dreht. Stimmt das?"',calibrated_questions:'ELITE: "Was muesste passieren, damit du sagst: Ja, das war der Durchbruch?" — Diese eine Frage veraendert die gesamte Therapiedynamik.',mirroring:'ELITE: Spiegele nicht nur Worte, sondern die EMOTION. Patient sagt "Es ist halt schwer." Du: "Schwer... (Pause) ...nicht schwer wie anstrengend, sondern schwer wie eine Last, die niemand sieht?"',labeling:'ELITE: "Es klingt so, als haettest du schon laengst aufgegeben, das jemandem zu erklaeren — weil sich eh nie jemand die Muehe macht, wirklich zuzuhoeren."',accusation_audit:'ELITE: "Du wirst jetzt vielleicht denken, dass ich wie jeder andere Therapeut bin, der Ratschlaege gibt die nichts bringen. Und vielleicht hast du damit sogar recht gehabt — bisher."',no_oriented:'ELITE: "Haben Sie das Gefuehl, dass es sinnlos ist, noch eine Methode auszuprobieren?" — Ein "Nein" hier bedeutet: sie sind bereit.',late_night_dj:'ELITE: Schreibe so, als wuerdest du jemandem um 2 Uhr nachts eine Nachricht schicken, die ihn nicht weckt, aber morgens das Erste ist, was er liest — und laechelt.',black_swan:'ELITE: "Was ist die eine Sache, die du niemandem sagst — nicht weil es ein Geheimnis ist, sondern weil du glaubst, dass es niemand verstehen wuerde?"'};
+
+    const dims={};
+    for(const[k,s]of Object.entries(scores)){
+      dims[k]={score:s,good:goodTips[k],improve:improveTips[k],elite:eliteTips[k]};
+    }
+
+    const top3=sorted.slice(0,3).map(([k])=>dimLabels[k]+' ('+scores[k]+'/100): '+goodTips[k]);
+    const bottom3=sorted.slice(-3).reverse().map(([k])=>dimLabels[k]+' ('+scores[k]+'/100): '+improveTips[k]);
+
+    const scripts=[
+      '"Ich moechte sicherstellen, dass ich dich richtig verstehe..."',
+      '"Es klingt so, als ob das fuer dich mehr bedeutet, als du sagst..."',
+      '"Was muesste passieren, damit du sagst: Jetzt hat sich etwas veraendert?"',
+      '"Waere es schlimm, wenn wir uns das mal genauer anschauen?"',
+      '"Erzaehl mir mehr darueber — was steckt da noch dahinter?"'
+    ];
+
+    // Pricing insight
+    const priceInsight=overall>=60?
+      'Deine Kommunikation zeigt bereits therapeutischen Mehrwert. Positioniere dich nicht ueber Stunden, sondern ueber Transformation. Ein Score von '+overall+' zeigt solide Basis — mit gezieltem Voss-Training kannst du Premium-Preise rechtfertigen, weil Patienten FUEHLEN, dass du sie verstehst wie kein anderer.':
+      'Fokus auf die schwachen Dimensionen. Jede Verbesserung in Labeling und kalibrierten Fragen erhoeht den wahrgenommenen Wert deiner Therapie SOFORT. Patienten zahlen nicht fuer Zeit — sie zahlen dafuer, sich verstanden zu fuehlen.';
+
+    const uniqueness=tCount>pMsgs.length?
+      'Du schreibst mehr als dein Patient ('+tCount+' vs '+pMsgs.length+') — das zeigt Engagement, aber Elite-Therapeuten lassen den Patienten 60-70% des Gespraechs fuehren. Weniger schreiben, tiefere Fragen stellen.':
+      'Dein Patient schreibt mehr als du ('+pMsgs.length+' vs '+tCount+') — gutes Zeichen! Du gibst Raum. Jetzt die Qualitaet deiner Antworten auf Elite-Level bringen.';
+
+    return{overall_score:overall,dimensions:dims,top_strengths:top3,top_improvements:bottom3,pricing_insight:priceInsight,uniqueness:uniqueness,concrete_scripts:scripts};
   }
 
-  startBtn.addEventListener('click',async()=>{
-    const tn=nameInput.value.trim(),ctx=contextInput.value.trim();
+  // ─── MUSK CHECK — Client-Side ───
+  function muskCheck(voss,msgCount,tCount,pCount){
+    const s=voss.overall_score;
+    const ratio=tCount/(pCount||1);
+    const invest=s>=55;
+
+    return{
+      first_principles:'Kommunikation ist kein Skill-Problem, sondern ein Systemproblem. Du optimierst einzelne Gespraeche — du solltest ein SYSTEM bauen, das jeden Patientenkontakt automatisch besser macht. '+msgCount+' Nachrichten analysiert — jede einzelne ist ein Datenpunkt, den du nicht nutzt.',
+      ten_x_thinking:'10% besser = bessere Fragen stellen. 10x besser = ein System wo der Patient sich SELBST therapiert und du nur noch den Rahmen haeltst. Dein Voss-Score ist '+s+'/100 — bei 90+ wuerdest du Patienten haben, die DICH weiterempfehlen ohne dass du fragst.',
+      automation:'Diese Analyse laeuft bereits automatisch. Naechster Schritt: Automatische Erinnerungen mit personalisierten Voss-Formulierungen. Jede WhatsApp-Nachricht sollte durch einen "Voss-Filter" laufen bevor du sie sendest.',
+      scale:'1:1 Therapie skaliert nicht. Gruppen-Sessions mit dem gleichen Empathie-Level. Video-Kurse mit den Elite-Formulierungen. Ein Bot der die Basis-Empathie uebernimmt, du machst nur noch die Black-Swan-Moments.',
+      pricing:ratio>1.2?'Du schreibst zu viel (Ratio '+ratio.toFixed(1)+':1). Weniger schreiben = mehr Wert pro Nachricht = hoehere Preise. Wenn jede deiner Nachrichten Gold ist, kannst du 3x mehr verlangen.':'Gute Message-Ratio ('+ratio.toFixed(1)+':1). Deine Zeit pro Nachricht ist wertvoll. Preis an Ergebnis koppeln, nicht an Stunden.',
+      speed:'Wie schnell antwortest du? Zu schnell = kein wahrgenommener Wert. Zu langsam = Patient fuehlt sich ignoriert. Sweet Spot: 2-4 Stunden. Zeigt "Ich denke darueber nach."',
+      killer_feature:'Was fehlt: Ein DASHBOARD das dir nach jeder Session zeigt wo du stehst. Genau das hier — aber nach JEDEM Gespraech automatisch. Plus: Vergleich mit deinem Score von vor 3 Monaten.',
+      final_verdict:invest?'Score '+s+'/100 zeigt Potenzial. Mit gezieltem Training auf den schwachen Dimensionen koenntest du in 90 Tagen bei 80+ sein. Das ist investierbar.':'Score '+s+'/100 ist noch zu niedrig. Aber: Die Tatsache dass du das hier analysierst zeigt Growth Mindset. Fokus auf die Top 3 Verbesserungen, dann reden wir nochmal.',
+      invest:invest,
+      one_line:invest?'Du bist naeher dran als du denkst. Aber "nah dran" zaehlt nicht — Execution zaehlt.':'Noch nicht investierbar, aber das Potenzial ist da. Ship the improvements.'
+    };
+  }
+
+  // ─── Start Analysis ───
+  startBtn.addEventListener('click',()=>{
+    const tn=nameInput.value.trim();
     uploadSection.style.display='none';loadingEl.style.display='block';
-    loadingPhase.textContent='Chat wird geparst...';
-    const msgs=parseWhatsApp(chatText);
-    if(!msgs.length){loadingEl.style.display='none';uploadSection.style.display='block';alert('Keine Nachrichten erkannt.');return}
-    const stats=buildStats(msgs);
-    let excerpt=msgs.slice(-80).map(m=>'['+m.timestamp+'] '+m.sender+': '+m.text).join('\n');
-    if(excerpt.length>6000)excerpt=excerpt.slice(-6000);
+    loadingPhase.textContent='Chat wird analysiert...';
 
-    loadingPhase.textContent='Chris Voss Analyse (8 Dimensionen)...';
-    let voss={};
-    try{voss=await callServer({action:'voss_analysis',chatText:excerpt,therapistName:tn,context:ctx})}catch(e){voss={error:e.message}}
+    setTimeout(()=>{
+      const msgs=parseWhatsApp(chatText);
+      if(!msgs.length){loadingEl.style.display='none';uploadSection.style.display='block';alert('Keine Nachrichten erkannt.');return}
 
-    loadingPhase.textContent='Musk Protocol wird aktiviert...';
-    let musk={};
-    try{musk=await callServer({action:'musk_check',analysisData:voss,messageCount:msgs.length})}catch(e){musk={error:e.message}}
+      const tMsgs=msgs.filter(m=>m.sender.toLowerCase().includes(tn.toLowerCase()));
+      const pMsgs=msgs.filter(m=>!m.sender.toLowerCase().includes(tn.toLowerCase()));
 
-    loadingEl.style.display='none';
-    renderResults(msgs,stats,tn,voss,musk);
+      loadingPhase.textContent='Chris Voss Analyse (8 Dimensionen)...';
+      const voss=analyzeVoss(msgs,tn);
+
+      loadingPhase.textContent='Musk Protocol...';
+      const musk=muskCheck(voss,msgs.length,tMsgs.length,pMsgs.length);
+
+      const senders={};let tl=0;
+      for(const m of msgs){if(!senders[m.sender])senders[m.sender]={count:0,chars:0,questions:0};senders[m.sender].count++;senders[m.sender].chars+=m.text.length;if(m.text.includes('?'))senders[m.sender].questions++;tl+=m.text.length}
+      const stats={total:msgs.length,senders:senders,avgLength:Math.round(tl/Math.max(msgs.length,1))};
+
+      loadingEl.style.display='none';
+      renderResults(msgs,stats,tn,voss,musk);
+    },500);
   });
+  // ─── Render ───
   function renderResults(msgs,stats,therapistName,voss,musk){
     const tn=therapistName.toLowerCase();const score=voss.overall_score||0;
     const scoreColor=score<40?'var(--red)':score<70?'var(--gold)':'var(--green)';
-    let errHTML='';
-    if(voss.error)errHTML='<div class="card" style="border-color:var(--red);margin-bottom:16px"><div style="font-size:11px;color:var(--red);letter-spacing:1px;font-weight:700;margin-bottom:6px">FEHLER</div><p style="color:var(--red);font-size:13px">'+esc(voss.error)+'</p>'+(voss.raw?'<pre style="font-size:11px;color:var(--dim);margin-top:8px;white-space:pre-wrap">'+esc(voss.raw)+'</pre>':'')+'</div>';
     let senderHTML='';
     for(const[name,s]of Object.entries(stats.senders)){const isT=name.toLowerCase().includes(tn);const pct=Math.round(s.count/Math.max(stats.total,1)*100);senderHTML+='<div class="sender-row"><div><span class="sender-name">'+esc(name)+'</span>'+(isT?'<span class="sender-you">DU</span>':'')+'</div><div class="sender-stats">'+s.count+' Nachr. ('+pct+'%) &middot; '+s.questions+' Fragen</div></div>'}
     const dimMeta={tactical_empathy:{label:'Taktische Empathie',desc:'Verstaendnis der Perspektive demonstrieren',color:'var(--cyan)'},calibrated_questions:{label:'Kalibrierte Fragen',desc:'Offene Wie/Was-Fragen statt geschlossener',color:'var(--green)'},mirroring:{label:'Spiegelung',desc:'Schluesselwoerter wiederholen fuer Rapport',color:'var(--purple)'},labeling:{label:'Labeling',desc:'"Es scheint als ob..." Emotionen benennen',color:'var(--pink)'},accusation_audit:{label:'Akkusations-Audit',desc:'Negative Erwartungen vorwegnehmen',color:'var(--gold)'},no_oriented:{label:'Nein-orientierte Fragen',desc:'Fragen wo "Nein" die gewuenschte Antwort ist',color:'var(--cyan)'},late_night_dj:{label:'Late-Night-DJ',desc:'Ruhiger, kontrollierter Ton',color:'var(--green)'},black_swan:{label:'Black Swans',desc:'Versteckte Informationen entdecken',color:'var(--pink)'}};
@@ -181,11 +299,12 @@ textarea{resize:vertical;min-height:60px}
     for(const[key,meta]of Object.entries(dimMeta)){const d=dims[key]||{};const ds=d.score||0;const dc=ds<40?'var(--red)':ds<70?'var(--gold)':'var(--green)';dimsHTML+='<div class="dim-card"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:'+meta.color+';opacity:.5"></div><div class="dim-header"><div class="dim-name">'+meta.label+'</div><div class="dim-score" style="color:'+dc+'">'+ds+'</div></div><div class="dim-bar"><div class="dim-bar-fill" style="width:'+Math.max(ds,2)+'%;background:'+dc+'"></div></div><div class="dim-desc">'+meta.desc+'</div><div class="dim-row"><span class="tag" style="color:var(--green)">GUT</span>'+esc(d.good||'---')+'</div><div class="dim-row"><span class="tag" style="color:var(--gold)">BESSER</span>'+esc(d.improve||'---')+'</div><div class="elite-box"><span class="tag" style="color:var(--purple)">ELITE</span>'+esc(d.elite||'---')+'</div></div>'}
     let strengthsHTML=(voss.top_strengths||[]).map(s=>'<div class="strength-item"><span style="color:var(--green)">&#10003;</span> '+esc(s)+'</div>').join('');
     let improvementsHTML=(voss.top_improvements||[]).map(s=>'<div class="improve-item"><span style="color:var(--gold)">&uarr;</span> '+esc(s)+'</div>').join('');
-    let scriptsHTML=(voss.concrete_scripts||[]).map(s=>'<div class="script-item">"'+esc(s)+'"</div>').join('');
-    let muskHTML='';
-    if(!musk.error&&musk.first_principles){const ic=musk.invest?'var(--green)':'var(--red)';const it=musk.invest?'JA — ICH INVESTIERE':'NEIN — NOCH NICHT';const mk=[['first_principles','FIRST PRINCIPLES'],['ten_x_thinking','10X THINKING'],['automation','AUTOMATION'],['scale','SCALE'],['pricing','PRICING'],['speed','SPEED'],['killer_feature','KILLER FEATURE'],['final_verdict','FINAL VERDICT']];let mr=mk.map(([k,l])=>{const v=musk[k]||'';return v?'<div class="musk-row"><div class="musk-label" style="color:var(--gold)">'+l+'</div><div class="musk-text">'+esc(v)+'</div></div>':''}).join('');muskHTML='<div class="musk-section"><div style="text-align:center;margin-bottom:16px"><div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:3px;margin-bottom:8px">MUSK PROTOCOL</div><h2 style="color:var(--text);font-size:18px;margin:0">Wuerde Elon investieren?</h2></div><div class="musk-verdict"><div class="invest" style="color:'+ic+'">'+it+'</div><div class="quote">"'+esc(musk.one_line||'')+'"</div></div>'+mr+'</div>'}
-    else if(musk.error){muskHTML='<div class="musk-section"><p style="color:var(--red)">Musk-Check: '+esc(musk.error)+'</p></div>'}
-    resultsEl.innerHTML='<h1>Analyse-Ergebnis</h1><div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div>'+errHTML+'<h2>Chat-Statistik</h2><div class="kpi-grid"><div class="kpi"><div class="val">'+stats.total+'</div><div class="lbl">NACHRICHTEN</div></div><div class="kpi"><div class="val">'+Object.keys(stats.senders).length+'</div><div class="lbl">TEILNEHMER</div></div><div class="kpi"><div class="val">'+stats.avgLength+'</div><div class="lbl">AVG ZEICHEN</div></div></div>'+senderHTML+'<div class="hr"></div><div class="score-big"><div class="number" style="color:'+scoreColor+'">'+score+'</div><div class="label">VOSS ELITE SCORE / 100</div></div><div class="hr"></div><h2>8 Dimensionen</h2>'+dimsHTML+'<div class="hr"></div><h2>Top 3 Staerken</h2>'+strengthsHTML+'<div class="hr"></div><h2>Top 3 Verbesserungen</h2>'+improvementsHTML+'<div class="hr"></div><h2>Konkrete Formulierungen</h2>'+scriptsHTML+(voss.pricing_insight?'<div class="hr"></div><h2>Pricing</h2><div class="pricing-box">'+esc(voss.pricing_insight)+'</div>':'')+(voss.uniqueness?'<div class="hr"></div><h2>Einzigartigkeit</h2><div class="uniqueness-box">'+esc(voss.uniqueness)+'</div>':'')+muskHTML+'<div class="hr"></div><div style="text-align:center;margin:24px 0"><button class="btn btn-primary" style="width:auto;display:inline-block;padding:14px 32px" onclick="location.reload()">NEUE ANALYSE</button></div><div style="text-align:center"><a href="/archive" style="font-size:11px;color:var(--dim);letter-spacing:1px">ARCHIVE</a></div>';
+    let scriptsHTML=(voss.concrete_scripts||[]).map(s=>'<div class="script-item">'+esc(s)+'</div>').join('');
+    const ic=musk.invest?'var(--green)':'var(--red)';const it=musk.invest?'JA — ICH INVESTIERE':'NEIN — NOCH NICHT';
+    const mk=[['first_principles','FIRST PRINCIPLES'],['ten_x_thinking','10X THINKING'],['automation','AUTOMATION'],['scale','SCALE'],['pricing','PRICING'],['speed','SPEED'],['killer_feature','KILLER FEATURE'],['final_verdict','FINAL VERDICT']];
+    let mr=mk.map(([k,l])=>{const v=musk[k]||'';return v?'<div class="musk-row"><div class="musk-label" style="color:var(--gold)">'+l+'</div><div class="musk-text">'+esc(v)+'</div></div>':''}).join('');
+    let muskHTML='<div class="musk-section"><div style="text-align:center;margin-bottom:16px"><div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:3px;margin-bottom:8px">MUSK PROTOCOL</div><h2 style="color:var(--text);font-size:18px;margin:0">Wuerde Elon investieren?</h2></div><div class="musk-verdict"><div class="invest" style="color:'+ic+'">'+it+'</div><div class="quote">"'+esc(musk.one_line||'')+'"</div></div>'+mr+'</div>';
+    resultsEl.innerHTML='<h1>Analyse-Ergebnis</h1><div class="subtitle">CHRIS VOSS x ELITE LEVEL x MUSK CHECK</div><h2>Chat-Statistik</h2><div class="kpi-grid"><div class="kpi"><div class="val">'+stats.total+'</div><div class="lbl">NACHRICHTEN</div></div><div class="kpi"><div class="val">'+Object.keys(stats.senders).length+'</div><div class="lbl">TEILNEHMER</div></div><div class="kpi"><div class="val">'+stats.avgLength+'</div><div class="lbl">AVG ZEICHEN</div></div></div>'+senderHTML+'<div class="hr"></div><div class="score-big"><div class="number" style="color:'+scoreColor+'">'+score+'</div><div class="label">VOSS ELITE SCORE / 100</div></div><div class="hr"></div><h2>8 Dimensionen</h2>'+dimsHTML+'<div class="hr"></div><h2>Top 3 Staerken</h2>'+strengthsHTML+'<div class="hr"></div><h2>Top 3 Verbesserungen</h2>'+improvementsHTML+'<div class="hr"></div><h2>Konkrete Formulierungen</h2>'+scriptsHTML+'<div class="hr"></div><h2>Pricing</h2><div class="pricing-box">'+esc(voss.pricing_insight)+'</div><div class="hr"></div><h2>Einzigartigkeit</h2><div class="uniqueness-box">'+esc(voss.uniqueness)+'</div>'+muskHTML+'<div class="hr"></div><div style="text-align:center;margin:24px 0"><button class="btn btn-primary" style="width:auto;display:inline-block;padding:14px 32px" onclick="location.reload()">NEUE ANALYSE</button></div><div style="text-align:center"><a href="/archive" style="font-size:11px;color:var(--dim);letter-spacing:1px">ARCHIVE</a></div>';
     resultsEl.style.display='block';
   }
   function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
