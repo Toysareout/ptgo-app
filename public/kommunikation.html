@@ -196,6 +196,11 @@ function rolloRespond(msgs,name,myName){
   if(testing)return{main:'Interessante Frage.\n\nAber die bessere Frage: Was denkst DU?\n\nIch bin nicht hier um dich zu ueberzeugen.',follow:'[Kein Follow-Up nach Tests. Bestanden = Attraction steigt.]',rule:'SHIT TEST erkannt. Amused Mastery. Nie erklaeren, nie rechtfertigen.'};
   if(interested){const day=['Donnerstag','Freitag','Samstag'][Math.floor(Math.random()*3)];return{main:'Gut.\n\n'+day+', 19 Uhr. Ich schick dir die Location.',follow:'Hey, brauch ne Antwort bis heute Abend — sonst verplan ich anders.',rule:'IOI erkannt. Setze den Termin. Du gibst den Rahmen vor.'};}
   if(short)return{main:'👍',follow:'[Match die Energie. Kurz = kurz. Nie mehr investieren als sie.]',rule:'IRON RULE #4: Never invest more than she does.'};
+  // "Was machst du heute?" etc — casual/fishing
+  if(lt.match(/was machst du|was hast du vor|was geht|was treibst|wie war dein tag|was laeuft/))return{main:'Bin beschaeftigt.\n\nHeute Abend kurz Zeit. Was schwebt dir vor?',follow:'[Kein Follow-Up. Sie hat gefragt — Ball liegt bei ihr.]',rule:'FRAME: Sie sucht deine Aufmerksamkeit. Gib wenig. Sei busy. Kurz antworten, dann SIE muss investieren. Nie mehr als 1 Satz auf Smalltalk.'};
+  // "Was soll das?" — challenged
+  if(lt.match(/was soll das|wie meinst du|versteh ich nicht|haeh|was meinst/))return{main:'Du weisst genau was ich meine.\n\n😏',follow:'[Nicht erklaeren. Nie. Erklaeren = Frame verlieren.]',rule:'SHIT TEST. "Was soll das?" ist ein Test ob du dich rechtfertigst. NIEMALS erklaeren. Amused Mastery: Kurz, mysterioes, leicht amuesiert.'};
+  if(question)return{main:'Gute Frage.\n\nAber nicht fuer WhatsApp. Lass uns das persoenlich klaeren.',follow:'[48h Regel. Wenn sie nicht schreibt — disqualifiziert.]',rule:'FRAME CONTROL: Wichtige Dinge nicht ueber Text. Du bestimmst das Medium. Persoenlich = dein Terrain = dein Frame.'};
   return{main:'Verstehe.\n\nLass uns das bei nem Kaffee besprechen. Nicht ueber Text.',follow:'[48h Regel. Wenn sie nicht schreibt — disqualifiziert.]',rule:'OUTCOME INDEPENDENCE. Der Mann der bereit ist wegzugehen hat die meiste Macht.'};
 }
 // ─── DASHBOARD ───
@@ -271,12 +276,12 @@ function renderFile(id){
   quickHTML+='<button class="btn btn-go" style="font-size:14px;padding:16px;margin-top:8px;background:'+color+'" onclick="quickAdd(\''+id+'\')">→ AGENT '+engine+' ANTWORTET</button>';
   quickHTML+='</div>';
 
-  // Chat history
+  // Chat history — collapsed by default so response stays visible
   let chatHTML='';
   if(a.lastMessages&&a.lastMessages.length){
-    const last=a.lastMessages.slice(-8);
-    chatHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">chat_log</span> <span class="t-dim">(letzte '+last.length+')</span></div></div>';
-    chatHTML+=last.map(m=>{const isMe=my&&m.sender.toLowerCase().includes(my.toLowerCase());return'<div class="bubble '+(isMe?'b-me':'b-them')+'">'+esc(m.text)+'<div class="b-ts">'+esc(m.sender)+'</div></div>'}).join('');
+    const last=a.lastMessages.slice(-12);
+    chatHTML='<div class="terminal" style="cursor:pointer" onclick="var c=this.nextElementSibling;c.style.display=c.style.display===\'none\'?\'block\':\'none\'"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">chat_log</span> <span class="t-dim">('+last.length+' Nachrichten — klicken zum oeffnen)</span></div></div>';
+    chatHTML+='<div style="display:none">'+last.map(m=>{const isMe=my&&m.sender.toLowerCase().includes(my.toLowerCase());return'<div class="bubble '+(isMe?'b-me':'b-them')+'">'+esc(m.text)+'<div class="b-ts">'+esc(m.sender)+'</div></div>'}).join('')+'</div>';
   }
 
   // Screenshots
