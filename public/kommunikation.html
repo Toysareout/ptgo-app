@@ -5,426 +5,376 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#020206">
 <meta name="robots" content="noindex,nofollow">
-<title>NEURAL FIELD THEORY</title>
+<title>MIND OS</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#020206;--surface:rgba(8,8,20,.85);--border:rgba(0,240,255,.08);--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#444460}
+:root{--bg:#020206;--surface:rgba(8,8,20,.9);--border:rgba(0,240,255,.08);--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#444460}
 html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
 ::selection{background:var(--cyan);color:var(--bg)}
 ::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:rgba(0,240,255,.2)}
-
-/* COSMOS */
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(168,85,247,.06),transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(0,240,255,.04),transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(255,45,142,.03),transparent 60%);pointer-events:none}
-canvas#field{position:fixed;inset:0;z-index:0;pointer-events:none}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 30% 10%,rgba(168,85,247,.05),transparent 50%),radial-gradient(ellipse at 70% 90%,rgba(0,240,255,.04),transparent 50%);pointer-events:none}
+canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
 .wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1}
-
-/* HEADER */
-.hdr{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
-.hdr h1{font-family:'Orbitron',sans-serif;font-size:clamp(16px,4vw,26px);font-weight:900;letter-spacing:6px;margin-bottom:4px}
-.hdr h1 span{background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:300% 100%;animation:gradient 6s linear infinite}
-@keyframes gradient{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-.hdr .formula{font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:3px;color:var(--gold);margin:6px 0}
-.hdr .sub{font-size:10px;color:var(--dim);letter-spacing:1px;line-height:1.6}
-.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite;margin:0 6px}
+.hdr{text-align:center;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.hdr h1{font-family:'Orbitron',sans-serif;font-size:clamp(18px,5vw,28px);font-weight:900;letter-spacing:6px}
+.hdr h1 span{background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:300%;animation:grd 6s linear infinite}
+@keyframes grd{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
+.hdr .sub{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:4px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,255,168,.4)}50%{box-shadow:0 0 0 6px rgba(45,255,168,0)}}
 
-/* GLASS CARDS */
-.glass{background:var(--surface);border:1px solid var(--border);padding:20px;margin:10px 0;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:relative;overflow:hidden}
-.glass::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,240,255,.3),transparent)}
-.glass-title{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;margin-bottom:12px}
+/* GLASS */
+.g{background:var(--surface);border:1px solid var(--border);padding:20px;margin:10px 0;backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.g::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,240,255,.3),transparent)}
+.gt{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;margin-bottom:10px}
 
-/* FIELD VISUALIZER */
-.field-vis{height:200px;position:relative;border:1px solid var(--border);margin:12px 0;overflow:hidden;background:rgba(0,0,0,.3)}
-.field-vis canvas{width:100%;height:100%}
+/* MIND ENTITIES */
+.entity{padding:16px;margin:8px 0;border:1px solid var(--border);position:relative;overflow:hidden;cursor:pointer;transition:all .3s}
+.entity:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.entity-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:900;letter-spacing:2px;margin-bottom:4px}
+.entity-role{font-size:10px;color:var(--dim);margin-bottom:8px}
+.entity-thought{font-size:12px;line-height:1.7;font-style:italic;padding:10px;background:rgba(0,0,0,.3);border-left:2px solid}
 
-/* THOUGHT PARTICLES */
-.thought{display:inline-block;padding:6px 12px;margin:3px;font-size:10px;border-radius:20px;animation:float 3s ease-in-out infinite;position:relative}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.thought-pos{background:rgba(45,255,168,.1);border:1px solid rgba(45,255,168,.3);color:var(--green)}
-.thought-neg{background:rgba(255,68,68,.1);border:1px solid rgba(255,68,68,.3);color:var(--red)}
-.thought-hidden{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);color:var(--purple)}
-.thought-desire{background:rgba(255,45,142,.1);border:1px solid rgba(255,45,142,.3);color:var(--pink)}
-.thought-fear{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold)}
+/* MISSION */
+.mission{padding:16px;margin:8px 0;border:1px solid var(--border);background:var(--surface);position:relative;transition:all .3s}
+.mission.done{opacity:.5;border-color:rgba(45,255,168,.3)}
+.mission.done .m-check{color:var(--green)}
+.m-time{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:6px}
+.m-text{font-size:12px;line-height:1.6}
+.m-why{font-size:10px;color:var(--dim);margin-top:6px;font-style:italic}
+.m-check{position:absolute;top:12px;right:12px;font-size:20px;cursor:pointer;color:var(--dim);transition:all .2s}
+.m-check:hover{color:var(--green);transform:scale(1.2)}
 
-/* QUANTUM STATES */
-.q-state{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(0,240,255,.05)}
-.q-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;width:100px;color:var(--dim)}
-.q-bar-wrap{flex:1;height:6px;background:rgba(255,255,255,.03);border-radius:3px;overflow:hidden;position:relative}
-.q-bar{height:100%;border-radius:3px;transition:width 1.5s cubic-bezier(.4,0,.2,1);position:relative}
-.q-bar::after{content:'';position:absolute;right:0;top:-2px;bottom:-2px;width:4px;background:inherit;border-radius:50%;box-shadow:0 0 8px currentColor}
-.q-val{font-family:'Orbitron',sans-serif;font-size:11px;width:35px;text-align:right;font-weight:700}
+/* DECODER */
+.drop{border:2px dashed var(--border);padding:24px 16px;text-align:center;cursor:pointer;transition:all .3s;margin:8px 0}
+.drop:hover,.drop.over{border-color:var(--cyan);background:rgba(0,240,255,.02)}
+.drop input{display:none}
+textarea{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px;outline:none;resize:vertical;min-height:50px}
+textarea:focus{border-color:var(--cyan);box-shadow:0 0 30px rgba(0,240,255,.08)}
+.go{width:100%;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:4px;padding:14px;border:none;cursor:pointer;margin-top:8px;font-weight:900;position:relative;overflow:hidden}
+.go::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink))}
+.go span{position:relative;z-index:1;color:var(--bg)}
 
-/* TIMELINE / WAVE */
-.wave-container{height:60px;position:relative;margin:8px 0}
-.wave-container canvas{width:100%;height:100%}
+/* RESULTS */
+.eq{text-align:center;margin:16px 0;padding:16px;border:1px solid var(--border);background:rgba(0,0,0,.3)}
+.eq-main{font-family:'Orbitron',sans-serif;font-size:clamp(18px,5vw,32px);font-weight:900;letter-spacing:3px}
+.thought-p{display:inline-block;padding:5px 10px;margin:3px;font-size:10px;border-radius:16px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.tp-surface{background:rgba(45,255,168,.1);border:1px solid rgba(45,255,168,.3);color:var(--green)}
+.tp-hidden{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);color:var(--purple)}
+.tp-desire{background:rgba(255,45,142,.1);border:1px solid rgba(255,45,142,.3);color:var(--pink)}
+.tp-fear{background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--gold)}
+.qbar{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:10px}
+.qbar-name{width:80px;color:var(--dim);font-size:9px;letter-spacing:1px}
+.qbar-fill{height:4px;border-radius:2px;transition:width 1s}
+.qbar-v{width:30px;text-align:right;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700}
+.rc{padding:14px;margin:6px 0;border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .3s;position:relative}
+.rc:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.rc-tag{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:4px}
+.rc-text{font-size:12px;line-height:1.7}
+.rc-pred{font-size:10px;color:var(--dim);margin-top:8px;border-top:1px solid var(--border);padding-top:6px}
+.rc-prob{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;float:right}
+.rc-copy{padding:5px 12px;background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer;margin-top:6px;transition:all .2s}
+.rc-copy:hover{border-color:var(--green);color:var(--green)}
 
-/* RESPONSE CARDS */
-.r-card{background:var(--surface);border:1px solid var(--border);padding:16px;margin:8px 0;cursor:pointer;transition:all .4s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden}
-.r-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(0,240,255,.03));opacity:0;transition:opacity .3s}
-.r-card:hover{transform:translateY(-3px) scale(1.01);box-shadow:0 10px 40px rgba(0,0,0,.4)}
-.r-card:hover::after{opacity:1}
-.r-num{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;position:absolute;top:8px;right:16px;opacity:.08}
-.r-tag{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:6px}
-.r-text{font-size:13px;line-height:1.8}
-.r-pred{font-size:10px;color:var(--dim);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)}
-.r-prob{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;float:right}
-.r-copy{padding:6px 14px;background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer;transition:all .2s;margin-top:8px}
-.r-copy:hover{border-color:var(--green);color:var(--green)}
-
-/* FIELD EQUATION */
-.equation{text-align:center;margin:20px 0;padding:20px;border:1px solid var(--border);background:rgba(0,0,0,.3)}
-.eq-main{font-family:'Orbitron',sans-serif;font-size:clamp(20px,5vw,36px);font-weight:900;letter-spacing:4px}
-.eq-e{color:var(--cyan)}
-.eq-m{color:var(--pink)}
-.eq-i{color:var(--gold)}
-.eq-vals{margin-top:8px;font-size:11px;color:var(--dim)}
-
-/* SCORE */
-.field-score{text-align:center;margin:20px 0}
-.field-score .ring{width:120px;height:120px;border-radius:50%;margin:0 auto;position:relative;display:flex;align-items:center;justify-content:center}
-.field-score .ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
-.field-score .num{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;position:relative;z-index:1}
-.field-score .lbl{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--dim);margin-top:6px}
-
-/* INPUT */
-.input-area{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:14px;outline:none;resize:vertical;min-height:90px;transition:all .3s}
-.input-area:focus{border-color:var(--cyan);box-shadow:0 0 40px rgba(0,240,255,.08)}
-.input-area::placeholder{color:var(--dim)}
-.go-btn{width:100%;font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:4px;padding:16px;border:none;cursor:pointer;margin-top:10px;font-weight:900;transition:all .4s;position:relative;overflow:hidden}
-.go-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));opacity:.9}
-.go-btn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--pink),var(--cyan));opacity:0;transition:opacity .4s}
-.go-btn:hover::after{opacity:1}
-.go-btn span{position:relative;z-index:1;color:var(--bg)}
-
-/* CONTACTS */
-.ct{display:flex;align-items:center;padding:12px 16px;border:1px solid var(--border);margin:4px 0;cursor:pointer;transition:all .3s;background:var(--surface)}
-.ct:hover{border-color:var(--cyan);transform:translateX(6px)}
+.ct{display:flex;align-items:center;padding:10px 14px;border:1px solid var(--border);margin:4px 0;cursor:pointer;transition:all .2s;background:var(--surface)}
+.ct:hover{border-color:var(--cyan);transform:translateX(4px)}
 .ct-name{flex:1;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px}
-.ct-badge{font-size:8px;letter-spacing:1px;padding:2px 8px;margin:0 8px}
-.ct-b-v{color:var(--cyan);border:1px solid rgba(0,240,255,.3)}
-.ct-b-r{color:var(--pink);border:1px solid rgba(255,45,142,.3)}
-.ct-score{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900}
+.ct-badge{font-size:8px;letter-spacing:1px;padding:2px 6px;margin:0 6px}
+.ct-sc{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900}
 
-.hr{height:1px;background:var(--border);margin:16px 0}
+.hr{height:1px;background:var(--border);margin:14px 0}
 .back{font-size:9px;color:var(--dim);letter-spacing:1px;cursor:pointer;padding:4px 8px;border:1px solid var(--border);display:inline-block}
 .back:hover{border-color:var(--cyan);color:var(--cyan)}
-label{display:block;font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px}
+label{display:block;font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:8px 0 4px}
 input[type="text"]{width:100%;background:rgba(0,0,0,.4);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px;outline:none}
-input:focus{border-color:var(--cyan)}
-.btn-add{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:10px;border:none;cursor:pointer;width:100%;margin-top:8px;font-weight:700}
+.btn-a{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:10px;border:none;cursor:pointer;width:100%;margin-top:6px;font-weight:700}
 .btn-del{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:9px;padding:8px;width:100%;cursor:pointer;margin-top:8px}
 .btn-del:hover{border-color:var(--red);color:var(--red)}
-.anim-in{animation:fadeUp .6s cubic-bezier(.4,0,.2,1)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.anim{animation:fadeUp .5s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:600px){.wrap{padding:16px 10px 60px}}
 </style>
 </head>
 <body>
-<canvas id="field"></canvas>
+<canvas id="bg"></canvas>
 <div class="wrap">
   <div class="hdr">
-    <h1><span>NEURAL FIELD THEORY</span></h1>
-    <div class="formula">E = M × I²</div>
-    <div class="sub">Unified Field Theory der menschlichen Kommunikation<span class="pulse"></span></div>
+    <h1><span>MIND OS</span></h1>
+    <div class="sub">VOSS · TOMASSI · HACKER <span class="pulse"></span></div>
   </div>
   <div id="app"></div>
 </div>
 <script>
 (function(){
-// ─── PARTICLE FIELD BACKGROUND ───
-const cv=document.getElementById('field');const ctx=cv.getContext('2d');
-let W,H;const particles=[];
-function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
-resize();window.addEventListener('resize',resize);
-for(let i=0;i<60;i++)particles.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5,a:Math.random()*.3+.1});
-function drawField(){ctx.clearRect(0,0,W,H);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,'+p.a+')';ctx.fill()});
-particles.forEach((a,i)=>{particles.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(0,240,255,'+((.08-d/1500))+')';ctx.stroke()}})});
-requestAnimationFrame(drawField)}
-drawField();
+// ─── PARTICLE BACKGROUND ───
+const cv=document.getElementById('bg'),ctx=cv.getContext('2d');let W,H;
+function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}rsz();addEventListener('resize',rsz);
+const pts=[];for(let i=0;i<50;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()*1.2+.3,a:Math.random()*.2+.05});
+function draw(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,'+p.a+')';ctx.fill()});pts.forEach((a,i)=>{pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<100){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(0,240,255,'+((.06-d/2000))+')';ctx.stroke()}})});requestAnimationFrame(draw)}draw();
 
-const $=id=>document.getElementById(id);const app=$('app');
+const $=id=>document.getElementById(id),app=$('app');
 const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
-function getAll(){try{return JSON.parse(localStorage.getItem('nft_contacts')||'[]')}catch(e){return[]}}
-function saveAll(a){localStorage.setItem('nft_contacts',JSON.stringify(a))}
+function getAll(){try{return JSON.parse(localStorage.getItem('mind_contacts')||'[]')}catch(e){return[]}}
+function saveAll(a){localStorage.setItem('mind_contacts',JSON.stringify(a))}
 function getOne(id){return getAll().find(p=>p.id===id)}
 function upd(id,fn){const a=getAll();const i=a.findIndex(p=>p.id===id);if(i>=0){fn(a[i]);saveAll(a)}}
+function getState(){try{return JSON.parse(localStorage.getItem('mind_state')||'{}')}catch(e){return{}}}
+function saveState(s){localStorage.setItem('mind_state',JSON.stringify(s))}
 
-// ═══════════════════════════════════════════════
-// NEURAL FIELD THEORY ENGINE
-// E = M × I²
-// E (Field Energy) = Total communication force
-// M (Mass) = Emotional weight of the message
-// I (Intent) = Direction × Velocity of intent
-// ═══════════════════════════════════════════════
-function computeField(text,type,name,history){
-  const lt=text.toLowerCase();const norm=lt.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
-  const len=text.length;const words=lt.split(/\s+/).length;const hasQ=lt.includes('?');
+// ─── THREE MINDS ───
+const MINDS={
+  voss:{name:'CHRIS VOSS',color:'var(--cyan)',role:'Der Verhandler. Sieht was Menschen WIRKLICH meinen.',
+    thoughts:[
+      'Jede Nachricht ist eine Verhandlung. Die Frage ist nur: Weisst du es?',
+      'Hoere nicht was sie SAGEN. Hoere was sie FUEHLEN.',
+      'Die maechtigste Waffe ist nicht was du sagst. Sondern die Pause davor.',
+      'Wer die Emotionen des anderen benennt, kontrolliert das Gespraech.',
+      'Ein "Nein" ist kein Ende. Es ist der Anfang der echten Verhandlung.',
+      'Taktische Empathie ist keine Schwaeche. Es ist die ultimative Staerke.',
+      'Spiegel die letzten drei Worte. Warte. Die Wahrheit kommt von allein.',
+      'Akkusations-Audit: Benenne das Schlimmste bevor sie es denken.',
+    ]},
+  rollo:{name:'ROLLO TOMASSI',color:'var(--pink)',role:'Der Stratege. Versteht die unsichtbare Dynamik.',
+    thoughts:[
+      'Frame ist alles. Wer den Frame kontrolliert, kontrolliert die Realitaet.',
+      'Erklaere dich nie. Wer sich erklaert, hat schon verloren.',
+      'Abundance Mentality: Der Mann der bereit ist wegzugehen hat die Macht.',
+      'Investiere nie mehr als sie. Iron Rule #4.',
+      'Jeder Shit-Test ist eine Einladung, staerker zu werden.',
+      'Mystery erzeugt Anziehung. Vorhersagbarkeit toetet sie.',
+      'Dein Wert wird nicht durch Worte bestimmt. Sondern durch Optionen.',
+      'Outcome Independence: Dein Glueck haengt nie von EINER Person ab.',
+    ]},
+  hacker:{name:'ZERO',color:'var(--green)',role:'Der Hacker. Sieht Systeme wo andere Chaos sehen.',
+    thoughts:[
+      'Jede Beziehung ist ein System. Jedes System hat ein Protokoll. Finde es.',
+      'Daten > Gefuehle. Tracke alles. Muster luegen nicht.',
+      'Automatisiere was wiederholbar ist. Deine Energie gehoert den Black Swans.',
+      'Social Engineering: Menschen sind das schwaechtste Glied. Und das staerkste.',
+      'Reverse Engineering: Starte beim Ergebnis. Arbeite rueckwaerts.',
+      'Kein Bug. Feature. Jeder Fehler ist Information.',
+      'Root Access: Finde den einen Hebel der alles veraendert.',
+      'Stealth Mode: Die beste Aktion ist die, die niemand bemerkt.',
+    ]}
+};
 
-  // ─── MASS (Emotional Weight) 0-100 ───
-  let mass=20; // baseline
+// ─── DAILY MISSIONS GENERATOR ───
+function generateMissions(){
+  const st=getState();const today=new Date().toISOString().slice(0,10);
+  if(st.missionsDate===today&&st.missions)return st.missions;
+  const hour=new Date().getHours();
+  const contacts=getAll();const hasContacts=contacts.length>0;
+  const randomContact=hasContacts?contacts[Math.floor(Math.random()*contacts.length)]:null;
+
+  const morningPool=[
+    {mind:'hacker',text:'Oeffne dein Handy. Scrolle durch die letzten 5 Chats. Frage dich bei jedem: Wer hat den Frame? Wenn nicht du — heute aenderst du das.',why:'Zero: Bewusstsein ist der erste Hack. Du kannst nicht aendern was du nicht siehst.'},
+    {mind:'voss',text:'Schreibe einem Patienten eine Nachricht die NUR aus einer Frage besteht. Keine Aussage. Keine Info. Nur: "Was beschaeftigt dich WIRKLICH gerade?"',why:'Voss: Kalibrierte Fragen oeffnen Tueren die Aussagen verschliessen.'},
+    {mind:'rollo',text:'Antworte heute auf KEINE Nachricht innerhalb von 5 Minuten. Minimum 30 Minuten. Beobachte was passiert.',why:'Rollo: Verfuegbarkeit senkt deinen Wert. Wer wartet, gewinnt.'},
+    {mind:'hacker',text:'Erstelle eine Liste: 3 Menschen die dir Energie geben. 3 die dir Energie nehmen. Streiche heute EINEN der Energiefresser.',why:'Zero: Optimiere dein Netzwerk wie ein System. Garbage in, garbage out.'},
+    {mind:'voss',text:'Bevor du heute die erste Nachricht schreibst: Lies sie laut vor. Hoert sie sich an wie ein Late-Night-DJ? Wenn nicht — umschreiben.',why:'Voss: Dein Ton bestimmt die Reaktion. Kontrolliere den Ton, kontrolliere das Ergebnis.'},
+  ];
+  const middayPool=[
+    {mind:'rollo',text:'Schau dir den letzten Chat mit '+(randomContact?randomContact.name:'jemandem')+' an. Wer hat die letzte Frage gestellt? Wenn du — schreib heute NICHTS mehr. Lass sie kommen.',why:'Rollo: Wer die letzte Frage stellt, gibt den Frame ab. Stille ist Macht.'},
+    {mind:'voss',text:'Nimm die letzte Patienten-Nachricht. Schreib sie um als Label: "Es klingt so als ob..." — Uebe das 5x mit verschiedenen Nachrichten.',why:'Voss: Labeling ist ein Muskel. Je mehr du uebst, desto natuerlicher wird es.'},
+    {mind:'hacker',text:'Screenshot deiner letzten 3 Chats machen. In MIND OS hochladen. Die Felder vergleichen. Wo ist die meiste Energie? Dort ist dein groesster Hebel.',why:'Zero: Daten zeigen dir wo du deine Zeit investieren sollst. Nicht dein Gefuehl.'},
+    {mind:'rollo',text:'Schreibe jemandem, der sich laenger nicht gemeldet hat. EINE Nachricht. Maximal 5 Worte. Dann Handy weglegen.',why:'Rollo: Kurze Nachrichten nach Funkstille erzeugen maximale Spannung. Weniger = mehr.'},
+    {mind:'voss',text:'Finde in deinen heutigen Gespraechen EINE Situation wo du "Nein" als Antwort provozierst. "Waere es schlimm wenn...?" Beobachte den Effekt.',why:'Voss: "Nein" gibt dem Gegenueber das Gefuehl von Kontrolle. Paradoxerweise gibt es DIR die Kontrolle.'},
+  ];
+  const eveningPool=[
+    {mind:'hacker',text:'Review des Tages: 3 Nachrichten die du heute geschrieben hast. Bewerte jede 1-10 nach Voss-Level. Was wuerdest du aendern?',why:'Zero: Iteration. Der beste Hacker macht nie den gleichen Fehler zweimal.'},
+    {mind:'rollo',text:'Geh durch alle Chats von heute. Zaehle: Wie oft hast du dich erklaert oder gerechtfertigt? Jedes Mal war Frame-Verlust. Morgen: Null.',why:'Rollo: Erklaerung = Schwaeche. Der starke Mann handelt. Er erklaert nicht.'},
+    {mind:'voss',text:'Schreibe eine "Gute Nacht" Nachricht an einen Patienten. Aber nicht "Gute Nacht." Sondern: "Ich hoffe du schlaefst heute ruhiger als gestern. Du hast es verdient."',why:'Voss: Empathie am Ende des Tages verankert Vertrauen ueber Nacht. Dein letzter Satz ist der erste Gedanke morgen.'},
+    {mind:'hacker',text:'Plane morgen EINE Aktion die dein Business 10x weiterbringt. Nicht 10%. 10x. Schreib sie auf. Schlaf drueber.',why:'Zero: Musk-Regel. Wenn es nicht 10x ist, ist es Zeitverschwendung.'},
+    {mind:'voss',text:'Reflektiere: Hast du heute jemanden wirklich GEHOERT? Nicht geantwortet. GEHOERT. Wenn nein — morgen ist deine einzige Aufgabe: Zuhoeren.',why:'Voss: Die meisten Menschen warten nur darauf zu antworten. Wer zuhoert, gewinnt.'},
+  ];
+
+  const pick=pool=>pool[Math.floor(Math.random()*pool.length)];
+  const missions=[
+    {...pick(morningPool),time:'MORGEN 07:00',done:false},
+    {...pick(middayPool),time:'MITTAG 13:00',done:false},
+    {...pick(eveningPool),time:'ABEND 21:00',done:false},
+  ];
+  st.missions=missions;st.missionsDate=today;saveState(st);
+  return missions;
+}
+// ─── FIELD DECODER (from Neural Field Theory) ───
+function computeField(text,type,name){
+  const lt=text.toLowerCase();const len=text.length;const hasQ=lt.includes('?');
+  let mass=20,intent=30;
   if(len>200)mass+=20;if(len>400)mass+=15;
-  if(lt.match(/!{2,}/))mass+=15;
-  if(lt.match(/vermiss|lieb|sehnsucht|denke an|brauch dich|herz|❤|😘|🥰/))mass+=35;
-  if(lt.match(/hass|scheisse|fuck|arsch|idiot|dumm/))mass+=30;
-  if(lt.match(/schmerz|weh|tut|angst|sorge|panik|traurig|einsam|hilfe/))mass+=25;
-  if(lt.match(/freue|glueck|glück|wunderbar|perfekt|liebe|traumhaft/))mass+=25;
+  if(lt.match(/vermiss|lieb|sehnsucht|denke an|brauch dich|❤|😘/))mass+=35;
+  if(lt.match(/hass|scheisse|fuck|idiot/))mass+=30;
+  if(lt.match(/schmerz|weh|angst|panik|traurig|einsam|hilfe/))mass+=25;
+  if(lt.match(/freue|glueck|glück|perfekt|traumhaft/))mass+=25;
   if(lt.match(/ok|ja|nein|gut|passt|hm/i)&&len<20)mass-=15;
   mass=Math.max(5,Math.min(100,mass));
-
-  // ─── INTENT (Direction × Velocity) 0-100 ───
-  let intent=30;
-  if(hasQ)intent+=20;
-  if(lt.match(/wann|wo |treffen|sehen|komm|lass uns|plan/))intent+=30; // action-oriented
-  if(lt.match(/was machst|was hast du|was geht|wie geht/))intent+=20; // seeking
-  if(lt.match(/musst|sofort|jetzt|schnell|dringend/))intent+=25; // urgent
-  if(lt.match(/vielleicht|mal schauen|keine zeit|weiss nicht|egal/))intent-=20; // low intent
-  if(lt.match(/was soll|warum|wieso/))intent+=15; // confrontational
+  if(hasQ)intent+=20;if(lt.match(/wann|wo |treffen|sehen|komm|plan/))intent+=30;
+  if(lt.match(/was machst|was hast du|wie geht/))intent+=20;
+  if(lt.match(/musst|sofort|jetzt|dringend/))intent+=25;
+  if(lt.match(/vielleicht|mal schauen|keine zeit|egal/))intent-=20;
   if(len<15&&!hasQ)intent-=15;
   intent=Math.max(5,Math.min(100,intent));
-
-  // ─── E = M × I² ───
   const energy=Math.round(mass*(intent/100)*(intent/100));
 
-  // ─── QUANTUM STATES ───
-  const states={
-    attraction:0,resistance:0,vulnerability:0,dominance:0,
-    curiosity:0,trust:0,deception:0,surrender:0
-  };
-  if(lt.match(/vermiss|mag |lieb|schoen|schön|suess|süß|gerne|freue/))states.attraction+=50;
+  const states={attraction:0,resistance:0,vulnerability:0,dominance:0,curiosity:0,trust:0};
+  if(lt.match(/vermiss|mag |lieb|schoen|gerne|freue|wann|treffen/))states.attraction+=50;
   if(hasQ&&len>30)states.attraction+=20;
-  if(lt.match(/wann|wo |treffen|sehen/))states.attraction+=30;
-  if(lt.match(/nein|nicht|lass|geh|will nicht|kann nicht|keine zeit|vielleicht/))states.resistance+=40;
-  if(lt.match(/was soll|nerv|egal|whatever/))states.resistance+=35;
-  if(lt.match(/angst|sorge|hilf|hilfe|weiss nicht|unsicher|allein|einsam/))states.vulnerability+=50;
-  if(lt.match(/vertrau|erzaehl dir|erzähl dir|unter uns|geheim/))states.vulnerability+=30;
-  if(lt.match(/du musst|mach|sofort|ich will|gib mir|hoer auf|hör auf/))states.dominance+=50;
-  if(lt.match(/was machst|was geht|erzaehl|erzähl|wirklich|im ernst|und dann/))states.curiosity+=40;
+  if(lt.match(/nein|nicht|lass|will nicht|keine zeit|vielleicht|was soll/))states.resistance+=45;
+  if(lt.match(/angst|hilf|weiss nicht|unsicher|allein|einsam|schmerz/))states.vulnerability+=50;
+  if(lt.match(/du musst|mach|sofort|ich will|gib mir/))states.dominance+=50;
+  if(lt.match(/was machst|erzaehl|erzähl|wirklich|warum/))states.curiosity+=40;
   if(hasQ)states.curiosity+=20;
-  if(lt.match(/vertrau|verspreche|ehrlich|schwör|schwor|immer|fuer dich|für dich/))states.trust+=40;
-  if(long&&!lt.match(/!/))states.trust+=15;
-  if(lt.match(/andere|jeder|alle sagen|du liebst mich nicht|wenn du mich|schuld/))states.deception+=45;
-  if(lt.match(/tut mir leid|entschuldige|ich weiss|bitte|flehe/))states.surrender+=40;
+  if(lt.match(/vertrau|ehrlich|fuer dich|für dich|verspreche/))states.trust+=40;
   Object.keys(states).forEach(k=>{states[k]=Math.min(100,states[k])});
-  const topState=Object.entries(states).sort((a,b)=>b[1]-a[1])[0];
 
-  // ─── THOUGHT PARTICLES ───
+  // Thoughts
   const thoughts={surface:[],hidden:[],desire:[],fear:[]};
-  // Surface (what they say)
-  if(lt.match(/was machst/))thoughts.surface.push('Will wissen wo du bist');
-  if(lt.match(/gut|ok|passt/))thoughts.surface.push('Alles normal');
-  if(lt.match(/schmerz|weh/))thoughts.surface.push('Koerperlicher Schmerz');
-  if(hasQ)thoughts.surface.push('Sucht Antwort');
-  if(lt.match(/schoen|schön|toll|super/))thoughts.surface.push('Positiv gestimmt');
-  // Hidden (what they really think)
-  if(lt.match(/was machst/))thoughts.hidden.push('Bin ich dir wichtig genug?');
-  if(lt.match(/vielleicht|mal schauen/))thoughts.hidden.push('Will nicht direkt Nein sagen');
-  if(lt.match(/gut|ok/)&&len<20)thoughts.hidden.push('Will nicht tiefer gehen');
-  if(lt.match(/was soll/))thoughts.hidden.push('Fuehle mich nicht gesehen');
-  if(lt.match(/wuensch|wünsch/))thoughts.hidden.push('Denke an dich wenn ich nicht muss');
-  // Desire
-  if(lt.match(/vermiss|denke an/))thoughts.desire.push('Naehe');
-  if(lt.match(/treffen|sehen|wann|wo/))thoughts.desire.push('Physische Praesenz');
-  if(lt.match(/was machst/))thoughts.desire.push('Deine Aufmerksamkeit');
-  if(lt.match(/besser|fortschritt/))thoughts.desire.push('Bestätigung');
-  if(lt.match(/schmerz|angst/))thoughts.desire.push('Erlosung');
-  // Fear
-  if(lt.match(/vielleicht/))thoughts.fear.push('Zu viel Commitment');
-  if(lt.match(/was soll/))thoughts.fear.push('Kontrolle verlieren');
-  if(lt.match(/vermiss/))thoughts.fear.push('Abhaengigkeit zeigen');
-  if(lt.match(/allein|einsam/))thoughts.fear.push('Verlassenwerden');
-  if(!thoughts.surface.length)thoughts.surface.push('Kontakt halten');
-  if(!thoughts.hidden.length)thoughts.hidden.push('Unklares Motiv — beobachten');
-  if(!thoughts.desire.length)thoughts.desire.push('Verbindung');
-  if(!thoughts.fear.length)thoughts.fear.push('Irrelevanz');
+  if(lt.match(/was machst/)){thoughts.surface.push('Fragt nach dir');thoughts.hidden.push('Bin ich dir wichtig?');thoughts.desire.push('Deine Aufmerksamkeit');thoughts.fear.push('Irrelevanz')}
+  if(lt.match(/schmerz|weh/)){thoughts.surface.push('Schmerz');thoughts.hidden.push('Wird es je besser?');thoughts.desire.push('Erloesung');thoughts.fear.push('Chronifizierung')}
+  if(lt.match(/vermiss/)){thoughts.surface.push('Sehnsucht');thoughts.hidden.push('Brauche ich zu viel?');thoughts.desire.push('Naehe');thoughts.fear.push('Abhaengigkeit zeigen')}
+  if(lt.match(/was soll/)){thoughts.surface.push('Konfrontation');thoughts.hidden.push('Ich fuehle mich nicht gesehen');thoughts.desire.push('Kontrolle');thoughts.fear.push('Macht verlieren')}
+  if(lt.match(/vielleicht/)){thoughts.surface.push('Unentschieden');thoughts.hidden.push('Will nein sagen');thoughts.desire.push('Konflikt vermeiden');thoughts.fear.push('Zu viel Commitment')}
+  if(lt.match(/wuensch|wünsch|schönes|gute nacht/)){thoughts.surface.push('Zuneigung');thoughts.hidden.push('Denke an dich');thoughts.desire.push('Verbindung');thoughts.fear.push('Zurueckweisung')}
+  if(lt.match(/besser|fortschritt|geschafft/)){thoughts.surface.push('Fortschritt');thoughts.hidden.push('Sieht er das auch?');thoughts.desire.push('Bestaetigung');thoughts.fear.push('Rueckfall')}
+  if(lt.match(/immobilien|wohnung|haus|miete/)){thoughts.surface.push('Zukunftsplanung');thoughts.hidden.push('Bist du Teil davon?');thoughts.desire.push('Gemeinsame Zukunft');thoughts.fear.push('Allein entscheiden')}
+  if(!thoughts.surface.length){thoughts.surface.push('Kontakt halten');thoughts.hidden.push('Unklares Motiv');thoughts.desire.push('Verbindung');thoughts.fear.push('Bedeutungslosigkeit')}
 
-  // ─── FIELD INTERPRETATION ───
-  let fieldType,fieldColor;
-  if(energy>60){fieldType='STARKES FELD';fieldColor='var(--cyan)'}
-  else if(energy>30){fieldType='AKTIVES FELD';fieldColor='var(--green)'}
-  else if(energy>15){fieldType='SCHWACHES FELD';fieldColor='var(--gold)'}
-  else{fieldType='KALTES FELD';fieldColor='var(--dim)'}
-
-  // ─── 3 RESPONSE VECTORS ───
+  // 3 Responses
   let responses=[];
   if(type==='rollo'){
-    if(states.attraction>30&&states.resistance<20){
-      responses=[
-        {tag:'GRAVITATION',text:'Gut. Dann lass uns nicht reden — lass uns was machen.\n\nFreitag. 19 Uhr. Ich schick dir wo.',prob:82,color:'var(--pink)',outcome:'Hohe Anziehung nutzen. Sofort in Action ueberleiten. Frame: Du fuehrst.'},
-        {tag:'MYSTERIUM',text:'Ich hatte auch an dich gedacht.\n\nAber ich sag dir nicht warum 😏',prob:71,color:'var(--purple)',outcome:'Hält die Spannung. Erzeugt Neugier. Sie wird nachfragen.'},
-        {tag:'SPIEGEL',text:'Schoen. Erzaehl mir das wenn wir uns sehen.',prob:65,color:'var(--cyan)',outcome:'Minimale Investition. Lenkt ins Persoenliche. Dein Terrain.'},
-      ];
-    }else if(states.resistance>30){
-      responses=[
-        {tag:'VAKUUM',text:'Alles klar.',prob:78,color:'var(--cyan)',outcome:'Emotionales Vakuum. Keine Reaktion = keine Angriffsflaeche. Sie kommt zurueck.'},
-        {tag:'AMUSED MASTERY',text:'Du weisst genau was ich meine.\n\n😏',prob:72,color:'var(--pink)',outcome:'Shit Test bestanden. Frame unerschuettert. Attraction steigt.'},
-        {tag:'NUCLEAR EXIT',text:'Ich investiere meine Zeit in Menschen die das schaetzen.\n\nKein Vorwurf. Nur Klarheit.',prob:45,color:'var(--red)',outcome:'Hard Next. Nur bei wiederholtem Disrespect. Zeigt absolute Selbstachtung.'},
-      ];
-    }else if(states.curiosity>30){
-      responses=[
-        {tag:'DARK MATTER',text:'Bin beschaeftigt.\n\nAber fuer dich haette ich heute Abend kurz Zeit.',prob:80,color:'var(--cyan)',outcome:'Busy + exklusiver Zugang fuer SIE. Wert steigt.'},
-        {tag:'GEGENFRAGE',text:'Warum fragst du?\n\nWas erhoffst du dir?',prob:68,color:'var(--gold)',outcome:'Dreht die Dynamik. Sie muss investieren. Du fragst, sie antwortet.'},
-        {tag:'BLACKOUT',text:'Geheimnis.',prob:55,color:'var(--purple)',outcome:'Maximales Mysterium. Riskant aber effektiv bei starkem IOI.'},
-      ];
-    }else{
-      responses=[
-        {tag:'SPIEGEL',text:'Verstehe.\n\nLass uns das persoenlich klaeren.',prob:72,color:'var(--cyan)',outcome:'Aus dem Text raus, ins Persoenliche. Dein Frame, dein Terrain.'},
-        {tag:'MINIMAL',text:'👍',prob:60,color:'var(--dim)',outcome:'Match die Energie. Kurz = kurz. Iron Rule #4.'},
-        {tag:'PROBE',text:'Interessant. Was steckt dahinter?',prob:65,color:'var(--gold)',outcome:'Dreht die Dynamik. Du wirst der Interviewer.'},
-      ];
-    }
+    if(states.attraction>30)responses=[{tag:'GRAVITATION',text:'Gut. Freitag, 19 Uhr. Ich schick dir wo.',prob:82,color:'var(--pink)'},{tag:'MYSTERIUM',text:'Hatte auch an dich gedacht. Aber ich sag dir nicht warum 😏',prob:71,color:'var(--purple)'},{tag:'SPIEGEL',text:'Erzaehl mir das wenn wir uns sehen.',prob:65,color:'var(--cyan)'}];
+    else if(states.resistance>30)responses=[{tag:'VAKUUM',text:'Alles klar.',prob:78,color:'var(--cyan)'},{tag:'AMUSED',text:'Du weisst genau was ich meine 😏',prob:72,color:'var(--pink)'},{tag:'EXIT',text:'Ich investiere meine Zeit in Menschen die das schaetzen.',prob:45,color:'var(--red)'}];
+    else if(states.curiosity>30)responses=[{tag:'DARK MATTER',text:'Bin beschaeftigt. Aber fuer dich haette ich heute Abend Zeit.',prob:80,color:'var(--cyan)'},{tag:'GEGENFRAGE',text:'Warum fragst du? Was erhoffst du dir?',prob:68,color:'var(--gold)'},{tag:'BLACKOUT',text:'Geheimnis.',prob:55,color:'var(--purple)'}];
+    else responses=[{tag:'SPIEGEL',text:'Verstehe. Lass uns das persoenlich klaeren.',prob:72,color:'var(--cyan)'},{tag:'MINIMAL',text:'👍',prob:60,color:'var(--dim)'},{tag:'PROBE',text:'Interessant. Was steckt dahinter?',prob:65,color:'var(--gold)'}];
   }else{
-    // VOSS
-    const mirror=text.trim().split(/\s+/).slice(-3).join(' ');
-    if(states.vulnerability>30||lt.match(/schmerz|angst|hilf|weh|tut/)){
-      responses=[
-        {tag:'TIEFES FELD',text:(mirror.length>5?mirror+'...?\n\n':'')+'Es klingt so, als ob das nicht nur ein Problem ist, das man loest. Es klingt so, als ob es etwas mit dir macht — tiefer als du zeigst.\n\nWas wuerdest du dir wuenschen, wenn du ganz ehrlich bist?',prob:85,color:'var(--green)',outcome:'Maximale Oeffnung. Label + kalibrierte Frage erreicht emotionalen Kern.'},
-        {tag:'AKKUSATIONS-FELD',text:'Vielleicht denkst du, dass ich wie alle anderen bin — dass ich sage "wird schon" und es dabei belasse.\n\nDu hast recht — das machen die meisten. Ich nicht.\n\nWas muesste passieren, damit du sagst: Jetzt hat sich was veraendert?',prob:78,color:'var(--cyan)',outcome:'Entwaffnet. Differenziert dich. Kalibrierte Frage bindet.'},
-        {tag:'WERT-FELD',text:'Ich arbeite nur mit Patienten bei denen ich weiss dass ich etwas bewirken kann. Bei dir sehe ich das.\n\nWaere es schlimm wenn wir das strukturiert angehen?',prob:70,color:'var(--gold)',outcome:'Value Positioning + No-oriented Close. Profit maximiert bei Commitment.'},
-      ];
-    }else if(states.trust>30||lt.match(/besser|gut|fortschritt|geschafft|klappt/)){
-      responses=[
-        {tag:'AMPLIFIER',text:'Was du da beschreibst ist nicht "ein bisschen besser." Das ist ein echter Shift.\n\nWas machst du jetzt anders als vor einem Monat?',prob:82,color:'var(--green)',outcome:'Verstaerkt Fortschritt. Verankert Veraenderung. Patient bindet sich selbst.'},
-        {tag:'NEXT LEVEL',text:'Das freut mich wirklich. Und ehrlich — wir sind erst am Anfang.\n\nWaere es schlimm wenn wir den naechsten Level angehen?',prob:75,color:'var(--gold)',outcome:'Upsell-Moment. Nutzt positive Energie fuer Erweiterung.'},
-        {tag:'BLACK SWAN',text:'Ich spuere dass da noch was ist. Etwas Gutes, das du noch nicht ganz greifen kannst.\n\nWas ist es?',prob:68,color:'var(--purple)',outcome:'Oeffnet unentdeckte positive Schicht. Black Swan Bereich.'},
-      ];
-    }else{
-      responses=[
-        {tag:'SPIEGEL-FELD',text:(mirror.length>5?mirror+'...?\n\n':'')+'Ich hoere was du sagst. Und ich hoere auch was du NICHT sagst.\n\nWas ist die eine Sache die du noch nicht ausgesprochen hast?',prob:80,color:'var(--green)',outcome:'Mirror + Black Swan Frage. Oeffnet tiefste Ebene.'},
-        {tag:'EMPATHIE-FELD',text:'Das muss sich anfuehlen als ob du alleine damit bist.\n\nWas wuerdest du dir wuenschen — nicht von mir, sondern generell?',prob:75,color:'var(--cyan)',outcome:'Tiefe Empathie. Patient fuehlt sich WIRKLICH verstanden.'},
-        {tag:'RESET-FELD',text:'Darf ich ehrlich sein? Ich glaube du bist weiter als du denkst.\n\nWas haelt dich davon ab, das zu sehen?',prob:70,color:'var(--gold)',outcome:'Reframing. Verschiebt Perspektive. Empowerment.'},
-      ];
-    }
+    const mirror=text.trim().split(/\s+/).slice(-3).join(' ');const mp=mirror.length>5?mirror+'...?\n\n':'';
+    if(states.vulnerability>30)responses=[{tag:'TIEFES FELD',text:mp+'Es klingt so, als ob das tiefer geht als du zeigst.\n\nWas wuerdest du dir wuenschen, wenn du ganz ehrlich bist?',prob:85,color:'var(--green)'},{tag:'AUDIT',text:'Vielleicht denkst du dass ich wie alle anderen bin. Du hast recht — die meisten sind so. Ich nicht.\n\nWas muesste passieren damit du sagst: Jetzt hat sich was veraendert?',prob:78,color:'var(--cyan)'},{tag:'WERT',text:'Ich arbeite nur mit Patienten bei denen ich weiss dass ich etwas bewirken kann. Bei dir sehe ich das.\n\nWaere es schlimm wenn wir das strukturiert angehen?',prob:70,color:'var(--gold)'}];
+    else if(states.trust>30)responses=[{tag:'AMPLIFIER',text:'Das ist nicht "ein bisschen besser." Das ist ein echter Shift.\n\nWas machst du jetzt anders als vor einem Monat?',prob:82,color:'var(--green)'},{tag:'NEXT LEVEL',text:'Wir sind erst am Anfang. Waere es schlimm wenn wir den naechsten Level angehen?',prob:75,color:'var(--gold)'},{tag:'BLACK SWAN',text:'Ich spuere da noch was. Etwas Gutes das du noch nicht greifen kannst. Was ist es?',prob:68,color:'var(--purple)'}];
+    else responses=[{tag:'SPIEGEL',text:mp+'Ich hoere was du sagst. Und was du NICHT sagst.\n\nWas ist die eine Sache die du noch nicht ausgesprochen hast?',prob:80,color:'var(--green)'},{tag:'EMPATHIE',text:'Das muss sich anfuehlen als ob du alleine damit bist.\n\nWas wuerdest du dir wuenschen?',prob:75,color:'var(--cyan)'},{tag:'RESET',text:'Darf ich ehrlich sein? Du bist weiter als du denkst.\n\nWas haelt dich davon ab das zu sehen?',prob:70,color:'var(--gold)'}];
+  }
+  const fieldType=energy>60?'STARKES FELD':energy>30?'AKTIVES FELD':energy>15?'SCHWACHES FELD':'KALTES FELD';
+  const fieldColor=energy>60?'var(--cyan)':energy>30?'var(--green)':energy>15?'var(--gold)':'var(--dim)';
+  return{mass,intent,energy,states,thoughts,responses,fieldType,fieldColor};
+}
+
+// ─── DASHBOARD ───
+function renderDash(){
+  const all=getAll();const missions=generateMissions();const st=getState();
+  // Current mind thought
+  const mindKeys=Object.keys(MINDS);const activeMind=MINDS[mindKeys[Math.floor(Date.now()/10000)%3]];
+  const thought=activeMind.thoughts[Math.floor(Date.now()/60000)%activeMind.thoughts.length];
+
+  // Active thought
+  let html='<div class="entity anim" style="border-color:'+activeMind.color+';border-left:3px solid '+activeMind.color+'"><div class="entity-name" style="color:'+activeMind.color+'">'+activeMind.name+'</div><div class="entity-role">'+activeMind.role+'</div><div class="entity-thought" style="border-color:'+activeMind.color+'">"'+esc(thought)+'"</div></div>';
+
+  // 3 Daily Missions
+  html+='<div class="gt" style="color:var(--gold);margin:16px 0 8px">HEUTIGE MISSIONEN</div>';
+  missions.forEach((m,i)=>{
+    const mind=MINDS[m.mind];const doneClass=m.done?'mission done':'mission';
+    html+='<div class="'+doneClass+' anim" style="border-left:3px solid '+mind.color+';animation-delay:'+(i*.1)+'s"><div class="m-time" style="color:'+mind.color+'">'+m.time+' — '+mind.name+'</div><div class="m-text">'+esc(m.text)+'</div><div class="m-why">'+esc(m.why)+'</div><div class="m-check" onclick="event.stopPropagation();toggleMission('+i+')">'+(m.done?'&#10003;':'○')+'</div></div>';
+  });
+
+  // Contacts
+  if(all.length){
+    html+='<div class="gt" style="color:var(--dim);margin:16px 0 8px">FELDER</div>';
+    html+=all.map(a=>{const e=a.lastEnergy||0;const ec=e>60?'var(--cyan)':e>30?'var(--green)':'var(--dim)';const badge=a.type==='rollo'?'<span class="ct-badge" style="color:var(--pink);border:1px solid rgba(255,45,142,.3)">R</span>':'<span class="ct-badge" style="color:var(--cyan);border:1px solid rgba(0,240,255,.3)">V</span>';return'<div class="ct" onclick="go(\''+a.id+'\')"><div class="ct-name">'+esc(a.name)+'</div>'+badge+'<div class="ct-sc" style="color:'+ec+'">'+e+'</div></div>'}).join('');
   }
 
-  return{mass,intent,energy,states,topState,thoughts,responses,fieldType,fieldColor};
-}
-// ─── VIEWS ───
-function renderDash(){
-  const all=getAll();const total=all.reduce((s,a)=>(a.decodes||0)+s,0);
-  let html='<div class="glass" style="text-align:center;padding:30px"><div class="glass-title" style="color:var(--gold)">E = M × I²</div><div style="font-size:11px;color:var(--dim);line-height:1.8">Jede Nachricht hat ein Feld.<br>Masse = emotionale Ladung. Intent = Richtung × Geschwindigkeit.<br>Neural Field Theory decoded das unsichtbare Feld hinter jeder Nachricht.</div><div style="margin-top:12px;font-family:Orbitron,sans-serif;font-size:10px;color:var(--cyan)">'+all.length+' FELDER · '+total+' DECODES</div></div>';
-  if(all.length){
-    html+='<div class="glass-title" style="color:var(--dim);margin:16px 0 8px">FELDER</div>';
-    html+=all.map(a=>{const badge=a.type==='rollo'?'<span class="ct-badge ct-b-r">ROLLO</span>':'<span class="ct-badge ct-b-v">VOSS</span>';const e=a.lastEnergy||0;const ec=e>60?'var(--cyan)':e>30?'var(--green)':e>15?'var(--gold)':'var(--dim)';return'<div class="ct" onclick="go(\''+a.id+'\')"><div class="ct-name">'+esc(a.name)+'</div>'+badge+'<div class="ct-score" style="color:'+ec+'">'+e+'</div></div>'}).join('');
-  }
-  html+='<div class="hr"></div><div class="glass"><div class="glass-title" style="color:var(--cyan)">NEUES FELD</div><label>Name</label><input type="text" id="nn" placeholder="Name"><div style="display:flex;gap:4px;margin-top:10px"><button class="btn-add" style="flex:1;background:var(--cyan);color:var(--bg)" onclick="add(\'voss\')">+ VOSS</button><button class="btn-add" style="flex:1;background:var(--pink);color:var(--bg)" onclick="add(\'rollo\')">+ ROLLO</button></div></div>';
+  // New Contact
+  html+='<div class="hr"></div><div class="g"><div class="gt" style="color:var(--cyan)">NEUES FELD</div><label>Name</label><input type="text" id="nn"><div style="display:flex;gap:4px;margin-top:6px"><button class="btn-a" style="flex:1;background:var(--cyan);color:var(--bg)" onclick="addC(\'voss\')">+ VOSS</button><button class="btn-a" style="flex:1;background:var(--pink);color:var(--bg)" onclick="addC(\'rollo\')">+ ROLLO</button></div></div>';
+
+  // Three Minds
+  html+='<div class="hr"></div><div class="gt" style="color:var(--dim);margin:8px 0">DEINE DREI MINDS</div>';
+  Object.entries(MINDS).forEach(([k,m])=>{
+    const t=m.thoughts[Math.floor(Math.random()*m.thoughts.length)];
+    html+='<div class="entity" style="border-left:3px solid '+m.color+'"><div class="entity-name" style="color:'+m.color+'">'+m.name+'</div><div class="entity-role">'+m.role+'</div><div class="entity-thought" style="border-color:'+m.color+'">"'+esc(t)+'"</div></div>';
+  });
+
   app.innerHTML=html;
 }
-window.add=function(t){const n=$('nn').value.trim();if(!n)return;const a=getAll();a.push({id:'f_'+Date.now(),name:n,type:t,history:[],decodes:0,lastEnergy:0});saveAll(a);renderDash()};
+
+window.toggleMission=function(i){const st=getState();if(st.missions&&st.missions[i]){st.missions[i].done=!st.missions[i].done;saveState(st);renderDash()}};
+window.addC=function(t){const n=$('nn').value.trim();if(!n)return;const a=getAll();a.push({id:'m_'+Date.now(),name:n,type:t,history:[],decodes:0,lastEnergy:0});saveAll(a);renderDash()};
 window.go=function(id){renderField(id)};
 
+// ─── FIELD VIEW ───
 function renderField(id){
   const c=getOne(id);if(!c){renderDash();return}
   const isR=c.type==='rollo';const color=isR?'var(--pink)':'var(--green)';
+  const mind=isR?MINDS.rollo:MINDS.voss;
+  const thought=mind.thoughts[Math.floor(Math.random()*mind.thoughts.length)];
 
-  // Last decode result
   let resultHTML='';
   if(c.lastResult){
     const r=c.lastResult;
-    // EQUATION
-    resultHTML+='<div class="equation anim-in"><div class="eq-main"><span class="eq-e">E</span> = <span class="eq-m">'+r.mass+'</span> × <span class="eq-i">'+r.intent+'</span>²</div><div class="eq-vals">ENERGY: '+r.energy+' · '+r.fieldType+'</div></div>';
-    // THOUGHT PARTICLES
-    resultHTML+='<div class="glass anim-in"><div class="glass-title" style="color:var(--purple)">GEDANKEN-PARTIKEL</div>';
-    resultHTML+='<div style="margin:6px 0"><div style="font-size:9px;color:var(--dim);margin-bottom:4px">OBERFLAECHE</div>'+r.thoughts.surface.map(t=>'<span class="thought thought-pos">'+esc(t)+'</span>').join('')+'</div>';
-    resultHTML+='<div style="margin:6px 0"><div style="font-size:9px;color:var(--dim);margin-bottom:4px">VERSTECKT</div>'+r.thoughts.hidden.map(t=>'<span class="thought thought-hidden">'+esc(t)+'</span>').join('')+'</div>';
-    resultHTML+='<div style="margin:6px 0"><div style="font-size:9px;color:var(--dim);margin-bottom:4px">DESIRE</div>'+r.thoughts.desire.map(t=>'<span class="thought thought-desire">'+esc(t)+'</span>').join('')+'</div>';
-    resultHTML+='<div style="margin:6px 0"><div style="font-size:9px;color:var(--dim);margin-bottom:4px">FEAR</div>'+r.thoughts.fear.map(t=>'<span class="thought thought-fear">'+esc(t)+'</span>').join('')+'</div>';
+    // Equation
+    resultHTML+='<div class="eq anim"><div class="eq-main"><span style="color:var(--cyan)">E</span> = <span style="color:var(--pink)">'+r.mass+'</span> × <span style="color:var(--gold)">'+r.intent+'</span>²</div><div style="font-size:10px;color:var(--dim);margin-top:4px">ENERGY: '+r.energy+' · '+r.fieldType+'</div></div>';
+    // Thoughts
+    resultHTML+='<div class="g anim"><div class="gt" style="color:var(--purple)">GEDANKEN</div>';
+    resultHTML+='<div style="margin:4px 0">'+r.thoughts.surface.map(t=>'<span class="thought-p tp-surface">'+esc(t)+'</span>').join('')+'</div>';
+    resultHTML+='<div style="margin:4px 0">'+r.thoughts.hidden.map(t=>'<span class="thought-p tp-hidden">'+esc(t)+'</span>').join('')+'</div>';
+    resultHTML+='<div style="margin:4px 0">'+r.thoughts.desire.map(t=>'<span class="thought-p tp-desire">'+esc(t)+'</span>').join('')+'</div>';
+    resultHTML+='<div style="margin:4px 0">'+r.thoughts.fear.map(t=>'<span class="thought-p tp-fear">'+esc(t)+'</span>').join('')+'</div></div>';
+    // States
+    const sc={attraction:'var(--pink)',resistance:'var(--red)',vulnerability:'var(--purple)',dominance:'var(--gold)',curiosity:'var(--cyan)',trust:'var(--green)'};
+    resultHTML+='<div class="g anim"><div class="gt" style="color:var(--cyan)">QUANTUM STATES</div>';
+    Object.entries(r.states).forEach(([k,v])=>{if(v>0)resultHTML+='<div class="qbar"><div class="qbar-name">'+k+'</div><div style="flex:1;height:4px;background:rgba(255,255,255,.03);border-radius:2px"><div class="qbar-fill" style="width:'+v+'%;background:'+(sc[k]||'var(--cyan)')+'"></div></div><div class="qbar-v" style="color:'+(sc[k]||'var(--cyan)')+'">'+v+'</div></div>'});
     resultHTML+='</div>';
-    // QUANTUM STATES
-    resultHTML+='<div class="glass anim-in"><div class="glass-title" style="color:var(--cyan)">QUANTUM STATES</div>';
-    const stColors={attraction:'var(--pink)',resistance:'var(--red)',vulnerability:'var(--purple)',dominance:'var(--gold)',curiosity:'var(--cyan)',trust:'var(--green)',deception:'var(--red)',surrender:'var(--dim)'};
-    Object.entries(r.states).forEach(([k,v])=>{if(v>0){resultHTML+='<div class="q-state"><div class="q-label">'+k.toUpperCase()+'</div><div class="q-bar-wrap"><div class="q-bar" style="width:'+v+'%;background:'+(stColors[k]||'var(--cyan)')+'"></div></div><div class="q-val" style="color:'+(stColors[k]||'var(--cyan)')+'">'+v+'</div></div>'}});
-    resultHTML+='</div>';
-    // RESPONSE VECTORS
-    resultHTML+='<div class="glass-title anim-in" style="color:'+color+';margin:16px 0 4px">RESPONSE VECTORS</div>';
-    r.responses.forEach((resp,i)=>{
-      resultHTML+='<div class="r-card anim-in" style="border-left:3px solid '+resp.color+';animation-delay:'+(i*.15)+'s"><div class="r-num">'+(i+1)+'</div><div class="r-tag" style="color:'+resp.color+'">'+esc(resp.tag)+'</div><div class="r-text" id="rt-'+i+'">'+esc(resp.text)+'</div><div class="r-pred">'+esc(resp.outcome)+' <span class="r-prob" style="color:'+resp.color+'">'+resp.prob+'%</span></div><button class="r-copy" onclick="event.stopPropagation();cp('+i+')">COPY</button></div>';
-    });
-    // FIELD SCORE
-    const pct=Math.min(100,r.energy);const dash=2*Math.PI*52;const offset=dash-(dash*pct/100);
-    resultHTML+='<div class="field-score anim-in"><div class="ring"><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(0,240,255,.08)" stroke-width="3"/><circle cx="60" cy="60" r="52" fill="none" stroke="'+r.fieldColor+'" stroke-width="3" stroke-dasharray="'+dash+'" stroke-dashoffset="'+offset+'" stroke-linecap="round"/></svg><div class="num" style="color:'+r.fieldColor+'">'+r.energy+'</div></div><div class="lbl">FIELD ENERGY</div></div>';
+    // Responses
+    resultHTML+='<div class="gt anim" style="color:'+color+';margin:12px 0 4px">RESPONSE VECTORS</div>';
+    r.responses.forEach((resp,i)=>{resultHTML+='<div class="rc anim" style="border-left:3px solid '+resp.color+'"><div class="rc-tag" style="color:'+resp.color+'">'+esc(resp.tag)+'</div><div class="rc-text" id="rt-'+i+'">'+esc(resp.text)+'</div><div class="rc-pred">Erfolg <span class="rc-prob" style="color:'+resp.color+'">'+resp.prob+'%</span></div><button class="rc-copy" onclick="event.stopPropagation();cp('+i+')">COPY</button></div>'});
   }
 
   // History
   let histHTML='';
   if(c.history&&c.history.length){
-    histHTML='<div class="glass-title" style="color:var(--dim);margin:16px 0 4px">FIELD LOG</div>';
-    histHTML+=c.history.slice(-6).reverse().map(h=>'<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:10px"><span style="color:var(--text)">'+esc(h.text.substring(0,50))+(h.text.length>50?'...':'')+'</span> <span style="color:var(--dim)">E='+h.energy+'</span></div>').join('');
+    histHTML='<div class="gt" style="color:var(--dim);margin:12px 0 4px">LOG</div>';
+    histHTML+=c.history.slice(-5).reverse().map(h=>'<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:10px"><span style="color:var(--text)">'+esc(h.text.substring(0,40))+(h.text.length>40?'...':'')+'</span> <span style="color:var(--dim)">E='+h.energy+'</span></div>').join('');
   }
 
-  app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span class="back" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:16px;font-weight:900;letter-spacing:3px;color:'+color+'">'+esc(c.name)+'</span></div>'
-    +'<div class="glass"><div class="glass-title" style="color:'+color+'">FIELD DECODER — '+(isR?'ROLLO TOMASSI':'CHRIS VOSS')+'</div>'
-    +'<div id="drop-zone" style="border:2px dashed var(--border);padding:30px 16px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:10px"><div style="font-size:32px;margin-bottom:8px">📸</div><div style="font-size:11px;color:var(--dim)">Screenshot hier ablegen oder klicken</div><div id="ocr-status" style="font-size:10px;color:var(--gold);margin-top:8px;display:none"></div><div id="ocr-preview" style="margin-top:8px;display:none"><img id="ocr-img" style="max-width:100%;max-height:150px;border:1px solid var(--border);margin-bottom:6px"><div id="ocr-text" style="font-size:10px;color:var(--dim);max-height:60px;overflow-y:auto;text-align:left;background:rgba(0,0,0,.3);padding:6px;white-space:pre-wrap"></div></div><input type="file" id="fi" accept="image/*" style="display:none"></div>'
-    +'<div style="font-size:9px;color:var(--dim);text-align:center;margin-bottom:10px">— oder Text direkt eingeben —</div>'
-    +'<textarea class="input-area" id="di" placeholder="Oder Text hier eintippen..." style="min-height:50px"></textarea>'
-    +'<button class="go-btn" onclick="run(\''+id+'\')"><span>DECODE FIELD</span></button></div>'
+  app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="back" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:14px;font-weight:900;letter-spacing:2px;color:'+color+'">'+esc(c.name)+'</span></div>'
+    +'<div class="entity" style="border-left:3px solid '+mind.color+';cursor:default"><div class="entity-name" style="color:'+mind.color+'">'+mind.name+' DENKT:</div><div class="entity-thought" style="border-color:'+mind.color+'">"'+esc(thought)+'"</div></div>'
+    +'<div class="g"><div class="gt" style="color:'+color+'">SCREENSHOT ODER TEXT</div>'
+    +'<div class="drop" id="dz"><div style="font-size:28px;margin-bottom:6px">📸</div><div style="font-size:10px;color:var(--dim)">Screenshot droppen oder klicken</div><div id="ocr-s" style="font-size:10px;color:var(--gold);margin-top:6px;display:none"></div><input type="file" id="fi" accept="image/*" style="display:none"></div>'
+    +'<textarea id="di" placeholder="Oder Text eingeben..." style="min-height:40px;margin-top:6px"></textarea>'
+    +'<button class="go" onclick="run(\''+id+'\')"><span>DECODE</span></button></div>'
     +resultHTML
     +(histHTML?'<div class="hr"></div>'+histHTML:'')
-    +'<div class="hr"></div><button class="btn-del" onclick="if(confirm(\'Feld loeschen?\'))del(\''+id+'\')">FELD LOESCHEN</button>';
+    +'<div class="hr"></div><button class="btn-del" onclick="if(confirm(\'Loeschen?\'))del(\''+id+'\')">LOESCHEN</button>';
 
-  // Setup screenshot drop
-  setupDrop(id);
-}
-
-let ocrResult='';
-
-function setupDrop(id){
-  const zone=$('drop-zone');const fi=$('fi');
-  if(!zone)return;
-  zone.addEventListener('click',()=>fi.click());
-  zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='var(--cyan)';zone.style.background='rgba(0,240,255,.03)'});
-  zone.addEventListener('dragleave',()=>{zone.style.borderColor='';zone.style.background=''});
-  zone.addEventListener('drop',e=>{e.preventDefault();zone.style.borderColor='';zone.style.background='';if(e.dataTransfer.files.length)processImage(e.dataTransfer.files[0],id)});
-  fi.addEventListener('change',()=>{if(fi.files.length)processImage(fi.files[0],id)});
-}
-
-async function processImage(file,id){
-  if(!file.type.startsWith('image/'))return;
-  const status=$('ocr-status');const preview=$('ocr-preview');const img=$('ocr-img');const ocrEl=$('ocr-text');
-  // Show preview
-  const url=URL.createObjectURL(file);
-  img.src=url;preview.style.display='block';
-  status.style.display='block';status.textContent='SCANNING...';status.style.color='var(--gold)';
-
-  // Compress
-  const compressed=await new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');const s=Math.min(1,1200/i.width);c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',0.8))};i.src=url});
-
-  // OCR
-  try{
-    const res=await Tesseract.recognize(compressed,'deu',{logger:m=>{if(m.status==='recognizing text')status.textContent='OCR '+Math.round((m.progress||0)*100)+'%'}});
-    ocrResult=(res.data.text||'').trim();
-    if(ocrResult.length>5){
-      status.textContent='TEXT ERKANNT — '+ocrResult.length+' Zeichen';status.style.color='var(--green)';
-      ocrEl.textContent=ocrResult;
-      // Auto-fill text input
-      const di=$('di');if(di)di.value=ocrResult;
-    }else{
-      status.textContent='Kein Text erkannt. Versuche ein klareres Bild.';status.style.color='var(--red)';
-      ocrResult='';
-    }
-  }catch(e){
-    status.textContent='OCR Fehler: '+e.message;status.style.color='var(--red)';
-    ocrResult='';
+  // Drop handler
+  const dz=$('dz'),fi=$('fi');
+  if(dz){
+    dz.addEventListener('click',()=>fi.click());
+    dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+    dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+    dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');if(e.dataTransfer.files.length)ocr(e.dataTransfer.files[0])});
+    fi.addEventListener('change',()=>{if(fi.files.length)ocr(fi.files[0])});
   }
+}
+
+async function ocr(file){
+  if(!file.type.startsWith('image/'))return;
+  const s=$('ocr-s');s.style.display='block';s.textContent='SCANNING...';
+  const url=URL.createObjectURL(file);
+  try{
+    const res=await Tesseract.recognize(url,'deu',{logger:m=>{if(m.status==='recognizing text')s.textContent='OCR '+Math.round((m.progress||0)*100)+'%'}});
+    const txt=(res.data.text||'').trim();
+    if(txt.length>5){s.textContent='ERKANNT: '+txt.length+' Zeichen';s.style.color='var(--green)';const di=$('di');if(di)di.value=txt}
+    else{s.textContent='Kein Text erkannt';s.style.color='var(--red)'}
+  }catch(e){s.textContent='Fehler';s.style.color='var(--red)'}
 }
 
 window.run=function(id){
-  const input=$('di');const text=input?input.value.trim():'';
-  const finalText=text||ocrResult;
-  if(!finalText){alert('Screenshot oder Text eingeben');return}
-  const c=getOne(id);if(!c)return;
-  const result=computeField(finalText,c.type,c.name,c.history);
-  upd(id,p=>{
-    p.lastResult=result;p.lastEnergy=result.energy;p.decodes=(p.decodes||0)+1;
-    if(!p.history)p.history=[];
-    p.history.push({text:finalText,energy:result.energy,field:result.fieldType,date:new Date().toLocaleString('de')});
-    if(p.history.length>50)p.history=p.history.slice(-50);
-  });
-  ocrResult='';
-  renderField(id);
-  setTimeout(()=>{const eq=document.querySelector('.equation');if(eq)eq.scrollIntoView({behavior:'smooth',block:'center'})},200);
+  const di=$('di');const text=di?di.value.trim():'';if(!text){alert('Screenshot oder Text eingeben');return}
+  const c=getOne(id);const result=computeField(text,c.type,c.name);
+  upd(id,p=>{p.lastResult=result;p.lastEnergy=result.energy;p.decodes=(p.decodes||0)+1;if(!p.history)p.history=[];p.history.push({text,energy:result.energy,date:new Date().toLocaleString('de')});if(p.history.length>50)p.history=p.history.slice(-50)});
+  renderField(id);setTimeout(()=>{const eq=document.querySelector('.eq');if(eq)eq.scrollIntoView({behavior:'smooth',block:'center'})},200);
 };
-window.cp=function(i){const el=document.getElementById('rt-'+i);if(el){navigator.clipboard.writeText(el.textContent);const b=el.parentElement.querySelector('.r-copy');if(b){b.textContent='COPIED';b.style.color='var(--green)';b.style.borderColor='var(--green)';setTimeout(()=>{b.textContent='COPY';b.style.color='';b.style.borderColor=''},1500)}}};
+window.cp=function(i){const el=document.getElementById('rt-'+i);if(el){navigator.clipboard.writeText(el.textContent);const b=el.parentElement.querySelector('.rc-copy');if(b){b.textContent='COPIED';b.style.color='var(--green)';setTimeout(()=>{b.textContent='COPY';b.style.color=''},1500)}}};
 window.del=function(id){saveAll(getAll().filter(a=>a.id!==id));renderDash()};
 renderDash();
 })();
