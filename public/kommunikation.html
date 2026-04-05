@@ -5,111 +5,105 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="theme-color" content="#030308">
 <meta name="robots" content="noindex,nofollow">
-<title>AGENT VOSS</title>
+<title>NEURAL OS</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#030308;--surface:#0a0a14;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680}
-html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace}
+:root{--bg:#020208;--surface:rgba(10,10,20,.8);--border:rgba(0,240,255,.12);--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#555570}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
 ::selection{background:var(--cyan);color:var(--bg)}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-a{text-decoration:none;color:var(--cyan)}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--border)}
 
-/* SCANLINES */
-.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.15;z-index:9999;animation:scan 4s linear infinite;pointer-events:none}
-@keyframes scan{0%{top:-2px}100%{top:100vh}}
+/* AMBIENT */
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,240,255,.04) 0%,transparent 70%);pointer-events:none;z-index:0}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,240,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,240,255,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.scanline{position:fixed;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.2;z-index:9999;animation:scan 3s linear infinite;pointer-events:none}
+@keyframes scan{0%{top:-1px}100%{top:100vh}}
 
-/* TERMINAL */
-.wrap{max-width:900px;margin:0 auto;padding:20px 16px 80px}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(14px,3vw,20px);letter-spacing:4px;color:var(--green)}
-.logo .v{color:var(--cyan)}
-.status{font-size:10px;color:var(--green);font-family:'Orbitron',sans-serif;letter-spacing:2px;animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.back-link{font-size:10px;color:var(--dim);letter-spacing:1px;cursor:pointer;padding:4px 8px;border:1px solid var(--border)}
-.back-link:hover{border-color:var(--cyan);color:var(--cyan)}
+.wrap{max-width:800px;margin:0 auto;padding:20px 16px 80px;position:relative;z-index:1}
 
-/* TERMINAL OUTPUT */
-.terminal{background:rgba(0,0,0,.4);border:1px solid var(--border);padding:16px;font-size:12px;line-height:1.7;margin:8px 0}
-.t-line{margin:2px 0}
-.t-prompt{color:var(--green)}
-.t-cmd{color:var(--cyan)}
-.t-warn{color:var(--gold)}
-.t-err{color:var(--red)}
-.t-dim{color:var(--dim)}
-.t-pink{color:var(--pink)}
-.t-ok{color:var(--green)}
-.t-bold{font-weight:700}
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:18px;letter-spacing:6px}
+.logo span{background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;margin-left:8px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,255,168,.4)}50%{box-shadow:0 0 0 8px rgba(45,255,168,0)}}
 
-/* COMMAND INPUT */
-.cmd-wrap{display:flex;border:1px solid var(--border);background:rgba(0,0,0,.5);margin:8px 0}
-.cmd-prefix{padding:12px;color:var(--green);font-size:13px;white-space:nowrap}
-.cmd-input{flex:1;background:transparent;border:none;color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:12px 12px 12px 0;outline:none}
-.cmd-input::placeholder{color:var(--dim)}
+/* DECODER */
+.decoder{background:var(--surface);border:1px solid var(--border);padding:20px;margin:12px 0;backdrop-filter:blur(10px)}
+.decoder-title{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--cyan);margin-bottom:12px}
+.decode-input{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:14px;padding:14px;outline:none;resize:vertical;min-height:80px;transition:all .3s}
+.decode-input:focus{border-color:var(--cyan);box-shadow:0 0 30px rgba(0,240,255,.1)}
+.decode-input::placeholder{color:var(--dim)}
+.decode-btn{width:100%;font-family:'Orbitron',sans-serif;font-size:13px;letter-spacing:3px;padding:14px;border:none;cursor:pointer;margin-top:10px;background:linear-gradient(135deg,var(--cyan),var(--purple));color:var(--bg);font-weight:900;transition:all .3s}
+.decode-btn:hover{box-shadow:0 0 40px rgba(0,240,255,.3);transform:translateY(-2px)}
+.mode-switch{display:flex;gap:4px;margin-bottom:12px}
+.mode-btn{flex:1;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;padding:8px;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all .2s;text-align:center}
+.mode-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,240,255,.05)}
+.mode-btn.active-pink{border-color:var(--pink);color:var(--pink);background:rgba(255,45,142,.05)}
 
-/* CARDS */
-.card{background:var(--surface);border:1px solid var(--border);padding:16px;margin:6px 0;cursor:pointer;transition:all .2s;position:relative}
-.card:hover{border-color:var(--cyan);transform:translateX(4px)}
-.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);opacity:.4}
-.card-rollo::before{background:var(--pink)}
-.card-static{cursor:default}.card-static:hover{transform:none}
-.card-name{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;font-weight:700}
-.card-meta{font-size:10px;color:var(--dim);margin-top:2px}
+/* RESULTS */
+.result-section{margin:16px 0;animation:fadeIn .5s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-/* RESPONSE */
-.response{background:rgba(45,255,168,.04);border:1px solid rgba(45,255,168,.25);padding:20px;margin:12px 0;position:relative}
-.response::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--green)}
-.response pre{font-family:'Space Mono',monospace;font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap;word-wrap:break-word;margin:0}
-.response-rollo{background:rgba(255,45,142,.04);border-color:rgba(255,45,142,.25)}
-.response-rollo::before{background:var(--pink)}
-.resp-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:8px}
+/* SUBTEXT DECODER */
+.subtext-card{background:var(--surface);border:1px solid var(--border);padding:16px;margin:8px 0;backdrop-filter:blur(10px)}
+.subtext-label{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:8px}
+.subtext-text{font-size:13px;line-height:1.7}
 
-.copy-btn{margin-top:10px;padding:8px;background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;cursor:pointer;width:100%;transition:all .3s}
+/* EMOTION RADAR */
+.emotion-bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11px}
+.emotion-fill{height:4px;border-radius:2px;transition:width 1s}
+.emotion-name{width:90px;color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:1px}
+.emotion-val{width:30px;text-align:right;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700}
+
+/* RESPONSE OPTIONS */
+.response-option{background:var(--surface);border:1px solid var(--border);padding:16px;margin:8px 0;cursor:pointer;transition:all .3s;position:relative;backdrop-filter:blur(10px)}
+.response-option:hover{border-color:var(--cyan);transform:translateX(4px)}
+.resp-num{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:var(--cyan);position:absolute;top:12px;right:16px;opacity:.3}
+.resp-tag{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;margin-bottom:6px}
+.resp-text{font-size:13px;line-height:1.7;margin:8px 0}
+.resp-outcome{font-size:10px;color:var(--dim);border-top:1px solid var(--border);padding-top:8px;margin-top:8px}
+.copy-btn{padding:6px 12px;background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;cursor:pointer;transition:all .2s;float:right}
 .copy-btn:hover{border-color:var(--green);color:var(--green)}
 
-/* FILE */
-.file-zone{border:1px dashed var(--border);padding:20px;text-align:center;cursor:pointer;transition:all .3s;margin:8px 0}
-.file-zone:hover,.file-zone.dragover{border-color:var(--cyan);background:rgba(0,240,255,.02)}
-.file-zone input{display:none}
+/* INFLUENCE SCORE */
+.score-ring{width:100px;height:100px;border-radius:50%;border:3px solid var(--border);display:flex;align-items:center;justify-content:center;margin:16px auto;position:relative}
+.score-ring::before{content:'';position:absolute;inset:-3px;border-radius:50%;border:3px solid transparent;border-top-color:var(--cyan);animation:rotate 3s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.score-num{font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900}
+.score-label{text-align:center;font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:4px}
 
-/* CHAT BUBBLES */
-.bubble{padding:8px 12px;margin:4px 0;font-size:11px;line-height:1.5;max-width:85%;border-radius:8px}
-.b-me{background:rgba(0,240,255,.06);border:1px solid rgba(0,240,255,.15);margin-left:auto;text-align:right}
-.b-them{background:rgba(255,45,142,.04);border:1px solid rgba(255,45,142,.1)}
-.b-ts{font-size:9px;color:var(--dim);margin-top:2px}
-
-/* SCREENSHOTS */
-.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin:8px 0}
-.shots img{width:100%;border:1px solid var(--border);cursor:pointer;transition:all .2s}
-.shots img:hover{border-color:var(--cyan)}
-.img-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10000;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.img-modal img{max-width:95%;max-height:90vh;object-fit:contain}
-.ocr-out{font-size:10px;color:var(--dim);background:var(--bg);border:1px solid var(--border);padding:8px;margin:6px 0;max-height:120px;overflow-y:auto;white-space:pre-wrap}
-.ocr-badge{position:absolute;top:2px;right:2px;font-size:7px;background:var(--green);color:var(--bg);padding:1px 4px;font-family:'Orbitron',sans-serif}
-
-.btn{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;padding:12px;border:none;cursor:pointer;transition:all .3s;text-align:center;width:100%;margin-top:8px}
-.btn-go{background:var(--green);color:var(--bg);font-weight:700}
-.btn-go:hover{box-shadow:0 0 20px rgba(45,255,168,.3)}
-.btn-go:disabled{opacity:.3;cursor:not-allowed}
-.btn-del{background:transparent;border:1px solid var(--border);color:var(--dim);font-size:10px}
-.btn-del:hover{border-color:var(--red);color:var(--red)}
+/* CONTACTS */
+.contact{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);margin:4px 0;cursor:pointer;transition:all .2s;background:var(--surface)}
+.contact:hover{border-color:var(--cyan);transform:translateX(4px)}
+.contact-name{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px}
+.contact-type{font-size:8px;letter-spacing:1px;padding:2px 6px;border:1px solid}
+.type-v{color:var(--cyan);border-color:var(--cyan)}
+.type-r{color:var(--pink);border-color:var(--pink)}
+.contact-score{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700}
 
 .hr{height:1px;background:var(--border);margin:16px 0}
-.hidden{display:none}
-label{display:block;font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px}
-input[type="text"]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px 12px;outline:none}
-input[type="text"]:focus{border-color:var(--cyan)}
-@media(max-width:600px){.wrap{padding:16px 10px 60px}}
+.back-btn{font-size:9px;color:var(--dim);letter-spacing:1px;cursor:pointer;padding:4px 8px;border:1px solid var(--border)}
+.back-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+label{display:block;font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin:10px 0 4px}
+input[type="text"]{width:100%;background:rgba(0,0,0,.5);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:13px;padding:10px 12px;outline:none}
+input:focus{border-color:var(--cyan)}
+.btn-add{font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:2px;padding:10px;border:none;cursor:pointer;width:100%;margin-top:8px;transition:all .2s}
+.btn-v{background:var(--cyan);color:var(--bg);font-weight:700}
+.btn-r{background:var(--pink);color:var(--bg);font-weight:700}
+.btn-del{background:transparent;border:1px solid var(--border);color:var(--dim);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px;padding:8px;width:100%;cursor:pointer;margin-top:8px}
+.btn-del:hover{border-color:var(--red);color:var(--red)}
+@media(max-width:600px){.wrap{padding:16px 10px 60px}.logo{font-size:14px;letter-spacing:4px}}
 </style>
 </head>
 <body>
+<div class="grid-bg"></div>
 <div class="scanline"></div>
 <div class="wrap">
   <div class="header">
-    <div class="logo">AGENT <span class="v">VOSS</span></div>
-    <div class="status">ONLINE</div>
+    <div class="logo"><span>NEURAL OS</span><div class="pulse"></div></div>
+    <a href="/archive" class="back-btn">EXIT</a>
   </div>
   <div id="app"></div>
 </div>
@@ -120,266 +114,273 @@ const app=$('app');
 const esc=s=>s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';
 
 // ─── Storage ───
-function getAll(){try{return JSON.parse(localStorage.getItem('voss_agents')||'[]')}catch(e){return[]}}
-function saveAll(a){localStorage.setItem('voss_agents',JSON.stringify(a))}
+function getAll(){try{return JSON.parse(localStorage.getItem('neural_contacts')||'[]')}catch(e){return[]}}
+function saveAll(a){localStorage.setItem('neural_contacts',JSON.stringify(a))}
 function getOne(id){return getAll().find(p=>p.id===id)}
 function upd(id,fn){const a=getAll();const i=a.findIndex(p=>p.id===id);if(i>=0){fn(a[i]);saveAll(a)}}
-function getMyName(){return localStorage.getItem('voss_my_name')||''}
 
-// ─── WhatsApp Parser ───
-function parseWA(raw){
-  const pats=[/^\[(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2}(?::\d{2})?)\]\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\.\d{1,2}\.\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s,/^(\d{1,2}\/\d{1,2}\/\d{2,4},\s*\d{1,2}:\d{2})\s*-\s*([^:]+):\s*(.+)/s];
-  const msgs=[];let cur=null;
-  for(const line of raw.split('\n')){let ok=false;for(const p of pats){const m=line.trim().match(p);if(m){if(cur)msgs.push(cur);cur={ts:m[1].trim(),sender:m[2].trim(),text:m[3].trim()};ok=true;break}}if(!ok&&cur&&line.trim())cur.text+='\n'+line.trim()}
-  if(cur)msgs.push(cur);return msgs;
-}
+// ─── NEURAL DECODER ENGINE ───
+function decode(text,type,contactName,history){
+  const lt=text.toLowerCase();const norm=lt.replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss');
+  const words=lt.split(/\s+/);const len=text.length;
+  const hasQ=lt.includes('?');const short=len<40;const long=len>200;
 
-// ─── VOSS ENGINE ───
-function vossRespond(msgs,name,myName){
-  const myLow=(myName||'').toLowerCase();
-  const them=myLow?msgs.filter(m=>!m.sender.toLowerCase().includes(myLow)).slice(-5):msgs.filter(m=>m.sender.toLowerCase().includes(name.toLowerCase())).slice(-5);
-  if(!them.length) return{main:'[KEINE DATEN]',follow:'',price:'',tactic:''};
-  const lt=them.map(m=>m.text).join(' ').toLowerCase();
-  const last=them[them.length-1].text;
-  const lastWords=last.trim().split(/\s+/).slice(-3).join(' ');
-  const first=name.split(' ')[0];
-  const pain=lt.match(/schmerz|weh|tut|sticht|brennt|zieht|druck|verspann|steif|rücken|rueck|nacken|kopf|knie|schulter/);
-  const fear=lt.match(/angst|sorge|panik|furcht|unwohl|unsicher|nervös|nervoes/);
-  const frust=lt.match(/frust|genervt|satt|reicht|bringt nichts|sinnlos|aufgeben|hoffnung/);
-  const pos=lt.match(/besser|gut|freue|schön|schoen|toll|super|fortschritt|geschafft|klappt|leichter/);
-  const sleep=lt.match(/schlaf|müde|muede|wach|nacht|erschöpf|erschoepf|energie/);
-  const stress=lt.match(/stress|druck|über|ueber|viel|schaff|belast/);
-  const short=lt.length<50;
-  let p=[];
-  // MIRROR
-  if(lastWords.length>5)p.push(lastWords+'...?');
-  // LABEL
-  if(pain)p.push('\nEs klingt so, als ob der Schmerz dir mehr nimmt als nur koerperliche Kraft. Als ob er sich in alles reinzieht — deinen Schlaf, deine Geduld, dein ganzes Gefuehl fuer Normalitaet.');
-  else if(frust)p.push('\nEs scheint, als ob du nicht frustriert bist wegen EINER Sache — sondern muede davon, ueberhaupt noch zu hoffen.');
-  else if(fear)p.push('\nEs klingt so, als ob da etwas unter der Oberflaeche ist. Etwas, das staerker ist als das, was man von aussen sieht.');
-  else if(pos)p.push('\nIch hoere da eine echte Veraenderung. Nicht nur ein guter Tag — ein Shift. Du merkst es vielleicht selbst noch nicht ganz.');
-  else if(sleep)p.push('\nEs scheint, als ob die Nacht kein Ruheort mehr ist. Sondern ein weiterer Ort, an dem du kaempfst.');
-  else if(stress)p.push('\nDu traegst gerade mehr als eine Person tragen sollte. Und trotzdem machst du weiter. Das sagt mir viel ueber dich.');
-  else if(short)p.push('\nDu sagst wenig. Manchmal steckt hinter kurzen Antworten mehr als hinter langen. Was ist das, was du NICHT sagst?');
-  else p.push('\nIch hoere was du sagst. Und ich hoere auch was du nicht sagst.');
-  // AUDIT
-  if(frust||short){p.push('\nDu denkst jetzt vielleicht: "Der sagt das auch nur so." Und ich verstehe warum. Du hast wahrscheinlich schon alles gehoert.')}
-  else if(pain){p.push('\nVielleicht denkst du, ich kann nicht nachvollziehen wie sich das anfuehlt. Und damit hast du recht. Aber ich kann zuhoeren. Richtig.')}
-  // CALIBRATED Q
-  p.push('');
-  if(pain)p.push('Was muesste passieren, damit du morgen aufwachst und sagst: "Heute ist es anders"?');
-  else if(frust)p.push('Was waere der kleinste Schritt, bei dem du sagen wuerdest: "Okay, vielleicht lohnt es sich doch"?');
-  else if(pos)p.push('Was genau hat sich veraendert — nicht die Situation, sondern DU?');
-  else if(fear)p.push('Wenn die Angst weg waere — was wuerdest du als Erstes tun?');
-  else p.push('Was ist die eine Sache, die du mir noch nicht gesagt hast — nicht weil es ein Geheimnis ist, sondern weil du dachtest, es ist nicht wichtig?');
-  const tactic='MIRROR → LABEL → AKKUSATIONS-AUDIT → KALIBRIERTE FRAGE';
-  const follow='Hey '+first+', ich wollte nicht draengen — aber du gehst mir nicht aus dem Kopf. Wenn jetzt nicht passt, ist das okay. Ich bin da.';
-  const price='Was ich dich fragen will: Was kostet es dich, wenn sich NICHTS aendert? Nicht in Euro — in Schlaf, Energie, Lebensqualitaet.\n\nWaere es schlimm, wenn wir es einfach versuchen?';
-  return{main:p.join('\n'),follow,price,tactic};
-}
+  // ─── EMOTION RADAR ───
+  const emotions={
+    interesse:0,distanz:0,frustration:0,zuneigung:0,unsicherheit:0,dominanz:0,manipulation:0,vertrauen:0
+  };
+  // Interesse
+  if(hasQ)emotions.interesse+=30;
+  if(lt.match(/was machst|was hast du|was geht|wie geht|wie war|erzaehl|erzähl/))emotions.interesse+=40;
+  if(lt.match(/wann|wo |treffen|sehen|lust/))emotions.interesse+=50;
+  if(long)emotions.interesse+=20;
+  // Distanz
+  if(short&&!hasQ)emotions.distanz+=40;
+  if(lt.match(/ok|okay|ja|nein|hm|hmm|aha|klar|gut|passt/))emotions.distanz+=30;
+  if(lt.match(/vielleicht|mal schauen|keine zeit|busy|spaeter|später/))emotions.distanz+=50;
+  // Frustration
+  if(lt.match(/was soll|warum|wieso nicht|versteh nicht|nerv|genervt|satt|reicht|schlimm/))emotions.frustration+=50;
+  if(lt.match(/!{2,}/))emotions.frustration+=30;
+  // Zuneigung
+  if(lt.match(/vermiss|denke an|schoen|schön|freue|mag |lieb|herz|♥|❤|😘|🥰/))emotions.zuneigung+=50;
+  if(lt.match(/wuensch|wünsch|schönes|gute nacht|schlaf gut|pass auf dich auf/))emotions.zuneigung+=35;
+  // Unsicherheit
+  if(lt.match(/weiss nicht|weiß nicht|keine ahnung|vielleicht|glaub|denkst du|meinst du|sicher\?/))emotions.unsicherheit+=45;
+  if(lt.match(/oder\?|richtig\?|stimmt das|findest du/))emotions.unsicherheit+=35;
+  // Dominanz
+  if(lt.match(/du musst|mach das|sofort|jetzt|hör auf|hoer auf|lass das/))emotions.dominanz+=60;
+  if(lt.match(/ich will|ich brauch|gib mir/))emotions.dominanz+=30;
+  // Manipulation
+  if(lt.match(/wenn du mich|du liebst mich nicht|andere wuerden|andere würden|jeder andere/))emotions.manipulation+=60;
+  if(lt.match(/schuld|immer du|nie machst|du machst nie/))emotions.manipulation+=40;
+  // Vertrauen
+  if(lt.match(/ich hab dir|erzaehl dir|erzähl dir|unter uns|nur dir|vertrau/))emotions.vertrauen+=50;
+  if(long&&!lt.match(/!{2,}/))emotions.vertrauen+=15;
 
-// ─── ROLLO ENGINE ───
-function rolloRespond(msgs,name,myName){
-  const myLow=(myName||'').toLowerCase();
-  const them=myLow?msgs.filter(m=>!m.sender.toLowerCase().includes(myLow)).slice(-5):msgs.filter(m=>m.sender.toLowerCase().includes(name.toLowerCase())).slice(-5);
-  if(!them.length) return{main:'[KEINE DATEN]',follow:'',rule:''};
-  const lt=them.map(m=>m.text).join(' ').toLowerCase();
-  const short=lt.length<50;
-  const flaky=lt.match(/vielleicht|mal schauen|weiss nicht|keine zeit|spaeter|busy|geht nicht|kann nicht|muss schauen/);
-  const interested=lt.match(/ja|klar|gerne|okay|wann|wo|freue|lust|cool|nice|super|unbedingt/);
-  const testing=lt.match(/warum|wieso|denkst du|findest du|meinst du|sicher|wirklich|ernst/);
-  const emotional=lt.match(/vermiss|denke an|fueh|mag dich|lieb|sehnsucht|traurig|einsam|brauch/);
-  const disrespect=lt.match(/egal|whatever|nerv|lass mich|geh weg|kein bock|interessiert nicht|haha ok/);
-  if(disrespect)return{main:'Alles klar.',follow:'[KEIN FOLLOW-UP. Abundance. Wer deinen Frame nicht respektiert, hat sich disqualifiziert.]',rule:'IRON RULE #1: Frame is everything. Rueckzug mit Wuerde. Kein Erklaeren. Kein Rechtfertigen.'};
-  if(flaky)return{main:'Kein Stress. Ich hab diese Woche eh einiges vor.\n\nWenn du Zeit hast, meld dich.',follow:'[KEIN FOLLOW-UP. "Vielleicht" = Nein. Naechste.]',rule:'IRON RULE #3: Any pursuit on YOUR terms. Abundance Mentality.'};
-  if(emotional)return{main:'Ich hoere dich.\n\nAber Gefuehle sind Momentaufnahmen. Was zaehlt ist was du TUST.\n\nWas willst du konkret?',follow:'[48h warten. Dann kurz, warm, nicht emotional.]',rule:'Frame Control: Emotionale Kongruenz ist eine Falle. Sei der Fels, nicht die Welle.'};
-  if(testing)return{main:'Interessante Frage.\n\nAber die bessere Frage: Was denkst DU?\n\nIch bin nicht hier um dich zu ueberzeugen.',follow:'[Kein Follow-Up nach Tests. Bestanden = Attraction steigt.]',rule:'SHIT TEST erkannt. Amused Mastery. Nie erklaeren, nie rechtfertigen.'};
-  if(interested){const day=['Donnerstag','Freitag','Samstag'][Math.floor(Math.random()*3)];return{main:'Gut.\n\n'+day+', 19 Uhr. Ich schick dir die Location.',follow:'Hey, brauch ne Antwort bis heute Abend — sonst verplan ich anders.',rule:'IOI erkannt. Setze den Termin. Du gibst den Rahmen vor.'};}
-  if(short)return{main:'👍',follow:'[Match die Energie. Kurz = kurz. Nie mehr investieren als sie.]',rule:'IRON RULE #4: Never invest more than she does.'};
-  // "Was machst du heute?" etc — casual/fishing
-  if(lt.match(/was machst du|was hast du vor|was geht|was treibst|wie war dein tag|was laeuft/))return{main:'Bin beschaeftigt.\n\nHeute Abend kurz Zeit. Was schwebt dir vor?',follow:'[Kein Follow-Up. Sie hat gefragt — Ball liegt bei ihr.]',rule:'FRAME: Sie sucht deine Aufmerksamkeit. Gib wenig. Sei busy. Kurz antworten, dann SIE muss investieren. Nie mehr als 1 Satz auf Smalltalk.'};
-  // "Was soll das?" — challenged
-  if(lt.match(/was soll das|wie meinst du|versteh ich nicht|haeh|was meinst/))return{main:'Du weisst genau was ich meine.\n\n😏',follow:'[Nicht erklaeren. Nie. Erklaeren = Frame verlieren.]',rule:'SHIT TEST. "Was soll das?" ist ein Test ob du dich rechtfertigst. NIEMALS erklaeren. Amused Mastery: Kurz, mysterioes, leicht amuesiert.'};
-  if(question)return{main:'Gute Frage.\n\nAber nicht fuer WhatsApp. Lass uns das persoenlich klaeren.',follow:'[48h Regel. Wenn sie nicht schreibt — disqualifiziert.]',rule:'FRAME CONTROL: Wichtige Dinge nicht ueber Text. Du bestimmst das Medium. Persoenlich = dein Terrain = dein Frame.'};
-  return{main:'Verstehe.\n\nLass uns das bei nem Kaffee besprechen. Nicht ueber Text.',follow:'[48h Regel. Wenn sie nicht schreibt — disqualifiziert.]',rule:'OUTCOME INDEPENDENCE. Der Mann der bereit ist wegzugehen hat die meiste Macht.'};
+  // Cap at 100
+  Object.keys(emotions).forEach(k=>{emotions[k]=Math.min(100,emotions[k])});
+  const topEmotion=Object.entries(emotions).sort((a,b)=>b[1]-a[1])[0];
+
+  // ─── SUBTEXT DECODER ───
+  let subtext='';let intent='';let powerDynamic='';
+  if(lt.match(/was machst du heute|was hast du vor|was geht/)){
+    subtext='Sie will deine Aufmerksamkeit und testet ob du verfuegbar bist. Die eigentliche Frage ist nicht "Was machst du?" sondern "Hast du Zeit fuer MICH?"';
+    intent='ATTENTION SEEKING — Sie denkt an dich, will aber nicht direkt sagen "Ich will dich sehen."';
+    powerDynamic='SIE initiiert. Das gibt dir den Frame. Wer fragt, gibt Macht ab.';
+  }else if(lt.match(/was soll das|wie meinst du|versteh ich nicht/)){
+    subtext='Das ist kein echtes Unverstaendnis. Das ist ein Test. Sie will sehen ob du dich rechtfertigst oder ob du bei dir bleibst.';
+    intent='FRAME TEST — Sie prueft deine innere Staerke. Erklaerst du dich = Frame verloren. Bleibst du cool = Attraction steigt.';
+    powerDynamic='MACHTKAMPF. Wer sich erklaert, verliert. Wer lacht, gewinnt.';
+  }else if(lt.match(/wuensch|wünsch|schönes|gute nacht|schlaf gut|pass auf dich/)){
+    subtext='Echte Zuneigung mit leichter Sehnsucht. Sie denkt an dich in Momenten wo sie nicht muss. Das ist real.';
+    intent='BONDING — Sie baut emotionale Verbindung auf. Kleine Nachrichten = sie will in deinem Kopf sein.';
+    powerDynamic='GLEICHGEWICHT. Das sind gesunde Signale. Nicht ueberreagieren.';
+  }else if(lt.match(/vermiss|denke an|sehnsucht|einsam|brauch dich/)){
+    subtext='Emotionaler Peak. Sie ist verletzlich und oeffnet sich. Was du JETZT sagst, praegt die Dynamik fuer Wochen.';
+    intent='VULNERABILITY — Echte Oeffnung. Seltener Moment. Nicht mit Logik antworten.';
+    powerDynamic='DU hast den Frame. Sie gibt dir emotionale Macht. Handle weise.';
+  }else if(lt.match(/vielleicht|mal schauen|keine zeit|busy|spaeter|später/)){
+    subtext='"Vielleicht" heisst Nein. Immer. Wenn sie wollen wuerde, wuerde sie Himmel und Erde bewegen. Das hier ist Hoeflichkeit.';
+    intent='SOFT REJECTION — Sie will nicht direkt Nein sagen, aber die Antwort ist Nein.';
+    powerDynamic='SIE hat den Frame. Du verlierst ihn, wenn du nachfragst. Einzige Loesung: Rueckzug.';
+  }else if(hasQ&&long){
+    subtext='Echtes Interesse. Sie investiert Zeit und Energie in diese Nachricht. Das ist ein starkes Zeichen.';
+    intent='INVESTMENT — Je laenger die Nachricht, desto mehr denkt sie an dich.';
+    powerDynamic='GLEICHGEWICHT bis leichter Vorteil fuer dich.';
+  }else if(short&&!hasQ){
+    subtext='Minimale Investition. Entweder sie ist beschaeftigt, oder du bist gerade nicht Prioritaet. Beides: Nicht nachhaken.';
+    intent='LOW INVESTMENT — Match die Energie. Nie mehr geben als du bekommst.';
+    powerDynamic='SIE kontrolliert das Tempo. Lass sie. Antworte genauso kurz.';
+  }else if(lt.match(/immobilienscout|angebot|wohnung|haus|miete|kaufen/)){
+    subtext='Sie teilt ihren Alltag und Zukunftsplaene mit dir. Das bedeutet: Du bist Teil ihres Denkens. Sie sieht dich als jemanden mit dem sie Zukunft plant — oder sie will deine Meinung.';
+    intent='FUTURE PROJECTION — Sie bezieht dich in Lebensentscheidungen ein. Starkes Bindungssignal.';
+    powerDynamic='GLEICHGEWICHT. Sie oeffnet ihr Leben fuer dich. Reagiere interessiert aber nicht ueber-enthusiastisch.';
+  }else{
+    subtext='Neutrale Nachricht. Der Kontext bestimmt den Subtext. Achte auf Timing und Haeufigkeit — WANN sie schreibt sagt mehr als WAS.';
+    intent='NEUTRAL — Beobachte das Muster ueber mehrere Nachrichten.';
+    powerDynamic='Nicht genug Daten fuer eine klare Einschaetzung.';
+  }
+  // ─── 3 RESPONSE OPTIONS ───
+  let responses=[];
+  if(type==='rollo'){
+    if(lt.match(/was machst du|was hast du vor|was geht|was treibst/)){
+      responses=[
+        {tag:'MYSTERIOES',text:'Geheime Sachen. Erzaehl ich dir vielleicht spaeter.',outcome:'Curiosity steigt. Sie wird nachfragen. Frame: Du bist interessant und beschaeftigt.',style:'border-left:3px solid var(--pink)'},
+        {tag:'DIREKT',text:'Bin beschaeftigt. Aber heute Abend haette ich kurz Zeit fuer dich.',outcome:'Zeigt Interesse aber zu DEINEN Bedingungen. Du setzt den Rahmen.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'MINIMAL',text:'Nichts was dich betrifft 😏',outcome:'Amused Mastery. Provoziert spielerisch. Nur wenn die Dynamik schon flirty ist.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else if(lt.match(/was soll das|wie meinst du/)){
+      responses=[
+        {tag:'AMUSED MASTERY',text:'Du weisst genau was ich meine 😏',outcome:'Shit Test bestanden. Keine Erklaerung. Attraction steigt sofort.',style:'border-left:3px solid var(--pink)'},
+        {tag:'REDIRECT',text:'Lass uns das persoenlich klaeren. Text ist das falsche Medium.',outcome:'Du kontrollierst WO das Gespraech stattfindet. Dein Terrain = dein Frame.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'NUCLEAR',text:'Wenn du das nicht verstehst, erklaere ich es nicht.',outcome:'Riskant. Nur bei wiederholten Tests. Zeigt absolute Frame-Kontrolle.',style:'border-left:3px solid var(--red)'},
+      ];
+    }else if(lt.match(/vermiss|denke an|mag dich/)){
+      responses=[
+        {tag:'WARM + FRAME',text:'Ich weiss.',outcome:'Han Solo Effekt. Zeigt Sicherheit ohne emotional zu werden. Sie fuehlt: Er ist sicher in sich.',style:'border-left:3px solid var(--pink)'},
+        {tag:'RECIPROCATE MINIMAL',text:'Geht mir aehnlich. Lass uns was planen.',outcome:'Gibt Zuneigung zurueck aber leitet sofort in ACTION. Reden < Handeln.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'PLAYFUL',text:'Natuerlich vermisst du mich. Wer wuerde das nicht 😏',outcome:'Amused Mastery + Confidence. Zeigt: Er nimmt sich nicht zu ernst.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else if(lt.match(/wuensch|wünsch|schönes|gute nacht|schlaf gut/)){
+      responses=[
+        {tag:'KURZ + WARM',text:'Dir auch. Schlaf gut.',outcome:'Match die Energie. Nicht mehr, nicht weniger. Perfekte Balance.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'PLAYFUL',text:'Ich schlaf immer gut 😎 Du auch?',outcome:'Leichter Humor. Zeigt: Du bist entspannt und hast dein Leben im Griff.',style:'border-left:3px solid var(--pink)'},
+        {tag:'MINIMAL',text:'✌️',outcome:'Ultra-kurz. Zeigt Coolness. Nur wenn du nicht zu distanziert wirken willst.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else if(lt.match(/immobilienscout|angebot|wohnung|haus|miete/)){
+      responses=[
+        {tag:'INTERESSIERT',text:'Sieht gut aus. Was gefaellt dir daran am meisten?',outcome:'Zeigt Interesse an ihrem Leben. Kalibrierte Frage oeffnet Gespraech.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'LEADER',text:'Gute Lage. Aber die Kaltmiete ist zu hoch fuer die Groesse. Schick mir noch 2-3, ich schau sie mir an.',outcome:'Du nimmst die Fuehrung. Zeigt Kompetenz und Frame. Sie fuehlt: Er kuemmert sich.',style:'border-left:3px solid var(--pink)'},
+        {tag:'ZUKUNFT',text:'Wollen wir am Wochenende zusammen ein paar besichtigen?',outcome:'Bold Move. Projiziert gemeinsame Zukunft. Nur wenn die Beziehung das hergibt.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else if(lt.match(/vielleicht|mal schauen|keine zeit|busy/)){
+      responses=[
+        {tag:'ABUNDANCE',text:'Kein Problem. Meld dich wenn du Zeit hast.',outcome:'Null Druck. Abundance Mentality. Ball bei ihr. Wenn sie will, kommt sie.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'SOFT NEXT',text:'Alles klar 👍',outcome:'Minimale Investition. Zeigt: Es betrifft dich nicht. Attraction durch Indifferenz.',style:'border-left:3px solid var(--pink)'},
+        {tag:'DEADLINE',text:'Verstehe. Sag mir bis morgen Bescheid, sonst verplan ich um.',outcome:'Zeigt: Deine Zeit ist wertvoll. Erzeugt sanften Handlungsdruck.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else{
+      responses=[
+        {tag:'MIRROR + REDIRECT',text:'Interessant. Erzaehl mir das persoenlich — nicht ueber Text.',outcome:'Lenkt ins Persoenliche. Face-to-face = dein Terrain = dein Frame.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'KURZ',text:'Verstehe.',outcome:'Minimale Investition. Laesst Raum. Sie muss mehr investieren.',style:'border-left:3px solid var(--pink)'},
+        {tag:'FRAGE',text:'Was erwartest du dir davon?',outcome:'Dreht die Dynamik. SIE muss nachdenken. Du fragst, sie antwortet.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }
+  }else{
+    // VOSS MODE
+    const lastWords=text.trim().split(/\s+/).slice(-3).join(' ');
+    const mirror=lastWords.length>5?lastWords+'...?':'';
+    if(lt.match(/schmerz|weh|tut|brennt|sticht|druck|verspann/)){
+      responses=[
+        {tag:'LABEL + MIRROR',text:(mirror?mirror+'\n\n':'')+'Es klingt so, als ob der Schmerz dir mehr nimmt als nur koerperliche Kraft. Als ob er dir Stueck fuer Stueck etwas wegnimmt — Schlaf, Geduld, das Gefuehl von Normalitaet.\n\nWas muesste passieren, damit du sagst: "Heute ist es anders"?',outcome:'Oeffnet den Patienten emotional. Zeigt tiefes Verstaendnis. Kalibrierte Frage aktiviert Loesungsdenken.',style:'border-left:3px solid var(--green)'},
+        {tag:'AKKUSATIONS-AUDIT',text:'Vielleicht denkst du, ich kann gar nicht nachvollziehen wie sich das anfuehlt. Und damit hast du recht — ich kann es nicht fuehlen. Aber ich kann zuhoeren. Richtig zuhoeren.\n\nWas ist das Schlimmste daran? Nicht der Schmerz selbst — sondern was er dir wegnimmt?',outcome:'Entwaffnet Widerstand durch Vorwegnahme. Black-Swan-Frage oeffnet neue Ebene.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'DIREKT + PREIS',text:'Ich arbeite nur mit Patienten bei denen ich weiss dass ich etwas bewirken kann. Bei dir sehe ich das.\n\nWaere es schlimm wenn wir das mal strukturiert angehen?',outcome:'Value-Positioning + No-oriented Close. Maximaler Profit bei echtem Commitment.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else if(lt.match(/besser|gut|freue|schoen|fortschritt|geschafft|klappt|leichter/)){
+      responses=[
+        {tag:'VERSTÄRKEN',text:'Das was du beschreibst ist nicht "ein bisschen besser." Das ist ein echter Shift.\n\nWas genau machst du jetzt anders als vor 4 Wochen?',outcome:'Verstaerkt den Fortschritt. Kalibrierte Frage verankert die Veraenderung.',style:'border-left:3px solid var(--green)'},
+        {tag:'LABEL + ZUKUNFT',text:'Es scheint als ob sich nicht nur der Schmerz veraendert hat — sondern deine Haltung. Das ist bemerkenswert.\n\nWo willst du in 4 Wochen stehen?',outcome:'Emotionales Label + Zukunftsprojektion. Bindet den Patienten langfristig.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'UPSELL',text:'Das freut mich wirklich. Und jetzt kommt der spannende Teil — wir sind erst am Anfang.\n\nWaere es schlimm wenn wir den naechsten Level angehen?',outcome:'Nutzt den positiven Moment fuer Upgrade/Continuation. Maximaler Lifetime Value.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }else{
+      responses=[
+        {tag:'MIRROR + LABEL',text:(mirror?mirror+'\n\n':'')+'Ich hoere was du sagst. Und ich hoere auch was du NICHT sagst.\n\nWas ist die eine Sache die du noch nicht ausgesprochen hast?',outcome:'Oefffnet Black-Swan-Bereich. Die wichtigsten Informationen sind die ungesagten.',style:'border-left:3px solid var(--green)'},
+        {tag:'EMPATHIE + FRAGE',text:'Das muss sich anfuehlen als ob... ja, als ob du alleine damit bist.\n\nWas wuerdest du dir wuenschen — nicht von mir, sondern generell?',outcome:'Tiefe Empathie + offene Frage. Patient fuehlt sich zum ersten Mal WIRKLICH gehoert.',style:'border-left:3px solid var(--cyan)'},
+        {tag:'AUDIT + COMMIT',text:'Du denkst vielleicht: Bringt das hier ueberhaupt was? Und ehrlich — das ist eine faire Frage.\n\nWas muesste passieren damit du sagst: Ja, das war es wert?',outcome:'Entwaffnet Skepsis + kalibrierte Frage nach dem Erfolgskriterium. Bindet.',style:'border-left:3px solid var(--gold)'},
+      ];
+    }
+  }
+
+  // Influence score (aggregated)
+  const history_count=(history||[]).length;
+  const influence=Math.min(99,20+history_count*3+Object.values(emotions).reduce((a,b)=>a+b,0)/8);
+
+  return{emotions,subtext,intent,powerDynamic,responses,influence:Math.round(influence),topEmotion};
 }
 // ─── DASHBOARD ───
 function renderDash(){
-  const all=getAll();const voss=all.filter(a=>a.type!=='rollo');const rollo=all.filter(a=>a.type==='rollo');
-  const total=all.length;const totalUploads=all.reduce((s,a)=>(a.uploads||[]).length+s,0);
-  const totalShots=all.reduce((s,a)=>(a.screenshots||[]).length+s,0);
+  const all=getAll();
+  const totalDecodes=all.reduce((s,a)=>(a.decodes||0)+s,0);
 
-  let term='<div class="terminal">';
-  term+='<div class="t-line"><span class="t-prompt">AGENT VOSS</span> <span class="t-ok">v3.0</span> <span class="t-dim">// Tactical Communication System</span></div>';
-  term+='<div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">status</span></div>';
-  term+='<div class="t-line"><span class="t-ok">ONLINE</span> — '+total+' Akten · '+totalUploads+' Uploads · '+totalShots+' Screenshots</div>';
-  term+='<div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">ready</span> <span class="t-dim">Warte auf Befehl...</span></div>';
-  term+='</div>';
+  let html='<div class="decoder" style="text-align:center;padding:30px"><div class="decoder-title">NEURAL OS v1.0</div><div style="font-size:12px;color:var(--dim);line-height:1.7;margin:8px 0">Paste was jemand geschrieben hat.<br>Neural OS decoded Subtext, Emotionen, Power-Dynamik<br>und gibt dir 3 taktische Antwort-Optionen.</div><div style="font-family:Orbitron,sans-serif;font-size:11px;color:var(--cyan);margin-top:12px">'+all.length+' KONTAKTE · '+totalDecodes+' DECODES</div></div>';
 
-  function cards(list){
-    if(!list.length)return'<div class="t-dim" style="padding:8px;font-size:11px">Keine Eintraege. Lege eine Akte an.</div>';
-    return list.map(a=>{
-      const u=(a.uploads||[]).length;const s=(a.screenshots||[]).length;
-      const cls=a.type==='rollo'?'card card-rollo':'card';
-      return'<div class="'+cls+'" onclick="openFile(\''+a.id+'\')"><div class="card-name">'+esc(a.name)+'</div><div class="card-meta">'+u+' Chats · '+s+' Shots · '+(a.type==='rollo'?'ROLLO':'VOSS')+'</div></div>';
+  if(all.length){
+    html+='<div style="font-family:Orbitron,sans-serif;font-size:10px;color:var(--dim);letter-spacing:2px;margin:16px 0 8px">KONTAKTE</div>';
+    html+=all.map(a=>{
+      const badge=a.type==='rollo'?'<span class="contact-type type-r">ROLLO</span>':'<span class="contact-type type-v">VOSS</span>';
+      const sc=a.influence||0;const scColor=sc>60?'var(--green)':sc>30?'var(--gold)':'var(--dim)';
+      return'<div class="contact" onclick="openC(\''+a.id+'\')"><div><div class="contact-name">'+esc(a.name)+'</div><div style="margin-top:4px">'+badge+'</div></div><div class="contact-score" style="color:'+scColor+'">'+sc+'</div></div>';
     }).join('');
   }
 
-  app.innerHTML=term
-    +'<div class="t-line t-prompt" style="margin:16px 0 8px;font-size:11px">PATIENTEN [VOSS]</div>'+cards(voss)
-    +'<div class="t-line t-pink" style="margin:16px 0 8px;font-size:11px">KONTAKTE [ROLLO]</div>'+cards(rollo)
-    +'<div class="hr"></div>'
-    +'<div class="terminal"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">neue_akte</span></div></div>'
-    +'<label>Name</label><input type="text" id="n-name" placeholder="Name">'
-    +'<label>Dein Chat-Name</label><input type="text" id="n-my" placeholder="z.B. THETOYSAREOUT" value="'+esc(getMyName())+'">'
-    +'<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-go" style="flex:1" onclick="addFile(\'voss\')">+ PATIENT (VOSS)</button><button class="btn btn-go" style="flex:1;background:var(--pink)" onclick="addFile(\'rollo\')">+ KONTAKT (ROLLO)</button></div>';
+  html+='<div class="hr"></div><div class="decoder"><div class="decoder-title">NEUE AKTE</div><label>Name</label><input type="text" id="n-name" placeholder="Name"><div style="display:flex;gap:4px;margin-top:10px"><button class="btn-add btn-v" style="flex:1" onclick="addC(\'voss\')">+ VOSS</button><button class="btn-add btn-r" style="flex:1" onclick="addC(\'rollo\')">+ ROLLO</button></div></div>';
+
+  app.innerHTML=html;
 }
 
-window.addFile=function(type){
-  const name=$('n-name').value.trim();const my=$('n-my').value.trim();
-  if(!name){alert('Name eingeben');return}
-  if(my)localStorage.setItem('voss_my_name',my);
-  const a=getAll();a.push({id:'a_'+Date.now(),name,myName:my,type,uploads:[],lastMessages:[],screenshots:[],ocrTexts:[],screenshotTexts:[]});
+window.addC=function(type){
+  const name=$('n-name').value.trim();if(!name){alert('Name');return}
+  const a=getAll();a.push({id:'n_'+Date.now(),name,type,history:[],influence:20,decodes:0});
   saveAll(a);renderDash();
 };
-window.openFile=function(id){renderFile(id)};
+window.openC=function(id){renderContact(id)};
 
-// ─── FILE VIEW ───
-function renderFile(id){
-  const a=getOne(id);if(!a){renderDash();return}
-  const my=a.myName||getMyName();
-  const isRollo=a.type==='rollo';
-  const color=isRollo?'var(--pink)':'var(--green)';
-  const engine=isRollo?'ROLLO':'VOSS';
+// ─── CONTACT VIEW ───
+function renderContact(id){
+  const c=getOne(id);if(!c){renderDash();return}
+  const isR=c.type==='rollo';
+  const color=isR?'var(--pink)':'var(--green)';
+  const engine=isR?'ROLLO TOMASSI':'CHRIS VOSS';
 
-  // Merge all context
-  let allMsgs=a.lastMessages?[...a.lastMessages]:[];
-  (a.screenshotTexts||[]).forEach(st=>{allMsgs.push({ts:st.date,sender:a.name+' (Screenshot)',text:st.text})});
+  // Build last decode result if exists
+  let lastResult='';
+  if(c.lastDecode){
+    const d=c.lastDecode;
+    // Emotion bars
+    let emotionHTML='';
+    Object.entries(d.emotions).forEach(([k,v])=>{
+      if(v>0){const col=k==='zuneigung'?'var(--pink)':k==='frustration'?'var(--red)':k==='dominanz'?'var(--gold)':k==='manipulation'?'var(--red)':k==='vertrauen'?'var(--green)':k==='interesse'?'var(--cyan)':k==='unsicherheit'?'var(--purple)':'var(--dim)';
+      emotionHTML+='<div class="emotion-bar"><div class="emotion-name">'+k+'</div><div style="flex:1;background:var(--border);border-radius:2px"><div class="emotion-fill" style="width:'+v+'%;background:'+col+'"></div></div><div class="emotion-val" style="color:'+col+'">'+v+'</div></div>'}
+    });
 
-  // Generate response — ALWAYS if we have any messages
-  let respHTML='';
-  if(allMsgs.length>0){
-    const r=isRollo?rolloRespond(allMsgs,a.name,my||'_ME_'):vossRespond(allMsgs,a.name,my||'_ME_');
-    const cls=isRollo?'response response-rollo':'response';
-    respHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">AGENT '+engine+'</span> <span class="t-cmd">generating response...</span></div><div class="t-line t-ok">TACTICAL RESPONSE READY</div></div>';
-    respHTML+='<div class="'+cls+'"><div class="resp-label" style="color:'+color+'">SENDE DIESE NACHRICHT</div><pre id="r-main">'+esc(r.main)+'</pre><button class="copy-btn" onclick="copyT(\'r-main\')">KOPIEREN</button></div>';
-    if(r.tactic)respHTML+='<div class="terminal"><div class="t-line"><span class="t-prompt">TAKTIK:</span> <span class="t-cmd">'+esc(r.tactic)+'</span></div></div>';
-    if(r.rule)respHTML+='<div class="terminal"><div class="t-line"><span class="t-prompt">RULE:</span> <span class="t-pink">'+esc(r.rule)+'</span></div></div>';
-    respHTML+='<div class="'+cls+'" style="opacity:.7"><div class="resp-label" style="color:'+color+'">FOLLOW-UP</div><pre id="r-follow">'+esc(r.follow)+'</pre><button class="copy-btn" onclick="copyT(\'r-follow\')">KOPIEREN</button></div>';
-    if(r.price)respHTML+='<div class="'+cls+'" style="opacity:.7"><div class="resp-label" style="color:'+color+'">PREIS-SCRIPT</div><pre id="r-price">'+esc(r.price)+'</pre><button class="copy-btn" onclick="copyT(\'r-price\')">KOPIEREN</button></div>';
+    lastResult='<div class="result-section">';
+    lastResult+='<div class="subtext-card"><div class="subtext-label" style="color:var(--cyan)">SUBTEXT</div><div class="subtext-text">'+esc(d.subtext)+'</div></div>';
+    lastResult+='<div class="subtext-card"><div class="subtext-label" style="color:var(--gold)">INTENT</div><div class="subtext-text">'+esc(d.intent)+'</div></div>';
+    lastResult+='<div class="subtext-card"><div class="subtext-label" style="color:var(--pink)">POWER DYNAMIC</div><div class="subtext-text">'+esc(d.powerDynamic)+'</div></div>';
+    lastResult+='<div class="subtext-card"><div class="subtext-label" style="color:var(--purple)">EMOTION RADAR</div>'+emotionHTML+'</div>';
+
+    // 3 Response Options
+    lastResult+='<div style="font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:2px;color:'+color+';margin:16px 0 8px">3 RESPONSE OPTIONEN</div>';
+    d.responses.forEach((r,i)=>{
+      lastResult+='<div class="response-option" style="'+r.style+'" onclick="copyR('+i+')"><div class="resp-num">'+(i+1)+'</div><div class="resp-tag" style="color:'+color+'">'+esc(r.tag)+'</div><div class="resp-text" id="resp-'+i+'">'+esc(r.text)+'</div><div class="resp-outcome">→ '+esc(r.outcome)+'</div><button class="copy-btn" onclick="event.stopPropagation();copyR('+i+')">COPY</button><div style="clear:both"></div></div>';
+    });
+
+    // Influence Score
+    lastResult+='<div class="score-ring"><div class="score-num" style="color:'+color+'">'+d.influence+'</div></div><div class="score-label">INFLUENCE SCORE</div>';
+    lastResult+='</div>';
   }
 
-  // Quick message input — THE MAIN FEATURE
-  let quickHTML='<div style="background:rgba(45,255,168,.03);border:2px solid '+color+';padding:16px;margin:8px 0">';
-  quickHTML+='<div style="font-family:Orbitron,sans-serif;font-size:10px;color:'+color+';letter-spacing:2px;margin-bottom:10px">WAS HAT '+esc(a.name).toUpperCase()+' GESCHRIEBEN?</div>';
-  quickHTML+='<textarea id="quick-msg" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:Space Mono,monospace;font-size:14px;padding:12px;outline:none;resize:vertical" placeholder="Nachricht hier eintippen oder einfuegen..."></textarea>';
-  quickHTML+='<button class="btn btn-go" style="font-size:14px;padding:16px;margin-top:8px;background:'+color+'" onclick="quickAdd(\''+id+'\')">→ AGENT '+engine+' ANTWORTET</button>';
-  quickHTML+='</div>';
-
-  // Chat history — collapsed by default so response stays visible
-  let chatHTML='';
-  if(a.lastMessages&&a.lastMessages.length){
-    const last=a.lastMessages.slice(-12);
-    chatHTML='<div class="terminal" style="cursor:pointer" onclick="var c=this.nextElementSibling;c.style.display=c.style.display===\'none\'?\'block\':\'none\'"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">chat_log</span> <span class="t-dim">('+last.length+' Nachrichten — klicken zum oeffnen)</span></div></div>';
-    chatHTML+='<div style="display:none">'+last.map(m=>{const isMe=my&&m.sender.toLowerCase().includes(my.toLowerCase());return'<div class="bubble '+(isMe?'b-me':'b-them')+'">'+esc(m.text)+'<div class="b-ts">'+esc(m.sender)+'</div></div>'}).join('')+'</div>';
+  // History
+  let histHTML='';
+  if(c.history&&c.history.length){
+    histHTML='<div style="font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:2px;color:var(--dim);margin:16px 0 8px">LETZTE DECODES</div>';
+    histHTML+=c.history.slice(-8).reverse().map(h=>'<div style="padding:8px;border:1px solid var(--border);margin:3px 0;font-size:11px;color:var(--dim)"><span style="color:var(--text)">'+esc(h.text.substring(0,60))+(h.text.length>60?'...':'')+'</span><br><span style="font-size:9px">'+esc(h.date)+' · Top: '+esc(h.topEmotion)+'</span></div>').join('');
   }
 
-  // Screenshots
-  let shotHTML='';
-  const shots=a.screenshots||[];const ocrs=a.ocrTexts||[];
-  if(shots.length){
-    shotHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">screenshots</span> <span class="t-dim">('+shots.length+')</span></div></div>';
-    shotHTML+='<div class="shots">'+shots.map((s,i)=>'<div style="position:relative"><img src="'+s+'" onclick="showI('+i+',\''+id+'\')">'+((ocrs[i]&&ocrs[i].length>5)?'<div class="ocr-badge">OCR</div>':'')+'</div>').join('')+'</div>';
-    const allOcr=ocrs.filter(t=>t&&t.length>5).join('\n---\n');
-    if(allOcr)shotHTML+='<div class="terminal"><div class="t-line t-ok">OCR ERKANNT:</div></div><div class="ocr-out">'+esc(allOcr)+'</div>';
-  }
-
-  // File uploads
-  let fileHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">upload</span></div></div>';
-  fileHTML+='<div class="file-zone" id="fz"><div style="font-size:10px;color:var(--dim)">Chat (.txt/.zip) hier ablegen</div><div id="fn" style="color:var(--green);font-size:11px;margin-top:4px;display:none"></div><input type="file" id="fi" accept=".txt,.csv,.text,.zip"></div>';
-  fileHTML+='<button class="btn btn-go" id="up-btn" disabled onclick="doUpload(\''+id+'\')">CHAT LADEN</button>';
-  fileHTML+='<div class="file-zone" id="iz" style="margin-top:6px"><div style="font-size:10px;color:var(--dim)">Screenshots hier ablegen</div><input type="file" id="ii" accept="image/*" multiple></div>';
-  fileHTML+='<div id="ocr-status"></div>';
-
-  app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="back-link" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;color:'+color+'">'+esc(a.name)+'</span><span style="font-size:9px;color:var(--dim);letter-spacing:1px">['+engine+']</span></div>'
-    +quickHTML
-    +respHTML
-    +(chatHTML?'<div class="hr"></div>'+chatHTML:'')
-    +'<div class="hr"></div>'+fileHTML
-    +(shotHTML?'<div class="hr"></div>'+shotHTML:'')
-    +'<div class="hr"></div><button class="btn btn-del" onclick="if(confirm(\'Akte loeschen?\'))delFile(\''+id+'\')">AKTE LOESCHEN</button>';
-
-  setupFiles(id);
+  app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span class="back-btn" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:16px;font-weight:900;letter-spacing:2px;color:'+color+'">'+esc(c.name)+'</span></div>'
+    +'<div class="decoder"><div class="decoder-title">NEURAL DECODER — '+engine+'</div><div class="mode-switch"><div class="mode-btn '+(isR?'active-pink':'active')+'">'+engine+'</div></div><textarea class="decode-input" id="decode-in" placeholder="Was hat '+esc(c.name)+' geschrieben? Paste die Nachricht hier..."></textarea><button class="decode-btn" onclick="runDecode(\''+id+'\')">DECODE + RESPOND</button></div>'
+    +lastResult
+    +'<div class="hr"></div>'+histHTML
+    +'<div class="hr"></div><button class="btn-del" onclick="if(confirm(\'Loeschen?\'))delC(\''+id+'\')">AKTE LOESCHEN</button>';
 }
 
-// ─── Quick Input ───
-window.quickAdd=function(id){
-  const input=$('quick-msg');
-  const msg=input?input.value.trim():'';
-  if(!msg)return;
-  const a=getOne(id);if(!a)return;
-  const contactName=a.name;
+window.runDecode=function(id){
+  const input=$('decode-in');
+  const text=input?input.value.trim():'';
+  if(!text)return;
+  const c=getOne(id);if(!c)return;
+
+  const result=decode(text,c.type,c.name,c.history);
+
   upd(id,p=>{
-    if(!p.lastMessages)p.lastMessages=[];
-    p.lastMessages.push({ts:new Date().toLocaleString('de'),sender:contactName,text:msg});
-    if(p.lastMessages.length>30)p.lastMessages=p.lastMessages.slice(-30);
+    p.lastDecode=result;
+    if(!p.history)p.history=[];
+    p.history.push({text,date:new Date().toLocaleString('de'),topEmotion:result.topEmotion[0]});
+    if(p.history.length>50)p.history=p.history.slice(-50);
+    p.influence=result.influence;
+    p.decodes=(p.decodes||0)+1;
   });
-  renderFile(id);
-  // Auto-scroll to response
-  setTimeout(()=>{const r=document.getElementById('r-main');if(r)r.scrollIntoView({behavior:'smooth',block:'center'})},100);
+
+  renderContact(id);
+  setTimeout(()=>{const r=document.querySelector('.result-section');if(r)r.scrollIntoView({behavior:'smooth',block:'start'})},100);
 };
 
-// ─── File Handling ───
-let pendingChat='';
-function setupFiles(id){
-  const fz=$('fz'),fi=$('fi'),fn=$('fn'),btn=$('up-btn');
-  const iz=$('iz'),ii=$('ii');
-  if(fz){
-    fz.addEventListener('click',()=>fi.click());
-    fz.addEventListener('dragover',e=>{e.preventDefault();fz.classList.add('dragover')});
-    fz.addEventListener('dragleave',()=>fz.classList.remove('dragover'));
-    fz.addEventListener('drop',e=>{e.preventDefault();fz.classList.remove('dragover');if(e.dataTransfer.files.length)loadChat(e.dataTransfer.files[0])});
-    fi.addEventListener('change',()=>{if(fi.files.length)loadChat(fi.files[0])});
-  }
-  if(iz){
-    iz.addEventListener('click',()=>ii.click());
-    iz.addEventListener('dragover',e=>{e.preventDefault();iz.classList.add('dragover')});
-    iz.addEventListener('dragleave',()=>iz.classList.remove('dragover'));
-    iz.addEventListener('drop',e=>{e.preventDefault();iz.classList.remove('dragover');doImages(e.dataTransfer.files,id)});
-    ii.addEventListener('change',()=>doImages(ii.files,id));
-  }
-  async function loadChat(file){
-    if(file.name.toLowerCase().endsWith('.zip')){
-      try{const zip=await JSZip.loadAsync(file);let t=null;zip.forEach((p,e)=>{if(!e.dir&&p.toLowerCase().endsWith('.txt'))t=e});if(!t){alert('Keine .txt in ZIP');return}pendingChat=await t.async('string')}catch(e){alert('ZIP: '+e.message);return}
-    }else{pendingChat=await new Promise((r,j)=>{const f=new FileReader();f.onload=e=>r(e.target.result);f.onerror=j;f.readAsText(file,'UTF-8')})}
-    fn.textContent=file.name;fn.style.display='block';btn.disabled=false;
-  }
-}
-
-window.doUpload=function(id){
-  const msgs=parseWA(pendingChat);if(!msgs.length){alert('Keine Nachrichten.');return}
-  upd(id,p=>{if(!p.uploads)p.uploads=[];p.uploads.push({date:new Date().toISOString().slice(0,10),msgCount:msgs.length});p.lastMessages=msgs.slice(-30)});
-  pendingChat='';renderFile(id);
+window.copyR=function(i){
+  const el=document.getElementById('resp-'+i);
+  if(el){navigator.clipboard.writeText(el.textContent);const btns=el.parentElement.querySelectorAll('.copy-btn');btns.forEach(b=>{b.textContent='COPIED';b.style.color='var(--green)';b.style.borderColor='var(--green)';setTimeout(()=>{b.textContent='COPY';b.style.color='';b.style.borderColor=''},1500)})}
 };
 
-async function doImages(files,id){
-  const arr=Array.from(files).filter(f=>f.type.startsWith('image/'));if(!arr.length)return;
-  const st=$('ocr-status');if(st)st.innerHTML='<div class="terminal"><div class="t-line t-warn">OCR SCANNING...</div></div>';
-  for(let i=0;i<arr.length;i++){
-    if(st)st.innerHTML='<div class="terminal"><div class="t-line t-warn">BILD '+(i+1)+'/'+arr.length+' — SCANNING...</div></div>';
-    const compressed=await new Promise(r=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');const s=Math.min(1,800/img.width);c.width=img.width*s;c.height=img.height*s;c.getContext('2d').drawImage(img,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',0.7))};img.src=URL.createObjectURL(arr[i])});
-    let ocr='';
-    try{const res=await Tesseract.recognize(compressed,'deu');ocr=(res.data.text||'').trim()}catch(e){ocr=''}
-    upd(id,p=>{if(!p.screenshots)p.screenshots=[];if(!p.ocrTexts)p.ocrTexts=[];if(!p.screenshotTexts)p.screenshotTexts=[];if(p.screenshots.length>=50){p.screenshots.shift();p.ocrTexts.shift()}p.screenshots.push(compressed);p.ocrTexts.push(ocr);if(ocr.length>10)p.screenshotTexts.push({date:new Date().toISOString().slice(0,10),text:ocr})});
-  }
-  if(st)st.innerHTML='<div class="terminal"><div class="t-line t-ok">'+arr.length+' SCREENSHOT(S) PROCESSED</div></div>';
-  setTimeout(()=>renderFile(id),600);
-}
-
-window.showI=function(i,id){const a=getOne(id);if(!a)return;const s=a.screenshots[i];const o=(a.ocrTexts||[])[i]||'';const m=document.createElement('div');m.className='img-modal';m.innerHTML='<div style="text-align:center"><img src="'+s+'" style="max-width:95%;max-height:'+(o?'75':'90')+'vh">'+(o.length>5?'<div style="margin-top:8px;padding:10px;background:rgba(0,0,0,.8);font-size:10px;color:var(--text);max-height:20vh;overflow-y:auto;text-align:left;white-space:pre-wrap">'+esc(o)+'</div>':'')+'</div>';m.onclick=e=>{if(e.target===m)m.remove()};document.body.appendChild(m)};
-
-window.delFile=function(id){saveAll(getAll().filter(a=>a.id!==id));renderDash()};
-window.copyT=function(id){const el=document.getElementById(id);if(el){navigator.clipboard.writeText(el.textContent);const b=el.parentElement.querySelector('.copy-btn');if(b){b.textContent='COPIED';b.style.color='var(--green)';b.style.borderColor='var(--green)';setTimeout(()=>{b.textContent='KOPIEREN';b.style.color='';b.style.borderColor=''},1500)}}};
+window.delC=function(id){saveAll(getAll().filter(a=>a.id!==id));renderDash()};
 
 // ─── INIT ───
 renderDash();
