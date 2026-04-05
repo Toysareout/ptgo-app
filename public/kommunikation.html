@@ -353,22 +353,74 @@ function renderField(id){
   }
 
   app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span class="back" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:16px;font-weight:900;letter-spacing:3px;color:'+color+'">'+esc(c.name)+'</span></div>'
-    +'<div class="glass"><div class="glass-title" style="color:'+color+'">FIELD DECODER — '+(isR?'ROLLO TOMASSI':'CHRIS VOSS')+'</div><textarea class="input-area" id="di" placeholder="Paste die Nachricht hier...\n\nNeural Field Theory berechnet das unsichtbare Feld."></textarea><button class="go-btn" onclick="run(\''+id+'\')"><span>DECODE FIELD</span></button></div>'
+    +'<div class="glass"><div class="glass-title" style="color:'+color+'">FIELD DECODER — '+(isR?'ROLLO TOMASSI':'CHRIS VOSS')+'</div>'
+    +'<div id="drop-zone" style="border:2px dashed var(--border);padding:30px 16px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:10px"><div style="font-size:32px;margin-bottom:8px">📸</div><div style="font-size:11px;color:var(--dim)">Screenshot hier ablegen oder klicken</div><div id="ocr-status" style="font-size:10px;color:var(--gold);margin-top:8px;display:none"></div><div id="ocr-preview" style="margin-top:8px;display:none"><img id="ocr-img" style="max-width:100%;max-height:150px;border:1px solid var(--border);margin-bottom:6px"><div id="ocr-text" style="font-size:10px;color:var(--dim);max-height:60px;overflow-y:auto;text-align:left;background:rgba(0,0,0,.3);padding:6px;white-space:pre-wrap"></div></div><input type="file" id="fi" accept="image/*" style="display:none"></div>'
+    +'<div style="font-size:9px;color:var(--dim);text-align:center;margin-bottom:10px">— oder Text direkt eingeben —</div>'
+    +'<textarea class="input-area" id="di" placeholder="Oder Text hier eintippen..." style="min-height:50px"></textarea>'
+    +'<button class="go-btn" onclick="run(\''+id+'\')"><span>DECODE FIELD</span></button></div>'
     +resultHTML
     +(histHTML?'<div class="hr"></div>'+histHTML:'')
     +'<div class="hr"></div><button class="btn-del" onclick="if(confirm(\'Feld loeschen?\'))del(\''+id+'\')">FELD LOESCHEN</button>';
+
+  // Setup screenshot drop
+  setupDrop(id);
+}
+
+let ocrResult='';
+
+function setupDrop(id){
+  const zone=$('drop-zone');const fi=$('fi');
+  if(!zone)return;
+  zone.addEventListener('click',()=>fi.click());
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.style.borderColor='var(--cyan)';zone.style.background='rgba(0,240,255,.03)'});
+  zone.addEventListener('dragleave',()=>{zone.style.borderColor='';zone.style.background=''});
+  zone.addEventListener('drop',e=>{e.preventDefault();zone.style.borderColor='';zone.style.background='';if(e.dataTransfer.files.length)processImage(e.dataTransfer.files[0],id)});
+  fi.addEventListener('change',()=>{if(fi.files.length)processImage(fi.files[0],id)});
+}
+
+async function processImage(file,id){
+  if(!file.type.startsWith('image/'))return;
+  const status=$('ocr-status');const preview=$('ocr-preview');const img=$('ocr-img');const ocrEl=$('ocr-text');
+  // Show preview
+  const url=URL.createObjectURL(file);
+  img.src=url;preview.style.display='block';
+  status.style.display='block';status.textContent='SCANNING...';status.style.color='var(--gold)';
+
+  // Compress
+  const compressed=await new Promise(r=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');const s=Math.min(1,1200/i.width);c.width=i.width*s;c.height=i.height*s;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',0.8))};i.src=url});
+
+  // OCR
+  try{
+    const res=await Tesseract.recognize(compressed,'deu',{logger:m=>{if(m.status==='recognizing text')status.textContent='OCR '+Math.round((m.progress||0)*100)+'%'}});
+    ocrResult=(res.data.text||'').trim();
+    if(ocrResult.length>5){
+      status.textContent='TEXT ERKANNT — '+ocrResult.length+' Zeichen';status.style.color='var(--green)';
+      ocrEl.textContent=ocrResult;
+      // Auto-fill text input
+      const di=$('di');if(di)di.value=ocrResult;
+    }else{
+      status.textContent='Kein Text erkannt. Versuche ein klareres Bild.';status.style.color='var(--red)';
+      ocrResult='';
+    }
+  }catch(e){
+    status.textContent='OCR Fehler: '+e.message;status.style.color='var(--red)';
+    ocrResult='';
+  }
 }
 
 window.run=function(id){
-  const input=$('di');const text=input?input.value.trim():'';if(!text)return;
+  const input=$('di');const text=input?input.value.trim():'';
+  const finalText=text||ocrResult;
+  if(!finalText){alert('Screenshot oder Text eingeben');return}
   const c=getOne(id);if(!c)return;
-  const result=computeField(text,c.type,c.name,c.history);
+  const result=computeField(finalText,c.type,c.name,c.history);
   upd(id,p=>{
     p.lastResult=result;p.lastEnergy=result.energy;p.decodes=(p.decodes||0)+1;
     if(!p.history)p.history=[];
-    p.history.push({text,energy:result.energy,field:result.fieldType,date:new Date().toLocaleString('de')});
+    p.history.push({text:finalText,energy:result.energy,field:result.fieldType,date:new Date().toLocaleString('de')});
     if(p.history.length>50)p.history=p.history.slice(-50);
   });
+  ocrResult='';
   renderField(id);
   setTimeout(()=>{const eq=document.querySelector('.equation');if(eq)eq.scrollIntoView({behavior:'smooth',block:'center'})},200);
 };
