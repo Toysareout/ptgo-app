@@ -136,7 +136,8 @@ function parseWA(raw){
 
 // ─── VOSS ENGINE ───
 function vossRespond(msgs,name,myName){
-  const them=msgs.filter(m=>!m.sender.toLowerCase().includes(myName.toLowerCase())).slice(-5);
+  const myLow=(myName||'').toLowerCase();
+  const them=myLow?msgs.filter(m=>!m.sender.toLowerCase().includes(myLow)).slice(-5):msgs.filter(m=>m.sender.toLowerCase().includes(name.toLowerCase())).slice(-5);
   if(!them.length) return{main:'[KEINE DATEN]',follow:'',price:'',tactic:''};
   const lt=them.map(m=>m.text).join(' ').toLowerCase();
   const last=them[them.length-1].text;
@@ -179,7 +180,8 @@ function vossRespond(msgs,name,myName){
 
 // ─── ROLLO ENGINE ───
 function rolloRespond(msgs,name,myName){
-  const them=msgs.filter(m=>!m.sender.toLowerCase().includes(myName.toLowerCase())).slice(-5);
+  const myLow=(myName||'').toLowerCase();
+  const them=myLow?msgs.filter(m=>!m.sender.toLowerCase().includes(myLow)).slice(-5):msgs.filter(m=>m.sender.toLowerCase().includes(name.toLowerCase())).slice(-5);
   if(!them.length) return{main:'[KEINE DATEN]',follow:'',rule:''};
   const lt=them.map(m=>m.text).join(' ').toLowerCase();
   const short=lt.length<50;
@@ -249,10 +251,10 @@ function renderFile(id){
   let allMsgs=a.lastMessages?[...a.lastMessages]:[];
   (a.screenshotTexts||[]).forEach(st=>{allMsgs.push({ts:st.date,sender:a.name+' (Screenshot)',text:st.text})});
 
-  // Generate response
+  // Generate response — ALWAYS if we have any messages
   let respHTML='';
-  if(allMsgs.length){
-    const r=isRollo?rolloRespond(allMsgs,a.name,my):vossRespond(allMsgs,a.name,my);
+  if(allMsgs.length>0){
+    const r=isRollo?rolloRespond(allMsgs,a.name,my||'_ME_'):vossRespond(allMsgs,a.name,my||'_ME_');
     const cls=isRollo?'response response-rollo':'response';
     respHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">AGENT '+engine+'</span> <span class="t-cmd">generating response...</span></div><div class="t-line t-ok">TACTICAL RESPONSE READY</div></div>';
     respHTML+='<div class="'+cls+'"><div class="resp-label" style="color:'+color+'">SENDE DIESE NACHRICHT</div><pre id="r-main">'+esc(r.main)+'</pre><button class="copy-btn" onclick="copyT(\'r-main\')">KOPIEREN</button></div>';
@@ -262,10 +264,12 @@ function renderFile(id){
     if(r.price)respHTML+='<div class="'+cls+'" style="opacity:.7"><div class="resp-label" style="color:'+color+'">PREIS-SCRIPT</div><pre id="r-price">'+esc(r.price)+'</pre><button class="copy-btn" onclick="copyT(\'r-price\')">KOPIEREN</button></div>';
   }
 
-  // Quick message input
-  let quickHTML='<div class="terminal"><div class="t-line"><span class="t-prompt">></span> <span class="t-cmd">quick_input</span> <span class="t-dim">Was hat '+esc(a.name)+' geschrieben?</span></div></div>';
-  quickHTML+='<div class="cmd-wrap"><div class="cmd-prefix">'+esc(a.name)+' ></div><input class="cmd-input" id="quick-msg" placeholder="Nachricht hier eintippen..." onkeydown="if(event.key===\'Enter\')quickAdd(\''+id+'\')"></div>';
-  quickHTML+='<button class="btn btn-go" onclick="quickAdd(\''+id+'\')">AGENT '+engine+' ANTWORTET</button>';
+  // Quick message input — THE MAIN FEATURE
+  let quickHTML='<div style="background:rgba(45,255,168,.03);border:2px solid '+color+';padding:16px;margin:8px 0">';
+  quickHTML+='<div style="font-family:Orbitron,sans-serif;font-size:10px;color:'+color+';letter-spacing:2px;margin-bottom:10px">WAS HAT '+esc(a.name).toUpperCase()+' GESCHRIEBEN?</div>';
+  quickHTML+='<textarea id="quick-msg" rows="3" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:Space Mono,monospace;font-size:14px;padding:12px;outline:none;resize:vertical" placeholder="Nachricht hier eintippen oder einfuegen..."></textarea>';
+  quickHTML+='<button class="btn btn-go" style="font-size:14px;padding:16px;margin-top:8px;background:'+color+'" onclick="quickAdd(\''+id+'\')">→ AGENT '+engine+' ANTWORTET</button>';
+  quickHTML+='</div>';
 
   // Chat history
   let chatHTML='';
@@ -293,7 +297,11 @@ function renderFile(id){
   fileHTML+='<div id="ocr-status"></div>';
 
   app.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span class="back-link" onclick="renderDash()">ESC</span><span style="font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;color:'+color+'">'+esc(a.name)+'</span><span style="font-size:9px;color:var(--dim);letter-spacing:1px">['+engine+']</span></div>'
-    +quickHTML+respHTML+'<div class="hr"></div>'+fileHTML+'<div class="hr"></div>'+chatHTML+'<div class="hr"></div>'+shotHTML
+    +quickHTML
+    +respHTML
+    +(chatHTML?'<div class="hr"></div>'+chatHTML:'')
+    +'<div class="hr"></div>'+fileHTML
+    +(shotHTML?'<div class="hr"></div>'+shotHTML:'')
     +'<div class="hr"></div><button class="btn btn-del" onclick="if(confirm(\'Akte loeschen?\'))delFile(\''+id+'\')">AKTE LOESCHEN</button>';
 
   setupFiles(id);
@@ -301,14 +309,19 @@ function renderFile(id){
 
 // ─── Quick Input ───
 window.quickAdd=function(id){
-  const msg=$('quick-msg').value.trim();if(!msg)return;
-  const a=getOne(id);
+  const input=$('quick-msg');
+  const msg=input?input.value.trim():'';
+  if(!msg)return;
+  const a=getOne(id);if(!a)return;
+  const contactName=a.name;
   upd(id,p=>{
     if(!p.lastMessages)p.lastMessages=[];
-    p.lastMessages.push({ts:new Date().toLocaleString('de'),sender:p.name,text:msg});
+    p.lastMessages.push({ts:new Date().toLocaleString('de'),sender:contactName,text:msg});
     if(p.lastMessages.length>30)p.lastMessages=p.lastMessages.slice(-30);
   });
   renderFile(id);
+  // Auto-scroll to response
+  setTimeout(()=>{const r=document.getElementById('r-main');if(r)r.scrollIntoView({behavior:'smooth',block:'center'})},100);
 };
 
 // ─── File Handling ───
