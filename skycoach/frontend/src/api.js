@@ -51,4 +51,7 @@ export const api = {
   listFlights: () => request('/api/flights'),
   getFlight: (id) => request(`/api/flights/${id}`),
   deleteFlight: (id) => request(`/api/flights/${id}`, { method: 'DELETE' }),
+
+  checkout: (success_url, cancel_url) =>
+    request('/api/billing/checkout', { method: 'POST', body: { success_url, cancel_url } }),
 }

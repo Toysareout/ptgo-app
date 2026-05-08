@@ -35,9 +35,16 @@ class User(Base):
     password_hash = Column(String(255), nullable=False)
     pilot_level = Column(String(64), default="beginner")     # beginner|advanced|xc|instructor
     license_type = Column(String(64), default="")
-    wing_class = Column(String(32), default="")              # EN-A|EN-B|EN-C|EN-D
+    wing_class = Column(String(32), default="")              # EN-A|EN-B|EN-C|EN-D|CCC
     flight_hours = Column(Integer, default=0)
     region = Column(String(128), default="")
+
+    # Subscription state
+    plan = Column(String(32), default="free")                # free|pro|flight_school
+    stripe_customer_id = Column(String(64), default="")
+    stripe_subscription_id = Column(String(64), default="")
+    plan_renews_at = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
 
     flights = relationship("Flight", back_populates="user", cascade="all, delete-orphan")
@@ -60,6 +67,7 @@ class Flight(Base):
     max_sink_ms = Column(Float, default=0.0)
     risk_score = Column(Integer, default=0)
     risk_level = Column(String(16), default="low")
+    weather_json = Column(Text, default="")                  # cached Open-Meteo snapshot
     analysis_json = Column(Text, nullable=False)             # full analysis payload
     created_at = Column(DateTime, default=datetime.utcnow)
 

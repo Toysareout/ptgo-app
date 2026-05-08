@@ -55,6 +55,21 @@ export default function AnalysisView({ analysis, onBack }) {
         <TrackMap points={analysis.track_preview} />
       </div>
 
+      {analysis.weather && (
+        <div className="card">
+          <h3>Wetter am Flugtag</h3>
+          <div className="grid grid-4">
+            <Metric label="Wind" value={analysis.weather.wind_speed_kmh} unit="km/h" />
+            <Metric label="Böen" value={analysis.weather.wind_gusts_kmh} unit="km/h" />
+            <Metric label="Richtung" value={analysis.weather.wind_direction_deg} unit="°" />
+            <Metric label="Temperatur" value={analysis.weather.temperature_c} unit="°C" />
+          </div>
+          <p className="muted" style={{ marginTop: 12, marginBottom: 0, fontSize: 13 }}>
+            Quelle: {analysis.weather.source} · Bodenwerte am Startpunkt zur Startzeit.
+          </p>
+        </div>
+      )}
+
       <div className="card">
         <h3>Thermiken ({m.thermals.length})</h3>
         {m.thermals.length === 0 ? (

@@ -8,21 +8,27 @@ MVP für eine Webanwendung, die IGC-Flugaufzeichnungen analysiert und automatisc
 
 ---
 
-## Funktionsumfang (V1 – MVP)
+## Funktionsumfang
 
-- Account & Anmeldung (E-Mail + Passwort, JWT-Token)
+**V1 (MVP):**
+- Account & Anmeldung (E-Mail + Passwort, Bearer-Token)
 - IGC-Upload mit Drag & Drop
-- Flugauswertung:
-  - Flugzeit, Strecke, Luftlinie
-  - Maximale & minimale Höhe, Höhengewinn
-  - Steig-/Sinkwerte (geglättet, GPS-Jitter-resistent)
-  - Boden- und Spitzengeschwindigkeit
-  - Thermik-Erkennung (Phasen mit anhaltendem Steigen ≥ 0.5 m/s)
-  - 0–100 Risiko-Score mit `low / medium / high`-Einstufung
-- KI-Coaching-Hinweise (regelbasiert in V1, ML/Claude-Integration in V2)
+- Flugauswertung: Dauer, Strecke, Luftlinie, max/min Höhe, Höhengewinn, Steig-/Sinkwerte (geglättet), Boden- und Spitzengeschwindigkeit
+- Thermik-Erkennung (Phasen mit Steigen ≥ 0.5 m/s, ≥ 20 s)
+- 0–100 Risiko-Score mit `low / medium / high`-Einstufung
+- Strukturierte deutschsprachige Coaching-Hinweise
 - Flugtagebuch mit Persistierung in SQLite/PostgreSQL
 - Pilotenprofil (Level, Schein, Schirmklasse, Stunden, Region)
-- Track-Vorschau als SVG (kein Map-Library nötig in V1)
+- Track-Vorschau als SVG
+
+**V2 (this branch):**
+- Open-Meteo-Wetterdaten (Wind, Böen, Richtung, Temperatur am Startpunkt zur Startzeit)
+- Wetter fließt in Risiko-Score und Coaching ein
+- Pilot-Level-spezifisches Coaching (Schüler bekommt Sicherheitsfokus, XC bekommt Performance-Hebel)
+- Schirmklassen-spezifische Warnungen (EN-C/D/CCC in starker Thermik)
+- **Stripe-Pro-Subscription** (12 €/Monat) + Free-Tier Rate Limit (3 Analysen/Monat)
+- Pytest-Suite (28 Tests: Parser, Analyzer, Personalisierung, Quota)
+- Calibration-CLI für die Validierung mit echten IGC-Dateien
 
 ## Architektur
 
@@ -32,17 +38,22 @@ skycoach/
 │   ├── skycoach/
 │   │   ├── igc_parser.py       IGC-Parser (B-Records, Header)
 │   │   ├── analyzer.py         Metriken, Thermiken, Risiko-Score, Coaching
+│   │   ├── weather.py          Open-Meteo-Lookup
+│   │   ├── billing.py          Stripe-Subscription + Quota
 │   │   ├── db.py               SQLAlchemy-Modelle
 │   │   ├── auth.py             HMAC-signierte Bearer-Token
 │   │   └── main.py             FastAPI-App + Routen
-│   ├── requirements.txt
-│   └── run.sh
-└── frontend/                   React + Vite
-    ├── src/
-    │   ├── App.jsx
-    │   ├── api.js
-    │   └── components/
-    └── package.json
+│   ├── tests/                  Pytest-Suite (28 Tests)
+│   ├── scripts/calibrate.py    CLI für echte IGC-Validierung
+│   ├── Dockerfile, fly.toml    Fly.io-Deployment
+│   └── requirements.txt
+├── frontend/                   React + Vite
+│   ├── src/
+│   │   ├── App.jsx, api.js
+│   │   └── components/
+│   ├── vercel.json             Vercel-Deployment
+│   └── package.json
+└── DEPLOY.md                   Schritt-für-Schritt Production-Setup
 ```
 
 ## Lokale Entwicklung
@@ -120,5 +131,23 @@ Die Schwellen sind in `analyzer.py` zentral dokumentiert und werden in V2 mit ec
 
 ## Tests
 
-Smoke-Test des Parsers + Analyzers + aller HTTP-Endpunkte wurde manuell ausgeführt.
-Ein dediziertes pytest-Setup folgt, sobald echte IGC-Testdateien verfügbar sind.
+```bash
+cd skycoach/backend
+pip install -r requirements.txt pytest
+pytest -q
+```
+
+28 Tests decken Parser-Edge-Cases, Analyzer-Heuristiken, Pilot-Level-/Wing-Class-Personalisierung, Wetter-Integration und Free-Tier-Quota ab.
+
+## Calibration mit echten IGC-Dateien
+
+```bash
+cd skycoach/backend
+python -m scripts.calibrate /pfad/zu/igc-ordner --out calibration.csv --json
+```
+
+Die CSV-Spalten enthalten Risiko-Score, erkannte Thermiken, Warnungen — vergleiche sie mit der Fluglehrer-Bewertung, dann passe die Schwellen in `analyzer.py` an.
+
+## Deployment
+
+Siehe [DEPLOY.md](./DEPLOY.md). Stack: Fly.io für Backend, Vercel für Frontend, Stripe für Pro-Subscription, Open-Meteo für Wetter (kein API-Key nötig).
