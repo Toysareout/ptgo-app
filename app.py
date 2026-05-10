@@ -441,6 +441,64 @@ class WealthWeekly(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+# =========================================================
+# ELITE PROGRAM — persönliches Selbstentwicklungs-Programm
+# (Quellen: Jocko Willink, Cal Newport, Huberman, Attia, Naval,
+#  Marcus Aurelius, Goggins, Mark Manson, David Deida, Chris Voss)
+# =========================================================
+
+class EliteProfile(Base):
+    """Persönliches Elite-Programm — 1 Profil pro Session-Key."""
+    __tablename__ = "elite_profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    owner_key = Column(String(128), unique=True, nullable=False, index=True)
+    display_name = Column(String(128), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    level = Column(Integer, default=1)                    # 1..10
+    streak_days = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_active_day = Column(String(10), nullable=True)
+    one_skill = Column(String(128), nullable=True)
+    keystone = Column(String(64), nullable=True)          # step_id die nie verpasst werden darf
+    weight_kg = Column(Float, nullable=True)
+    body_fat_pct = Column(Float, nullable=True)
+    baseline_bench_kg = Column(Float, nullable=True)
+    baseline_deadlift_kg = Column(Float, nullable=True)
+    total_days_logged = Column(Integer, default=0)
+    total_steps_completed = Column(Integer, default=0)
+    total_steps_skipped = Column(Integer, default=0)
+    last_level_change = Column(String(10), nullable=True)
+    last_review_week = Column(String(10), nullable=True)
+
+
+class EliteDay(Base):
+    __tablename__ = "elite_days"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("elite_profiles.id"), index=True, nullable=False)
+    day = Column(String(10), index=True, nullable=False)
+    steps_done_json = Column(Text, default="[]")
+    steps_skipped_json = Column(Text, default="[]")
+    metrics_json = Column(Text, default="{}")
+    score = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class EliteWeeklyReview(Base):
+    __tablename__ = "elite_weekly_reviews"
+    id = Column(Integer, primary_key=True, index=True)
+    profile_id = Column(Integer, ForeignKey("elite_profiles.id"), index=True, nullable=False)
+    week = Column(String(10), index=True, nullable=False)   # YYYY-WXX
+    wins = Column(Text, nullable=True)
+    failures = Column(Text, nullable=True)
+    next_focus = Column(Text, nullable=True)
+    self_score = Column(Integer, nullable=True)             # 1..10
+    completion_pct = Column(Integer, default=0)
+    level_at_review = Column(Integer, default=1)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -9197,3 +9255,984 @@ async def communication_analyze(request: Request):
     <p class="small" style="text-align:center"><a href="/therapist">← Dashboard</a></p>
     """
     return _page("Analyse-Ergebnis", body, request)
+
+
+# =========================================================
+# ELITE PROGRAM — Persönliches Selbstentwicklungs-Programm
+# Quellen: Jocko Willink, Cal Newport, Andrew Huberman, Peter Attia,
+#          Naval Ravikant, Marcus Aurelius, David Goggins, Mark Manson,
+#          David Deida, Chris Voss, Alex Hormozi, James Clear, Viktor Frankl
+# =========================================================
+
+ELITE_STEPS = [
+    # ── MORGEN-BLOCK ──
+    {
+        "id": "wake_early", "time": "05:30", "pillar": "mind",
+        "title": "Aufstehen — Füße auf den Boden",
+        "icon": "⚡", "min_level": 1, "keystone": True,
+        "why": "Der erste Sieg des Tages bestimmt alle anderen. Wer den Wecker verhandelt, verhandelt alles. (Jocko Willink: 'Discipline Equals Freedom')",
+        "how": "Wecker klingelt → 3 Sekunden → Füße auf den Boden → Bett machen. Kein Snooze. Kein Nachdenken. Bett machen = erster abgeschlossener Auftrag.",
+        "metric": None,
+    },
+    {
+        "id": "no_phone_90", "time": "05:31", "pillar": "mind",
+        "title": "Kein Handy — erste 90 Minuten",
+        "icon": "📵", "min_level": 1, "keystone": False,
+        "why": "Dein Gehirn ist morgens im Theta/Alpha-Übergang — maximal formbar. Wer als Erstes Social Media checkt, trainiert Reaktivität statt Intention. (Cal Newport: 'Digital Minimalism')",
+        "how": "Handy bleibt im anderen Raum oder in einer Schublade. Flugmodus bis 07:00. Kein Check, kein Scroll, keine Nachrichten. Du bestimmst die Agenda des Tages — nicht dein Feed.",
+        "metric": None,
+    },
+    {
+        "id": "water_salt", "time": "05:35", "pillar": "body",
+        "title": "500 ml Wasser + Prise Salz",
+        "icon": "💧", "min_level": 1, "keystone": False,
+        "why": "Nach 7–8 Stunden Schlaf bist du dehydriert. Elektrolyte (Na+) verbessern Nervenleitung und Energielevel sofort. (Huberman Lab: 'Optimizing Hydration')",
+        "how": "500 ml stilles Wasser + 1 Prise Meersalz oder Himalaya-Salz. Kein Kaffee in den ersten 90 Minuten — Adenosin muss erst natural clearen.",
+        "metric": None,
+    },
+    {
+        "id": "sunlight", "time": "05:40", "pillar": "body",
+        "title": "10 Min Sonnenlicht — draußen",
+        "icon": "☀️", "min_level": 1, "keystone": False,
+        "why": "Morgenlicht (>100.000 Lux) setzt den zirkadianen Cortisol-Peak und programmiert Melatonin-Release 14–16 h später. Kein Fenster, kein Supplement ersetzt das. (Huberman: 'Master Your Sleep')",
+        "how": "Rausgehen. Keine Sonnenbrille. Richtung Sonne schauen (nicht direkt rein). 10 Minuten. Bei Wolken: 20 Minuten. Kombinierbar mit Spaziergang.",
+        "metric": None,
+    },
+    {
+        "id": "cold_shower", "time": "05:55", "pillar": "body",
+        "title": "Kaltdusche — 2 Minuten",
+        "icon": "🧊", "min_level": 2, "keystone": False,
+        "why": "+250 % Dopamin-Baseline für 3–5 Stunden. Kein Supplement, kein Kaffee kommt an diesen Effekt ran. Gleichzeitig: Willenskraft-Training — du tust bewusst etwas Unangenehmes. (Huberman: 'Deliberate Cold Exposure')",
+        "how": "Letzte 2 Minuten der Dusche: Wasser auf kalt. So kalt es geht. Atme kontrolliert. Nicht zusammenzucken. Steh aufrecht. Nach 30 Sekunden wird es leichter — dein Körper adaptiert.",
+        "metric": None,
+    },
+    {
+        "id": "meditation", "time": "06:00", "pillar": "mind",
+        "title": "Meditation — Gedanken beobachten",
+        "icon": "🧠", "min_level": 1, "keystone": True,
+        "why": "Du trainierst die Fähigkeit, zwischen Reiz und Reaktion eine Lücke zu setzen. Das ist die Grundlage von Selbstkontrolle, Charisma und emotionaler Stärke. (Marcus Aurelius: 'Du hast Macht über deinen Geist — nicht über äußere Ereignisse.')",
+        "how": "Sitz aufrecht. Timer stellen. Atem beobachten. Gedanken kommen — lass sie gehen, zurück zum Atem. Nicht 'entspannen' — üben. L1–L3: 5 Min. L4–L6: 10 Min. L7+: 20 Min.",
+        "metric": {"key": "meditation_min", "label": "Minuten meditiert", "type": "number", "unit": "min"},
+    },
+    # ── LEISTUNGS-BLOCK ──
+    {
+        "id": "deep_work", "time": "06:15", "pillar": "money",
+        "title": "Deep Work — Dein EINE Ding",
+        "icon": "🎯", "min_level": 1, "keystone": True,
+        "why": "Die produktivsten Menschen der Welt arbeiten 3–4 Stunden in Deep Work pro Tag — der Rest ist Verwaltung. 90 Minuten ununterbrochene Fokusarbeit schlagen 8 Stunden Multitasking. (Cal Newport: 'Deep Work')",
+        "how": "Tür zu. Handy im anderen Raum. Browser: nur das eine Tab. Eine Aufgabe, die dein Leben voranbringt. Kein E-Mail, kein Chat. Timer auf 90 Min. Arbeite, bis er klingelt.",
+        "metric": {"key": "deep_work_min", "label": "Deep-Work Minuten", "type": "number", "unit": "min"},
+    },
+    {
+        "id": "eat_the_frog", "time": "06:15", "pillar": "money",
+        "title": "Eat the Frog — Härteste Aufgabe zuerst",
+        "icon": "🐸", "min_level": 2, "keystone": False,
+        "why": "Willenskraft ist morgens am höchsten und nimmt über den Tag ab (Baumeister: 'Ego Depletion'). Wer die schwierigste Sache zuerst erledigt, gewinnt den Tag bis Mittag.",
+        "how": "Gestern Abend hast du die eine härteste Aufgabe für heute definiert. Die machst du JETZT — vor Meetings, vor E-Mails, vor allem anderen. Erledigt = Freiheit für den Rest des Tages.",
+        "metric": None,
+    },
+    {
+        "id": "skill_30", "time": "08:00", "pillar": "money",
+        "title": "Skill-Training — Dein EINER Skill",
+        "icon": "🔧", "min_level": 3, "keystone": False,
+        "why": "Spezifisches Wissen + Hebel = Wohlstand. Du brauchst EINEN Skill, den du auf Weltklasse-Niveau beherrschst. Nicht drei, nicht fünf. Einen. (Naval: 'Spezifisches Wissen kann nicht trainiert, nur entdeckt werden.')",
+        "how": "30 Min gezielte Übung (Deliberate Practice — Ericsson). Nicht lesen, nicht Videos, nicht 'recherchieren'. MACHEN. Code schreiben. Texte schreiben. Verkaufsgespräche führen. Output produzieren.",
+        "metric": {"key": "skill_min", "label": "Skill-Training Minuten", "type": "number", "unit": "min"},
+    },
+    # ── KÖRPER-BLOCK ──
+    {
+        "id": "workout", "time": "17:00", "pillar": "body",
+        "title": "Training — Stärker werden",
+        "icon": "🏋️", "min_level": 2, "keystone": True,
+        "why": "Krafttraining ist das stärkste Anti-Aging-Mittel (Attia: 'Outlive'). Es verändert Hormonprofil, Körperhaltung, Selbstbild und wie andere dich wahrnehmen — gleichzeitig.",
+        "how": "Mo: Push (Bankdrücken, Schulterdrücken, Trizeps) | Di: Zone 2 Cardio 45 Min | Mi: Pull (Kreuzheben, Rudern, Bizeps) | Do: Zone 2 | Fr: Legs (Kniebeuge, RDL) | Sa: VO2max 4×4 Min",
+        "metric": {"key": "workout_type", "label": "Training heute", "type": "select", "options": ["Push", "Pull", "Legs", "Cardio Z2", "VO2max", "Mobility", "Pause"]},
+    },
+    {
+        "id": "steps_10k", "time": "ganztags", "pillar": "body",
+        "title": "10.000 Schritte",
+        "icon": "🚶", "min_level": 2, "keystone": False,
+        "why": "Zone 2 Grundbewegung. Verbessert Insulinsensitivität, Kreativität (Stanford: Walking + Kreativität +60%) und kardiovaskuläre Basis. Telefonieren im Gehen. Meetings im Gehen.",
+        "how": "Tracke deine Schritte. Jeder Anruf: aufstehen, gehen. Jede Pause: 10 Min Spaziergang. Treppe statt Aufzug. Immer.",
+        "metric": {"key": "steps", "label": "Schritte heute", "type": "number", "unit": ""},
+    },
+    {
+        "id": "protein", "time": "ganztags", "pillar": "body",
+        "title": "Protein-Ziel — 1.8 g/kg",
+        "icon": "🥩", "min_level": 1, "keystone": False,
+        "why": "Muskelaufbau, Sättigung, Thermogenese. Ohne ausreichend Protein ist Training verschwendet. (Layne Norton, Peter Attia: Protein als wichtigster Makronährstoff für Langlebigkeit + Körperkomposition)",
+        "how": "Beispiel 80 kg: 144 g Protein/Tag. Auf 3 Mahlzeiten: ~48 g pro Mahlzeit. Hähnchen, Fisch, Eier, Magerquark, Whey. Tracke es heute — nach 2 Wochen weißt du es auswendig.",
+        "metric": {"key": "protein_g", "label": "Protein (g)", "type": "number", "unit": "g"},
+    },
+    {
+        "id": "no_liquid_cal", "time": "ganztags", "pillar": "body",
+        "title": "Keine Flüssigkalorien",
+        "icon": "🚫", "min_level": 1, "keystone": False,
+        "why": "Softdrinks, Säfte, Alkohol — 500+ leere Kalorien täglich, keine Sättigung. Eliminierung allein reicht für messbare Körperfettreduktion in 4 Wochen.",
+        "how": "Wasser. Schwarzer Kaffee. Tee. Sonst nichts. Kein 'aber ein Glas Saft'. Kein 'nur ein Bier'. 90 Tage. Ausnahmslos.",
+        "metric": None,
+    },
+    # ── GELD / SYSTEME ──
+    {
+        "id": "outreach", "time": "10:00", "pillar": "money",
+        "title": "5 Outreach-Aktionen — Sichtbarkeit",
+        "icon": "📤", "min_level": 4, "keystone": False,
+        "why": "Geld folgt Aufmerksamkeit. Wer nicht sichtbar ist, existiert nicht. 5 Kontakte pro Tag = 150/Monat = dein Netzwerk explodiert. (Hormozi: '$100M Leads')",
+        "how": "5 DMs, 5 E-Mails, 5 Kommentare — oder Mischung. Nicht spammen. Wert liefern. Frage stellen. Hilfe anbieten. Verbindung aufbauen. Jeden. Einzelnen. Tag.",
+        "metric": {"key": "outreach_count", "label": "Outreach-Aktionen", "type": "number", "unit": ""},
+    },
+    {
+        "id": "finance_check", "time": "20:00", "pillar": "money",
+        "title": "Finanzen geprüft — Was gemessen wird, wird besser",
+        "icon": "💰", "min_level": 3, "keystone": False,
+        "why": "Die meisten Menschen wissen nicht, was sie ausgeben. Bewusstsein allein reduziert Konsum um 15–20 %. (Housel: 'Psychology of Money': Reichtum = was du NICHT ausgibst.)",
+        "how": "Öffne dein Konto. Prüfe die Transaktionen des Tages. Frage bei jeder Ausgabe: 'Bringt mich das meinem Ziel näher?' Wenn nein → eliminieren.",
+        "metric": None,
+    },
+    # ── SOZIAL / CHARISMA ──
+    {
+        "id": "real_conversation", "time": "tagsüber", "pillar": "social",
+        "title": "Eine echte Begegnung — volle Präsenz",
+        "icon": "👤", "min_level": 2, "keystone": False,
+        "why": "Charisma ist keine Eigenschaft — es ist Aufmerksamkeit. Wer einem Menschen das Gefühl gibt, der einzige Mensch im Raum zu sein, ist magnetisch. (David Deida: Präsenz als maskulinste Qualität. Mark Manson: echte Verletzlichkeit > Performance)",
+        "how": "Ein Gespräch heute: Handy weg. Augenkontakt halten. Mehr fragen als erzählen. Namen merken. Zuhören, um zu verstehen — nicht um zu antworten. Pause vor der Antwort = Stärke.",
+        "metric": None,
+    },
+    {
+        "id": "active_listen", "time": "tagsüber", "pillar": "social",
+        "title": "Mirror + Label — Chris Voss Technik",
+        "icon": "🪞", "min_level": 5, "keystone": False,
+        "why": "FBI-Verhandler nutzen Mirroring (letzte 3 Worte wiederholen) und Labeling ('Es scheint, als ob…'), um sofort Vertrauen und Verbindung aufzubauen. Funktioniert überall. (Voss: 'Never Split the Difference')",
+        "how": "In einem Gespräch heute: 1× Mirror (letzte Worte des anderen leicht fragend wiederholen) + 1× Label ('Es klingt, als wäre dir X wichtig.'). Beobachte die Reaktion.",
+        "metric": None,
+    },
+    {
+        "id": "gratitude_spoken", "time": "tagsüber", "pillar": "social",
+        "title": "Dankbarkeit ausgesprochen — zu einem Menschen",
+        "icon": "🤝", "min_level": 4, "keystone": False,
+        "why": "Nicht gedacht — ausgesprochen. Echter Dank vertieft Beziehungen messbar und verändert deine eigene Neurochemie (Präfrontaler Cortex-Aktivierung). (Huberman: Gratitude Practice, Gottman: 5:1 Ratio)",
+        "how": "Einer Person heute sagen: 'Ich wollte dir sagen, dass [konkretes Verhalten] mir [konkreten Effekt] gegeben hat. Danke.' Nicht per Text — persönlich oder Anruf.",
+        "metric": None,
+    },
+    # ── ABEND-BLOCK ──
+    {
+        "id": "reading_30", "time": "20:00", "pillar": "mind",
+        "title": "30 Min Lesen — Bücher, keine Feeds",
+        "icon": "📖", "min_level": 1, "keystone": False,
+        "why": "Buffett liest 5 Stunden täglich. Munger: 'Geh jeden Abend klüger ins Bett, als du aufgestanden bist.' 30 Min/Tag = ~25 Bücher/Jahr. Das trennt dich von 95% der Menschen.",
+        "how": "Physisches Buch oder E-Reader (kein Tablet mit Notifications). Sachbuch, Philosophie, Biografie. Nicht 'Lesen' auf Twitter. Stift bereithalten — markiere 1 Idee pro Session.",
+        "metric": {"key": "read_min", "label": "Minuten gelesen", "type": "number", "unit": "min"},
+    },
+    {
+        "id": "journal_evening", "time": "21:00", "pillar": "mind",
+        "title": "Abend-Journal — 3 Fragen",
+        "icon": "📝", "min_level": 1, "keystone": True,
+        "why": "Marcus Aurelius schrieb jeden Abend. Das 'Meditations' war sein privates Journal. Reflexion ohne Aufschreiben ist Illusion — du vergisst 90 % bis morgen.",
+        "how": "3 Fragen, handschriftlich: 1) Was habe ich heute GUT gemacht? 2) Wo war ich feige / habe ausgewichen? 3) Was ist morgen mein Frog (härteste Aufgabe)?",
+        "metric": None,
+    },
+    {
+        "id": "sleep_prep", "time": "21:30", "pillar": "body",
+        "title": "Schlaf-Vorbereitung — Handy raus",
+        "icon": "🌙", "min_level": 1, "keystone": False,
+        "why": "Schlaf ist das stärkste legale Leistungsmittel. 7–8 h = +20 % Testosteron, +35 % Wachstumshormon, emotionale Regulation, Gedächtniskonsolidierung. Alles andere wird irrelevant ohne Schlaf. (Attia: 'Outlive', Walker: 'Why We Sleep')",
+        "how": "21:30: Handy in anderem Raum (Wecker = echter Wecker). Licht dimmen. Kein Bildschirm. Zimmer: 18°C, dunkel, still. 22:00 Licht aus. Nicht verhandelbar.",
+        "metric": {"key": "sleep_h", "label": "Stunden geschlafen (letzte Nacht)", "type": "number", "unit": "h"},
+    },
+    # ── ADVANCED / LEVEL 5+ ──
+    {
+        "id": "breathwork", "time": "06:10", "pillar": "mind",
+        "title": "Box-Breathing — 5 Minuten",
+        "icon": "🫁", "min_level": 5, "keystone": False,
+        "why": "Navy SEALs nutzen Box-Breathing (4-4-4-4) für Stress-Inokulierung. Aktiviert Parasympathikus, senkt Herzfrequenz, schärft Fokus. Vor Deep Work = Leistungsboost. (Mark Divine: 'Unbeatable Mind')",
+        "how": "4 Sek einatmen → 4 Sek halten → 4 Sek ausatmen → 4 Sek halten. 5 Minuten. Aufrecht sitzen. Augen geschlossen. Zähle die Zyklen.",
+        "metric": None,
+    },
+    {
+        "id": "memento_mori", "time": "06:30", "pillar": "mind",
+        "title": "Memento Mori — Du stirbst",
+        "icon": "💀", "min_level": 6, "keystone": False,
+        "why": "Die Stoiker: 'Meditatio Mortis'. Steve Jobs: 'Remembering that you are going to die is the best way I know to avoid the trap of thinking you have something to lose.' 60 Sekunden Konfrontation mit der eigenen Endlichkeit = maximale Klarheit über Prioritäten.",
+        "how": "60 Sekunden still. Stell dir vor, du hast noch 1 Jahr. Was fällt sofort weg? Was bleibt? Heute: handle nach dieser Klarheit.",
+        "metric": None,
+    },
+    {
+        "id": "kill_distraction", "time": "ganztags", "pillar": "mind",
+        "title": "1 Ablenkung eliminieren — permanent",
+        "icon": "✂️", "min_level": 3, "keystone": False,
+        "why": "Jede Ablenkung, die du eliminierst, gibt dir Kapazität zurück — nicht additiv, sondern multiplikativ. Ein Nein zu Junk = Ja zu Deep Work. (Buffett: 'The difference between successful people and really successful people is that really successful people say no to almost everything.')",
+        "how": "Identifiziere die EINE Sache, die dich heute am meisten Zeit gekostet hätte (Instagram, YouTube, Junk-Snack, toxischer Chat). Eliminiere sie für heute. Wenn sie 7 Tage überlebt: permanent weg.",
+        "metric": None,
+    },
+]
+
+# Welche Schritte pro Level sichtbar
+def _elite_steps_for_level(level: int) -> list:
+    return [s for s in ELITE_STEPS if s["min_level"] <= level]
+
+
+# Tages-Score berechnen
+def _elite_compute_score(steps_for_today: list, done_ids: list, skipped_ids: list) -> int:
+    if not steps_for_today:
+        return 0
+    keystone_steps = [s for s in steps_for_today if s.get("keystone")]
+    normal_steps = [s for s in steps_for_today if not s.get("keystone")]
+    keystone_done = sum(1 for s in keystone_steps if s["id"] in done_ids)
+    normal_done = sum(1 for s in normal_steps if s["id"] in done_ids)
+    keystone_total = len(keystone_steps) or 1
+    normal_total = len(normal_steps) or 1
+    # Keystone-Schritte zählen doppelt
+    raw = (keystone_done / keystone_total) * 60 + (normal_done / normal_total) * 40
+    return min(100, max(0, int(round(raw))))
+
+
+# Streak-Logik
+def _elite_update_streak(profile: EliteProfile, today_str: str):
+    yesterday = (datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    if profile.last_active_day == yesterday:
+        profile.streak_days += 1
+    elif profile.last_active_day != today_str:
+        profile.streak_days = 1
+    profile.last_active_day = today_str
+    if profile.streak_days > (profile.longest_streak or 0):
+        profile.longest_streak = profile.streak_days
+    profile.total_days_logged = (profile.total_days_logged or 0) + 1
+
+
+# Level-Progression
+def _elite_check_level(db, profile: EliteProfile):
+    last_7 = db.query(EliteDay).filter(
+        EliteDay.profile_id == profile.id
+    ).order_by(EliteDay.day.desc()).limit(7).all()
+    if len(last_7) < 5:
+        return
+    avg_score = sum(d.score for d in last_7) / len(last_7)
+    last_change = profile.last_level_change or "2000-01-01"
+    days_since = (datetime.utcnow() - datetime.strptime(last_change, "%Y-%m-%d")).days
+    if days_since < 7:
+        return
+    today = _now_local().date().isoformat()
+    if avg_score >= 80 and profile.level < 10:
+        profile.level += 1
+        profile.last_level_change = today
+    elif avg_score < 35 and profile.level > 1:
+        profile.level -= 1
+        profile.last_level_change = today
+
+
+# Session-Key
+def _elite_owner_key(request: Request) -> str:
+    key = request.session.get("elite_key")
+    if not key:
+        key = secrets.token_hex(16)
+        request.session["elite_key"] = key
+    return key
+
+
+# Profil laden / erstellen
+def _elite_get_profile(db, request: Request) -> EliteProfile:
+    key = _elite_owner_key(request)
+    profile = db.query(EliteProfile).filter(EliteProfile.owner_key == key).first()
+    if not profile:
+        profile = EliteProfile(owner_key=key, level=1, streak_days=0, longest_streak=0,
+                               total_days_logged=0, total_steps_completed=0, total_steps_skipped=0)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+    return profile
+
+
+# Heutigen Tag laden / erstellen
+def _elite_get_day(db, profile: EliteProfile) -> EliteDay:
+    today = _now_local().date().isoformat()
+    day = db.query(EliteDay).filter(
+        EliteDay.profile_id == profile.id, EliteDay.day == today
+    ).first()
+    if not day:
+        day = EliteDay(profile_id=profile.id, day=today)
+        db.add(day)
+        db.commit()
+        db.refresh(day)
+    return day
+
+
+# ── Elite-spezifischer Page-Wrapper ──
+def _elite_page(title: str, body_html: str, step: int = 0, total: int = 0) -> HTMLResponse:
+    progress_bar = ""
+    if total > 0:
+        pct = int((step / total) * 100) if total else 0
+        progress_bar = f"""
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+          <div style="flex:1;height:6px;background:#1f2937;border-radius:999px;overflow:hidden">
+            <div style="height:6px;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:999px;width:{pct}%;transition:width .5s ease"></div>
+          </div>
+          <span style="font-size:13px;color:#f59e0b;font-weight:700;white-space:nowrap">{step}/{total}</span>
+        </div>
+        """
+
+    nav = """
+    <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;justify-content:center">
+      <a href="/elite" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Übersicht</a>
+      <a href="/elite/today" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Heute</a>
+      <a href="/elite/status" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Status</a>
+      <a href="/elite/weekly" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Review</a>
+    </div>
+    """
+
+    css = """
+    <style>
+      :root { --bg:#0a0a0f; --card:#0f111a; --muted:#6b7280; --text:#e5e7eb; --accent:#f59e0b; --line:#1f2937; --red:#ef4444; --green:#22c55e; }
+      *{box-sizing:border-box}
+      html,body{height:100%;margin:0}
+      body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:radial-gradient(ellipse at 50% 0%,#1a1030 0%,#0a0a0f 70%);color:var(--text);min-height:100vh}
+      a{color:var(--accent);text-decoration:none}
+      .wrap{max-width:480px;margin:0 auto;padding:20px 16px 60px}
+      .card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:20px;padding:28px 22px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+      h1{font-size:28px;line-height:1.15;margin:0 0 8px;font-weight:800}
+      h2{font-size:18px;margin:20px 0 10px;color:#f3f4f6}
+      p{color:var(--muted);line-height:1.6;margin:8px 0}
+      .hr{height:1px;background:var(--line);margin:20px 0}
+      .icon-big{font-size:48px;margin-bottom:12px;display:block}
+      .pillar-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:12px}
+      .pillar-body{background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+      .pillar-money{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+      .pillar-mind{background:rgba(99,102,241,.12);color:#a5b4fc;border:1px solid rgba(99,102,241,.3)}
+      .pillar-social{background:rgba(236,72,153,.12);color:#f9a8d4;border:1px solid rgba(236,72,153,.3)}
+      .btn-done{display:block;width:100%;background:linear-gradient(180deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:14px;padding:16px;font-weight:700;font-size:17px;cursor:pointer;margin-top:16px;letter-spacing:.3px}
+      .btn-done:active{transform:scale(.97)}
+      .btn-skip{display:block;width:100%;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;cursor:pointer;margin-top:8px}
+      .btn-primary{display:block;width:100%;background:linear-gradient(180deg,#fbbf24,#f59e0b);color:#111;border:none;border-radius:14px;padding:16px;font-weight:700;font-size:17px;cursor:pointer;margin-top:16px}
+      .btn-outline{display:inline-block;background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:8px 14px;font-size:13px;cursor:pointer}
+      input[type=number],input[type=text],select,textarea{width:100%;background:#0b1223;border:1px solid #263246;color:#e5e7eb;border-radius:12px;padding:12px;font-size:16px;outline:none;margin-top:6px}
+      input:focus,select:focus,textarea:focus{border-color:#f59e0b}
+      label{display:block;color:#cbd5e1;font-size:13px;margin:12px 0 4px;font-weight:600}
+      .streak-fire{font-size:22px;font-weight:800;color:#f59e0b;display:flex;align-items:center;gap:6px}
+      .level-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(180deg,rgba(245,158,11,.15),rgba(239,68,68,.1));border:1px solid rgba(245,158,11,.3);color:#fbbf24;padding:6px 14px;border-radius:999px;font-weight:700;font-size:14px}
+      .step-row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:14px;margin:6px 0;cursor:pointer;transition:all .2s}
+      .step-row:hover{border-color:#374151;background:rgba(255,255,255,.02)}
+      .step-done{border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.05)}
+      .step-done .step-check{color:#22c55e}
+      .step-skipped{border-color:rgba(107,114,128,.3);opacity:.5}
+      .step-check{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+      .step-done .step-check{border-color:#22c55e;background:rgba(34,197,94,.1)}
+      .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+      .kpi{border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02);text-align:center}
+      .kpi b{display:block;font-size:24px;margin-top:4px;color:var(--accent)}
+      .kpi span{font-size:12px;color:var(--muted)}
+      .heatmap{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:12px 0}
+      .heatmap div{aspect-ratio:1;border-radius:4px;min-width:0}
+      @media(max-width:400px){.kpi-grid{grid-template-columns:1fr}}
+    </style>
+    """
+
+    html = f"""
+    <html><head>
+      <meta name="viewport" content="width=device-width,initial-scale=1.0">
+      <title>{title} — Elite Program</title>
+      {css}
+    </head>
+    <body>
+      <div class="wrap">
+        <div class="card">
+          {progress_bar}
+          {body_html}
+        </div>
+        {nav}
+      </div>
+    </body></html>
+    """
+    return HTMLResponse(html)
+
+
+# =========================================================
+# ELITE ROUTES
+# =========================================================
+
+# ── Landing / Übersicht ──
+@app.get("/elite", response_class=HTMLResponse)
+def elite_landing(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    day = _elite_get_day(db, profile)
+    steps = _elite_steps_for_level(profile.level)
+    done_ids = json.loads(day.steps_done_json or "[]")
+    skipped_ids = json.loads(day.steps_skipped_json or "[]")
+    done_count = len(done_ids)
+    total = len(steps)
+    remaining = total - done_count - len(skipped_ids)
+    score = _elite_compute_score(steps, done_ids, skipped_ids)
+
+    # Nächster unerledigter Step
+    next_idx = None
+    for i, s in enumerate(steps):
+        if s["id"] not in done_ids and s["id"] not in skipped_ids:
+            next_idx = i
+            break
+
+    # Level bar
+    level_pct = min(100, int(score * 1.0))
+    streak_text = f"🔥 {profile.streak_days} Tage" if profile.streak_days > 0 else "Starte heute"
+
+    if next_idx is not None:
+        cta = f'<a href="/elite/step/{next_idx}" class="btn-primary" style="display:block;text-align:center;margin-top:20px">Weiter → {steps[next_idx]["icon"]} {steps[next_idx]["title"]}</a>'
+    elif remaining <= 0 and done_count > 0:
+        cta = '<a href="/elite/complete" class="btn-primary" style="display:block;text-align:center;margin-top:20px">Tag abschließen ✓</a>'
+    else:
+        cta = '<a href="/elite/step/0" class="btn-primary" style="display:block;text-align:center;margin-top:20px">Tag starten →</a>'
+
+    # Step list
+    step_list = ""
+    for i, s in enumerate(steps):
+        if s["id"] in done_ids:
+            cls = "step-row step-done"
+            check = "✓"
+        elif s["id"] in skipped_ids:
+            cls = "step-row step-skipped"
+            check = "–"
+        else:
+            cls = "step-row"
+            check = ""
+        step_list += f"""
+        <a href="/elite/step/{i}" style="text-decoration:none;color:inherit">
+          <div class="{cls}">
+            <div class="step-check">{check}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;color:var(--muted)">{s['time']} · {s['icon']}</div>
+              <div style="font-size:15px;font-weight:600;color:#e5e7eb">{s['title']}</div>
+            </div>
+          </div>
+        </a>
+        """
+
+    body = f"""
+    <div style="text-align:center;margin-bottom:20px">
+      <div class="level-badge">Level {profile.level}</div>
+      <div class="streak-fire" style="justify-content:center;margin-top:10px">{streak_text}</div>
+      <p style="font-size:13px;margin-top:4px">Longest: {profile.longest_streak or 0} Tage</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span>Score heute</span><b>{score}%</b></div>
+      <div class="kpi"><span>Erledigt</span><b>{done_count}/{total}</b></div>
+    </div>
+
+    {cta}
+
+    <div class="hr"></div>
+    <h2>Heutiger Plan</h2>
+    {step_list}
+    """
+    return _elite_page("Elite Program", body)
+
+
+# ── Onboarding ──
+@app.get("/elite/setup", response_class=HTMLResponse)
+def elite_setup(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    body = f"""
+    <div style="text-align:center;margin-bottom:16px">
+      <span style="font-size:56px">🏔️</span>
+      <h1>Elite Program</h1>
+      <p>90 Tage. 3 Säulen. Kein Ausweg.</p>
+    </div>
+
+    <div class="hr"></div>
+    <p style="color:#e5e7eb;font-size:14px;line-height:1.7">
+      <b>Körper</b> — Kraft, Schlaf, Ernährung, Kälte<br>
+      <b>Geld</b> — Deep Work, Skill, Sichtbarkeit, Systeme<br>
+      <b>Geist</b> — Meditation, Lesen, Journal, Stoa<br>
+      <b>Charisma</b> — Präsenz, Zuhören, Verbindung
+    </p>
+
+    <div class="hr"></div>
+    <p style="font-size:13px">Du startest auf <b>Level 1</b> mit den Grundlagen. Jede Woche mit &gt;80 % Score → Level Up. Mehr Schritte, höherer Standard. Level 10 = Elite.</p>
+
+    <form method="post" action="/elite/setup">
+      <label>Dein Name (optional)</label>
+      <input type="text" name="name" value="{profile.display_name or ''}" placeholder="Wie soll ich dich nennen?">
+
+      <label>Dein EINER Skill — was willst du meistern?</label>
+      <input type="text" name="skill" value="{profile.one_skill or ''}" placeholder="z.B. Programmieren, Copywriting, Sales, Video...">
+
+      <button type="submit" class="btn-primary">Commitment — Ich bin bereit</button>
+    </form>
+    """
+    return _elite_page("Setup", body)
+
+
+@app.post("/elite/setup", response_class=HTMLResponse)
+def elite_setup_save(request: Request, name: str = Form(""), skill: str = Form(""), db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    if name.strip():
+        profile.display_name = name.strip()
+    if skill.strip():
+        profile.one_skill = skill.strip()
+    db.commit()
+    return RedirectResponse("/elite", status_code=303)
+
+
+# ── Heute: Tagesübersicht ──
+@app.get("/elite/today", response_class=HTMLResponse)
+def elite_today(request: Request, db=Depends(get_db)):
+    return RedirectResponse("/elite", status_code=303)
+
+
+# ── Step Slideshow ──
+@app.get("/elite/step/{idx}", response_class=HTMLResponse)
+def elite_step_view(idx: int, request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    day = _elite_get_day(db, profile)
+    steps = _elite_steps_for_level(profile.level)
+
+    if idx < 0 or idx >= len(steps):
+        return RedirectResponse("/elite", status_code=303)
+
+    step = steps[idx]
+    done_ids = json.loads(day.steps_done_json or "[]")
+    skipped_ids = json.loads(day.steps_skipped_json or "[]")
+    already_done = step["id"] in done_ids
+    already_skipped = step["id"] in skipped_ids
+
+    pillar_cls = f"pillar-{step['pillar']}"
+    pillar_label = {"body": "KÖRPER", "money": "GELD", "mind": "GEIST", "social": "CHARISMA"}[step["pillar"]]
+
+    # Metric input
+    metric_html = ""
+    metrics = json.loads(day.metrics_json or "{}")
+    if step.get("metric"):
+        m = step["metric"]
+        saved = metrics.get(m["key"], "")
+        if m["type"] == "number":
+            metric_html = f"""
+            <label>{m['label']}</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" name="metric_value" value="{saved}" placeholder="0" style="flex:1" inputmode="decimal">
+              <span style="color:var(--muted);font-size:14px">{m.get('unit','')}</span>
+            </div>
+            """
+        elif m["type"] == "select":
+            opts = "".join(f'<option value="{o}" {"selected" if saved == o else ""}>{o}</option>' for o in m["options"])
+            metric_html = f"""
+            <label>{m['label']}</label>
+            <select name="metric_value">{opts}</select>
+            """
+
+    # Status badge
+    status_html = ""
+    if already_done:
+        status_html = '<div style="text-align:center;padding:10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;color:#4ade80;font-weight:700;margin-bottom:12px">✓ Erledigt</div>'
+    elif already_skipped:
+        status_html = '<div style="text-align:center;padding:10px;background:rgba(107,114,128,.1);border:1px solid rgba(107,114,128,.3);border-radius:12px;color:#9ca3af;margin-bottom:12px">– Übersprungen</div>'
+
+    # Nav arrows
+    prev_btn = f'<a href="/elite/step/{idx-1}" class="btn-outline">← Zurück</a>' if idx > 0 else '<span></span>'
+    next_btn = f'<a href="/elite/step/{idx+1}" class="btn-outline">Weiter →</a>' if idx < len(steps) - 1 else '<a href="/elite/complete" class="btn-outline">Abschluss →</a>'
+
+    keystone_badge = '<span style="font-size:11px;background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);padding:3px 8px;border-radius:999px;margin-left:8px">KEYSTONE</span>' if step.get("keystone") else ""
+
+    body = f"""
+    <div style="text-align:center">
+      <span class="icon-big">{step['icon']}</span>
+      <span class="pillar-tag {pillar_cls}">{pillar_label}</span>{keystone_badge}
+      <h1>{step['title']}</h1>
+      <p style="font-size:13px;color:#94a3b8">{step['time']}</p>
+    </div>
+
+    {status_html}
+
+    <div class="hr"></div>
+
+    <h2>Warum</h2>
+    <p style="font-size:14px;color:#cbd5e1;line-height:1.7">{step['why']}</p>
+
+    <h2>Wie — konkret</h2>
+    <p style="font-size:14px;color:#e5e7eb;line-height:1.7">{step['how']}</p>
+
+    <div class="hr"></div>
+
+    <form method="post" action="/elite/step/{idx}">
+      {metric_html}
+      <button type="submit" name="action" value="done" class="btn-done">✓ Erledigt</button>
+      <button type="submit" name="action" value="skip" class="btn-skip">Übersprungen</button>
+    </form>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px">
+      {prev_btn}
+      {next_btn}
+    </div>
+    """
+    return _elite_page(step["title"], body, step=idx + 1, total=len(steps))
+
+
+@app.post("/elite/step/{idx}", response_class=HTMLResponse)
+def elite_step_submit(idx: int, request: Request, action: str = Form("done"), metric_value: str = Form(""), db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    day = _elite_get_day(db, profile)
+    steps = _elite_steps_for_level(profile.level)
+
+    if idx < 0 or idx >= len(steps):
+        return RedirectResponse("/elite", status_code=303)
+
+    step = steps[idx]
+    done_ids = json.loads(day.steps_done_json or "[]")
+    skipped_ids = json.loads(day.steps_skipped_json or "[]")
+    metrics = json.loads(day.metrics_json or "{}")
+
+    if action == "done":
+        if step["id"] not in done_ids:
+            done_ids.append(step["id"])
+        if step["id"] in skipped_ids:
+            skipped_ids.remove(step["id"])
+        profile.total_steps_completed = (profile.total_steps_completed or 0) + 1
+    else:
+        if step["id"] not in skipped_ids:
+            skipped_ids.append(step["id"])
+        if step["id"] in done_ids:
+            done_ids.remove(step["id"])
+        profile.total_steps_skipped = (profile.total_steps_skipped or 0) + 1
+
+    if step.get("metric") and metric_value.strip():
+        metrics[step["metric"]["key"]] = metric_value.strip()
+
+    day.steps_done_json = json.dumps(done_ids)
+    day.steps_skipped_json = json.dumps(skipped_ids)
+    day.metrics_json = json.dumps(metrics)
+    day.score = _elite_compute_score(steps, done_ids, skipped_ids)
+    db.commit()
+
+    # Nächster unerledigter Step
+    for i in range(idx + 1, len(steps)):
+        if steps[i]["id"] not in done_ids and steps[i]["id"] not in skipped_ids:
+            return RedirectResponse(f"/elite/step/{i}", status_code=303)
+    # Alle erledigt → Complete
+    return RedirectResponse("/elite/complete", status_code=303)
+
+
+# ── Tag abschließen ──
+@app.get("/elite/complete", response_class=HTMLResponse)
+def elite_complete(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    day = _elite_get_day(db, profile)
+    steps = _elite_steps_for_level(profile.level)
+    done_ids = json.loads(day.steps_done_json or "[]")
+    skipped_ids = json.loads(day.steps_skipped_json or "[]")
+    score = _elite_compute_score(steps, done_ids, skipped_ids)
+
+    day.score = score
+    today_str = _now_local().date().isoformat()
+    _elite_update_streak(profile, today_str)
+    _elite_check_level(db, profile)
+    db.commit()
+
+    # Score Rating
+    if score >= 90:
+        rating = "ELITE 🔥"
+        color = "#22c55e"
+        msg = "Weltklasse. Genau so. Jeden Tag."
+    elif score >= 70:
+        rating = "STARK 💪"
+        color = "#f59e0b"
+        msg = "Solider Tag. Keystone-Habits gehalten. Weiter."
+    elif score >= 50:
+        rating = "OK ⚡"
+        color = "#eab308"
+        msg = "Basis steht, aber da geht mehr. Was hat dich aufgehalten?"
+    else:
+        rating = "SCHWACH ⚠️"
+        color = "#ef4444"
+        msg = "Kein Problem — aber morgen wird besser. Was war der Blocker?"
+
+    # Done / Missed summary
+    done_list = ""
+    missed_list = ""
+    for s in steps:
+        if s["id"] in done_ids:
+            done_list += f'<div style="color:#4ade80;font-size:14px;padding:3px 0">✓ {s["icon"]} {s["title"]}</div>'
+        elif s["id"] in skipped_ids:
+            missed_list += f'<div style="color:#9ca3af;font-size:14px;padding:3px 0">– {s["icon"]} {s["title"]}</div>'
+        else:
+            missed_list += f'<div style="color:#ef4444;font-size:14px;padding:3px 0">✗ {s["icon"]} {s["title"]}</div>'
+
+    body = f"""
+    <div style="text-align:center">
+      <span style="font-size:64px;display:block;margin-bottom:8px">{"🏆" if score >= 90 else "📊"}</span>
+      <h1 style="color:{color}">{rating}</h1>
+      <p style="font-size:14px;color:#e5e7eb">{msg}</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span>Score</span><b style="color:{color}">{score}%</b></div>
+      <div class="kpi"><span>Streak</span><b>🔥 {profile.streak_days}</b></div>
+      <div class="kpi"><span>Level</span><b>{profile.level}</b></div>
+      <div class="kpi"><span>Gesamt Tage</span><b>{profile.total_days_logged}</b></div>
+    </div>
+
+    <div class="hr"></div>
+    <h2 style="color:#4ade80">Erledigt</h2>
+    {done_list or '<p style="font-size:14px">—</p>'}
+
+    {f'<div class="hr"></div><h2 style="color:#ef4444">Verpasst</h2>{missed_list}' if missed_list else ''}
+
+    <div class="hr"></div>
+
+    <form method="post" action="/elite/complete">
+      <label>Notizen / Reflexion (optional)</label>
+      <textarea name="notes" rows="3" placeholder="Was habe ich heute gelernt? Was war der Blocker?">{day.notes or ''}</textarea>
+      <button type="submit" class="btn-primary">Tag speichern</button>
+    </form>
+
+    <div style="text-align:center;margin-top:16px">
+      <a href="/elite" style="font-size:14px;color:var(--muted)">← Zurück zur Übersicht</a>
+    </div>
+    """
+    return _elite_page("Tag abgeschlossen", body)
+
+
+@app.post("/elite/complete", response_class=HTMLResponse)
+def elite_complete_save(request: Request, notes: str = Form(""), db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    day = _elite_get_day(db, profile)
+    day.notes = notes.strip() if notes.strip() else day.notes
+    db.commit()
+    return RedirectResponse("/elite", status_code=303)
+
+
+# ── Status / Metriken / Level-System ──
+@app.get("/elite/status", response_class=HTMLResponse)
+def elite_status(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    steps = _elite_steps_for_level(profile.level)
+
+    # Letzte 30 Tage
+    last_30 = db.query(EliteDay).filter(
+        EliteDay.profile_id == profile.id
+    ).order_by(EliteDay.day.desc()).limit(30).all()
+    last_30.reverse()
+
+    avg_score = int(sum(d.score for d in last_30) / len(last_30)) if last_30 else 0
+    best_score = max((d.score for d in last_30), default=0)
+
+    # Heatmap (letzte 28 Tage)
+    heatmap_html = ""
+    today = _now_local().date()
+    day_scores = {d.day: d.score for d in last_30}
+    for i in range(27, -1, -1):
+        d = (today - timedelta(days=i)).isoformat()
+        sc = day_scores.get(d, -1)
+        if sc < 0:
+            color = "#1f2937"
+        elif sc >= 80:
+            color = "#22c55e"
+        elif sc >= 60:
+            color = "#84cc16"
+        elif sc >= 40:
+            color = "#eab308"
+        elif sc > 0:
+            color = "#ef4444"
+        else:
+            color = "#1f2937"
+        heatmap_html += f'<div style="background:{color}" title="{d}: {sc}%"></div>'
+
+    # Pillar breakdown
+    pillar_done = {"body": 0, "money": 0, "mind": 0, "social": 0}
+    pillar_total = {"body": 0, "money": 0, "mind": 0, "social": 0}
+    for d in last_30:
+        done_ids = json.loads(d.steps_done_json or "[]")
+        for s in steps:
+            pillar_total[s["pillar"]] = pillar_total.get(s["pillar"], 0) + 1
+            if s["id"] in done_ids:
+                pillar_done[s["pillar"]] = pillar_done.get(s["pillar"], 0) + 1
+
+    pillar_html = ""
+    pillar_names = {"body": ("KÖRPER", "pillar-body", "🏋️"), "money": ("GELD", "pillar-money", "💰"), "mind": ("GEIST", "pillar-mind", "🧠"), "social": ("CHARISMA", "pillar-social", "👤")}
+    for p_key in ["body", "money", "mind", "social"]:
+        name, cls, icon = pillar_names[p_key]
+        pct = int(pillar_done[p_key] / pillar_total[p_key] * 100) if pillar_total[p_key] else 0
+        pillar_html += f"""
+        <div style="border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.02)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span class="pillar-tag {cls}">{icon} {name}</span>
+            <span style="font-size:18px;font-weight:700;color:{'#22c55e' if pct >= 70 else '#f59e0b' if pct >= 40 else '#ef4444'}">{pct}%</span>
+          </div>
+          <div style="height:4px;background:#1f2937;border-radius:999px;margin-top:8px">
+            <div style="height:4px;background:{'#22c55e' if pct >= 70 else '#f59e0b' if pct >= 40 else '#ef4444'};border-radius:999px;width:{pct}%"></div>
+          </div>
+        </div>
+        """
+
+    # Level progression info
+    next_level_info = ""
+    if profile.level < 10:
+        next_steps = [s for s in ELITE_STEPS if s["min_level"] == profile.level + 1]
+        if next_steps:
+            ns_list = "".join(f'<div style="font-size:13px;color:#cbd5e1;padding:2px 0">{s["icon"]} {s["title"]}</div>' for s in next_steps)
+            next_level_info = f"""
+            <div class="hr"></div>
+            <h2>Level {profile.level + 1} — Neue Schritte</h2>
+            <p style="font-size:13px">Erreiche 80 % Durchschnitt über 7 Tage für Level Up.</p>
+            {ns_list}
+            """
+
+    # Metrics history (latest)
+    metrics_html = ""
+    if last_30:
+        latest_metrics = json.loads(last_30[-1].metrics_json or "{}")
+        if latest_metrics:
+            metrics_html = '<div class="hr"></div><h2>Letzte Metriken</h2>'
+            for k, v in latest_metrics.items():
+                label = k.replace("_", " ").title()
+                metrics_html += f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px"><span style="color:var(--muted)">{label}</span><span style="font-weight:600">{v}</span></div>'
+
+    body = f"""
+    <div style="text-align:center;margin-bottom:16px">
+      <div class="level-badge" style="font-size:18px;padding:10px 20px">Level {profile.level}</div>
+      <div class="streak-fire" style="justify-content:center;margin-top:12px">🔥 {profile.streak_days} Tage Streak</div>
+      <p style="font-size:12px">Rekord: {profile.longest_streak or 0} Tage | Gesamt: {profile.total_days_logged or 0} Tage</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span>∅ Score (30T)</span><b>{avg_score}%</b></div>
+      <div class="kpi"><span>Best Score</span><b>{best_score}%</b></div>
+      <div class="kpi"><span>Steps erledigt</span><b>{profile.total_steps_completed or 0}</b></div>
+      <div class="kpi"><span>Skill</span><b style="font-size:14px">{profile.one_skill or '—'}</b></div>
+    </div>
+
+    <div class="hr"></div>
+    <h2>Letzte 28 Tage</h2>
+    <div class="heatmap">{heatmap_html}</div>
+    <p style="font-size:11px;display:flex;gap:12px;justify-content:center">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px"></span> 80+</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#84cc16;border-radius:2px"></span> 60+</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#eab308;border-radius:2px"></span> 40+</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px"></span> &lt;40</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#1f2937;border-radius:2px"></span> kein Eintrag</span>
+    </p>
+
+    <div class="hr"></div>
+    <h2>Säulen-Analyse</h2>
+    <div style="display:grid;gap:10px">{pillar_html}</div>
+
+    {next_level_info}
+    {metrics_html}
+
+    <div style="text-align:center;margin-top:24px">
+      <a href="/elite/setup" class="btn-outline">Profil bearbeiten</a>
+    </div>
+    """
+    return _elite_page("Status", body)
+
+
+# ── Wöchentliches Review ──
+@app.get("/elite/weekly", response_class=HTMLResponse)
+def elite_weekly(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    today = _now_local().date()
+    week_str = today.strftime("%Y-W%W")
+
+    existing = db.query(EliteWeeklyReview).filter(
+        EliteWeeklyReview.profile_id == profile.id,
+        EliteWeeklyReview.week == week_str
+    ).first()
+
+    # Letzte 7 Tage Score
+    last_7 = db.query(EliteDay).filter(
+        EliteDay.profile_id == profile.id
+    ).order_by(EliteDay.day.desc()).limit(7).all()
+    avg_7 = int(sum(d.score for d in last_7) / len(last_7)) if last_7 else 0
+    days_active_7 = len(last_7)
+
+    body = f"""
+    <div style="text-align:center;margin-bottom:16px">
+      <span style="font-size:48px;display:block">📋</span>
+      <h1>Wöchentliches Review</h1>
+      <p>KW: {week_str}</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span>∅ Score 7T</span><b>{avg_7}%</b></div>
+      <div class="kpi"><span>Aktive Tage</span><b>{days_active_7}/7</b></div>
+    </div>
+
+    <div class="hr"></div>
+
+    <form method="post" action="/elite/weekly">
+      <input type="hidden" name="week" value="{week_str}">
+
+      <label>🏆 Was habe ich diese Woche gut gemacht?</label>
+      <textarea name="wins" rows="3" placeholder="Siege, Durchbrüche, Disziplin-Momente...">{existing.wins if existing else ''}</textarea>
+
+      <label>💀 Wo war ich feige / habe ausgewichen?</label>
+      <textarea name="failures" rows="3" placeholder="Ehrlich. Kein Bullshit.">{existing.failures if existing else ''}</textarea>
+
+      <label>🎯 Fokus nächste Woche — WAS ist die EINE Sache?</label>
+      <textarea name="next_focus" rows="3" placeholder="Ein Ziel. Nicht drei.">{existing.next_focus if existing else ''}</textarea>
+
+      <label>Selbst-Bewertung 1–10</label>
+      <input type="number" name="self_score" min="1" max="10" value="{existing.self_score if existing else ''}" placeholder="Ehrlich: 1 = Totalausfall, 10 = Weltklasse">
+
+      <button type="submit" class="btn-primary">Review speichern</button>
+    </form>
+
+    <div class="hr"></div>
+    <h2>Vergangene Reviews</h2>
+    """
+
+    past = db.query(EliteWeeklyReview).filter(
+        EliteWeeklyReview.profile_id == profile.id
+    ).order_by(EliteWeeklyReview.week.desc()).limit(8).all()
+
+    if past:
+        for r in past:
+            body += f"""
+            <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin:8px 0;background:rgba(255,255,255,.02)">
+              <div style="display:flex;justify-content:space-between;font-size:14px">
+                <span style="font-weight:600">{r.week}</span>
+                <span style="color:{'#22c55e' if (r.self_score or 0) >= 7 else '#f59e0b' if (r.self_score or 0) >= 5 else '#ef4444'};font-weight:700">{r.self_score or '—'}/10</span>
+              </div>
+              <p style="font-size:13px;margin-top:6px;color:#cbd5e1">{(r.next_focus or '—')[:120]}</p>
+            </div>
+            """
+    else:
+        body += '<p style="font-size:14px">Noch keine Reviews.</p>'
+
+    return _elite_page("Weekly Review", body)
+
+
+@app.post("/elite/weekly", response_class=HTMLResponse)
+def elite_weekly_save(request: Request, week: str = Form(""), wins: str = Form(""), failures: str = Form(""), next_focus: str = Form(""), self_score: int = Form(0), db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    today = _now_local().date()
+    week_str = week or today.strftime("%Y-W%W")
+
+    existing = db.query(EliteWeeklyReview).filter(
+        EliteWeeklyReview.profile_id == profile.id,
+        EliteWeeklyReview.week == week_str
+    ).first()
+
+    last_7 = db.query(EliteDay).filter(
+        EliteDay.profile_id == profile.id
+    ).order_by(EliteDay.day.desc()).limit(7).all()
+    completion_pct = int(sum(d.score for d in last_7) / len(last_7)) if last_7 else 0
+
+    if existing:
+        existing.wins = wins.strip()
+        existing.failures = failures.strip()
+        existing.next_focus = next_focus.strip()
+        existing.self_score = max(1, min(10, self_score)) if self_score else None
+        existing.completion_pct = completion_pct
+    else:
+        review = EliteWeeklyReview(
+            profile_id=profile.id,
+            week=week_str,
+            wins=wins.strip(),
+            failures=failures.strip(),
+            next_focus=next_focus.strip(),
+            self_score=max(1, min(10, self_score)) if self_score else None,
+            completion_pct=completion_pct,
+            level_at_review=profile.level,
+        )
+        db.add(review)
+
+    _elite_check_level(db, profile)
+    profile.last_review_week = week_str
+    db.commit()
+    return RedirectResponse("/elite/weekly", status_code=303)
