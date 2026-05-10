@@ -1,5 +1,78 @@
 # SkyCoach AI — Deployment Guide
 
+Es gibt zwei Deployment-Pfade. Wähle einen:
+
+- **A. Sub-Mount unter ptgo.de** (empfohlen wenn der Server schon steht) — SkyCoach läuft im selben Prozess wie PTGO unter `https://app.ptgo.de/skycoach`
+- **B. Standalone** auf Fly.io + Vercel — eigene Domain, eigene Infrastruktur
+
+---
+
+## A. Sub-Mount unter ptgo.de
+
+### Voraussetzungen auf dem Server
+
+- Node.js ≥ 18 + npm (für den Frontend-Build)
+- Python ≥ 3.9 (für PTGO ohnehin vorhanden)
+- Schreibrechte im Repo, sudo-Rechte für `systemctl restart <unit>`
+
+### Einmaliger Server-Setup
+
+```bash
+ssh root@app.ptgo.de
+cd /opt/ptgo
+git pull
+./skycoach/deploy_ptgo.sh
+```
+
+Das Skript:
+1. installiert die Python-Dependencies (`stripe`, sonst sind alle schon da)
+2. baut das Frontend mit `base="/skycoach/"` → `skycoach/frontend/dist/`
+3. restartet den systemd-Service (Default-Name: `ptgo`, mit `PTGO_SERVICE=foo` überschreibbar)
+
+Beim nächsten App-Start mountet `app.py` SkyCoach automatisch unter `/skycoach`.
+
+### Healthcheck
+
+```bash
+curl -s https://app.ptgo.de/skycoach/health
+# → {"status":"ok","service":"skycoach-ai","version":"0.2.0"}
+```
+
+Frontend öffnet unter **https://app.ptgo.de/skycoach**.
+
+### Stripe aktivieren (optional)
+
+In der bestehenden systemd-Unit (`/etc/systemd/system/ptgo.service`) zu den `Environment=`-Zeilen hinzufügen:
+
+```
+Environment=STRIPE_SECRET_KEY=sk_live_…
+Environment=STRIPE_PRICE_ID=price_…
+Environment=STRIPE_WEBHOOK_SECRET=whsec_…
+```
+
+Dann Stripe-Webhook anlegen → Endpoint `https://app.ptgo.de/skycoach/api/billing/webhook`, Events `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl restart ptgo
+```
+
+### Wo liegt die DB?
+
+`SKYCOACH_DB_URL` defaultet zu `sqlite:///./skycoach.db` im aktuellen Arbeitsverzeichnis des PTGO-Prozesses (typischerweise `/opt/ptgo/skycoach.db`). Falls du Postgres bevorzugst, setze `SKYCOACH_DB_URL=postgresql://…` in der systemd-Unit.
+
+### Rollback
+
+```bash
+git revert <skycoach-merge-commit>
+sudo systemctl restart ptgo
+```
+
+Der `try/except` um den Mount sorgt dafür, dass selbst bei einem SkyCoach-Importfehler die PTGO-App weiterläuft.
+
+---
+
+## B. Standalone — Fly.io + Vercel
+
 ## Architektur
 
 - **Backend (FastAPI)** → Fly.io, Region `fra` (Frankfurt)
