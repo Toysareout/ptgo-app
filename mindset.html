@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#020206">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
+<title>MINDSET FOCUS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#020206;--surface:rgba(8,8,20,.92);--border:rgba(0,240,255,.08);--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--orange:#ff8c00;--text:#e0ddd4;--dim:#444460}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:2px}::-webkit-scrollbar-thumb{background:rgba(0,240,255,.2)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 10%,rgba(168,85,247,.06),transparent 50%),radial-gradient(ellipse at 80% 90%,rgba(0,240,255,.04),transparent 50%);pointer-events:none;z-index:0}
+canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 100px;position:relative;z-index:1}
+.hdr{text-align:center;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.hdr h1{font-family:'Orbitron',sans-serif;font-size:clamp(20px,6vw,32px);font-weight:900;letter-spacing:6px}
+.hdr h1 span{background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:300%;animation:grd 6s linear infinite}
+@keyframes grd{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
+.hdr .sub{font-size:10px;color:var(--dim);letter-spacing:2px;margin-top:6px}
+.pulse{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(45,255,168,.4)}50%{box-shadow:0 0 0 6px rgba(45,255,168,0)}}
+
+.g{background:var(--surface);border:1px solid var(--border);padding:20px;margin:12px 0;backdrop-filter:blur(20px);position:relative;overflow:hidden}
+.g::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,240,255,.3),transparent)}
+.gt{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:3px;margin-bottom:10px}
+
+.daily-quote{text-align:center;padding:24px 20px;border:1px solid var(--border);background:var(--surface);margin:12px 0;position:relative;overflow:hidden}
+.daily-quote::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--purple),var(--pink),var(--gold));background-size:300%;animation:grd 4s linear infinite}
+.daily-quote .q{font-size:15px;line-height:1.8;font-style:italic;color:var(--text);margin-bottom:10px}
+.daily-quote .a{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px}
+
+.mind-card{padding:16px;margin:8px 0;border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden;cursor:default;transition:all .3s}
+.mind-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.mind-icon{font-size:20px;float:left;margin-right:12px;margin-top:2px}
+.mind-name{font-family:'Orbitron',sans-serif;font-size:11px;font-weight:900;letter-spacing:2px;margin-bottom:3px}
+.mind-role{font-size:9px;color:var(--dim);letter-spacing:1px;margin-bottom:8px}
+.mind-thought{font-size:12px;line-height:1.7;font-style:italic;padding:10px;background:rgba(0,0,0,.3);border-left:2px solid;clear:both}
+
+.mission{padding:18px;margin:10px 0;border:1px solid var(--border);background:var(--surface);position:relative;transition:all .3s;overflow:hidden}
+.mission::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:.3}
+.mission.done{opacity:.45;border-color:rgba(45,255,168,.3)}
+.mission.done .m-check{color:var(--green)}
+.mission.active{border-color:rgba(0,240,255,.3);box-shadow:0 0 20px rgba(0,240,255,.05)}
+.m-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.m-time{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px}
+.m-source{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;padding:2px 8px;border:1px solid;opacity:.7}
+.m-title{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.m-text{font-size:12px;line-height:1.7}
+.m-why{font-size:10px;color:var(--dim);margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-style:italic;line-height:1.6}
+.m-check{position:absolute;top:14px;right:14px;font-size:22px;cursor:pointer;color:var(--dim);transition:all .2s;z-index:2}
+.m-check:hover{color:var(--green);transform:scale(1.3)}
+
+.streak-bar{display:flex;align-items:center;gap:8px;padding:14px 16px;background:var(--surface);border:1px solid var(--border);margin:12px 0}
+.streak-num{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:900;color:var(--gold)}
+.streak-label{font-size:10px;color:var(--dim);letter-spacing:1px}
+.streak-fire{font-size:20px}
+
+.principle{padding:14px 16px;margin:6px 0;border:1px solid var(--border);background:var(--surface);position:relative;overflow:hidden;cursor:pointer;transition:all .2s}
+.principle:hover{border-color:rgba(0,240,255,.2);transform:translateX(4px)}
+.principle .p-num{font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:2px;margin-bottom:4px}
+.principle .p-text{font-size:12px;line-height:1.6}
+.principle .p-practice{font-size:10px;color:var(--gold);margin-top:6px;display:none;line-height:1.5;padding-top:6px;border-top:1px solid var(--border)}
+.principle.open .p-practice{display:block}
+
+.tab-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(2,2,6,.96);border-top:1px solid var(--border);padding:8px 0;backdrop-filter:blur(12px);z-index:99}
+.tab-inner{max-width:640px;margin:0 auto;display:flex;justify-content:center;gap:0}
+.tab-btn{background:none;border:none;color:var(--dim);font-family:'Orbitron',sans-serif;font-size:8px;letter-spacing:1px;text-transform:uppercase;padding:8px 16px;cursor:pointer;transition:all .3s;position:relative}
+.tab-btn.active{color:var(--cyan)}
+.tab-btn.active::after{content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;background:var(--cyan)}
+.tab-btn:hover{color:var(--cyan)}
+
+.anim{animation:fadeUp .4s cubic-bezier(.4,0,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hr{height:1px;background:var(--border);margin:16px 0}
+@media(max-width:400px){.wrap{padding:14px 10px 90px}.mission{padding:14px}}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="wrap">
+  <div class="hdr">
+    <h1><span>MINDSET FOCUS</span></h1>
+    <div class="sub">VOSS &middot; TATE &middot; TOMASSI &middot; MUSK &middot; ZERO <span class="pulse"></span></div>
+  </div>
+  <div id="app"></div>
+</div>
+<nav class="tab-bar"><div class="tab-inner">
+  <button class="tab-btn active" onclick="switchTab('focus')">FOCUS</button>
+  <button class="tab-btn" onclick="switchTab('arsenal')">ARSENAL</button>
+  <button class="tab-btn" onclick="switchTab('log')">LOG</button>
+</div></nav>
+<script>
+(function(){
+const cv=document.getElementById('bg'),ctx=cv.getContext('2d');let W,H;
+function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight}rsz();addEventListener('resize',rsz);
+const pts=[];for(let i=0;i<40;i++)pts.push({x:Math.random()*2000,y:Math.random()*2000,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,r:Math.random()*1+.3,a:Math.random()*.15+.04});
+function draw(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,240,255,'+p.a+')';ctx.fill()});pts.forEach((a,i)=>{pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<120){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(0,240,255,'+((.05-d/2500))+')';ctx.stroke()}})});requestAnimationFrame(draw)}draw();
+
+const app=document.getElementById('app');
+function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''}
+function getState(){try{return JSON.parse(localStorage.getItem('mindset_state')||'{}')}catch(e){return{}}}
+function saveState(s){localStorage.setItem('mindset_state',JSON.stringify(s))}
+
+const MASTERS={
+  voss:{name:'CHRIS VOSS',icon:'🎯',color:'var(--cyan)',role:'Taktische Empathie & Verhandlung',
+    thoughts:[
+      'Hoere nicht was sie SAGEN. Hoere was sie FUEHLEN.',
+      'Die maechtigste Waffe ist nicht was du sagst — sondern die Pause davor.',
+      'Wer die Emotionen benennt, kontrolliert das Gespraech.',
+      'Ein "Nein" ist kein Ende. Es ist der Anfang der echten Verhandlung.',
+      'Taktische Empathie ist keine Schwaeche. Es ist die ultimative Staerke.',
+      'Spiegel die letzten drei Worte. Warte. Die Wahrheit kommt von allein.',
+      'Dein Ton bestimmt die Reaktion. Kontrolliere den Ton, kontrolliere alles.',
+      'Akkusations-Audit: Benenne das Schlimmste bevor sie es denken.',
+      'Kalibrierte Fragen oeffnen Tueren die Aussagen verschliessen.',
+      'Die meisten warten nur darauf zu antworten. Wer zuhoert, gewinnt.'
+    ],
+    principles:[
+      {title:'Taktische Empathie',text:'Verstehe die Emotionen des Gegenueber und benenne sie laut. Nicht Mitgefuehl — strategisches Verstaendnis.',practice:'Sage heute in einem Gespraech: "Es klingt so als ob..." und beobachte wie sich die Dynamik veraendert.'},
+      {title:'Mirroring',text:'Wiederhole die letzten 1-3 Worte deines Gegenueber. Dann schweige. Menschen fuellen die Stille mit Wahrheit.',practice:'Nutze Mirroring 3x heute. Wiederhole, schweige, warte.'},
+      {title:'Labeling',text:'Benenne die Emotion hinter der Aussage. "Es scheint als ob..." — das entwaffnet Widerstand.',practice:'Schreibe 5 Labels fuer Situationen die du heute erlebst.'},
+      {title:'Akkusations-Audit',text:'Zaehle alle negativen Annahmen auf die dein Gegenueber haben koennte. Sprich sie aus BEVOR sie es tun.',practice:'Bevor du ein schwieriges Gespraech fuehrst: Liste 3 Vorwuerfe auf und entkraefte sie praeventiv.'},
+      {title:'Kalibrierte Fragen',text:'Fragen die mit "Was" oder "Wie" beginnen geben dem anderen das Gefuehl von Kontrolle, waehrend DU die Richtung bestimmst.',practice:'Ersetze heute jedes "Warum" durch "Was hat dich dazu gebracht...?"'},
+      {title:'Die Macht des Nein',text:'Lass den anderen "Nein" sagen. Es gibt ihm Sicherheit und Kontrolle. Paradoxerweise oeffnet es ihn.',practice:'Stelle eine Frage die ein "Nein" provoziert: "Waere es schlimm wenn...?"'}
+    ]
+  },
+  tate:{name:'ANDREW TATE',icon:'⚡',color:'var(--orange)',role:'Disziplin & kompromisslose Action',
+    thoughts:[
+      'Dein Geist muss staerker sein als deine Gefuehle.',
+      'Mittelmässigkeit ist keine Option. Dein Potenzial auszuschoepfen ist Pflicht.',
+      'Motivation kommt und geht. Disziplin bleibt. Disziplin IST Freiheit.',
+      'Speed schlaegt Perfektion. Wer zoegert, verliert.',
+      'Hör auf Ausreden zu suchen. Wo du stehst ist das Resultat deiner Entscheidungen.',
+      'Tu heute bewusst etwas Unbequemes. Das ist der Preis fuer Wachstum.',
+      'Dein Wort ist deine Waehrung. Brich es einmal und du verlierst alles.',
+      'Nie aus Angst handeln. Nie aus Verzweiflung. Immer aus Staerke.',
+      'Schwaeche ist eine Wahl. Staerke auch.',
+      'Jeden Tag dem maximalen Impact widmen. War es genug? Was mache ich morgen besser?'
+    ],
+    principles:[
+      {title:'Disziplin ueber Motivation',text:'Motivation ist ein Gefuehl — es kommt und geht. Disziplin ist eine Entscheidung. Halte JEDEN Plan ein.',practice:'Halte heute JEDEN Plan ein den du dir vorgenommen hast. Kein Verhandeln mit dir selbst.'},
+      {title:'Persoenliche Verantwortung',text:'Niemand schuldet dir etwas. Wo du stehst ist das Resultat deiner Entscheidungen. Punkt.',practice:'Frage dich bei jedem Problem: Was ist MEIN Anteil? Was kann ICH aendern?'},
+      {title:'Unbequemes tun',text:'Wachstum liegt ausserhalb der Komfortzone. Tu bewusst das Schwierige. Jeden Tag.',practice:'Kalt duschen, extra Satz im Training, das schwierige Gespraech fuehren. Heute.'},
+      {title:'Speed & Execution',text:'Schnelles Handeln schlaegt perfekte Planung. Wer plant statt handelt, verliert.',practice:'Arbeite heute mindestens 2h an etwas das direkt Ergebnis bringt. Nicht planen — TUN.'},
+      {title:'Ehrenwort halten',text:'Gib keine Versprechen die du nicht halten kannst. Und halte JEDES Versprechen das du gibst.',practice:'Gib heute maximal 2 Versprechen. Aber halte sie zu 100%.'},
+      {title:'Koerper & Geist trainieren',text:'Der Koerper ohne Geist ist leer. Der Geist ohne Koerper ist schwach. Trainiere beides. Taeglich.',practice:'1h koerperliches Training + 30min mentales Training (Lesen, Lernen, Strategie).'}
+    ]
+  },
+  rollo:{name:'ROLLO TOMASSI',icon:'🔴',color:'var(--pink)',role:'Frame Control & unsichtbare Dynamik',
+    thoughts:[
+      'Frame ist alles. Wer den Frame kontrolliert, kontrolliert die Realitaet.',
+      'Erklaere dich nie. Wer sich erklaert, hat schon verloren.',
+      'Abundance Mentality: Der Mann der bereit ist wegzugehen hat die Macht.',
+      'Jeder Shit-Test ist eine Einladung, staerker zu werden.',
+      'Mystery erzeugt Anziehung. Vorhersagbarkeit toetet sie.',
+      'Dein Wert wird nicht durch Worte bestimmt. Sondern durch Optionen.',
+      'Outcome Independence: Dein Glueck haengt nie von EINER Person ab.',
+      'Desire Cannot Be Negotiated. Echte Attraktion ist nicht verhandelbar.',
+      'Lass deine Handlungen sprechen. Hoer auf dich zu rechtfertigen.',
+      'Werde die beste Version deiner selbst. Nicht fuer sie — fuer DICH.'
+    ],
+    principles:[
+      {title:'Frame ist alles',text:'In jeder Interaktion bestimmt die Person die den Frame haelt die Realitaet. Dein Frame = deine Mission, deine Ueberzeugungen.',practice:'Beobachte jede Interaktion heute: Wer setzt den Frame? Wenn nicht du — aendere das.'},
+      {title:'Abundance Mentality',text:'Es gibt immer Optionen. Knappheitsdenken macht dich schwach. Denke in Ueberfluss.',practice:'Wo handelst du aus Knappheit? Identifiziere eine Situation und denke sie in Abundance um.'},
+      {title:'Outcome Independence',text:'Dein Glueck und dein Wert haengen nie von einer einzelnen Person oder Situation ab.',practice:'Loesche heute eine emotionale Abhaengigkeit. Investiere die Energie in DICH.'},
+      {title:'Nie selbst herunterputzen',text:'Selbstabwertung ist kein Humor — es ist Selbstsabotage. Sei der Preis.',practice:'Achte auf jeden Moment wo du dich abwertest. Ersetze Selbstironie durch ruhiges Selbstvertrauen.'},
+      {title:'Mission vor allem',text:'Dein Lebenszweck definiert deinen Wert. Keine Person darf dein Lebenszweck werden.',practice:'Wie viel deiner Identitaet haengt an einer Person? Investiere heute in DEINE Mission.'},
+      {title:'Amused Mastery',text:'Begegne Tests und Provokationen mit souveraenem Humor statt emotional zu reagieren.',practice:'Reagiere heute auf eine Provokation mit einem Laecheln statt mit Worten.'}
+    ]
+  },
+  musk:{name:'ELON MUSK',icon:'🚀',color:'var(--green)',role:'First Principles & 10x Thinking',
+    thoughts:[
+      'First Principles: Zerlege jedes Problem bis auf die physikalischen Grundwahrheiten.',
+      'Wenn es nicht 10x ist, ist es Zeitverschwendung.',
+      'Die gefaehrlichste Frage ist: "So haben wir es immer gemacht."',
+      'Dein groesster Feind ist nicht Versagen. Es ist zu wenig Ambition.',
+      'Loesche was nicht funktioniert. Vereinfache. Dann beschleunige.',
+      'Arbeite nicht haerter. Arbeite an den richtigen Problemen.',
+      'Feedback-Loops: Miss. Lerne. Iteriere. Schneller als alle anderen.',
+      'Die beste Komponente ist die, die nicht existiert. Simplify.',
+      'Mach die Zukunft aufregend. Alles andere ist Verschwendung.',
+      'Frage nicht "Ist es moeglich?" Frage "Wie lange dauert es?"'
+    ],
+    principles:[
+      {title:'First Principles Thinking',text:'Zerlege jedes Annahme-Gebaelde in die grundlegenden Wahrheiten. Baue von dort neu auf.',practice:'Nimm ein Problem das dich blockiert. Schreibe 3 Annahmen auf. Hinterfrage jede einzelne.'},
+      {title:'10x statt 10%',text:'Denke nicht in kleinen Verbesserungen. Frage: Wie mache ich das 10x besser/schneller/groesser?',practice:'Plane eine Aktion die dein wichtigstes Ziel 10x weiterbringt. Nicht 10%. 10x.'},
+      {title:'Delete, Simplify, Accelerate',text:'Schritt 1: Loesche was unnoetig ist. Schritt 2: Vereinfache was uebrig bleibt. Schritt 3: Beschleunige.',practice:'Streiche heute 3 Dinge von deiner To-Do-Liste die keinen echten Impact haben.'},
+      {title:'Feedback-Loops verkuerzen',text:'Je schneller du Feedback bekommst, desto schneller lernst du. Miss alles. Iteriere taeglich.',practice:'Was hast du gestern getan? Was war das Ergebnis? Was aenderst du heute? Schreib es auf.'},
+      {title:'Ambition als Pflicht',text:'Zu wenig Ambition ist gefaehrlicher als Versagen. Setze Ziele die dich nervoes machen.',practice:'Schreibe dein groesstes Ziel auf. Verdopple es. DAS ist dein echtes Ziel.'},
+      {title:'Unmoeglich ist temporaer',text:'Frage nicht ob es moeglich ist. Frage wie lange es dauert und was es kostet.',practice:'Nimm einen "unmoglichen" Wunsch. Schreibe 3 konkrete erste Schritte.'}
+    ]
+  },
+  zero:{name:'ZERO',icon:'👁',color:'var(--purple)',role:'Systemdenken & Muster-Erkennung',
+    thoughts:[
+      'Jede Beziehung ist ein System. Jedes System hat ein Protokoll. Finde es.',
+      'Daten ueber Gefuehle. Tracke alles. Muster luegen nicht.',
+      'Automatisiere was wiederholbar ist. Deine Energie gehoert den Black Swans.',
+      'Reverse Engineering: Starte beim Ergebnis. Arbeite rueckwaerts.',
+      'Kein Bug. Feature. Jeder Fehler ist Information.',
+      'Root Access: Finde den EINEN Hebel der alles veraendert.',
+      'Die beste Aktion ist die, die niemand kommen sieht.',
+      'Social Engineering: Menschen sind das schwaechste Glied. Und das staerkste.',
+      'Optimiere dein Netzwerk wie ein System. Garbage in, garbage out.',
+      'Iteration. Der beste Hacker macht nie den gleichen Fehler zweimal.'
+    ],
+    principles:[
+      {title:'Systemdenken',text:'Alles ist ein System. Menschen, Maerkte, Beziehungen. Finde die Regeln, dann spielst du nach deinen.',practice:'Analysiere eine Situation die dich frustriert. Welches System steckt dahinter? Welche Regel kannst du aendern?'},
+      {title:'Daten statt Bauchgefuehl',text:'Gefuehle sind Rauschen. Daten sind Signal. Tracke deine Ergebnisse. Muster emergieren.',practice:'Schreibe heute abend 3 Fakten ueber deinen Tag auf. Keine Meinungen. Nur Daten.'},
+      {title:'Reverse Engineering',text:'Starte mit dem gewuenschten Ergebnis. Arbeite rueckwaerts. Jeder Schritt wird klar.',practice:'Nimm dein naechstes Ziel. Schreibe den letzten Schritt zuerst. Dann den vorletzten. Bis zum Anfang.'},
+      {title:'Root Cause Analysis',text:'Behandle nie Symptome. Finde die Wurzel. Ein Fix am Root loest 100 Symptome.',practice:'Bei deinem naechsten Problem: Frage 5x "Warum?" bis du die echte Ursache findest.'},
+      {title:'80/20 Hebel finden',text:'20% der Aktionen erzeugen 80% der Ergebnisse. Finde den einen Hebel. Ignoriere den Rest.',practice:'Liste alle deine aktuellen Aktivitaeten. Streiche 80%. Die restlichen 20% sind dein Fokus.'},
+      {title:'Iteration ueber Perfektion',text:'Version 1 ist besser als Version Perfect-die-nie-kommt. Shippe. Lerne. Verbessere.',practice:'Was schiebst du auf weil es "noch nicht fertig" ist? Mach es heute zu 80% fertig und release.'}
+    ]
+  }
+};
+
+const DAILY_QUOTES=[
+  {q:'"Your mind must be stronger than your feelings."',a:'ANDREW TATE',color:'var(--orange)'},
+  {q:'"He who has learned to disagree without being disagreeable has discovered the most valuable secret."',a:'CHRIS VOSS',color:'var(--cyan)'},
+  {q:'"The best version of yourself is the version that can walk away."',a:'ROLLO TOMASSI',color:'var(--pink)'},
+  {q:'"When something is important enough, you do it even if the odds are not in your favor."',a:'ELON MUSK',color:'var(--green)'},
+  {q:'"Frame ist alles. Verliere ihn nie."',a:'ROLLO TOMASSI',color:'var(--pink)'},
+  {q:'"Taktische Empathie ist die ultimative Waffe."',a:'CHRIS VOSS',color:'var(--cyan)'},
+  {q:'"Disziplin IST Freiheit."',a:'ANDREW TATE',color:'var(--orange)'},
+  {q:'"First Principles: Frage nicht WIE andere es machen. Frage WARUM es so sein muss."',a:'ELON MUSK',color:'var(--green)'},
+  {q:'"Daten luegen nicht. Gefuehle schon."',a:'ZERO',color:'var(--purple)'},
+  {q:'"Sei der Preis. Nicht der Bieter."',a:'ROLLO TOMASSI',color:'var(--pink)'},
+  {q:'"Benenne die Emotion. Dann kontrollierst du sie."',a:'CHRIS VOSS',color:'var(--cyan)'},
+  {q:'"Loesche. Vereinfache. Beschleunige."',a:'ELON MUSK',color:'var(--green)'},
+  {q:'"Mittelmässigkeit ist keine Option."',a:'ANDREW TATE',color:'var(--orange)'},
+  {q:'"Reverse Engineer dein Leben. Starte beim Ziel."',a:'ZERO',color:'var(--purple)'},
+  {q:'"Abundance Mentality: Es gibt IMMER Optionen."',a:'ROLLO TOMASSI',color:'var(--pink)'},
+  {q:'"Wer zuhoert, gewinnt. Wer redet, verhandelt gegen sich selbst."',a:'CHRIS VOSS',color:'var(--cyan)'},
+  {q:'"Speed schlaegt Perfektion. Jeden. Verdammten. Tag."',a:'ANDREW TATE',color:'var(--orange)'},
+  {q:'"Frage nicht ob es moeglich ist. Frage wie lange es dauert."',a:'ELON MUSK',color:'var(--green)'},
+  {q:'"Finde den einen Hebel. Ignoriere den Rest."',a:'ZERO',color:'var(--purple)'},
+  {q:'"Dein Ehrenwort ist deine Waehrung."',a:'ANDREW TATE',color:'var(--orange)'}
+];
+
+function generateMissions(){
+  const st=getState();const today=new Date().toISOString().slice(0,10);
+  if(st.missionsDate===today&&st.missions)return st.missions;
+
+  const morningPool=[
+    {master:'voss',title:'EMOTIONEN LESEN',text:'Lies die ersten 3 Nachrichten die du heute bekommst. Frage dich bei jeder: Was ist die EMOTION dahinter? Nicht der Inhalt — das Gefuehl. Schreibe fuer jede ein Label: "Es klingt als ob..."',why:'Voss: Wer Emotionen benennt bevor der andere sie ausspricht, kontrolliert jede Interaktion.'},
+    {master:'tate',title:'UNBEQUEMES ZUERST',text:'Identifiziere die EINE Sache die du heute am meisten aufschieben willst. Tu sie ZUERST. Vor dem Kaffee. Vor dem Handy. Vor allem anderen.',why:'Tate: Disziplin zeigt sich nicht wenn es leicht ist. Sie zeigt sich um 6 Uhr morgens bei der Sache die du hasst.'},
+    {master:'rollo',title:'FRAME SETZEN',text:'Bevor du heute das Haus verlaesst oder den ersten Chat oeffnest: Definiere deinen Frame fuer den Tag. WER bist du heute? Was ist deine Mission? Schreib einen Satz.',why:'Rollo: Wer den Tag ohne Frame startet, lebt im Frame anderer. Du entscheidest — oder andere entscheiden fuer dich.'},
+    {master:'musk',title:'FIRST PRINCIPLES CHECK',text:'Nimm dein wichtigstes aktuelles Problem. Schreibe 3 Annahmen auf die du fuer wahr haeltst. Hinterfrage JEDE. Welche ist falsch? Welche limitiert dich?',why:'Musk: 90% aller Probleme bestehen aus falschen Annahmen die niemand hinterfragt. Sei der der fragt.'},
+    {master:'zero',title:'SYSTEM-SCAN',text:'Oeffne dein Handy. Schau dir deine letzten 5 Interaktionen an. Bei welcher hast DU den Frame gehalten? Bei welcher hast du ihn verloren? Notiere das Muster.',why:'Zero: Ohne Daten bist du blind. Der erste Schritt zum Hack ist: Verstehe das System.'}
+  ];
+
+  const middayPool=[
+    {master:'voss',title:'SPIEGEL-TECHNIK',text:'Nutze in deinem naechsten Gespraech bewusst Mirroring: Wiederhole die letzten 2-3 Worte deines Gegenueber. Dann schweige. Zaehle innerlich bis 5. Beobachte was passiert.',why:'Voss: Mirroring aktiviert den Spiegelneuroneneffekt. Dein Gegenueber fuehlt sich verstanden ohne zu wissen warum.'},
+    {master:'tate',title:'2 STUNDEN PURE ACTION',text:'Stoppe JETZT alles was keine direkte Wirkung hat. Die naechsten 2 Stunden: NUR Dinge tun die messbares Ergebnis bringen. Kein Planen. Kein Lernen. TUN.',why:'Tate: Die Welt belohnt nicht Wissen. Sie belohnt Execution. 2 Stunden fokussiertes Handeln > 2 Wochen Planung.'},
+    {master:'rollo',title:'ABUNDANCE RESET',text:'Wo in deinem Leben handelst du gerade aus Knappheit? Identifiziere EINE Situation. Dann frage dich: Was wuerde ich tun wenn ich 10 Optionen haette? Tu genau DAS.',why:'Rollo: Knappheitsdenken macht dich vorhersagbar und schwach. Abundance ist keine Situation — es ist eine Entscheidung.'},
+    {master:'musk',title:'10X FRAGE',text:'Nimm dein aktuelles Hauptprojekt. Frage: Wie mache ich das 10x groesser/schneller/besser? Nicht 10% besser — 10x. Schreibe 3 wilde Ideen auf. Eine davon ist Gold.',why:'Musk: 10% Verbesserung ist Optimierung. 10x ist Innovation. Nur 10x veraendert alles.'},
+    {master:'zero',title:'HEBEL FINDEN',text:'Liste alle Dinge auf die du heute getan hast. Markiere: Welche 20% haben 80% der Ergebnisse gebracht? Ab jetzt: NUR noch diese 20%. Der Rest wird geloescht.',why:'Zero: Effizienz ist nicht mehr tun. Effizienz ist das Richtige tun. Finde den Hebel, ignoriere den Rest.'}
+  ];
+
+  const eveningPool=[
+    {master:'voss',title:'GESPRAECHS-REVIEW',text:'Geh durch deine wichtigsten Gespraeche von heute. Bei welchem hast du taktische Empathie eingesetzt? Bei welchem hast du es vergessen? Was haettest du anders sagen koennen?',why:'Voss: Jeder Tag ist Training. Jedes Gespraech ist eine Verhandlung. Review macht dich jeden Tag 1% besser.'},
+    {master:'tate',title:'TAGES-ABRECHNUNG',text:'3 Fragen: 1) Was war mein groesster Impact heute? 2) Wo war ich diszipliniert? 3) Wo habe ich verhandelt statt gehandelt? Morgen: Null Verhandlungen mit dir selbst.',why:'Tate: Wer seinen Tag nicht bewertet, wiederholt seine Fehler. Jeden Abend Rechenschaft — vor dir selbst.'},
+    {master:'rollo',title:'FRAME-CHECK',text:'Reflektiere den Tag: In wie vielen Situationen hast du dich erklaert oder gerechtfertigt? Jedes Mal war Frame-Verlust. Ziel fuer morgen: NULL Erklaerungen.',why:'Rollo: Erklaerung = Schwaeche. Der starke Mann handelt. Er erklaert nicht warum.'},
+    {master:'musk',title:'FEEDBACK-LOOP',text:'Was hast du heute getan? Was war das messbare Ergebnis? Was aenderst du morgen? Drei Fragen. Jeden Abend. Das ist der Loop der alles veraendert.',why:'Musk: Die schnellsten Lerner haben die kuerzesten Feedback-Loops. Taegliches Review = taegliche Evolution.'},
+    {master:'zero',title:'DATEN-REVIEW',text:'Schreibe 3 Fakten ueber deinen Tag. Keine Meinungen. Keine Gefuehle. Nur Daten. Was sagen die Daten? Welches Muster erkennst du ueber die letzten Tage?',why:'Zero: Gefuehle sind Rauschen. Daten sind Signal. Wer Muster erkennt kontrolliert die Zukunft.'}
+  ];
+
+  const pick=pool=>pool[Math.floor(Math.random()*pool.length)];
+  const missions=[
+    {...pick(morningPool),time:'MORGEN 07:00',phase:'morning',done:false},
+    {...pick(middayPool),time:'MITTAG 13:00',phase:'midday',done:false},
+    {...pick(eveningPool),time:'ABEND 21:00',phase:'evening',done:false}
+  ];
+  st.missions=missions;st.missionsDate=today;saveState(st);
+  return missions;
+}
+
+function getStreak(){
+  const st=getState();
+  if(!st.streakDays)return 0;
+  return st.streakDays;
+}
+
+function updateStreak(){
+  const st=getState();const today=new Date().toISOString().slice(0,10);
+  const missions=st.missions||[];
+  const allDone=missions.length===3&&missions.every(m=>m.done);
+  if(allDone&&st.lastStreakDate!==today){
+    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    if(st.lastStreakDate===yesterday){st.streakDays=(st.streakDays||0)+1}
+    else{st.streakDays=1}
+    st.lastStreakDate=today;
+    saveState(st);
+  }
+}
+
+function getDailyQuote(){
+  const day=Math.floor(Date.now()/86400000);
+  return DAILY_QUOTES[day%DAILY_QUOTES.length];
+}
+
+function getActiveMission(){
+  const h=new Date().getHours();
+  if(h<12)return 0;if(h<18)return 1;return 2;
+}
+
+function getLog(){
+  try{return JSON.parse(localStorage.getItem('mindset_log')||'[]')}catch(e){return[]}
+}
+function addLog(entry){
+  const log=getLog();
+  log.push({...entry,date:new Date().toISOString()});
+  if(log.length>90)log.splice(0,log.length-90);
+  localStorage.setItem('mindset_log',JSON.stringify(log));
+}
+
+let currentTab='focus';
+
+window.switchTab=function(tab){
+  currentTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.toggle('active',b.textContent.trim().toLowerCase()===tab);
+  });
+  render();
+};
+
+window.toggleMission=function(i){
+  const st=getState();
+  if(st.missions&&st.missions[i]){
+    st.missions[i].done=!st.missions[i].done;
+    saveState(st);
+    if(st.missions[i].done){
+      addLog({type:'mission',master:st.missions[i].master,title:st.missions[i].title,phase:st.missions[i].phase});
+    }
+    updateStreak();
+    render();
+  }
+};
+
+window.togglePrinciple=function(el){
+  el.classList.toggle('open');
+};
+
+function renderFocus(){
+  const missions=generateMissions();
+  const quote=getDailyQuote();
+  const streak=getStreak();
+  const activeIdx=getActiveMission();
+  const masterKeys=Object.keys(MASTERS);
+  const nowMind=MASTERS[masterKeys[Math.floor(Date.now()/15000)%5]];
+  const thought=nowMind.thoughts[Math.floor(Date.now()/60000)%nowMind.thoughts.length];
+
+  let html='';
+
+  html+='<div class="daily-quote anim"><div class="q">'+quote.q+'</div><div class="a" style="color:'+quote.color+'">— '+quote.a+'</div></div>';
+
+  html+='<div class="streak-bar anim"><span class="streak-fire">🔥</span><span class="streak-num">'+streak+'</span><span class="streak-label">TAGE STREAK</span></div>';
+
+  html+='<div class="mind-card anim" style="border-left:3px solid '+nowMind.color+'"><span class="mind-icon">'+nowMind.icon+'</span><div class="mind-name" style="color:'+nowMind.color+'">'+nowMind.name+'</div><div class="mind-role">'+nowMind.role+'</div><div class="mind-thought" style="border-color:'+nowMind.color+'">"'+esc(thought)+'"</div></div>';
+
+  html+='<div class="hr"></div><div class="gt" style="color:var(--gold);margin:8px 0">HEUTIGE MISSIONEN</div>';
+
+  missions.forEach(function(m,i){
+    const master=MASTERS[m.master];
+    const isActive=i===activeIdx&&!m.done;
+    const cls='mission'+(m.done?' done':'')+(isActive?' active':'');
+    html+='<div class="'+cls+' anim" style="border-left:3px solid '+master.color+';animation-delay:'+(i*.08)+'s">';
+    html+='<div class="m-header"><div class="m-time" style="color:'+master.color+'">'+m.time+'</div>';
+    html+='<div class="m-source" style="color:'+master.color+';border-color:'+master.color+'">'+master.icon+' '+master.name+'</div></div>';
+    html+='<div class="m-title" style="color:'+master.color+'">'+esc(m.title)+'</div>';
+    html+='<div class="m-text">'+esc(m.text)+'</div>';
+    html+='<div class="m-why">'+esc(m.why)+'</div>';
+    html+='<div class="m-check" onclick="event.stopPropagation();toggleMission('+i+')">'+(m.done?'✓':'○')+'</div>';
+    html+='</div>';
+  });
+
+  html+='<div class="hr"></div>';
+  html+='<div style="text-align:center;padding:10px"><div style="font-size:9px;color:var(--dim);letter-spacing:1px">5 MINDS &middot; 3 MISSIONEN &middot; JEDEN TAG</div></div>';
+
+  return html;
+}
+
+function renderArsenal(){
+  let html='<div class="gt anim" style="color:var(--cyan);margin-bottom:12px">DAS ARSENAL — ALLE PRINZIPIEN</div>';
+
+  Object.entries(MASTERS).forEach(function(entry){
+    const key=entry[0],m=entry[1];
+    html+='<div class="mind-card anim" style="border-left:3px solid '+m.color+';margin-bottom:4px;cursor:default"><span class="mind-icon">'+m.icon+'</span><div class="mind-name" style="color:'+m.color+'">'+m.name+'</div><div class="mind-role">'+m.role+'</div></div>';
+
+    m.principles.forEach(function(p,i){
+      html+='<div class="principle anim" style="border-left:3px solid '+m.color+';animation-delay:'+(i*.05)+'s" onclick="togglePrinciple(this)">';
+      html+='<div class="p-num" style="color:'+m.color+'">'+m.icon+' PRINZIP '+(i+1)+'</div>';
+      html+='<div class="p-text"><strong style="color:'+m.color+'">'+esc(p.title)+'</strong> — '+esc(p.text)+'</div>';
+      html+='<div class="p-practice">💡 '+esc(p.practice)+'</div>';
+      html+='</div>';
+    });
+
+    html+='<div class="hr"></div>';
+  });
+
+  return html;
+}
+
+function renderLog(){
+  const log=getLog();
+  const streak=getStreak();
+
+  let html='<div class="gt anim" style="color:var(--green);margin-bottom:12px">FORTSCHRITT</div>';
+
+  html+='<div class="streak-bar anim"><span class="streak-fire">🔥</span><span class="streak-num">'+streak+'</span><span class="streak-label">TAGE STREAK</span></div>';
+
+  const last7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    const dayLog=log.filter(function(l){return l.date&&l.date.startsWith(d)});
+    last7.push({date:d,count:dayLog.length,items:dayLog});
+  }
+
+  html+='<div class="g anim"><div class="gt" style="color:var(--cyan)">LETZTE 7 TAGE</div>';
+  html+='<div style="display:flex;gap:6px;justify-content:space-between;margin-top:8px">';
+  last7.forEach(function(day){
+    const pct=Math.min(100,day.count*33);
+    const c=day.count>=3?'var(--green)':day.count>=1?'var(--gold)':'var(--dim)';
+    const label=day.date.slice(8,10)+'.'+day.date.slice(5,7);
+    html+='<div style="flex:1;text-align:center"><div style="height:60px;display:flex;align-items:flex-end;justify-content:center"><div style="width:100%;max-width:24px;height:'+Math.max(4,pct)+'%;background:'+c+';border-radius:2px"></div></div><div style="font-size:8px;color:var(--dim);margin-top:4px">'+label+'</div></div>';
+  });
+  html+='</div></div>';
+
+  const masterCount={};
+  log.forEach(function(l){if(l.master){masterCount[l.master]=(masterCount[l.master]||0)+1}});
+
+  if(Object.keys(masterCount).length){
+    html+='<div class="g anim"><div class="gt" style="color:var(--purple)">MIND-VERTEILUNG</div>';
+    Object.entries(masterCount).sort(function(a,b){return b[1]-a[1]}).forEach(function(entry){
+      const k=entry[0],v=entry[1];
+      const m=MASTERS[k];if(!m)return;
+      const max=Math.max.apply(null,Object.values(masterCount));
+      const w=Math.round(v/max*100);
+      html+='<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><span style="width:70px;font-size:9px;color:'+m.color+'">'+m.icon+' '+m.name.split(' ')[0]+'</span><div style="flex:1;height:4px;background:rgba(255,255,255,.03);border-radius:2px"><div style="width:'+w+'%;height:4px;background:'+m.color+';border-radius:2px"></div></div><span style="font-family:Orbitron,sans-serif;font-size:10px;color:'+m.color+';width:24px;text-align:right">'+v+'</span></div>';
+    });
+    html+='</div>';
+  }
+
+  if(log.length){
+    html+='<div class="g anim"><div class="gt" style="color:var(--gold)">LETZTE AKTIVITAETEN</div>';
+    log.slice(-10).reverse().forEach(function(l){
+      const m=MASTERS[l.master];
+      const d=l.date?new Date(l.date).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+      const c=m?m.color:'var(--dim)';
+      const icon=m?m.icon:'·';
+      html+='<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;display:flex;align-items:center;gap:8px"><span>'+icon+'</span><span style="flex:1;color:'+c+'">'+esc(l.title||'Mission')+'</span><span style="color:var(--dim)">'+d+'</span></div>';
+    });
+    html+='</div>';
+  }else{
+    html+='<div class="g anim" style="text-align:center;padding:30px"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:11px;color:var(--dim)">Schliesse deine ersten Missionen ab.<br>Dein Fortschritt erscheint hier.</div></div>';
+  }
+
+  return html;
+}
+
+function render(){
+  if(currentTab==='focus')app.innerHTML=renderFocus();
+  else if(currentTab==='arsenal')app.innerHTML=renderArsenal();
+  else if(currentTab==='log')app.innerHTML=renderLog();
+}
+
+render();
+setInterval(function(){if(currentTab==='focus')render()},60000);
+})();
+</script>
+</body>
+</html>

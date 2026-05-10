@@ -623,6 +623,7 @@ _TTAO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "thetoysar
 _LIVE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "live.html")
 _DASHBOARD_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mein-dashboard.html")
 _COACHING_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "coaching.html")
+_MINDSET_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mindset.html")
 
 @app.get("/thetoysareout", response_class=HTMLResponse)
 async def thetoysareout():
@@ -646,6 +647,12 @@ async def mein_dashboard():
 async def coaching_page():
     if os.path.exists(_COACHING_PATH):
         return FileResponse(_COACHING_PATH, media_type="text/html")
+    raise HTTPException(status_code=404, detail="Not found")
+
+@app.get("/mindset", response_class=HTMLResponse)
+async def mindset_page():
+    if os.path.exists(_MINDSET_PATH):
+        return FileResponse(_MINDSET_PATH, media_type="text/html")
     raise HTTPException(status_code=404, detail="Not found")
 
 
