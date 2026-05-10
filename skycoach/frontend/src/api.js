@@ -1,5 +1,11 @@
 const TOKEN_KEY = 'skycoach.token'
 
+// Vite injects BASE_URL at build time. When the bundle is served standalone it's
+// "/"; when mounted under PTGO at /skycoach/ it's "/skycoach/". We strip the
+// trailing slash and prefix every API path so the frontend works in both cases
+// without code changes.
+const BASE = (import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+
 export const auth = {
   get: () => localStorage.getItem(TOKEN_KEY),
   set: (t) => localStorage.setItem(TOKEN_KEY, t),
@@ -12,7 +18,7 @@ async function request(path, { method = 'GET', body, isForm = false } = {}) {
   const token = auth.get()
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(path, {
+  const res = await fetch(BASE + path, {
     method,
     headers,
     body: isForm ? body : body ? JSON.stringify(body) : undefined,
