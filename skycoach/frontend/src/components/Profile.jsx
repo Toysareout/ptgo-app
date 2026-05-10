@@ -1,6 +1,55 @@
 import { useState } from 'react'
 import { api } from '../api.js'
 
+function PlanCard({ user }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function upgrade() {
+    setBusy(true)
+    setError('')
+    try {
+      const { url } = await api.checkout(
+        `${window.location.origin}?upgraded=1`,
+        `${window.location.origin}?upgraded=0`,
+      )
+      window.location.href = url
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
+    }
+  }
+
+  const isPro = user.plan === 'pro' || user.plan === 'flight_school'
+  const used = user.monthly_used ?? 0
+  const quota = user.monthly_quota ?? 3
+
+  return (
+    <div className="card">
+      <div className="row between" style={{ marginBottom: 8 }}>
+        <h2 style={{ margin: 0 }}>Plan</h2>
+        <span className={`risk-badge ${isPro ? 'risk-low' : 'risk-medium'}`}>
+          {isPro ? 'Pro' : 'Free'}
+        </span>
+      </div>
+      {isPro ? (
+        <p className="muted">Unbegrenzte Analysen, KI-Coach, vollständige Historie.</p>
+      ) : (
+        <>
+          <p className="muted">
+            Du nutzt {used} / {quota} Analysen diesen Monat. Pro-Plan: 12 €/Monat, unbegrenzte Analysen,
+            personalisiertes Coaching, Wetterdaten.
+          </p>
+          {error && <div className="error">{error}</div>}
+          <button className="btn btn-primary" onClick={upgrade} disabled={busy}>
+            {busy ? 'Weiterleiten…' : 'Auf Pro upgraden'}
+          </button>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function Profile({ user, onSaved }) {
   const [form, setForm] = useState({
     name: user.name,
@@ -38,6 +87,8 @@ export default function Profile({ user, onSaved }) {
   }
 
   return (
+    <>
+    <PlanCard user={user} />
     <div className="card">
       <h2>Pilotenprofil</h2>
       <p className="muted">Diese Angaben helfen, Coaching-Hinweise besser zu personalisieren.</p>
@@ -87,5 +138,6 @@ export default function Profile({ user, onSaved }) {
         </button>
       </form>
     </div>
+    </>
   )
 }

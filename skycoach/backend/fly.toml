@@ -1,0 +1,39 @@
+# SkyCoach AI backend — Fly.io config
+#
+# Deploy:
+#   cd skycoach/backend
+#   fly launch --no-deploy --copy-config        # first time only
+#   fly secrets set SKYCOACH_SECRET=$(openssl rand -hex 32)
+#   fly secrets set SKYCOACH_DB_URL='postgres://...'
+#   fly secrets set STRIPE_SECRET_KEY=sk_live_...
+#   fly secrets set STRIPE_PRICE_ID=price_...
+#   fly secrets set STRIPE_WEBHOOK_SECRET=whsec_...
+#   fly deploy
+
+app = "skycoach-api"
+primary_region = "fra"   # Frankfurt — close to DACH paragliding regions
+
+[build]
+
+[env]
+  PORT = "8001"
+
+[http_service]
+  internal_port = 8001
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    grace_period = "10s"
+    interval = "30s"
+    method = "GET"
+    timeout = "5s"
+    path = "/health"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512

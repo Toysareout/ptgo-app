@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://skycoach-api.fly.dev/api/$1" },
+    { "source": "/health", "destination": "https://skycoach-api.fly.dev/health" }
+  ]
+}

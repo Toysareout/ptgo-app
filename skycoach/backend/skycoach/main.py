@@ -4,7 +4,7 @@ Routes:
     GET  /health                    - liveness check
     POST /api/auth/register         - create account
     POST /api/auth/login            - issue bearer token
-    GET  /api/me                    - current user profile
+    GET  /api/me                    - current user profile (incl. plan + usage)
     PATCH /api/me                   - update pilot profile
 
     POST /api/analyze               - parse + analyse an IGC file (no save)
@@ -12,6 +12,9 @@ Routes:
     GET  /api/flights               - flight log for current user
     GET  /api/flights/{id}          - full analysis for one flight
     DELETE /api/flights/{id}        - remove a flight from the log
+
+    POST /api/billing/checkout      - Stripe checkout session for Pro
+    POST /api/billing/webhook       - Stripe webhook receiver
 
 LEGAL NOTE: SkyCoach AI is a training- and analysis tool. It is NOT a certified
 flight instrument and does not prevent accidents. See README.md.
@@ -23,20 +26,21 @@ import json
 import logging
 from typing import Any
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
-from .analyzer import analysis_to_dict, analyze_flight
+from . import billing, weather as weather_module
+from .analyzer import PilotContext, analysis_to_dict, analyze_flight
 from .auth import get_current_user, hash_password, issue_token, verify_password
 from .db import Flight, User, get_db, init_db
-from .igc_parser import parse_igc
+from .igc_parser import IGCFlight, parse_igc
 
 log = logging.getLogger("skycoach")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s — %(message)s")
 
-app = FastAPI(title="SkyCoach AI", version="0.1.0")
+app = FastAPI(title="SkyCoach AI", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -81,6 +85,9 @@ class ProfileOut(BaseModel):
     wing_class: str
     flight_hours: int
     region: str
+    plan: str
+    monthly_quota: int
+    monthly_used: int
 
 
 class ProfilePatch(BaseModel):
@@ -111,7 +118,8 @@ class FlightSummary(BaseModel):
 # ----- helpers ------------------------------------------------------------
 
 
-def _profile(u: User) -> ProfileOut:
+def _profile(u: User, db: Session | None = None) -> ProfileOut:
+    used = billing.monthly_usage(u, db) if db is not None else 0
     return ProfileOut(
         id=u.id,
         email=u.email,
@@ -121,7 +129,36 @@ def _profile(u: User) -> ProfileOut:
         wing_class=u.wing_class or "",
         flight_hours=u.flight_hours or 0,
         region=u.region or "",
+        plan=u.plan or "free",
+        monthly_quota=billing.FREE_MONTHLY_ANALYSES,
+        monthly_used=used,
     )
+
+
+def _pilot_context(u: User) -> PilotContext:
+    level = u.pilot_level or "beginner"
+    if level not in ("beginner", "advanced", "xc", "instructor"):
+        level = "beginner"
+    wing = u.wing_class or ""
+    if wing not in ("", "EN-A", "EN-B", "EN-C", "EN-D", "CCC"):
+        wing = ""
+    return PilotContext(level=level, wing_class=wing, flight_hours=u.flight_hours or 0)
+
+
+def _weather_for_flight(flight: IGCFlight) -> dict | None:
+    """Pull weather for the start fix; quietly returns None on failure."""
+    if not flight.fixes:
+        return None
+    try:
+        ws = weather_module.lookup(
+            flight.fixes[0].lat,
+            flight.fixes[0].lon,
+            flight.fixes[0].timestamp,
+        )
+        return ws.to_dict() if ws else None
+    except Exception as e:
+        log.warning("weather lookup raised: %s", e)
+        return None
 
 
 async def _read_igc(file: UploadFile) -> str:
@@ -136,13 +173,17 @@ async def _read_igc(file: UploadFile) -> str:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Datei konnte nicht gelesen werden")
 
 
-def _analyze_text(text: str) -> dict[str, Any]:
+def _analyze_text(
+    text: str,
+    ctx: PilotContext | None = None,
+    weather: dict | None = None,
+) -> tuple[IGCFlight, dict[str, Any]]:
     try:
         flight = parse_igc(text)
     except ValueError as e:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, f"Ungültige IGC-Datei: {e}")
-    analysis = analyze_flight(flight)
-    return analysis_to_dict(analysis)
+    analysis = analyze_flight(flight, ctx=ctx, weather=weather)
+    return flight, analysis_to_dict(analysis)
 
 
 # ----- routes -------------------------------------------------------------
@@ -178,8 +219,8 @@ def login(body: LoginIn, db: Session = Depends(get_db)) -> TokenOut:
 
 
 @app.get("/api/me", response_model=ProfileOut)
-def me(user: User = Depends(get_current_user)) -> ProfileOut:
-    return _profile(user)
+def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ProfileOut:
+    return _profile(user, db)
 
 
 @app.patch("/api/me", response_model=ProfileOut)
@@ -192,14 +233,15 @@ def update_me(
         setattr(user, k, v)
     db.commit()
     db.refresh(user)
-    return _profile(user)
+    return _profile(user, db)
 
 
 @app.post("/api/analyze")
 async def analyze_only(file: UploadFile = File(...)) -> dict[str, Any]:
     """Analyse an IGC without persisting. Useful for the public demo."""
     text = await _read_igc(file)
-    return _analyze_text(text)
+    _, analysis = _analyze_text(text)
+    return analysis
 
 
 @app.post("/api/flights")
@@ -208,8 +250,16 @@ async def upload_flight(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
+    billing.enforce_quota(user, db)
+
     text = await _read_igc(file)
-    analysis = _analyze_text(text)
+    # Parse first so weather lookup can use the start fix
+    parsed = parse_igc(text) if text else None
+    if parsed is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "IGC-Datei konnte nicht geparst werden")
+    weather = _weather_for_flight(parsed)
+    ctx = _pilot_context(user)
+    _, analysis = _analyze_text(text, ctx=ctx, weather=weather)
     metrics = analysis["metrics"]
 
     flight = Flight(
@@ -226,6 +276,7 @@ async def upload_flight(
         max_sink_ms=metrics["max_sink_ms"],
         risk_score=analysis["risk_score"],
         risk_level=analysis["risk_level"],
+        weather_json=json.dumps(weather) if weather else "",
         analysis_json=json.dumps(analysis),
     )
     db.add(flight)
@@ -289,3 +340,38 @@ def delete_flight(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Flug nicht gefunden")
     db.delete(flight)
     db.commit()
+
+
+# ----- billing ------------------------------------------------------------
+
+
+class CheckoutIn(BaseModel):
+    success_url: str
+    cancel_url: str
+
+
+class CheckoutOut(BaseModel):
+    url: str
+
+
+@app.post("/api/billing/checkout", response_model=CheckoutOut)
+def billing_checkout(
+    body: CheckoutIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> CheckoutOut:
+    if billing.is_pro(user):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Du bist bereits Pro-Nutzer.")
+    url = billing.create_checkout_session(user, body.success_url, body.cancel_url)
+    db.commit()
+    return CheckoutOut(url=url)
+
+
+@app.post("/api/billing/webhook")
+async def billing_webhook(
+    request: Request,
+    stripe_signature: str = Header(default="", alias="Stripe-Signature"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    payload = await request.body()
+    return billing.handle_webhook(payload, stripe_signature, db)

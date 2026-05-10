@@ -19,6 +19,37 @@ THERMAL_MIN_DURATION_S = 20     # ignore tiny lift bursts
 SINK_ALERT_MS = -3.0            # below this we flag strong sink
 
 
+PilotLevel = Literal["beginner", "advanced", "xc", "instructor"]
+WingClass = Literal["", "EN-A", "EN-B", "EN-C", "EN-D", "CCC"]
+
+
+@dataclass
+class PilotContext:
+    """Optional pilot profile that personalises the analysis.
+
+    Beginners get more conservative thresholds and safety-leaning coaching;
+    XC / instructor pilots see performance-leaning hints. Higher-rated wings
+    (EN-C/D, CCC) get extra warnings about active flying in turbulence.
+    """
+
+    level: PilotLevel = "beginner"
+    wing_class: WingClass = ""
+    flight_hours: int = 0
+
+
+def _level_multipliers(ctx: PilotContext) -> dict:
+    """Adjust risk weights by pilot experience.
+
+    Beginners get a higher multiplier — the same flight is riskier for them.
+    """
+    if ctx.level == "beginner":
+        return {"risk_mul": 1.3, "sink_threshold_ms": -2.5, "speed_threshold_kmh": 40}
+    if ctx.level == "advanced":
+        return {"risk_mul": 1.0, "sink_threshold_ms": -3.0, "speed_threshold_kmh": 50}
+    # xc / instructor
+    return {"risk_mul": 0.85, "sink_threshold_ms": -3.5, "speed_threshold_kmh": 55}
+
+
 @dataclass
 class Thermal:
     start_ts: str
@@ -65,6 +96,7 @@ class FlightAnalysis:
     risk_level: Literal["low", "medium", "high"]
     coaching: list[CoachingHint]
     track_preview: list[tuple[float, float]]   # decimated lat/lon for the map
+    weather: dict | None = None   # optional Open-Meteo snapshot
 
 
 def _vertical_speed(prev: Fix, cur: Fix) -> float:
@@ -197,7 +229,11 @@ def _compute_metrics(flight: IGCFlight) -> FlightMetrics:
     )
 
 
-def _risk_score(m: FlightMetrics) -> tuple[int, Literal["low", "medium", "high"]]:
+def _risk_score(
+    m: FlightMetrics,
+    ctx: PilotContext | None = None,
+    weather: dict | None = None,
+) -> tuple[int, Literal["low", "medium", "high"]]:
     """Rule-based 0–100 risk score.
 
     Higher = more concerning. Drivers:
@@ -206,6 +242,8 @@ def _risk_score(m: FlightMetrics) -> tuple[int, Literal["low", "medium", "high"]
       - very low altitude reserve at landing  (we approximate via min_alt_m
         relative to max_alt_m — a dedicated DEM lookup comes in v2)
       - extremely strong climb rates (turbulent thermals)
+      - cross-checked against ground wind & gusts when weather is available
+      - amplified for low-experience pilots
     """
     score = 0
 
@@ -237,6 +275,17 @@ def _risk_score(m: FlightMetrics) -> tuple[int, Literal["low", "medium", "high"]
     if m.duration_s < 180:
         score += 10  # very short flight — possible aborted launch
 
+    if weather:
+        gusts = weather.get("wind_gusts_kmh", 0)
+        wind = weather.get("wind_speed_kmh", 0)
+        if gusts >= 35 or wind >= 25:
+            score += 15
+        elif gusts >= 25 or wind >= 18:
+            score += 8
+
+    if ctx:
+        score = int(score * _level_multipliers(ctx)["risk_mul"])
+
     score = max(0, min(100, score))
     level: Literal["low", "medium", "high"] = (
         "high" if score >= 60 else "medium" if score >= 30 else "low"
@@ -244,8 +293,15 @@ def _risk_score(m: FlightMetrics) -> tuple[int, Literal["low", "medium", "high"]
     return score, level
 
 
-def _generate_coaching(m: FlightMetrics, risk: int) -> list[CoachingHint]:
+def _generate_coaching(
+    m: FlightMetrics,
+    risk: int,
+    ctx: PilotContext | None = None,
+    weather: dict | None = None,
+) -> list[CoachingHint]:
     hints: list[CoachingHint] = []
+    level = ctx.level if ctx else "advanced"
+    high_class = ctx.wing_class in ("EN-C", "EN-D", "CCC") if ctx else False
 
     if not m.thermals:
         hints.append(
@@ -316,31 +372,108 @@ def _generate_coaching(m: FlightMetrics, risk: int) -> list[CoachingHint]:
             )
         )
 
-    if risk >= 60:
+    if weather:
+        wind = weather.get("wind_speed_kmh", 0)
+        gusts = weather.get("wind_gusts_kmh", 0)
+        if gusts >= 35:
+            hints.append(
+                CoachingHint(
+                    "danger",
+                    f"Starke Böen am Boden ({gusts:.0f} km/h)",
+                    "Bodenwind und Spitzenböen waren am Flugtag deutlich erhöht. "
+                    "Solche Tage erfordern eine sehr saubere Wetterbeurteilung — bei Böen über 35 km/h ist Starten/Landen mit erhöhtem Risiko verbunden.",
+                )
+            )
+        elif wind >= 20 or gusts >= 25:
+            hints.append(
+                CoachingHint(
+                    "warn",
+                    f"Erhöhter Bodenwind ({wind:.0f} km/h, Böen {gusts:.0f} km/h)",
+                    "Plane Start und Landung sehr bewusst gegen den Wind. Achte auf Lee hinter Geländekanten.",
+                )
+            )
+
+    if high_class and m.max_climb_ms >= 4:
         hints.append(
             CoachingHint(
-                "danger",
-                "Hoher Gesamt-Risikoscore",
-                "Mehrere Risikofaktoren kombiniert. Empfehlung: Flugbesprechung mit Fluglehrer, "
-                "vor dem nächsten ähnlichen Tag Wetterbriefing intensiv prüfen.",
+                "warn",
+                f"{ctx.wing_class}-Schirm in starker Thermik",
+                "Höhere Schirmklassen reagieren in turbulenter Luft schneller. "
+                "Aktiv fliegen, Trimm offen, im Bart eher außen kreisen bis das Steigen sauber zentriert ist.",
             )
         )
-    elif risk >= 30:
-        hints.append(
-            CoachingHint(
-                "info",
-                "Mittlerer Risikoscore",
-                "Solide Flugparameter mit einzelnen Auffälligkeiten — sieh dir die Warnungen oben an.",
+
+    if level == "beginner":
+        if risk >= 30:
+            hints.append(
+                CoachingHint(
+                    "danger" if risk >= 60 else "warn",
+                    "Flugbedingungen über deinem aktuellen Erfahrungslevel",
+                    "Mehrere Werte deuten auf anspruchsvolle Bedingungen hin. "
+                    "Bespreche diesen Flug mit deinem Fluglehrer, bevor du bei ähnlicher Wetterlage wieder fliegst.",
+                )
             )
-        )
-    else:
-        hints.append(
-            CoachingHint(
-                "info",
-                "Niedriger Risikoscore",
-                "Sauberer Flug ohne kritische Werte. Fokus für nächsten Flug: Thermikausnutzung verfeinern.",
+        else:
+            hints.append(
+                CoachingHint(
+                    "info",
+                    "Sauberer Schülerflug",
+                    "Fokus für den nächsten Flug: Bremswege üben, Höhensteuerung sauber, Landeeinteilung mit Gegenwind.",
+                )
             )
-        )
+    elif level in ("xc", "instructor"):
+        if risk >= 60:
+            hints.append(
+                CoachingHint(
+                    "danger",
+                    "Anspruchsvoller XC-Tag",
+                    "Auch erfahrene Piloten profitieren bei solchen Werten von einer Flugbesprechung. "
+                    "Leeseiten, Konvergenzen und überentwickelte Wolken im Folgeflug aktiv meiden.",
+                )
+            )
+        elif m.thermals and m.avg_thermal_climb_ms >= 2.5:
+            hints.append(
+                CoachingHint(
+                    "info",
+                    "Thermikausnutzung gut — Linienwahl prüfen",
+                    f"Ø Steigen {m.avg_thermal_climb_ms:.1f} m/s. Für mehr Strecke: "
+                    "schneller Übergang, längere Glides bei Rückenwind, früher abdrehen wenn der nächste Wolkenträger steht.",
+                )
+            )
+        else:
+            hints.append(
+                CoachingHint(
+                    "info",
+                    "Solider Performance-Flug",
+                    "Nächster Optimierungshebel: Geschwindigkeit zwischen den Thermiken und konsequenter Wolkenaufschluss.",
+                )
+            )
+    else:  # advanced
+        if risk >= 60:
+            hints.append(
+                CoachingHint(
+                    "danger",
+                    "Hoher Gesamt-Risikoscore",
+                    "Mehrere Risikofaktoren kombiniert. Empfehlung: Flugbesprechung mit Fluglehrer, "
+                    "vor dem nächsten ähnlichen Tag Wetterbriefing intensiv prüfen.",
+                )
+            )
+        elif risk >= 30:
+            hints.append(
+                CoachingHint(
+                    "info",
+                    "Mittlerer Risikoscore",
+                    "Solide Flugparameter mit einzelnen Auffälligkeiten — sieh dir die Warnungen oben an.",
+                )
+            )
+        else:
+            hints.append(
+                CoachingHint(
+                    "info",
+                    "Niedriger Risikoscore",
+                    "Sauberer Flug ohne kritische Werte. Fokus für nächsten Flug: Thermikausnutzung verfeinern.",
+                )
+            )
 
     return hints
 
@@ -348,15 +481,25 @@ def _generate_coaching(m: FlightMetrics, risk: int) -> list[CoachingHint]:
 def _decimate_track(fixes: list[Fix], max_points: int = 400) -> list[tuple[float, float]]:
     if len(fixes) <= max_points:
         return [(f.lat, f.lon) for f in fixes]
-    step = len(fixes) // max_points
+    # Ceiling division so the result never exceeds max_points.
+    step = -(-len(fixes) // max_points)
     return [(fixes[i].lat, fixes[i].lon) for i in range(0, len(fixes), step)]
 
 
-def analyze_flight(flight: IGCFlight) -> FlightAnalysis:
-    """End-to-end analysis: parsed IGC -> structured analysis."""
+def analyze_flight(
+    flight: IGCFlight,
+    ctx: PilotContext | None = None,
+    weather: dict | None = None,
+) -> FlightAnalysis:
+    """End-to-end analysis: parsed IGC -> structured analysis.
+
+    `ctx` personalises risk weighting and coaching language.
+    `weather` (from `weather.lookup()`) tightens the risk score and adds
+    wind/gust hints. Both are optional — analysis works without them.
+    """
     metrics = _compute_metrics(flight)
-    risk, level = _risk_score(metrics)
-    coaching = _generate_coaching(metrics, risk)
+    risk, level = _risk_score(metrics, ctx=ctx, weather=weather)
+    coaching = _generate_coaching(metrics, risk, ctx=ctx, weather=weather)
 
     return FlightAnalysis(
         pilot=flight.pilot,
@@ -367,6 +510,7 @@ def analyze_flight(flight: IGCFlight) -> FlightAnalysis:
         risk_level=level,
         coaching=coaching,
         track_preview=_decimate_track(flight.fixes),
+        weather=weather,
     )
 
 
