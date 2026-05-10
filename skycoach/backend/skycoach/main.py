@@ -24,10 +24,14 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Request, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -191,7 +195,7 @@ def _analyze_text(
 
 @app.get("/health")
 def health() -> dict[str, str]:
-    return {"status": "ok", "service": "skycoach-ai", "version": "0.1.0"}
+    return {"status": "ok", "service": "skycoach-ai", "version": "0.2.0"}
 
 
 @app.post("/api/auth/register", response_model=TokenOut)
@@ -375,3 +379,36 @@ async def billing_webhook(
 ) -> dict[str, Any]:
     payload = await request.body()
     return billing.handle_webhook(payload, stripe_signature, db)
+
+
+# ----- static SPA (optional) ---------------------------------------------
+#
+# When SKYCOACH_FRONTEND_DIST points to a built Vite `dist/` directory, the
+# SPA is served from this same FastAPI app. This is what the ptgo.de
+# integration uses (mounted at /skycoach inside the existing PTGO app).
+#
+# We mount StaticFiles at /assets (Vite's default) and add a catch-all that
+# returns index.html for any non-API path, so React Router-style URLs work.
+
+_FRONTEND_DIST = os.environ.get("SKYCOACH_FRONTEND_DIST", "").strip()
+
+if _FRONTEND_DIST:
+    _dist = Path(_FRONTEND_DIST)
+    _index = _dist / "index.html"
+    if _index.exists():
+        # Vite builds put hashed JS/CSS into /assets — serve them directly.
+        if (_dist / "assets").is_dir():
+            app.mount("/assets", StaticFiles(directory=_dist / "assets"), name="assets")
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def _spa_catchall(full_path: str) -> FileResponse:
+            # API routes are matched first because they're registered earlier;
+            # this only fires for the SPA shell.
+            target = _dist / full_path
+            if full_path and target.is_file():
+                return FileResponse(target)
+            return FileResponse(_index)
+
+        log.info("Serving SkyCoach SPA from %s", _dist)
+    else:
+        log.warning("SKYCOACH_FRONTEND_DIST=%s set but index.html missing", _FRONTEND_DIST)

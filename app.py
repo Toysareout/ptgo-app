@@ -616,6 +616,35 @@ app.add_middleware(SessionMiddleware, secret_key=APP_SECRET)
 
 
 # =========================================================
+# SKYCOACH AI — Gleitschirm-Fluganalyse als Sub-Mount
+# =========================================================
+# Lebt unter /skycoach. Eigene SQLite-DB (skycoach.db) und eigene Auth, damit
+# PTGO-Daten unangetastet bleiben. Frontend-`dist/` wird vom selben Prozess
+# ausgeliefert, sobald das Frontend einmal mit
+# `SKYCOACH_BASE=/skycoach/ npm run build` gebaut wurde.
+
+try:
+    import sys as _sys
+    _sys.path.insert(
+        0,
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "skycoach", "backend"),
+    )
+    os.environ.setdefault("SKYCOACH_SECRET", APP_SECRET)
+    os.environ.setdefault(
+        "SKYCOACH_FRONTEND_DIST",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "skycoach", "frontend", "dist"),
+    )
+    from skycoach.main import app as _skycoach_app  # noqa: E402
+    from skycoach.db import init_db as _init_skycoach_db  # noqa: E402
+
+    _init_skycoach_db()
+    app.mount("/skycoach", _skycoach_app)
+    print("[skycoach] mounted at /skycoach")
+except Exception as _e:
+    print(f"[skycoach] not mounted: {_e}")
+
+
+# =========================================================
 # THETOYSAREOUT — served from local file
 # =========================================================
 
