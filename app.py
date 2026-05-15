@@ -9464,6 +9464,73 @@ ELITE_STEPS = [
         "how": "Identifiziere die EINE Sache, die dich heute am meisten Zeit gekostet hätte (Instagram, YouTube, Junk-Snack, toxischer Chat). Eliminiere sie für heute. Wenn sie 7 Tage überlebt: permanent weg.",
         "metric": None,
     },
+    # ── ROLLO TOMASSI INTEGRATION ──
+    {
+        "id": "iron_rule_daily", "time": "06:20", "pillar": "social",
+        "title": "Iron Rule des Tages — Frame halten",
+        "icon": "🔴", "min_level": 2, "keystone": True,
+        "why": "Tomassi Iron Rule #1: Frame ist alles. In jeder Interaktion bestimmt die Person mit dem stärkeren Frame die Realität. Frame = deine Mission, deine Überzeugungen, dein Lebensentwurf. Wer seinen Frame aufgibt, lebt im Frame eines anderen. (Rollo Tomassi: 'The Rational Male')",
+        "how": "Lies die heutige Iron Rule (rotiert automatisch). Beobachte JEDE Interaktion heute: Wer setzt den Frame? Bei Tests: ruhig standhalten, nicht emotional reagieren. Amused Mastery = souveräner Humor statt Reaktivität. Tägliche Übung im Detail auf der Systemseite.",
+        "metric": {"key": "frame_score", "label": "Frame-Kontrolle heute (1-10)", "type": "number", "unit": ""},
+    },
+    {
+        "id": "smv_invest", "time": "ganztags", "pillar": "social",
+        "title": "SMV Investment — Marktwert steigern",
+        "icon": "📈", "min_level": 3, "keystone": False,
+        "why": "SMV (Sexual Market Value) = Physique (25%) + Status (30%) + Game (25%) + Ressourcen (20%). Männer peaken 35-45. Jeder Tag ohne bewusste Investition ist verschwendetes Kapital. (Tomassi: 'Desire cannot be negotiated — it must be inspired.')",
+        "how": "Wähle EINE SMV-Aktion heute: Physique (Training, Kleidung, Körpersprache), Status (Karriere, Social Proof, Führung), Game (mit Fremden sprechen, Push/Pull üben), Ressourcen (Investieren, Einkommen steigern). Dokumentiere was du gewählt hast.",
+        "metric": {"key": "smv_action", "label": "SMV-Aktion heute", "type": "select", "options": ["Physique", "Status", "Game", "Ressourcen"]},
+    },
+    {
+        "id": "abundance_check", "time": "21:00", "pillar": "social",
+        "title": "Abundance Check — Kein Oneitis",
+        "icon": "♾️", "min_level": 4, "keystone": False,
+        "why": "Oneitis = krankhafte Fixierung auf EINE Person/EINEN Kunden/EINE Einkommensquelle. Zerstört Frame und Verhandlungsmacht in JEDEM Lebensbereich. Abundance Mentality ist die Grundlage für Stärke. (Tomassi: 'Scarcity denken = schwach handeln.')",
+        "how": "Ehrliche Frage: Wo bist du heute in Scarcity gefallen? Wo hast du an EINER Option gehangen, statt Optionen zu bauen? Relationships, Business, Social — überall gilt: wer Optionen hat, verhandelt aus Stärke.",
+        "metric": None,
+    },
+    # ── ELON MUSK / FIRST PRINCIPLES ──
+    {
+        "id": "first_principles", "time": "06:15", "pillar": "money",
+        "title": "First Principles — Denke von Null",
+        "icon": "🚀", "min_level": 3, "keystone": False,
+        "why": "Musk: 'Ich denke nicht in Analogien — ich zerlege Probleme in ihre physikalischen Grundbestandteile und baue von dort.' Das ist der Grund, warum er Raketen, E-Autos und Gehirn-Interfaces gleichzeitig baut. Analogie-Denken kopiert. First Principles erfindet.",
+        "how": "Nimm EINE Annahme in deinem Leben/Business, die 'alle so machen'. Frage 3×: Warum? Was, wenn das Gegenteil stimmt? Was wäre die optimale Lösung, wenn es keine Regeln gäbe? Schreibe die Antwort auf.",
+        "metric": None,
+    },
+    {
+        "id": "time_boxing", "time": "08:00", "pillar": "money",
+        "title": "Time Boxing — 5-Minuten-Blöcke (Musk)",
+        "icon": "⏱️", "min_level": 4, "keystone": False,
+        "why": "Musk blockt seinen Tag in 5-Minuten-Einheiten. Nicht weil er neurotisch ist — sondern weil Parkinson's Law gilt: Arbeit dehnt sich auf die verfügbare Zeit aus. Enge Zeitfenster = maximale Intensität = 10× Output.",
+        "how": "Blocke die nächsten 4 Stunden in konkrete Einheiten. Jede Aufgabe bekommt eine Zeitgrenze. Timer sichtbar. Wenn die Zeit um ist, nächste Aufgabe — auch wenn nicht fertig. Morgen optimierst du.",
+        "metric": {"key": "timeboxed_hours", "label": "Time-boxed Stunden heute", "type": "number", "unit": "h"},
+    },
+    {
+        "id": "build_not_consume", "time": "ganztags", "pillar": "money",
+        "title": "Bauen, nicht konsumieren — Builder Mindset",
+        "icon": "🔨", "min_level": 2, "keystone": False,
+        "why": "Musk: 'Builder profitieren, Konsumenten werden ersetzt.' Naval: 'Du wirst nicht reich, indem du deine Zeit vermietest. Du musst Equity besitzen.' Jede Stunde, die du konsumierst (Scroll, Netflix, News), ist eine Stunde, die du nicht baust.",
+        "how": "Tracke heute brutal ehrlich: Wie viele Stunden hast du GEBAUT (Code, Content, Produkt, Skill, Beziehung) vs. KONSUMIERT (Scroll, Netflix, News, passives Zuschauen)? Ziel: 80% Build.",
+        "metric": {"key": "build_hours", "label": "Build-Stunden heute", "type": "number", "unit": "h"},
+    },
+    # ── INCOME ENGINE INTEGRATION ──
+    {
+        "id": "revenue_action", "time": "09:00", "pillar": "money",
+        "title": "Revenue-Aktion — Geld verdienen JETZT",
+        "icon": "💵", "min_level": 3, "keystone": False,
+        "why": "Hormozi: 'Die ersten 4 Stunden deines Tages gehören der Umsatzgenerierung. Alles andere ist Ablenkung.' Keine Strategie ersetzt Verkaufen. Kein Plan ersetzt Pitchen. Umsatz heilt alle Wunden.",
+        "how": "EINE direkte Revenue-Aktion: Kunde anrufen, Angebot schreiben, Pitch senden, Produkt listen, Service verkaufen. Nicht 'planen' — MACHEN. Am Ende des Tages: Hast du Geld bewegt? Ja oder Nein.",
+        "metric": None,
+    },
+    {
+        "id": "leverage_build", "time": "15:00", "pillar": "money",
+        "title": "Hebel bauen — Code, Content, Capital, People",
+        "icon": "⚙️", "min_level": 5, "keystone": False,
+        "why": "Naval's 4 Hebel: Code (skaliert unendlich), Media/Content (skaliert unendlich), Capital (Geld arbeiten lassen), People (Team multipliziert). Ohne Hebel tauschst du Zeit gegen Geld — das skaliert nie.",
+        "how": "30 Min heute in EINEN Hebel investieren: SaaS/Tool bauen (Code), Content-Piece erstellen (Media), investieren/sparen (Capital), oder delegieren/outsourcen (People). Welchen Hebel hast du heute bewegt?",
+        "metric": {"key": "leverage_type", "label": "Hebel heute", "type": "select", "options": ["Code", "Content/Media", "Capital", "People/Team", "keiner"]},
+    },
 ]
 
 # Welche Schritte pro Level sichtbar
@@ -9571,11 +9638,12 @@ def _elite_page(title: str, body_html: str, step: int = 0, total: int = 0) -> HT
         """
 
     nav = """
-    <div style="display:flex;gap:10px;margin-top:24px;flex-wrap:wrap;justify-content:center">
-      <a href="/elite" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Übersicht</a>
-      <a href="/elite/today" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Heute</a>
-      <a href="/elite/status" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Status</a>
-      <a href="/elite/weekly" style="font-size:12px;color:#6b7280;text-decoration:none;padding:6px 12px;border:1px solid #1f2937;border-radius:8px">Review</a>
+    <div style="display:flex;gap:8px;margin-top:24px;flex-wrap:wrap;justify-content:center">
+      <a href="/elite" style="font-size:11px;color:#6b7280;text-decoration:none;padding:6px 10px;border:1px solid #1f2937;border-radius:8px">Übersicht</a>
+      <a href="/elite/system" style="font-size:11px;color:#a5b4fc;text-decoration:none;padding:6px 10px;border:1px solid rgba(99,102,241,.3);border-radius:8px">System</a>
+      <a href="/elite/income" style="font-size:11px;color:#86efac;text-decoration:none;padding:6px 10px;border:1px solid rgba(34,197,94,.3);border-radius:8px">Income</a>
+      <a href="/elite/status" style="font-size:11px;color:#6b7280;text-decoration:none;padding:6px 10px;border:1px solid #1f2937;border-radius:8px">Status</a>
+      <a href="/elite/weekly" style="font-size:11px;color:#6b7280;text-decoration:none;padding:6px 10px;border:1px solid #1f2937;border-radius:8px">Review</a>
     </div>
     """
 
@@ -9703,21 +9771,87 @@ def elite_landing(request: Request, db=Depends(get_db)):
         </a>
         """
 
+    # ── Iron Rule des Tages (Rollo) ──
+    day_of_year = _now_local().timetuple().tm_yday
+    rollo_rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rollo_rules[day_of_year % len(rollo_rules)]
+
+    iron_rule_html = f"""
+    <div style="background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-radius:14px;padding:14px;margin:12px 0">
+      <div style="font-size:10px;color:#f87171;letter-spacing:1.5px;font-weight:700;margin-bottom:4px">🔴 IRON RULE DES TAGES</div>
+      <div style="font-size:14px;font-weight:700;color:#fca5a5">{todays_rule['rule']}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:6px;line-height:1.5">{todays_rule['description'][:150]}…</div>
+      <div style="font-size:11px;color:#f59e0b;margin-top:6px">→ {todays_rule['daily_practice'][:120]}</div>
+    </div>
+    """
+
+    # ── Aktueller Musk-Zeitblock ──
+    now = _now_local()
+    current_block = None
+    for block in BILLIONAIRE_DAILY_PLAN["schedule"]:
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+        if now >= block_time:
+            current_block = block
+
+    musk_html = ""
+    if current_block:
+        musk_html = f"""
+    <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:14px;margin:0 0 12px">
+      <div style="font-size:10px;color:#f59e0b;letter-spacing:1.5px;font-weight:700;margin-bottom:4px">🚀 JETZT — MUSK-BLOCK</div>
+      <div style="font-size:14px;font-weight:700;color:#fbbf24">{current_block['block']}</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px">{current_block['action'][:130]}</div>
+    </div>
+    """
+
+    # ── Income Phase ──
+    total_days_in = profile.total_days_logged or 0
+    if total_days_in < 90:
+        phase_name = "Phase 1: Foundation"
+        phase_target = "500–2.000€/Tag"
+        phase_color = "#22c55e"
+    elif total_days_in < 365:
+        phase_name = "Phase 2: Scale"
+        phase_target = "2.000–5.000€/Tag"
+        phase_color = "#f59e0b"
+    else:
+        phase_name = "Phase 3: Compound"
+        phase_target = "5.000–50.000€/Tag"
+        phase_color = "#ef4444"
+
     body = f"""
-    <div style="text-align:center;margin-bottom:20px">
+    <div style="text-align:center;margin-bottom:16px">
       <div class="level-badge">Level {profile.level}</div>
       <div class="streak-fire" style="justify-content:center;margin-top:10px">{streak_text}</div>
-      <p style="font-size:13px;margin-top:4px">Longest: {profile.longest_streak or 0} Tage</p>
+      <p style="font-size:13px;margin-top:4px">Longest: {profile.longest_streak or 0} Tage · Tag {total_days_in}</p>
     </div>
 
     <div class="kpi-grid">
       <div class="kpi"><span>Score heute</span><b>{score}%</b></div>
       <div class="kpi"><span>Erledigt</span><b>{done_count}/{total}</b></div>
+      <div class="kpi"><span>Income Phase</span><b style="font-size:13px;color:{phase_color}">{phase_name}</b></div>
+      <div class="kpi"><span>Ziel</span><b style="font-size:14px">{phase_target}</b></div>
     </div>
 
     {cta}
 
+    {iron_rule_html}
+    {musk_html}
+
     <div class="hr"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <a href="/elite/system" style="display:block;padding:12px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.2);border-radius:12px;text-align:center;text-decoration:none">
+        <div style="font-size:20px">⚡</div>
+        <div style="font-size:12px;font-weight:700;color:#a5b4fc;margin-top:4px">Komplett-System</div>
+        <div style="font-size:10px;color:#6b7280">Rollo + Musk + Naval</div>
+      </a>
+      <a href="/elite/income" style="display:block;padding:12px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:12px;text-align:center;text-decoration:none">
+        <div style="font-size:20px">💰</div>
+        <div style="font-size:12px;font-weight:700;color:#86efac;margin-top:4px">Income Engine</div>
+        <div style="font-size:10px;color:#6b7280">Phasen + Hebel</div>
+      </a>
+    </div>
+
     <h2>Heutiger Plan</h2>
     {step_list}
     """
@@ -10236,3 +10370,279 @@ def elite_weekly_save(request: Request, week: str = Form(""), wins: str = Form("
     profile.last_review_week = week_str
     db.commit()
     return RedirectResponse("/elite/weekly", status_code=303)
+
+
+# ── ELITE SYSTEM — Komplett-Framework (Rollo + Musk + Naval + Income) ──
+@app.get("/elite/system", response_class=HTMLResponse)
+def elite_system(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+
+    # Today's Iron Rule
+    day_of_year = _now_local().timetuple().tm_yday
+    rules = ROLLO_TOMASSI["core_principles"]["iron_rules"]
+    todays_rule = rules[day_of_year % len(rules)]
+
+    # All Iron Rules
+    rules_html = ""
+    for i, rule in enumerate(rules):
+        is_today = (i == day_of_year % len(rules))
+        border = "border:2px solid #ef4444" if is_today else "border:1px solid rgba(239,68,68,.15)"
+        badge = '<span style="font-size:10px;background:#ef4444;color:#fff;padding:2px 8px;border-radius:99px;margin-left:8px">HEUTE</span>' if is_today else ''
+        rules_html += f"""
+        <details style="{border};border-radius:12px;margin-bottom:8px;background:rgba(239,68,68,.03)" {"open" if is_today else ""}>
+          <summary style="padding:12px 14px;cursor:pointer;list-style:none;display:flex;align-items:center">
+            <b style="color:#fca5a5;font-size:13px;flex:1">{rule['rule']}</b>{badge}
+          </summary>
+          <div style="padding:0 14px 14px">
+            <p style="font-size:13px;margin:0 0 8px;color:#d1d5db;line-height:1.6">{rule['description']}</p>
+            <div style="font-size:12px;color:#f59e0b;background:rgba(245,158,11,.06);padding:8px 12px;border-radius:8px;margin-top:8px">
+              <b>Tägliche Praxis:</b> {rule['daily_practice']}
+            </div>
+          </div>
+        </details>"""
+
+    # SMV Pillars
+    smv_html = ""
+    pillar_icons = {"physique": "💪", "status": "👑", "game": "🎯", "resources": "💰"}
+    pillar_colors = {"physique": "#22c55e", "status": "#f59e0b", "game": "#6366f1", "resources": "#eab308"}
+    for key, pillar in ROLLO_TOMASSI["smv_pillars"].items():
+        pct = int(pillar["weight"] * 100)
+        icon = pillar_icons.get(key, "•")
+        color = pillar_colors.get(key, "#6b7280")
+        actions = "".join(f'<div style="font-size:11px;color:#94a3b8;padding:2px 0">• {a}</div>' for a in pillar["actions"])
+        smv_html += f"""
+        <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:8px;background:rgba(255,255,255,.02)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:14px;font-weight:700;color:{color}">{icon} {pillar['label']}</span>
+            <span style="font-size:16px;font-weight:800;color:{color}">{pct}%</span>
+          </div>
+          <div style="height:5px;background:#1f2937;border-radius:99px;margin-bottom:8px">
+            <div style="height:5px;background:{color};border-radius:99px;width:{pct}%"></div>
+          </div>
+          {actions}
+        </div>"""
+
+    # Musk Schedule
+    now = _now_local()
+    musk_html = ""
+    cat_colors = {
+        "health": "#22c55e", "build": "#f59e0b", "revenue": "#ef4444",
+        "review": "#6366f1", "communication": "#94a3b8", "learning": "#a855f7",
+        "scale": "#ec4899", "network": "#06b6d4", "brand": "#f97316",
+        "relationships": "#e879f9", "wind_down": "#6b7280", "sleep": "#334155",
+    }
+    for i_b, block in enumerate(BILLIONAIRE_DAILY_PLAN["schedule"]):
+        bh, bm = block["time"].split(":")
+        block_time = now.replace(hour=int(bh), minute=int(bm), second=0)
+        is_current = False
+        next_b = BILLIONAIRE_DAILY_PLAN["schedule"][i_b + 1] if i_b + 1 < len(BILLIONAIRE_DAILY_PLAN["schedule"]) else None
+        if next_b:
+            nh, nm = next_b["time"].split(":")
+            is_current = block_time <= now < now.replace(hour=int(nh), minute=int(nm), second=0)
+        else:
+            is_current = now >= block_time
+        color = cat_colors.get(block["category"], "#6b7280")
+        border = f"2px solid {color}" if is_current else "1px solid #1f2937"
+        bg = f"rgba(255,255,255,.04)" if is_current else "transparent"
+        here = f'<div style="font-size:10px;color:{color};font-weight:700;margin-top:4px">← DU BIST HIER</div>' if is_current else ""
+        musk_html += f"""
+        <div style="border:{border};border-radius:10px;padding:10px 12px;margin-bottom:6px;background:{bg}">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:12px;color:{color};font-weight:700">{block['time']}</span>
+            <span style="font-size:13px;font-weight:600;color:#e5e7eb">{block['block']}</span>
+            <span style="font-size:10px;color:#6b7280">{block['duration']}</span>
+          </div>
+          <div style="font-size:11px;color:#9ca3af;margin-top:4px">{block['action'][:100]}</div>
+          {here}
+        </div>"""
+
+    # Naval's 4 Lever
+    lever_html = ""
+    lever_icons = {"Code (Software)": "💻", "Media (Content)": "📱", "Capital (Geld)": "💰", "People (Team)": "👥"}
+    for lever in INCOME_STRATEGY["leverage_types"]["levers"]:
+        icon = lever_icons.get(lever["name"], "⚙️")
+        lever_html += f"""
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)">
+          <div style="font-size:20px;text-align:center">{icon}</div>
+          <div style="font-size:13px;font-weight:700;color:#e5e7eb;text-align:center;margin:4px 0">{lever['name']}</div>
+          <div style="font-size:11px;color:#9ca3af;text-align:center">{lever['description'][:80]}</div>
+        </div>"""
+
+    # Glossary (compact)
+    glossary_html = ""
+    for key, entry in list(ROLLO_TOMASSI["glossary"].items())[:8]:
+        glossary_html += f"""
+        <div style="padding:6px 0;border-bottom:1px solid #111827">
+          <span style="color:#fca5a5;font-size:12px;font-weight:700">{entry['term']}</span>
+          <span style="font-size:11px;color:#6b7280"> — {entry['definition'][:100]}</span>
+        </div>"""
+
+    body = f"""
+    <div style="text-align:center;margin-bottom:16px">
+      <span style="font-size:48px;display:block">⚡</span>
+      <h1 style="font-size:22px;margin-bottom:4px">Das Komplett-System</h1>
+      <p style="font-size:12px;color:#6b7280;margin:0">Rollo Tomassi + Elon Musk + Naval Ravikant + Hormozi</p>
+      <div class="level-badge" style="margin-top:10px">Level {profile.level}</div>
+    </div>
+
+    <!-- SEKTION 1: ROLLO TOMASSI — IRON RULES -->
+    <div class="hr"></div>
+    <h2 style="color:#fca5a5;font-size:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">🔴</span> Rollo Tomassi — Iron Rules
+    </h2>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Aus 'The Rational Male' (5 Bücher). Frame = Realität. Wer den Frame hält, bestimmt alles.</p>
+    {rules_html}
+
+    <!-- SEKTION 2: SMV — SEXUAL MARKET VALUE -->
+    <div class="hr"></div>
+    <h2 style="color:#a5b4fc;font-size:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">📊</span> SMV — Dein Marktwert
+    </h2>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">4 Säulen. Männer peaken 35–45. Investiere JETZT — jeder Tag zählt.</p>
+    {smv_html}
+
+    <!-- SEKTION 3: MUSK — TAGESSTRUKTUR -->
+    <div class="hr"></div>
+    <h2 style="color:#fbbf24;font-size:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">🚀</span> Elon Musk — Tagesstruktur
+    </h2>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">Time-Boxing in 5-Min-Einheiten. First Principles. Impact/Stunde maximieren.</p>
+    {musk_html}
+
+    <!-- SEKTION 4: NAVAL — 4 HEBEL -->
+    <div class="hr"></div>
+    <h2 style="color:#86efac;font-size:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">💰</span> Naval Ravikant — 4 Hebel zum Reichtum
+    </h2>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px">'Du wirst nicht reich, indem du deine Zeit vermietest. Du musst Equity besitzen.'</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{lever_html}</div>
+
+    <!-- SEKTION 5: GLOSSAR -->
+    <div class="hr"></div>
+    <h2 style="color:#f59e0b;font-size:16px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:22px">🔑</span> Glossar
+    </h2>
+    <div style="background:rgba(255,255,255,.02);border:1px solid #1f2937;border-radius:12px;padding:12px 14px">
+      {glossary_html}
+    </div>
+
+    <!-- SEKTION 6: DIE FORMEL -->
+    <div class="hr"></div>
+    <div style="text-align:center;padding:20px;background:linear-gradient(180deg,rgba(245,158,11,.08),rgba(239,68,68,.04));border:1px solid rgba(245,158,11,.2);border-radius:16px;margin:12px 0">
+      <div style="font-size:11px;color:#f59e0b;letter-spacing:2px;font-weight:700;margin-bottom:8px">DIE FORMEL</div>
+      <div style="font-size:18px;font-weight:800;color:#e5e7eb;line-height:1.4">
+        Frame × Körper × Skill × Hebel = Unaufhaltbar
+      </div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:8px;line-height:1.5">
+        Frame (Rollo) → Wer du BIST<br>
+        Körper (Huberman/Attia) → Wie du WIRKST<br>
+        Skill (Newport/Ericsson) → Was du KANNST<br>
+        Hebel (Naval/Musk) → Wie du SKALIERST
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:16px">
+      <a href="/elite" class="btn-primary" style="display:inline-block;width:auto;padding:14px 24px">← Zurück zum Tagesplan</a>
+    </div>
+    """
+    return _elite_page("Komplett-System", body)
+
+
+# ── INCOME ENGINE — Phasen + Strategie ──
+@app.get("/elite/income", response_class=HTMLResponse)
+def elite_income(request: Request, db=Depends(get_db)):
+    profile = _elite_get_profile(db, request)
+    total_days = profile.total_days_logged or 0
+
+    # Phase determination
+    phases_html = ""
+    phase_colors = ["#22c55e", "#f59e0b", "#ef4444"]
+    phase_icons = ["🌱", "📈", "🏆"]
+    for i, phase in enumerate(INCOME_STRATEGY["phases"]):
+        color = phase_colors[i]
+        icon = phase_icons[i]
+        is_current = (i == 0 and total_days < 90) or (i == 1 and 90 <= total_days < 365) or (i == 2 and total_days >= 365)
+        border = f"2px solid {color}" if is_current else "1px solid var(--line)"
+        actions = "".join(f'<div style="font-size:12px;color:#cbd5e1;padding:3px 0;line-height:1.5">• {a}</div>' for a in phase["actions"])
+        current_badge = f'<span style="font-size:10px;background:{color};color:#000;padding:2px 8px;border-radius:99px;font-weight:700">DU BIST HIER</span>' if is_current else ''
+        phases_html += f"""
+        <div style="border:{border};border-radius:16px;padding:16px;margin-bottom:12px;background:rgba(255,255,255,.02)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <span style="font-size:15px;font-weight:700;color:{color}">{icon} {phase['phase']}</span>
+            {current_badge}
+          </div>
+          <div style="font-size:13px;color:#fbbf24;font-weight:600;margin-bottom:4px">Ziel: {phase['target']}</div>
+          <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">Fokus: {phase['focus']}</div>
+          {actions}
+          <div style="font-size:11px;color:#6b7280;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+            KPI: {phase['weekly_kpi']}
+          </div>
+        </div>"""
+
+    # Sofort-Aktionen
+    today_actions = "".join(f'<div style="font-size:13px;color:#e5e7eb;padding:4px 0">✓ {a}</div>' for a in INCOME_STRATEGY["immediate_actions"]["today"])
+    week_actions = "".join(f'<div style="font-size:13px;color:#cbd5e1;padding:4px 0">→ {a}</div>' for a in INCOME_STRATEGY["immediate_actions"]["this_week"])
+
+    # Elon Prediction
+    elon_html = "".join(f'<div style="font-size:12px;color:#cbd5e1;padding:3px 0;line-height:1.5">• {p}</div>' for p in INCOME_STRATEGY["elon_prediction"]["analysis"])
+
+    # Lever
+    lever_html = ""
+    for lever in INCOME_STRATEGY["leverage_types"]["levers"]:
+        lever_html += f"""
+        <div style="border:1px solid var(--line);border-radius:12px;padding:12px;background:rgba(255,255,255,.02)">
+          <div style="font-size:14px;font-weight:700;color:#fbbf24">{lever['name']}</div>
+          <div style="font-size:11px;color:#9ca3af;margin:4px 0">{lever['description']}</div>
+          <div style="font-size:12px;color:#22c55e;font-weight:600">→ {lever['action']}</div>
+        </div>"""
+
+    # Reality Check
+    reality = "".join(f'<div style="font-size:12px;color:#fca5a5;padding:2px 0">⚠️ {f}</div>' for f in INCOME_STRATEGY["reality_check"]["facts"])
+
+    body = f"""
+    <div style="text-align:center;margin-bottom:16px">
+      <span style="font-size:48px;display:block">💰</span>
+      <h1 style="font-size:22px;margin-bottom:4px">Income Engine</h1>
+      <p style="font-size:12px;color:#6b7280;margin:0">Dein Weg zu finanziellem Durchbruch — Tag {total_days}</p>
+    </div>
+
+    <!-- Reality Check -->
+    <div style="background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.2);border-radius:14px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#fca5a5;margin-bottom:8px">⚠️ REALITY CHECK</div>
+      {reality}
+    </div>
+
+    <!-- Phasen -->
+    <h2 style="font-size:16px">📋 Die 3 Phasen</h2>
+    {phases_html}
+
+    <!-- Elon's Vorhersage -->
+    <div class="hr"></div>
+    <h2 style="font-size:16px">🚀 Elon Musk — Warum JETZT</h2>
+    <div style="background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:14px">
+      <div style="font-size:13px;font-weight:700;color:#fbbf24;margin-bottom:8px">{INCOME_STRATEGY['elon_prediction']['title']}</div>
+      {elon_html}
+    </div>
+
+    <!-- 4 Hebel -->
+    <div class="hr"></div>
+    <h2 style="font-size:16px">⚙️ Die 4 Hebel (Naval Ravikant)</h2>
+    <div style="display:grid;gap:8px">{lever_html}</div>
+
+    <!-- Sofort-Aktionen -->
+    <div class="hr"></div>
+    <h2 style="font-size:16px">🎯 Was du HEUTE tust</h2>
+    <div style="background:rgba(34,197,94,.05);border:1px solid rgba(34,197,94,.2);border-radius:14px;padding:14px;margin-bottom:12px">
+      {today_actions}
+    </div>
+
+    <h2 style="font-size:16px">📅 Diese Woche</h2>
+    <div style="background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:14px;padding:14px">
+      {week_actions}
+    </div>
+
+    <div style="text-align:center;margin-top:20px">
+      <a href="/elite" class="btn-primary" style="display:inline-block;width:auto;padding:14px 24px">← Zurück zum Tagesplan</a>
+    </div>
+    """
+    return _elite_page("Income Engine", body)
