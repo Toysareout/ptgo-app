@@ -10646,3 +10646,1160 @@ def elite_income(request: Request, db=Depends(get_db)):
     </div>
     """
     return _elite_page("Income Engine", body)
+
+
+# =========================================================
+# ALEX — BLUE ELECTRIC LIFE
+# Lebensdesign-System (Artist / Athlete / Father)
+# =========================================================
+
+ALEX = {
+    "name": "Alex",
+    "subtitle": "Blue Electric Life — zwischen München, Wien, Bergen und offenen Straßen",
+    "leitsatz": "Ich bin kein Mann, der vor dem Leben flieht. Ich bin ein Mann, der sein Leben wieder zu Kunst macht.",
+    "schlusssatz": "Ein Mann mit offenen Straßen im Herzen, Musik in den Händen, Ruhe im Nervensystem und einer Tochter, die weiß: Mein Vater ist frei — aber er bleibt.",
+    "frame_rule": "Dieses Leben darf niemals toxisch-alpha, fake-spirituell, eskapistisch oder Instagram-künstlich werden. Es muss sich anfühlen wie: ein Mann baut sich langsam, ehrlich und stilvoll zurück ins Leben.",
+
+    "pillars": [
+        {"icon": "🜂", "key": "tochter",      "title": "Tochter / Wurzeln",        "lede": "Heiliger Anker. Alle zwei Wochen volle Präsenz. Sie erlebt einen stabilen, warmen, freien Vater."},
+        {"icon": "✦",  "key": "ptgo",         "title": "PTGO / Mission",            "lede": "Keine Therapie-Stunden. Transformations-Kunst. Premium, ruhig, präzise, skalierbar."},
+        {"icon": "♪",  "key": "musik",        "title": "Musik / Kunst",             "lede": "Kein Nebenprojekt — Markenkern. Soul, Rock, Blues, deutschsprachige Tiefe. Täglich."},
+        {"icon": "❖",  "key": "koerper",      "title": "Körper / Gesundheit",       "lede": "Nicht Influencer. Pantherenergie: ruhig stark, geschmeidig, sinnlich, wach."},
+        {"icon": "△",  "key": "freiheit",     "title": "Freiheit / Van / Fliegen", "lede": "Van und Gleitschirm sind Nervensystem-Regulation, nicht Flucht. Bewegte Stille."},
+        {"icon": "◐",  "key": "stil",         "title": "Stil / Ästhetik",           "lede": "Schwarzes Leder, warme Räume, Tattoos im Goldlicht. Zeitlose Rock-Soul-Männlichkeit."},
+        {"icon": "❤︎",  "key": "frauen",       "title": "Frauen / Verbindung",       "lede": "Ergänzung, nie Zentrum. Aus voller eigener Welt heraus lieben — nicht aus Bedürftigkeit."},
+        {"icon": "≈",  "key": "nervensystem", "title": "Nervensystem / Ruhe",       "lede": "Atmen, Natur, Musik, Ordnung, Schönheit. Nie wieder gegen das eigene Nervensystem leben."},
+    ],
+
+    "week": [
+        {"day": "Montag",     "mode": "München · Deep Work · Soul",        "weekday": 0,
+         "items": [
+            "06:00 — Aufstehen. Wasser, kalte Luft, Fenster auf. Kein Handy für 60 Min.",
+            "06:20 — Mobility, Push-ups, Schattenboxen, Atmung. Pantherenergie, kein Studio-Ego.",
+            "07:00 — Espresso, Früchte, Protein. Curtis Mayfield leise im Hintergrund.",
+            "08:00–12:00 — Deep Work: PTGO, Musik, Texte, Systeme. Kein Chaos.",
+            "12:30 — Clean Lunch, dann Spaziergang. Sonne statt Dauerreize.",
+            "14:00–17:00 — Sessions, Calls, Business. Ruhig, präsent, nicht gehetzt.",
+            "17:30 — Golden Hour: Isar oder Tegernsee. Nervensystempflege.",
+            "20:00 — Dusche, warmes Licht, Piano oder Gitarre, schreiben.",
+            "22:30 — Lesen. Schlafvorbereitung. Keine digitale Hölle."]},
+        {"day": "Dienstag",   "mode": "Business + Musik",                   "weekday": 1,
+         "items": [
+            "06:30 — Morgenroutine wie Montag, etwas weicher.",
+            "08:30–12:00 — PTGO-Systeme, Automatisierung, KI-Tools.",
+            "13:00 — Krafttraining oder Schwimmen. Sauna danach.",
+            "15:00–18:00 — Content, Masterclass, Calls.",
+            "20:00 — Musikproduktion oder Songwriting. Mindestens 60 Min.",
+            "22:30 — Abendroutine, früh ins Bett."]},
+        {"day": "Mittwoch",   "mode": "Reset Day · Wohnung zurückerobern",  "weekday": 2,
+         "items": [
+            "Der wichtigste Tag der Woche. Freiheit braucht Ordnung.",
+            "Vormittag — Admin, Buchhaltung, Termine, Tochterplanung, Wien-Vorbereitung.",
+            "Mittag — Wohnung 83083: ein klar definierter Bereich pro Mittwoch (Bad / Küche / Schlafzimmer / Musikecke / Kleiderschrank).",
+            "Ein Karton raus. Eine Schublade leer. Eine Fläche sichtbar. Nicht perfekt, aber atmungsfähig.",
+            "Nachmittag — Wäsche, Körperpflege, Tasche packen für Wien.",
+            "Bei Bedarf: Reinigungskraft, Entrümpler, Handwerker. Verantwortung > Chaos romantisieren.",
+            "Abends — Training oder Spaziergang, dann Piano/Gitarre."]},
+        {"day": "Donnerstag", "mode": "Wien · Anreise · Creative Gentleman", "weekday": 3,
+         "items": [
+            "Vorabend-Anreise per Bahn, wenn möglich. Schwarzer Mantel, Lederjacke, Notizbuch.",
+            "Minimalistisches Gepäck. Eine Tasche, ein Anzug, drei Hemden, ein Buch.",
+            "Hotel oder feste Unterkunft. Duschen, Spaziergang, gutes Abendessen.",
+            "Spät: Kaffeehaus, Jazzbar oder Hotelzimmer mit Lampe, Musik, Schreiben.",
+            "Keine billige Ablenkung. Wien = Inspirationsquelle, nicht Belastung."]},
+        {"day": "Freitag",    "mode": "Wien · Deep Presence · Hotel Energy", "weekday": 4,
+         "items": [
+            "Arbeit in Wien — präsent, fokussiert, ruhig.",
+            "Sauna oder Gym am späten Nachmittag.",
+            "Freitag Nacht: warme Lampen, Hemd halb offen, Musik über Lautsprecher.",
+            "Notizen aus Wien sammeln — für Musik, PTGO, Texte.",
+            "Abendzug oder Übernachtung. Keine Hetze."]},
+        {"day": "Samstag",    "mode": "Wochenende A: Tochter / B: Freiheit", "weekday": 5,
+         "items": [
+            "Wochenende A (gerade KW) — Tochter in München.",
+            "Wochenende B (ungerade KW) — Van, Berge, Musik, Natur.",
+            "Klar entscheiden, was heute ist. Keine Mischmodi."]},
+        {"day": "Sonntag",    "mode": "Reflexion · Vorbereitung · Ruhe",     "weekday": 6,
+         "items": [
+            "Spaziergang. Tagebuch. Wochenrückblick (3 Punkte: Würde, Wachstum, Korrektur).",
+            "Wäsche fertig, Tasche gepackt, Mo-Vormittag schon klar.",
+            "Abends — Piano oder Lesen. Früh ins Bett."]},
+    ],
+
+    "weekend_a_tochter": {
+        "title": "Wochenende A — Tochter / heiliger Anker",
+        "rituale": [
+            "Gemeinsames Frühstück ohne Eile.",
+            "Natur: See, Wald, Park, Tegernsee, Isar.",
+            "Musik: ein Lied zusammen hören, ein Lied zusammen erfinden.",
+            "Kochen mit ihr — kleine Aufgaben, große Würde.",
+            "Lesen am Abend, ruhige Stimme.",
+            "Eine kleine Tradition pro Wochenende (gleicher Bäcker, gleicher Platz)."],
+        "nicht": [
+            "Kein Dauerhandy.",
+            "Kein gestresster Vater, kein Überprogramm.",
+            "Keine Schuldgefühle kompensieren mit Geschenken.",
+            "Keine Dating-Energie, keine fremden Frauen im Bild.",
+            "Kein Van-Drama, kein Reise-Stress an diesem Wochenende."],
+        "ziel": "Sie erlebt einen Vater, der stabil, warm, präsent, frei — und da ist."
+    },
+    "weekend_b_freiheit": {
+        "title": "Wochenende B — Freiheit",
+        "optionen": ["Van-Tour", "Paragliding (Tegernsee / Kössen / Gardasee)", "Dolomiten / Annecy / Südtirol",
+                     "Musik-Retreat", "Sauna-Wochenende", "Kreativtage allein", "Sonntag Long Drive"],
+        "leitsatz": "Bewegte Stille. Kein Eskapismus, kein Influencer-Roadtrip."
+    },
+
+    "day_blocks": [
+        {"t1": "06:00", "t2": "07:00", "label": "Morgen-Anker",  "h": 6,  "items": [
+            "Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.",
+            "5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.",
+            "5 Min Vision: heute soll sich wie was anfühlen?",
+            "Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds."]},
+        {"t1": "07:00", "t2": "08:00", "label": "Frühstück & Übergang", "h": 7, "items": [
+            "Espresso. Früchte. Eier oder Protein.",
+            "Kein Doomscroll. Erst nach dem ersten Deep-Work-Block."]},
+        {"t1": "08:00", "t2": "12:00", "label": "Deep Work I",   "h": 8,  "items": [
+            "PTGO / Masterclass / Musik / Texte / KI-Systeme.",
+            "Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.",
+            "Drei Sitzungen à 75 Min mit kurzen Pausen."]},
+        {"t1": "12:00", "t2": "14:00", "label": "Clean Lunch & Walk", "h": 12, "items": [
+            "Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.",
+            "20-Min Spaziergang. Sonne ins Gesicht. Keine Reize."]},
+        {"t1": "14:00", "t2": "17:00", "label": "Sessions / Business", "h": 14, "items": [
+            "Sessions, Calls, Strategie, Premium-Angebote.",
+            "Ruhig, präsent, nicht gehetzt."]},
+        {"t1": "17:30", "t2": "19:30", "label": "Golden Hour",   "h": 17, "items": [
+            "Tegernsee, Isar, oder Spaziergang.",
+            "Fahrt mit Musik, offenes Fenster, Sonnenuntergang."]},
+        {"t1": "20:00", "t2": "22:00", "label": "Musik / Schreiben", "h": 20, "items": [
+            "Warmlicht, Piano oder Gitarre.",
+            "Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?"]},
+        {"t1": "22:00", "t2": "23:00", "label": "Schlafvorbereitung", "h": 22, "items": [
+            "Dusche, Duft, Lesen.",
+            "Kein Bildschirm im Bett. Vorhang zu, Raum kühl."]},
+    ],
+
+    "koerper": {
+        "kern": "Nicht Bodybuilder. Pantherenergie — geschmeidig, stark, ruhig.",
+        "wochen": [
+            "Mo — Mobility + Push-ups + Schattenboxen (30 Min)",
+            "Di — Krafttraining schwer (60 Min) + Sauna",
+            "Mi — Spaziergang lang + Atemarbeit",
+            "Do — Reisemodus: Push-ups, Mobility im Hotelzimmer",
+            "Fr — Sauna oder Schwimmen",
+            "Sa — Natur lange Bewegung",
+            "So — Ruhe, leichte Mobility"],
+        "ernaehrung": [
+            "Wasser zuerst. Espresso danach.",
+            "Früchte, Eier oder Protein.",
+            "Gemüse, Fisch, Fleisch oder hochwertige vegetarische Alternative.",
+            "Wenig Zucker, wenig Alkohol, kein emotionales Essen.",
+            "Sinnlich essen — Teller, Licht, Musik."]
+    },
+
+    "wien": {
+        "modus": "Creative Gentleman Work Mode — keine Belastung, keine Hetze.",
+        "anreise": [
+            "Vorabend-Anreise per Bahn, wenn möglich. Sonst früher Frühzug.",
+            "Schwarzer Mantel oder Lederjacke. Notizbuch. Buch. Kopfhörer.",
+            "Gepäck: eine Tasche, drei Hemden, zwei Hosen, ein Anzug, ein Buch."],
+        "unterkunft": [
+            "Feste Unterkunft oder ein Hotel, das du immer wieder buchst.",
+            "Ein Ort, der dich kennt. Vorzimmer für deinen Wien-Modus.",
+            "Sauberes Bad, gutes Licht, ruhige Lage."],
+        "rituale": [
+            "Espresso im selben Café.",
+            "Spaziergang durch eine schöne Straße zu Arbeitsbeginn.",
+            "Mittagspause mit echter Mahlzeit, nicht to-go.",
+            "Nach der Arbeit: duschen, laufen, gutes Essen.",
+            "Abends: Kaffeehaus, Jazzbar, Schreiben.",
+            "Freitag Nacht: Hotel-Energy — Lampen, Musik, Notizen."],
+        "inspiration": ["Architektur", "Musik der Stadt", "alte Welt-Eleganz", "Texte und PTGO-Ideen", "Stille zwischen den Terminen"],
+        "donts": ["Keine sinnlose Ablenkung", "Kein Dating-Modus", "Kein Übernachtsaufen", "Keine Hotellobby-Doom-Scrolls"]
+    },
+
+    "muenchen": {
+        "ist_zustand": "Wohnung 83083 ist heute eher Lagerhalle alter Dinge. Sie wird wieder Männerraum, Musikraum, Vaterraum.",
+        "atmosphaere": ["Holz und schwere Stoffe", "warme Lampen statt Deckenlicht", "Lederdetails, dunkle Farben",
+                         "gute Lautsprecher sichtbar platziert", "Instrumente im Blickfeld", "Duft (warm, holzig, rauchig)",
+                         "Pflanzen, klares Bad, gutes Bett, Ordnung"],
+        "funktion": ["Vater-Ort: ihre Ecke, ihre Decke, ihre Bücher",
+                     "Musik-Ort: Gitarre, Piano, Interface, Kopfhörer immer griffbereit",
+                     "PTGO-Ort: ein Schreibtisch, eine Lampe, ein Sessel für Calls",
+                     "Ruhe-Ort: ein Sessel am Fenster, leer und still",
+                     "Dating-Ort nur, wenn es wirklich passt — nicht als Standard"],
+        "reset_wochen": [
+            "Woche 1 — Bad: leer machen, schrubben, Duft, neue Handtücher.",
+            "Woche 2 — Küche: Schubladen aussortieren, Essentials sichtbar, alles andere weg.",
+            "Woche 3 — Schlafzimmer: nur Bett, Licht, Nachttisch, Buch. Nichts auf dem Boden.",
+            "Woche 4 — Musikecke einrichten: Instrumente, Kabel, Sound auf Punkt.",
+            "Woche 5 — Kleiderschrank: 80% raus. Style-Guide leben.",
+            "Woche 6 — Eingang, Flur, Schuhe — der erste Eindruck deines Lebens."],
+        "hilfe": ["Reinigungskraft 1× pro Woche, fix gebucht.",
+                  "Entrümpler einmalig für die großen Sachen.",
+                  "Handwerker für Licht, Regale, Akustik — nicht selber machen wollen."]
+    },
+
+    "van": {
+        "vehikel": "Mercedes Sprinter oder gleichwertig. Dunkles Exterieur (schwarz oder anthrazit).",
+        "vibe": ["Dunkles Holz", "Warmes Licht (2700K)", "Cleanes Bett, schwere Decke",
+                 "Espresso-Setup", "Mini-Studio (Audio-Interface, Mic, Kopfhörer)",
+                 "Gute Lautsprecher", "Stauraum für Paragliding-Ausrüstung",
+                 "Laptop-Arbeitsplatz", "Duft", "Kamera", "Gitarre"],
+        "nicht": ["Kein billiger Camping-Look", "Keine Aufkleber", "Keine Klimbim-Optik", "Kein YouTuber-Vanlife-Klischee"],
+        "frequenz": "1–2× pro Monat 3–5 Tage. Nicht öfter — sonst wird Freiheit zur Flucht.",
+        "touren": [
+            "Tegernsee — Wochenend-Reset, 1h Anfahrt.",
+            "Kössen — Paragliding Klassiker, 1,5h.",
+            "Gardasee — Wärme & Wasser, 4h.",
+            "Dolomiten — Berge & Stille, 5h.",
+            "Annecy — Fliegen am See, 7h.",
+            "Südfrankreich / Italien — längere Solo-Touren 5+ Tage."],
+        "ritual": ["Espresso zuerst", "Eine Seite Tagebuch", "30 Min Gitarre",
+                   "Spaziergang", "Arbeit nur 2–3 Stunden", "Sonnenuntergang draußen"]
+    },
+
+    "paragliding": {
+        "funktion": "Nervensystem-Regulation. Meditation in Bewegung. Kein Sport-Ego.",
+        "kalender": [
+            ("Jan–Feb", "Theorie, Wetterstudium, Materialcheck, Indoor-Training."),
+            ("März",    "Saisonstart Tegernsee — kurze Flüge, Routine reaktivieren."),
+            ("April",   "Kössen — Höhenmeter und Sicherheit aufbauen."),
+            ("Mai–Juni","Gardasee + Dolomiten — Thermik, längere Flüge."),
+            ("Juli",    "Annecy — Akro & Höhe."),
+            ("August",  "Tochter-Wochenenden priorisieren, kürzere Flüge."),
+            ("Sept",    "Dolomiten Soaring, lange Touren."),
+            ("Okt",     "Tegernsee letzte Flüge, Saison-Reflexion."),
+            ("Nov–Dez", "Material-Service, Theorie, mentale Vorbereitung."),
+            ("Highlight","Ölüdeniz (Türkei) — 1× pro Jahr als Reise.")],
+        "routine": [
+            "Wetter 24h vorher checken (Windyty, DHV, lokaler Wetterdienst).",
+            "Gear-Check am Vorabend: Schirm, Gurtzeug, Retter, Helm, Funk.",
+            "Körper-Check morgens: Schlaf, Atmung, mentaler Zustand.",
+            "Briefing-Ritual am Startplatz, keine Hetze.",
+            "Nach Landung: 5 Min still sitzen, dann Notiz im Logbuch."],
+        "gear": ["Schirm + Reserve (Service-Intervalle einhalten)", "Helm, Handschuhe, Gurtzeug",
+                 "Vario, Funkgerät", "Wetterapp", "Sonnencreme, Wasser, Riegel", "Pilotenbuch"]
+    },
+
+    "ptgo": {
+        "positionierung": "Premium-Kunstform. Keine Therapiestunden — Transformationserlebnisse.",
+        "elemente": ["Manuelle Präzision", "Musik im Raum", "Stimme & Präsenz",
+                     "Ritualisierter Beginn und Abschluss", "Premium-Preise", "Klare Grenzen"],
+        "produkte": [
+            "1:1 High Impact Session — limitiert, hochpreisig.",
+            "PTGO Masterclass — gruppenbasiert, mehrere Wochen.",
+            "Musikbasierte Körper-/Nervensystem-Releases (Audio-Programme).",
+            "KI-gestützte Programme (Daily Check-in, Pattern Engine).",
+            "Retreats — 2–4× pro Jahr, klein, sorgfältig kuratiert.",
+            "Membership — kontinuierliche Begleitung, niederpreisig wiederkehrend.",
+            "Premium Online-System — skaliertes High-End-Programm."],
+        "marke": ["Klar", "Tief", "Ruhig", "Transformierend", "Niemals billig", "Niemals laut"],
+        "rhythmus": ["Mo–Di Deep Work + Calls", "Do–Fr Wien-Sessions",
+                     "Monatlich 1 Content-Schub", "Quartalsweise 1 Retreat oder Launch"]
+    },
+
+    "musik": {
+        "sound": ["Soul", "Rock", "Funk", "Blues", "deutschsprachige Tiefe",
+                  "warme Gitarren", "Piano", "analoge Atmosphäre",
+                  "verletzliche Männlichkeit", "Freiheit, Nacht, Straße, Liebe, Feuer, Vater, Natur"],
+        "ritual": "Täglich 30–90 Min Musik. Mindestens einmal pro Woche eine Session in echter Tiefe (2–3 Std).",
+        "formate": ["Songs (fertig produziert)", "Voice Notes (roh, ehrlich)", "Live-Improvisationen (Video)",
+                    "PTGO-Sounds (für Sessions, Retreats)", "Masterclass-Beds (Hintergrund-Atmos)",
+                    "YouTube/Instagram-Ausschnitte (kurz, atmosphärisch)"],
+        "setup": ["Gitarre + Piano sichtbar in München-Base", "Audio-Interface fest am Schreibtisch",
+                  "Kondensator-Mikro + Akustik-Behandlung", "Eine DAW, die du beherrschst — nicht drei",
+                  "Mobiler Setup für Van und Wien (Interface, Mic, Kopfhörer)"]
+    },
+
+    "style": {
+        "kleidung": [
+            "Schwarze Boots (1 hoch, 1 niedrig).",
+            "Lederjacke (eine, gute, die altert).",
+            "Leinenhemden (creme, weiß, schwarz).",
+            "Gute Jeans (dunkel, schmal, ehrlich).",
+            "Schwarze Shirts (dick, kein Logo).",
+            "Mantel für Wien (lang, schwer, schwarz).",
+            "Sonnenbrille (klassisch, nicht laut).",
+            "Schmuck (Silber, dezent, dauerhaft getragen)."],
+        "farben": ["Schwarz", "Weiß", "Creme", "Cognac", "Dunkelbraun", "Silber", "Gold", "Oliv", "Denim"],
+        "duefte": ["Warm", "Holzig", "Rauchig", "Sinnlich — niemals süß oder generisch"],
+        "nicht": ["Funktionsjacken ohne Stil", "Billige Sneaker", "Überladene Outfits",
+                  "Fitness-Bro-Look", "Hype-Sneaker, Hype-Marken", "Logos im Gesicht des Outfits"],
+        "tattoo_regel": "Tattoos sichtbar, aber nie bemüht. Sie erzählen — sie posieren nicht."
+    },
+
+    "frauen": {
+        "grundsatz": "Frauen sind Ergänzung, nicht Zentrum. Sie ersetzen nicht die Mission.",
+        "regeln": [
+            "Nicht jagen.",
+            "Nicht klammern.",
+            "Nicht emotional betteln.",
+            "Nicht kontrollieren.",
+            "Keine Dauerdiskussionen.",
+            "Keine Beziehung als Identitätsersatz."],
+        "stattdessen": [
+            "Eigene Welt, eigene Routine.",
+            "Ruhige Kommunikation.",
+            "Klare Grenzen, klare Wünsche.",
+            "Sinnliche Atmosphäre statt Druck.",
+            "Führung ohne Härte, Wärme ohne Bedürftigkeit."],
+        "pia": [
+            "Keine emotionalen Kämpfe mehr.",
+            "Keine Verschmelzung, keine Chaos-Abhängigkeit.",
+            "Keine Familiensystem-Übernahme, keine Retterrolle.",
+            "Ruhe. Präsenz. Grenzen. Eigene Base. Eigene Identität.",
+            "Freundlich, aber nicht selbstaufgebend."],
+        "leitsatz": "Ich bin offen für Liebe, aber ich verrate mich nicht mehr dafür."
+    },
+
+    "tochter": {
+        "grundsatz": "Heiliger Anker. Alle zwei Wochen volle Präsenz.",
+        "rituale": [
+            "Frühstück ohne Eile — kein Handy am Tisch.",
+            "Ein Naturort pro Wochenende (See, Wald, Berg).",
+            "Eine Musikminute zusammen (Lied hören oder erfinden).",
+            "Eine kleine Tradition (Bäcker, Spielplatz, Eisdiele).",
+            "Lesen abends, ruhige Stimme.",
+            "Kleines Abenteuer — Museum, Boot, kleines Konzert.",
+            "Kochen mit ihr — sie hat eine kleine Aufgabe."],
+        "nicht": ["Nebenbei-Handy", "Gestresster Vater", "Schuldgefühle kompensieren",
+                  "Überprogramm", "Dating-Energie", "Familiensystem-Drama anderer Frauen"],
+        "ziel": "Sie erlebt einen Vater, der stabil, warm, präsent, frei — und da ist."
+    },
+
+    "monthly": [
+        "Habe ich meine Tochter wirklich präsent gesehen?",
+        "Habe ich PTGO konkret weitergebaut?",
+        "Habe ich Musik gemacht — nicht nur geplant?",
+        "Habe ich trainiert und meinen Körper gepflegt?",
+        "Habe ich Natur wirklich erlebt (nicht nur durchquert)?",
+        "Habe ich keine Frau zum Zentrum meines Lebens gemacht?",
+        "Habe ich mein Nervensystem geschützt?",
+        "Habe ich Geld intelligent bewegt (Übersicht, Sparen, Investieren)?",
+        "Habe ich Schönheit in mein Leben gebracht?",
+        "Habe ich Freiheit und Verantwortung verbunden — nicht gegeneinander gestellt?",
+    ],
+
+    "year": [
+        {"phase": "Jan–März", "title": "Studio & Strategie",   "items": ["Wien-Rhythmus festziehen", "PTGO-Premium-Angebot fertig", "Körper-Basis stabil", "Musik: 1 Song fertig"]},
+        {"phase": "Apr–Juni", "title": "Bergluft & Build",     "items": ["Paragliding-Saison startet", "Van recherchieren / probieren", "Masterclass-Launch vorbereiten", "Gardasee-Tour"]},
+        {"phase": "Juli–Aug", "title": "Tochter & Sonne",      "items": ["Lange Tochter-Wochenenden", "Reisen mit ihr (1 kleines Abenteuer)", "Musik draußen", "weniger Termine"]},
+        {"phase": "Sept–Okt", "title": "Schreiben & Retreats", "items": ["1 Retreat", "Tegernsee-Phase", "Musik: 2. Song produziert", "PTGO-Skalierung Phase 2"]},
+        {"phase": "Nov–Dez", "title": "Reflexion & Wien",      "items": ["Wien-Wochen verdichten", "Musikproduktion fokussiert", "Jahresplanung", "Ruhe & Lesen"]},
+    ],
+
+    "daily_checklist": [
+        "60 Min ohne Handy nach dem Aufstehen.",
+        "Wasser vor allem anderen.",
+        "10 Min Mobility oder Bewegung.",
+        "Espresso bewusst getrunken — nicht nebenbei.",
+        "1 Deep-Work-Block ohne Ablenkung (mindestens 90 Min).",
+        "Spaziergang an der frischen Luft.",
+        "Clean Lunch ohne Bildschirm.",
+        "Mindestens 15 Min Musik (Gitarre, Piano, Hören, Schreiben).",
+        "Mindestens 3 Sätze Tagebuch (Würde / Wachstum / Korrektur).",
+        "Eine Geste der Schönheit (Licht, Duft, Musik, Ordnung).",
+        "Frauen nicht zum Zentrum gemacht.",
+        "Nervensystem geschützt — keine emotionalen Sümpfe.",
+        "Vor 23:00 Schirme aus.",
+    ],
+
+    "roadmap": [
+        {"phase": "Tag 1–30 — Foundation", "lede": "Wohnung, Körper, Routine. Das Fundament.", "items": [
+            "Wohnung 83083: Bad, Küche, Schlafzimmer freigeräumt.",
+            "Reinigungskraft fix gebucht (1× pro Woche).",
+            "Entrümpler einmalig durchgeführt.",
+            "Morgen-Anker etabliert: 06:00, Wasser, Atmung, Mobility.",
+            "Rauchen reduziert oder ersetzt durch Atemarbeit + Spaziergang.",
+            "1 Deep-Work-Block jeden Werktag (90 Min minimum).",
+            "Style-Reset: Kleiderschrank 80% raus, Essentials da."]},
+        {"phase": "Tag 31–60 — Build", "lede": "PTGO Premium, Musik-Output, Van-Recherche.", "items": [
+            "PTGO Premium-Angebot finalisiert (Preisliste, Beschreibung, Buchungsweg).",
+            "1 Song roh fertig (Voice Notes oder erste Skizze produziert).",
+            "Wien-Rhythmus etabliert: Do/Fr fest, gleiches Hotel.",
+            "Paragliding-Saison gestartet, erste Flüge.",
+            "Van-Recherche: 3 konkrete Modelle, 1 Testfahrt.",
+            "Masterclass-Outline geschrieben."]},
+        {"phase": "Tag 61–90 — Expand", "lede": "Skalierung, Sichtbarkeit, Vater-Tiefe.", "items": [
+            "Masterclass-Launch oder Pilot durchgeführt.",
+            "1 Song produziert und veröffentlicht (auch nur klein).",
+            "Van entschieden oder konkret gemietet/getestet.",
+            "1 Retreat geplant oder durchgeführt.",
+            "Tochter-Tradition stabil etabliert.",
+            "Pia-Dynamik geklärt — Ruhe, Grenzen, Klarheit.",
+            "Jahresplan für die nächsten 9 Monate steht."]}
+    ],
+
+    "notion": {
+        "tree": [
+            "ALEX · Blue Electric Life",
+            "├── 00 · Heute",
+            "│   ├── Morgen-Anker",
+            "│   ├── Deep-Work-Ziel",
+            "│   └── 3 Zeilen Tagebuch",
+            "├── 01 · Tochter",
+            "│   ├── Rituale",
+            "│   ├── Kalender (gerade KW)",
+            "│   └── Ideen / kleine Abenteuer",
+            "├── 02 · PTGO",
+            "│   ├── Produkte",
+            "│   ├── Pipeline & Calls",
+            "│   ├── Masterclass / Retreats",
+            "│   └── Marke & Texte",
+            "├── 03 · Musik",
+            "│   ├── Songs (DB)",
+            "│   ├── Voice Notes",
+            "│   ├── Setlists & Skizzen",
+            "│   └── Releases",
+            "├── 04 · Körper",
+            "│   ├── Wochenplan",
+            "│   ├── Ernährung",
+            "│   └── Sauna / Cold / Schlaf",
+            "├── 05 · Freiheit",
+            "│   ├── Van (Setup, Touren-DB)",
+            "│   ├── Paragliding (Flüge-DB, Gear)",
+            "│   └── Reise-Karte",
+            "├── 06 · Stil",
+            "│   ├── Garderobe (DB)",
+            "│   ├── Düfte",
+            "│   └── Looks (Bilder)",
+            "├── 07 · Frauen",
+            "│   ├── Frame",
+            "│   ├── Pia",
+            "│   └── Kommunikations-Templates",
+            "├── 08 · Nervensystem",
+            "│   ├── Atem-Protokolle",
+            "│   ├── Cold / Sauna Tracker",
+            "│   └── Tagebuch (DB)",
+            "├── 09 · München-Base",
+            "│   ├── Reset-Wochenplan",
+            "│   ├── Helfer (Reinigung, Entrümpler)",
+            "│   └── Wunschliste (Möbel, Sound)",
+            "├── 10 · Wien-Modus",
+            "│   ├── Hotels & Anfahrt",
+            "│   ├── Orte (Cafés, Bars, Spaziergänge)",
+            "│   └── Notizen-Speicher",
+            "├── 11 · 90-Tage-Roadmap",
+            "└── 99 · Jahresvision",
+        ],
+        "datenbanken": [
+            ("Tagebuch", "Datum · Zustand 0–10 · Würde · Wachstum · Korrektur · Tag-Tag"),
+            ("Songs", "Titel · Status · BPM · Tonart · Lyrics-Link · Audio-Link · Notiz"),
+            ("Flüge", "Datum · Ort · Dauer · Bedingungen · Notiz · Bewertung"),
+            ("Tochter-Erinnerungen", "Datum · Ort · was wir gemacht haben · Foto · ihr Lieblingsmoment"),
+            ("PTGO-Klient:innen", "Name · Status · letzter Kontakt · Pipeline-Stufe · nächste Aktion"),
+            ("Garderobe", "Stück · Kategorie · Farbe · letztes Mal getragen · Pflege"),
+        ],
+        "tags": ["#tiefe", "#freiheit", "#tochter", "#wien", "#musik", "#korrektur", "#wuerde", "#wachstum"],
+    },
+
+    "no_chaos": [
+        "Eine Frau zerstört dauerhaft dein Nervensystem.",
+        "Du vernachlässigst deine Arbeit für Drama.",
+        "Du verpasst deine Tochter emotional.",
+        "Du reagierst nur noch, statt zu gestalten.",
+        "Du bist permanent müde.",
+        "Du erklärst dich, statt zu leben.",
+        "Du wohnst in fremdem Chaos.",
+        "Du verlierst Zugang zu deiner Kreativität.",
+    ],
+    "no_chaos_antwort": [
+        "Rückzug.",
+        "Ordnung in deinem Raum.",
+        "Training.",
+        "Musik.",
+        "Natur.",
+        "Klarheit — auch wenn sie unbequem ist.",
+    ],
+}
+
+
+_ALEX_CSS = """
+<style>
+  :root{
+    --bg:#0b0805; --bg2:#160e08; --ink:#e9e4dc; --muted:#9b8f80;
+    --line:#2a1f17; --line2:#3a2a1d;
+    --gold:#c8821e; --gold2:#e2a04a; --cream:#f0e7d5;
+    --cognac:#8a4f23; --leather:#1a120c; --red:#a02c2c; --green:#5f8c5a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:
+    radial-gradient(1000px 600px at 80% -200px, rgba(200,130,30,.10), transparent 60%),
+    radial-gradient(800px 500px at 10% 100%, rgba(138,79,35,.08), transparent 60%),
+    var(--bg);
+    min-height:100vh}
+  a{color:var(--gold2);text-decoration:none}
+  a:hover{color:var(--cream)}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 22px 80px}
+
+  .hero{padding:8px 0 24px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .title{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-size:56px;line-height:1.02;
+    margin:8px 0 6px;letter-spacing:.5px;color:var(--cream);font-weight:600}
+  .title em{font-style:italic;color:var(--gold2)}
+  .sub{color:var(--muted);font-size:15px;max-width:760px;line-height:1.6;margin:8px 0 0}
+  .leitsatz{margin:22px 0 6px;padding:18px 22px;border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(200,130,30,.07),transparent);
+    font-family:'Cormorant Garamond',Georgia,serif;font-size:21px;color:var(--cream);font-style:italic;line-height:1.5}
+  .schluss{margin-top:16px;padding:14px 18px;border:1px solid var(--line2);border-radius:14px;background:rgba(0,0,0,.25);
+    color:var(--cream);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:17px;line-height:1.6}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:18px 22px 14px;margin:6px -22px 22px;
+    border-bottom:1px solid var(--line);scrollbar-width:thin}
+  .tabs::-webkit-scrollbar{height:6px}
+  .tabs::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+  .tab{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:9px 14px;border-radius:999px;font-size:13px;cursor:pointer;letter-spacing:.3px;
+    font-family:inherit;white-space:nowrap;transition:all .15s}
+  .tab:hover{border-color:var(--gold);color:var(--cream)}
+  .tab.active{background:linear-gradient(180deg,rgba(200,130,30,.16),rgba(200,130,30,.06));
+    border-color:var(--gold);color:var(--cream);box-shadow:0 0 0 1px rgba(200,130,30,.25)}
+
+  .panel{display:none;animation:fade .25s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  h2.section{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;color:var(--cream);
+    margin:0 0 6px;font-weight:600;letter-spacing:.5px}
+  .section-sub{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.6}
+
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(0,0,0,.15));
+    border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin:0 0 14px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .card h3{margin:0 0 10px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:var(--cream);font-weight:600;letter-spacing:.3px}
+  .card .meta{font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .card p{color:var(--muted);font-size:14px;line-height:1.65;margin:6px 0}
+  .card ul{margin:8px 0 0;padding:0;list-style:none}
+  .card ul li{padding:7px 0 7px 22px;color:var(--ink);font-size:14.5px;line-height:1.55;
+    position:relative;border-bottom:1px solid rgba(58,42,29,.4)}
+  .card ul li:last-child{border-bottom:none}
+  .card ul li::before{content:'';position:absolute;left:6px;top:14px;width:6px;height:6px;
+    border-radius:50%;background:var(--gold)}
+  .card.dim ul li::before{background:var(--cognac)}
+
+  .grid{display:grid;gap:14px}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:780px){.grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr}}
+
+  .pillar{padding:18px 18px;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.2);transition:all .2s}
+  .pillar:hover{border-color:var(--gold);background:rgba(200,130,30,.04);transform:translateY(-1px)}
+  .pillar .icn{font-size:22px;color:var(--gold2);font-family:Georgia,serif;line-height:1}
+  .pillar .tt{font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;color:var(--cream);margin:8px 0 4px;font-weight:600}
+  .pillar .ld{font-size:13px;color:var(--muted);line-height:1.55}
+
+  .day{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(0,0,0,.18)}
+  .day.today{border-color:var(--gold);background:linear-gradient(180deg,rgba(200,130,30,.10),rgba(0,0,0,.2));
+    box-shadow:0 0 0 1px rgba(200,130,30,.25)}
+  .day .hdr{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .day .dn{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:var(--cream);font-weight:600}
+  .day .md{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+  .day .now-tag{font-size:10px;background:var(--gold);color:#000;padding:2px 8px;border-radius:99px;font-weight:700;letter-spacing:1px}
+
+  .block{display:grid;grid-template-columns:90px 1fr;gap:14px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:8px}
+  .block.now{border-color:var(--gold);background:linear-gradient(90deg,rgba(200,130,30,.12),rgba(0,0,0,.2))}
+  .block .tm{font-family:'Cormorant Garamond',Georgia,serif;color:var(--gold2);font-size:16px;font-weight:600;letter-spacing:.5px}
+  .block .lb{font-size:14px;color:var(--cream);font-weight:600;margin-bottom:4px}
+  .block .it{font-size:13px;color:var(--muted);line-height:1.55}
+  .block .it div{padding:2px 0}
+
+  .check-list{display:flex;flex-direction:column;gap:2px}
+  .check{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border:1px solid var(--line);
+    border-radius:11px;background:rgba(0,0,0,.18);cursor:pointer;transition:all .15s;user-select:none}
+  .check:hover{border-color:var(--line2);background:rgba(255,255,255,.02)}
+  .check input{appearance:none;width:18px;height:18px;border:1.5px solid var(--line2);border-radius:5px;
+    background:transparent;flex-shrink:0;cursor:pointer;margin-top:1px;position:relative;transition:all .15s}
+  .check input:checked{background:var(--gold);border-color:var(--gold)}
+  .check input:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #000;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .check input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--cognac)}
+  .check span{font-size:14px;color:var(--ink);line-height:1.5}
+  .check-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:14px}
+  .check-head .meter{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:var(--gold2);font-weight:600}
+  .bar{height:4px;background:var(--line);border-radius:99px;margin:6px 0 14px;overflow:hidden}
+  .bar > div{height:100%;background:linear-gradient(90deg,var(--cognac),var(--gold));border-radius:99px;
+    width:0;transition:width .3s ease}
+
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .tag{display:inline-block;font-size:11.5px;padding:4px 10px;border-radius:99px;
+    border:1px solid var(--line2);color:var(--cream);background:rgba(0,0,0,.25);letter-spacing:.3px}
+  .tag.gold{border-color:var(--gold);color:var(--gold2)}
+  .tag.warn{border-color:rgba(160,44,44,.5);color:#e08585}
+
+  .tree{font-family:'JetBrains Mono','SF Mono',Menlo,monospace;font-size:13px;color:var(--cream);
+    background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+    line-height:1.7;white-space:pre;overflow-x:auto}
+  .db-row{display:grid;grid-template-columns:1fr 2fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .db-row:last-child{border-bottom:none}
+  .db-row b{color:var(--gold2);font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-weight:600}
+  .db-row span{color:var(--muted);font-size:13px;font-family:'JetBrains Mono','SF Mono',Menlo,monospace}
+
+  .quote{margin:24px 0;padding:18px 22px;border-left:2px solid var(--gold);
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:19px;color:var(--cream);line-height:1.55}
+
+  .twin{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.twin{grid-template-columns:1fr}}
+  .col h4{margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:var(--cream);font-weight:600}
+  .col h4.danger{color:#e08585}
+  .col h4.ok{color:#9bd194}
+
+  .footnote{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+</style>
+"""
+
+
+_ALEX_JS = """
+<script>
+(function(){
+  var tabs = document.querySelectorAll('[data-tab]');
+  var panels = document.querySelectorAll('[data-panel]');
+  function show(name){
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab === name); });
+    panels.forEach(function(p){ p.classList.toggle('active', p.dataset.panel === name); });
+    history.replaceState(null, '', '#' + name);
+    var active = document.querySelector('[data-tab="' + name + '"]');
+    if (active && active.scrollIntoView) active.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+    window.scrollTo({top:0});
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.tab); }); });
+  var hash = location.hash.slice(1);
+  if (hash && document.querySelector('[data-tab="' + hash + '"]')) show(hash);
+
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+  function monthKey(){ return new Date().toISOString().slice(0,7); }
+  function bind(id, scope){
+    var root = document.getElementById(id);
+    if (!root) return;
+    var boxes = root.querySelectorAll('input[type=checkbox]');
+    var storageKey = id + ':' + (scope === 'day' ? todayKey() : scope === 'month' ? monthKey() : 'persistent');
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e){ saved = []; }
+    var meter = root.querySelector('.meter');
+    var bar = root.querySelector('.bar > div');
+    function refresh(){
+      var done = 0;
+      boxes.forEach(function(b){ if (b.checked) done++; });
+      if (meter) meter.textContent = done + ' / ' + boxes.length;
+      if (bar) bar.style.width = (boxes.length ? (done / boxes.length * 100) : 0) + '%';
+    }
+    boxes.forEach(function(b, i){
+      b.checked = saved.indexOf(i) !== -1;
+      b.addEventListener('change', function(){
+        var arr = [];
+        boxes.forEach(function(x, j){ if (x.checked) arr.push(j); });
+        localStorage.setItem(storageKey, JSON.stringify(arr));
+        refresh();
+      });
+    });
+    refresh();
+  }
+  bind('daily-checklist', 'day');
+  bind('monthly-checklist', 'month');
+  bind('roadmap-checklist', 'persistent');
+
+  var dow = (new Date().getDay() + 6) % 7;
+  var dayEl = document.querySelector('.day[data-weekday="' + dow + '"]');
+  if (dayEl){
+    dayEl.classList.add('today');
+    var tag = dayEl.querySelector('.now-tag');
+    if (tag) tag.style.display = 'inline-block';
+  }
+  var hr = new Date().getHours();
+  var blocks = document.querySelectorAll('.block[data-hour]');
+  var current = null;
+  blocks.forEach(function(b){
+    var h = parseInt(b.dataset.hour, 10);
+    if (h >= 0 && h <= hr) current = b;
+  });
+  if (current) current.classList.add('now');
+})();
+</script>
+"""
+
+
+def _alex_page(body_html: str) -> HTMLResponse:
+    html = f"""<!doctype html>
+<html lang="de"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Alex · Blue Electric Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  {_ALEX_CSS}
+</head><body>
+  <div class="wrap">
+    {body_html}
+  </div>
+  {_ALEX_JS}
+</body></html>"""
+    return HTMLResponse(html)
+
+
+def _alex_pillars_html() -> str:
+    cards = ""
+    for p in ALEX["pillars"]:
+        cards += f"""
+        <div class="pillar">
+          <div class="icn">{p['icon']}</div>
+          <div class="tt">{p['title']}</div>
+          <div class="ld">{p['lede']}</div>
+        </div>"""
+    return f'<div class="grid cols-4">{cards}</div>'
+
+
+def _alex_week_html() -> str:
+    days = ""
+    for d in ALEX["week"]:
+        items = "".join(f"<li>{x}</li>" for x in d["items"])
+        days += f"""
+        <div class="day" data-weekday="{d['weekday']}">
+          <div class="hdr">
+            <div>
+              <div class="dn">{d['day']} <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">{d['mode']}</div>
+            </div>
+          </div>
+          <ul>{items}</ul>
+        </div>"""
+    return f'<div class="grid cols-2">{days}</div>'
+
+
+def _alex_weekend_html() -> str:
+    a = ALEX["weekend_a_tochter"]
+    b = ALEX["weekend_b_freiheit"]
+    a_rit = "".join(f"<li>{x}</li>" for x in a["rituale"])
+    a_nicht = "".join(f"<li>{x}</li>" for x in a["nicht"])
+    b_opt = "".join(f"<li>{x}</li>" for x in b["optionen"])
+    return f"""
+    <div class="twin">
+      <div class="card">
+        <div class="meta">Wochenende A</div>
+        <h3>{a['title']}</h3>
+        <div class="col"><h4 class="ok">Rituale</h4><ul>{a_rit}</ul></div>
+        <div class="col" style="margin-top:14px"><h4 class="danger">Nicht</h4><ul>{a_nicht}</ul></div>
+        <p style="margin-top:14px;color:var(--cream);font-style:italic">{a['ziel']}</p>
+      </div>
+      <div class="card">
+        <div class="meta">Wochenende B</div>
+        <h3>{b['title']}</h3>
+        <ul>{b_opt}</ul>
+        <p style="margin-top:14px;color:var(--cream);font-style:italic">{b['leitsatz']}</p>
+      </div>
+    </div>"""
+
+
+def _alex_day_blocks_html() -> str:
+    blocks = ""
+    for b in ALEX["day_blocks"]:
+        items = "".join(f"<div>{x}</div>" for x in b["items"])
+        blocks += f"""
+        <div class="block" data-hour="{b['h']}">
+          <div class="tm">{b['t1']}<br><span style="font-size:12px;color:var(--muted)">bis {b['t2']}</span></div>
+          <div>
+            <div class="lb">{b['label']}</div>
+            <div class="it">{items}</div>
+          </div>
+        </div>"""
+    return blocks
+
+
+def _alex_dashboard_panel() -> str:
+    pillars = _alex_pillars_html()
+    return f"""
+    <section data-panel="dashboard" class="panel active">
+      <h2 class="section">Die acht Säulen</h2>
+      <p class="section-sub">Acht Achsen, auf denen dieses Leben getragen wird. Nicht nebeneinander, sondern miteinander.</p>
+      {pillars}
+      <div class="quote">„{ALEX['leitsatz']}“</div>
+      <div class="card" style="margin-top:18px">
+        <div class="meta">Frame-Regel</div>
+        <p>{ALEX['frame_rule']}</p>
+      </div>
+      <div class="schluss">„{ALEX['schlusssatz']}“</div>
+    </section>"""
+
+
+def _alex_week_panel() -> str:
+    week = _alex_week_html()
+    weekends = _alex_weekend_html()
+    return f"""
+    <section data-panel="wochenplan" class="panel">
+      <h2 class="section">Wochenstruktur</h2>
+      <p class="section-sub">Mo–So mit klarem Modus pro Tag. Der aktuelle Tag wird automatisch markiert.</p>
+      {week}
+      <h2 class="section" style="margin-top:30px">Die zwei Wochenenden</h2>
+      <p class="section-sub">A für Tochter. B für Freiheit. Klar getrennt — keine Mischmodi.</p>
+      {weekends}
+    </section>"""
+
+
+def _alex_day_panel() -> str:
+    blocks = _alex_day_blocks_html()
+    koerper = "".join(f"<li>{x}</li>" for x in ALEX["koerper"]["wochen"])
+    ernaehrung = "".join(f"<li>{x}</li>" for x in ALEX["koerper"]["ernaehrung"])
+    return f"""
+    <section data-panel="tagesplan" class="panel">
+      <h2 class="section">Tagesplan</h2>
+      <p class="section-sub">Acht Blöcke vom Morgen-Anker bis zur Schlafvorbereitung. Der aktuelle Block ist hervorgehoben.</p>
+      {blocks}
+      <div class="twin" style="margin-top:22px">
+        <div class="card">
+          <div class="meta">Körper · Wochenrhythmus</div>
+          <h3>{ALEX['koerper']['kern']}</h3>
+          <ul>{koerper}</ul>
+        </div>
+        <div class="card">
+          <div class="meta">Ernährung</div>
+          <h3>Clean. Sinnlich. Einfach.</h3>
+          <ul>{ernaehrung}</ul>
+        </div>
+      </div>
+    </section>"""
+
+
+def _alex_wien_panel() -> str:
+    w = ALEX["wien"]
+    anreise = "".join(f"<li>{x}</li>" for x in w["anreise"])
+    unterkunft = "".join(f"<li>{x}</li>" for x in w["unterkunft"])
+    rituale = "".join(f"<li>{x}</li>" for x in w["rituale"])
+    insp = " ".join(f'<span class="tag gold">{x}</span>' for x in w["inspiration"])
+    donts = "".join(f"<li>{x}</li>" for x in w["donts"])
+    return f"""
+    <section data-panel="wien" class="panel">
+      <h2 class="section">Wien · Creative Gentleman Work Mode</h2>
+      <p class="section-sub">{w['modus']}</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Anreise</div><h3>Schwarzer Mantel, Notizbuch</h3><ul>{anreise}</ul></div>
+        <div class="card"><div class="meta">Unterkunft</div><h3>Ein Ort, der dich kennt</h3><ul>{unterkunft}</ul></div>
+      </div>
+      <div class="card"><div class="meta">Rituale</div><h3>Espresso, Spaziergang, Notizen, Jazz</h3><ul>{rituale}</ul></div>
+      <div class="card">
+        <div class="meta">Inspirationsquellen</div>
+        <h3>Wien wird Material — nicht Belastung</h3>
+        <div class="tag-row">{insp}</div>
+      </div>
+      <div class="card dim"><div class="meta">Nicht</div><h3>Was Wien zerstören würde</h3><ul>{donts}</ul></div>
+    </section>"""
+
+
+def _alex_muc_panel() -> str:
+    m = ALEX["muenchen"]
+    atmo = "".join(f"<li>{x}</li>" for x in m["atmosphaere"])
+    funktion = "".join(f"<li>{x}</li>" for x in m["funktion"])
+    reset = "".join(f"<li>{x}</li>" for x in m["reset_wochen"])
+    hilfe = "".join(f"<li>{x}</li>" for x in m["hilfe"])
+    return f"""
+    <section data-panel="muenchen" class="panel">
+      <h2 class="section">München-Base · die Wohnung zurückerobern</h2>
+      <p class="section-sub">{m['ist_zustand']}</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Atmosphäre</div><h3>Holz, warmes Licht, Leder, Pflanzen</h3><ul>{atmo}</ul></div>
+        <div class="card"><div class="meta">Funktion</div><h3>Vier Räume in einem</h3><ul>{funktion}</ul></div>
+      </div>
+      <div class="card"><div class="meta">Reset · 6 Wochen</div><h3>Pro Mittwoch ein Bereich</h3><ul>{reset}</ul></div>
+      <div class="card"><div class="meta">Hilfe</div><h3>Stärke ist Verantwortung — nicht Alleingang</h3><ul>{hilfe}</ul></div>
+    </section>"""
+
+
+def _alex_van_panel() -> str:
+    v = ALEX["van"]
+    vibe = " ".join(f'<span class="tag">{x}</span>' for x in v["vibe"])
+    nicht = " ".join(f'<span class="tag warn">{x}</span>' for x in v["nicht"])
+    touren = "".join(f"<li>{x}</li>" for x in v["touren"])
+    ritual = "".join(f"<li>{x}</li>" for x in v["ritual"])
+    return f"""
+    <section data-panel="van" class="panel">
+      <h2 class="section">Van · ein mobiles Atelier</h2>
+      <p class="section-sub">Kein Fluchtfahrzeug. Ein Boutique-Hotel für einen Mann, der wieder atmen lernt.</p>
+      <div class="card"><div class="meta">Vehikel</div><h3>{v['vehikel']}</h3><p>Frequenz: {v['frequenz']}</p></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Vibe</div><h3>Holz, Licht, Leder</h3><div class="tag-row">{vibe}</div></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was den Van billig macht</h3><div class="tag-row">{nicht}</div></div>
+      </div>
+      <div class="twin">
+        <div class="card"><div class="meta">Touren</div><h3>Sechs Routen, ein Rhythmus</h3><ul>{touren}</ul></div>
+        <div class="card"><div class="meta">Ritual im Van</div><h3>Stille, Espresso, Gitarre</h3><ul>{ritual}</ul></div>
+      </div>
+    </section>"""
+
+
+def _alex_para_panel() -> str:
+    p = ALEX["paragliding"]
+    kal = ""
+    for monat, txt in p["kalender"]:
+        kal += f'<div class="block" data-hour="-1"><div class="tm">{monat}</div><div><div class="it">{txt}</div></div></div>'
+    routine = "".join(f"<li>{x}</li>" for x in p["routine"])
+    gear = " ".join(f'<span class="tag">{x}</span>' for x in p["gear"])
+    return f"""
+    <section data-panel="paragliding" class="panel">
+      <h2 class="section">Paragliding · Meditation im Himmel</h2>
+      <p class="section-sub">{p['funktion']}</p>
+      {kal}
+      <div class="twin" style="margin-top:14px">
+        <div class="card"><div class="meta">Routine</div><h3>Sicher fliegen heißt: ruhig vorbereiten</h3><ul>{routine}</ul></div>
+        <div class="card"><div class="meta">Gear</div><h3>Was immer dabei ist</h3><div class="tag-row">{gear}</div></div>
+      </div>
+    </section>"""
+
+
+def _alex_ptgo_panel() -> str:
+    p = ALEX["ptgo"]
+    elemente = " ".join(f'<span class="tag gold">{x}</span>' for x in p["elemente"])
+    produkte = "".join(f"<li>{x}</li>" for x in p["produkte"])
+    marke = " ".join(f'<span class="tag">{x}</span>' for x in p["marke"])
+    rhythmus = "".join(f"<li>{x}</li>" for x in p["rhythmus"])
+    return f"""
+    <section data-panel="ptgo" class="panel">
+      <h2 class="section">PTGO · Premium-Kunstform</h2>
+      <p class="section-sub">{p['positionierung']}</p>
+      <div class="card"><div class="meta">Elemente</div><h3>Was eine Session zu Kunst macht</h3><div class="tag-row">{elemente}</div></div>
+      <div class="card"><div class="meta">Produkte</div><h3>Sieben Türen ins gleiche Haus</h3><ul>{produkte}</ul></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Marke</div><h3>Wie sie klingt</h3><div class="tag-row">{marke}</div></div>
+        <div class="card"><div class="meta">Rhythmus</div><h3>Wie sie atmet</h3><ul>{rhythmus}</ul></div>
+      </div>
+    </section>"""
+
+
+def _alex_music_panel() -> str:
+    m = ALEX["musik"]
+    sound = " ".join(f'<span class="tag gold">{x}</span>' for x in m["sound"])
+    formate = "".join(f"<li>{x}</li>" for x in m["formate"])
+    setup = "".join(f"<li>{x}</li>" for x in m["setup"])
+    return f"""
+    <section data-panel="musik" class="panel">
+      <h2 class="section">Musik · Markenkern, nicht Hobby</h2>
+      <p class="section-sub">{m['ritual']}</p>
+      <div class="card"><div class="meta">Sound-DNA</div><h3>Worauf alles ruht</h3><div class="tag-row">{sound}</div></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Formate</div><h3>Wie Musik aus dir herauskommt</h3><ul>{formate}</ul></div>
+        <div class="card"><div class="meta">Setup</div><h3>Was immer bereit steht</h3><ul>{setup}</ul></div>
+      </div>
+    </section>"""
+
+
+def _alex_style_panel() -> str:
+    s = ALEX["style"]
+    kleidung = "".join(f"<li>{x}</li>" for x in s["kleidung"])
+    farben = " ".join(f'<span class="tag">{x}</span>' for x in s["farben"])
+    duefte = " ".join(f'<span class="tag gold">{x}</span>' for x in s["duefte"])
+    nicht = "".join(f"<li>{x}</li>" for x in s["nicht"])
+    return f"""
+    <section data-panel="stil" class="panel">
+      <h2 class="section">Stil · zeitlose Rock-Soul-Männlichkeit</h2>
+      <p class="section-sub">Wiedererkennbar. Niemals Hype.</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Kleidung</div><h3>Was getragen wird</h3><ul>{kleidung}</ul></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was nie ins Bild passt</h3><ul>{nicht}</ul></div>
+      </div>
+      <div class="twin">
+        <div class="card"><div class="meta">Farben</div><h3>Palette</h3><div class="tag-row">{farben}</div></div>
+        <div class="card"><div class="meta">Düfte</div><h3>Stimmung am Körper</h3><div class="tag-row">{duefte}</div></div>
+      </div>
+      <div class="quote">„{s['tattoo_regel']}“</div>
+    </section>"""
+
+
+def _alex_frauen_panel() -> str:
+    f = ALEX["frauen"]
+    regeln = "".join(f"<li>{x}</li>" for x in f["regeln"])
+    stattdessen = "".join(f"<li>{x}</li>" for x in f["stattdessen"])
+    pia = "".join(f"<li>{x}</li>" for x in f["pia"])
+    return f"""
+    <section data-panel="frauen" class="panel">
+      <h2 class="section">Frauen · Verbindung statt Zentrum</h2>
+      <p class="section-sub">{f['grundsatz']}</p>
+      <div class="twin">
+        <div class="card dim"><div class="meta">Nicht mehr</div><h3>Alte Muster, die enden</h3><ul>{regeln}</ul></div>
+        <div class="card"><div class="meta">Stattdessen</div><h3>Wie Liebe jetzt klingt</h3><ul>{stattdessen}</ul></div>
+      </div>
+      <div class="card"><div class="meta">Pia</div><h3>Ruhe, Grenzen, Klarheit</h3><ul>{pia}</ul></div>
+      <div class="quote">„{f['leitsatz']}“</div>
+    </section>"""
+
+
+def _alex_tochter_panel() -> str:
+    t = ALEX["tochter"]
+    rituale = "".join(f"<li>{x}</li>" for x in t["rituale"])
+    nicht = "".join(f"<li>{x}</li>" for x in t["nicht"])
+    return f"""
+    <section data-panel="tochter" class="panel">
+      <h2 class="section">Tochter · der heilige Anker</h2>
+      <p class="section-sub">{t['grundsatz']}</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Rituale</div><h3>Was sie erlebt</h3><ul>{rituale}</ul></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was sie nicht erleben darf</h3><ul>{nicht}</ul></div>
+      </div>
+      <div class="quote">„{t['ziel']}“</div>
+    </section>"""
+
+
+def _alex_daily_panel() -> str:
+    items = "".join(
+        f'<label class="check"><input type="checkbox"><span>{q}</span></label>'
+        for q in ALEX["daily_checklist"]
+    )
+    return f"""
+    <section data-panel="taeglich" class="panel">
+      <h2 class="section">Tägliche Checkliste</h2>
+      <p class="section-sub">Setzt sich um Mitternacht automatisch zurück. Kein Druck — eine Einladung.</p>
+      <div class="card" id="daily-checklist">
+        <div class="check-head"><h3 style="margin:0">{_now_local().strftime('%A, %d. %B')}</h3><div class="meter">0 / {len(ALEX['daily_checklist'])}</div></div>
+        <div class="bar"><div></div></div>
+        <div class="check-list">{items}</div>
+      </div>
+    </section>"""
+
+
+def _alex_notion_panel() -> str:
+    tree = "\n".join(ALEX["notion"]["tree"])
+    dbs = ""
+    for name, cols in ALEX["notion"]["datenbanken"]:
+        dbs += f'<div class="db-row"><b>{name}</b><span>{cols}</span></div>'
+    tags = " ".join(f'<span class="tag gold">{t}</span>' for t in ALEX["notion"]["tags"])
+    return f"""
+    <section data-panel="notion" class="panel">
+      <h2 class="section">Notion-Struktur</h2>
+      <p class="section-sub">Ein Workspace, der atmet wie das Leben darin.</p>
+      <div class="card"><div class="meta">Workspace-Baum</div><h3>So liegt es in Notion</h3>
+        <div class="tree">{tree}</div>
+      </div>
+      <div class="card"><div class="meta">Datenbanken</div><h3>Sechs Tabellen, die das System tragen</h3>
+        {dbs}
+      </div>
+      <div class="card"><div class="meta">Tags</div><h3>Wie Einträge atmen</h3><div class="tag-row">{tags}</div></div>
+    </section>"""
+
+
+def _alex_roadmap_panel() -> str:
+    sections = ""
+    total = 0
+    for ph in ALEX["roadmap"]:
+        items_html = ""
+        for it in ph["items"]:
+            items_html += f'<label class="check"><input type="checkbox"><span>{it}</span></label>'
+            total += 1
+        sections += f"""
+        <div class="card">
+          <div class="meta">{ph['phase']}</div>
+          <h3>{ph['lede']}</h3>
+          <div class="check-list">{items_html}</div>
+        </div>"""
+    return f"""
+    <section data-panel="roadmap" class="panel">
+      <h2 class="section">90-Tage-Roadmap</h2>
+      <p class="section-sub">Drei Phasen × 30 Tage. Foundation → Build → Expand. Häkchen bleiben gespeichert.</p>
+      <div id="roadmap-checklist">
+        <div class="check-head" style="padding:0 4px"><h3 style="margin:0">Fortschritt</h3><div class="meter">0 / {total}</div></div>
+        <div class="bar"><div></div></div>
+        {sections}
+      </div>
+    </section>"""
+
+
+def _alex_chaos_panel() -> str:
+    stops = "".join(f"<li>{x}</li>" for x in ALEX["no_chaos"])
+    antwort = "".join(f"<li>{x}</li>" for x in ALEX["no_chaos_antwort"])
+    return f"""
+    <section data-panel="nochaos" class="panel">
+      <h2 class="section">No-Chaos · Notausstieg</h2>
+      <p class="section-sub">Wenn eines der folgenden Signale dauerhaft brennt, gilt das Notprotokoll.</p>
+      <div class="twin">
+        <div class="card dim"><div class="meta">Sofort stoppen, wenn…</div><h3>Frühwarnsystem</h3><ul>{stops}</ul></div>
+        <div class="card"><div class="meta">Antwort</div><h3>Was dann passiert</h3><ul>{antwort}</ul></div>
+      </div>
+      <div class="quote">„Ein Mann mit offenen Straßen im Herzen, Musik in den Händen, Ruhe im Nervensystem und einer Tochter, die weiß: Mein Vater ist frei — aber er bleibt.“</div>
+    </section>"""
+
+
+@app.get("/alex", response_class=HTMLResponse)
+def alex_dashboard(request: Request):
+    tabs_def = [
+        ("dashboard",   "Dashboard"),
+        ("wochenplan",  "Wochenplan"),
+        ("tagesplan",   "Tagesplan"),
+        ("wien",        "Wien"),
+        ("muenchen",    "München-Base"),
+        ("van",         "Van"),
+        ("paragliding", "Paragliding"),
+        ("ptgo",        "PTGO"),
+        ("musik",       "Musik"),
+        ("stil",        "Stil"),
+        ("frauen",      "Frauen"),
+        ("tochter",     "Tochter"),
+        ("monat",       "Monatscheck"),
+        ("jahr",        "Jahresvision"),
+        ("taeglich",    "Täglich"),
+        ("notion",      "Notion"),
+        ("roadmap",     "90-Tage"),
+        ("nochaos",     "No-Chaos"),
+    ]
+    tabs_html = ""
+    for key, label in tabs_def:
+        active = " active" if key == "dashboard" else ""
+        tabs_html += f'<button class="tab{active}" data-tab="{key}">{label}</button>'
+
+    monthly_items = "".join(
+        f'<label class="check"><input type="checkbox"><span>{q}</span></label>'
+        for q in ALEX["monthly"]
+    )
+    monat_panel = f"""
+    <section data-panel="monat" class="panel">
+      <h2 class="section">Monatscheck · zehn Fragen</h2>
+      <p class="section-sub">Einmal pro Monat ehrlich beantworten. Wird automatisch zum Monatswechsel zurückgesetzt.</p>
+      <div class="card" id="monthly-checklist">
+        <div class="check-head"><h3 style="margin:0">{_now_local().strftime('%B %Y')}</h3><div class="meter">0 / {len(ALEX['monthly'])}</div></div>
+        <div class="bar"><div></div></div>
+        <div class="check-list">{monthly_items}</div>
+      </div>
+    </section>"""
+
+    year_items_html = ""
+    for ph in ALEX["year"]:
+        items_y = "".join(f"<li>{x}</li>" for x in ph["items"])
+        year_items_html += f'<div class="card"><div class="meta">{ph["phase"]}</div><h3>{ph["title"]}</h3><ul>{items_y}</ul></div>'
+    jahr_panel = f"""
+    <section data-panel="jahr" class="panel">
+      <h2 class="section">Jahresvision · fünf Phasen</h2>
+      <p class="section-sub">Das Jahr in Atemzügen — nicht in Quartalsberichten.</p>
+      <div class="grid cols-2">{year_items_html}</div>
+    </section>"""
+
+    body = f"""
+    <div class="hero">
+      <div class="eyebrow">Alex · Lebensdesign-System</div>
+      <h1 class="title">Blue Electric <em>Life</em></h1>
+      <p class="sub">{ALEX['subtitle']}. Ein Leben mit Seele — zwischen Hotelzimmern in Wien, stillen Morgen am Tegernsee, Musik um Mitternacht, Espresso vor Sonnenaufgang, Tattoos im warmen Licht, offenen Straßen Richtung Italien, Gleitschirm über Bergen und der ruhigen Verantwortung eines Vaters.</p>
+      <div class="leitsatz">„{ALEX['leitsatz']}“</div>
+    </div>
+
+    <nav class="tabs">{tabs_html}</nav>
+
+    {_alex_dashboard_panel()}
+    {_alex_week_panel()}
+    {_alex_day_panel()}
+    {_alex_wien_panel()}
+    {_alex_muc_panel()}
+    {_alex_van_panel()}
+    {_alex_para_panel()}
+    {_alex_ptgo_panel()}
+    {_alex_music_panel()}
+    {_alex_style_panel()}
+    {_alex_frauen_panel()}
+    {_alex_tochter_panel()}
+    {monat_panel}
+    {jahr_panel}
+    {_alex_daily_panel()}
+    {_alex_notion_panel()}
+    {_alex_roadmap_panel()}
+    {_alex_chaos_panel()}
+
+    <div class="footnote">Blue Electric Life · ein Mann baut sich langsam, ehrlich und stilvoll zurück ins Leben.</div>
+    """
+    return _alex_page(body)
