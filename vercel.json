@@ -3,6 +3,7 @@
   "outputDirectory": "public",
   "installCommand": "cd netlify/functions && npm install",
   "rewrites": [
+    { "source": "/alex", "destination": "/alex.html" },
     { "source": "/heal", "destination": "/heal.html" },
     { "source": "/heal-en", "destination": "/heal-en.html" },
     { "source": "/heal-ultra", "destination": "/heal-ultra.html" },
