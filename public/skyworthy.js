@@ -95,6 +95,60 @@ const Store = {
 };
 
 /* ============================================================
+   LEARN — persistent learning layer (the real moat: improves with use).
+   localStorage-backed models: ForecastRealityHistory, PilotFeedback,
+   ModelReliabilityScore, PersonalPilotRiskProfile, LocalPatternMemory.
+   (SiteDNA lives in SITE_DNA + siteDNA(); augmented here over time.)
+   ============================================================ */
+const Learn = {
+  data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 } },
+  load() { try { const raw = JSON.parse(localStorage.getItem('skyworthy.learn') || 'null'); if (raw && raw.v) this.data = Object.assign(this.data, raw); } catch (e) { /* ignore */ } },
+  save() { try { localStorage.setItem('skyworthy.learn', JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
+  // ForecastRealityHistory: log forecast vs strongest live station (max 1/site/30min)
+  logForecastReality(siteId, d, stations) {
+    if (!d || !d.best || !stations || !stations.length) return;
+    const st = stations.reduce((m, s) => (s.gustKmh > m.gustKmh ? s : m));
+    const h = d.best.h, now = Date.now();
+    if (this.data.forecastReality.some(x => x.siteId === siteId && now - x.ts < 30 * 60000)) return;
+    this.data.forecastReality.push({ ts: now, siteId, fGust: round(h.gustKmh), lGust: st.gustKmh, fWind: round(h.windKmh), lWind: st.windSpeedKmh, devGust: Math.abs(st.gustKmh - h.gustKmh), devWind: Math.abs(st.windSpeedKmh - h.windKmh) });
+    if (this.data.forecastReality.length > 400) this.data.forecastReality = this.data.forecastReality.slice(-400);
+    this.save();
+  },
+  // ModelReliabilityScore per site (1 = forecast tends to match reality)
+  modelReliability(siteId) {
+    const rows = this.data.forecastReality.filter(x => x.siteId === siteId).slice(-20);
+    if (rows.length < 3) return { reliability: null, samples: rows.length, avgGustDev: null };
+    const avgGustDev = rows.reduce((s, x) => s + x.devGust, 0) / rows.length;
+    return { reliability: clamp(1 - avgGustDev / 30, 0.2, 0.99), samples: rows.length, avgGustDev: round(avgGustDev, 1) };
+  },
+  // PilotFeedback → adapts PersonalPilotRiskProfile + LocalPatternMemory
+  recordFeedback(siteId, rating, d) {
+    this.data.feedback.push({ ts: Date.now(), siteId, rating, status: d ? d.status : null, gust: d ? round(d.best.h.gustKmh) : null });
+    if (this.data.feedback.length > 300) this.data.feedback = this.data.feedback.slice(-300);
+    const p = this.data.personal;
+    if (rating === 'harder') { p.gustAdj = clamp(p.gustAdj - 1, -10, 4); p.windAdj = clamp(p.windAdj - 0.7, -8, 3); }
+    else if (rating === 'easier') { p.gustAdj = clamp(p.gustAdj + 0.5, -10, 4); p.windAdj = clamp(p.windAdj + 0.4, -8, 3); }
+    p.samples++;
+    if (siteId && d) this.notePattern(siteId, d.status === 'green' ? 'goodDays' : 'toughDays');
+    this.save();
+  },
+  // PersonalPilotRiskProfile: effective limits = profile + learned adjustment
+  effectiveLimits(pilot) {
+    const p = this.data.personal;
+    return { maxGustKmh: clamp(pilot.maxGustKmh + p.gustAdj, 8, 80), maxWindKmh: clamp(pilot.maxWindKmh + p.windAdj, 5, 60), adjusted: p.samples >= 2 && (p.gustAdj !== 0 || p.windAdj !== 0) };
+  },
+  // LocalPatternMemory
+  notePattern(siteId, key) { const m = this.data.patterns[siteId] || (this.data.patterns[siteId] = {}); m[key] = (m[key] || 0) + 1; this.save(); },
+  patternMemory(siteId) { return this.data.patterns[siteId] || {}; }
+};
+
+// BEST SITE NOW refresh cadence (per spec)
+const BEST_SITE_UI_REFRESH_MS = 2 * 1000;
+const LIVE_STATION_REFRESH_MS = 2 * 60 * 1000;
+const FORECAST_REFRESH_MS = 10 * 60 * 1000;
+const MAX_GREEN_DATA_AGE_MINUTES = 20;
+
+/* ============================================================
    DATA — flying sites (Brauneck premium + alpine classics)
    ============================================================ */
 const SITES = [
@@ -355,11 +409,18 @@ const Providers = {
   },
   /* REAL live stations via Pioupiou open API (fair use, CC-BY).
      Returns mapped LiveStation[] within radiusKm, or null on failure/none. */
-  async fetchPioupiou(site, radiusKm = 60) {
+  async _pioupiouRaw() {
+    const now = Date.now();
+    if (this._ppCache && now - this._ppCache.ts < 120000) return this._ppCache.data;
     const r = await fetch('https://api.pioupiou.fr/v1/live/all', { cache: 'no-store' });
     if (!r.ok) throw new Error('Pioupiou HTTP ' + r.status);
     const j = await r.json();
     const data = (j && j.data) || [];
+    this._ppCache = { ts: now, data };
+    return data;
+  },
+  async fetchPioupiou(site, radiusKm = 60) {
+    const data = await this._pioupiouRaw();
     const out = [];
     for (const s of data) {
       const loc = s.location, m = s.measurements;
@@ -867,6 +928,108 @@ function dualDecision() {
   return { beginner: calculateFlightDecision(agg, st, site, PRESET_BEGINNER, day, cons), expert: calculateFlightDecision(agg, st, site, PRESET_EXPERT, day, cons) };
 }
 
+/* ---- TRUST ENGINE: how dependable is this decision? ---- */
+function calculateTrust({ stations, consensus, mismatches, dataAgeMin }) {
+  const dataFreshness = clamp(100 - dataAgeMin * 4, 0, 100);
+  const modelAgreement = consensus ? consensus.agreement : 55;
+  const liveScore = stations && stations.length ? clamp(55 + stations.length * 12, 0, 100) : 25;
+  const realityScore = mismatches && mismatches.length ? clamp(100 - mismatches.reduce((s, m) => s + m.deviationPercent, 0), 0, 100) : (stations && stations.length ? 100 : 70);
+  const confidence = Math.round(dataFreshness * 0.25 + modelAgreement * 0.30 + liveScore * 0.20 + realityScore * 0.25);
+  const decisive = [], conflicting = [], missing = [], stale = [];
+  if (modelAgreement >= 70) decisive.push('Wettermodelle weitgehend einig'); else if (modelAgreement < 45) conflicting.push('Modelle widersprechen sich');
+  if (stations && stations.length) decisive.push(`${stations.length} Live-Station(en) im Umkreis`); else missing.push('Keine Live-Stationen im Umkreis');
+  if (mismatches && mismatches.length) conflicting.push('Livewind weicht von Prognose ab');
+  if (dataAgeMin > MAX_GREEN_DATA_AGE_MINUTES) stale.push(`Daten ${round(dataAgeMin)} min alt`);
+  const label = confidence >= 85 ? 'Sehr hohe Datenqualität' : confidence >= 70 ? 'Gute Datenqualität' : confidence >= 55 ? 'Mittlere Datenqualität' : confidence >= 40 ? 'Unsicher' : 'Nicht belastbar';
+  return {
+    confidencePercent: confidence, dataFreshnessScore: round(dataFreshness), modelAgreementScore: round(modelAgreement),
+    liveStationScore: round(liveScore), forecastRealityScore: round(realityScore),
+    decisiveSignals: decisive, conflictingSignals: conflicting, missingData: missing, staleDataWarnings: stale, finalTrustLabel: label,
+    trustExplanationBeginner: confidence >= 70 ? 'Die Daten sind solide — prüf trotzdem Himmel und Livewind vor dem Start.' : 'Die Daten sind heute weniger verlässlich — sei besonders vorsichtig und entscheide konservativ.',
+    trustExplanationExpert: `Konfidenz ${confidence}% — Frische ${round(dataFreshness)}, Modellkonsens ${round(modelAgreement)}, Live ${round(liveScore)}, Realität ${round(realityScore)}.`
+  };
+}
+
+/* ---- BEST SITE NOW / MORNING ENGINE ---- */
+const STATUS_ORDER = { green: 0, yellow: 1, orange: 2, red: 3, black: 4, gray: 5, neutral: 6 };
+function worseStatus(a, b) { return STATUS_ORDER[a] >= STATUS_ORDER[b] ? a : b; }
+function parseWindow(s) { if (!s || !/\d/.test(s)) return { from: '—', to: '—' }; const m = String(s).split('–'); return { from: (m[0] || '').trim(), to: (m[1] || m[0] || '').trim() }; }
+function flightDuration(ft, level) {
+  const map = { 'Abgleiter': ['10–20 min', '15–30 min'], 'Soaring': ['30–60 min', '1–2 h'], 'Thermikflug': ['30–90 min', '1–3 h'], 'Thermik / XC': ['1–2 h', '2–5 h'], 'XC': ['1–2 h', '3–6 h'], 'Hike & Fly': ['30–60 min', '1–3 h'], 'Nicht fliegen': ['—', '—'] };
+  const e = map[ft] || ['30–60 min', '1–2 h']; return level === 'expert' ? e[1] : e[0];
+}
+function siteDnaScore(site, d) {
+  let s = 100;
+  if (Wind.matches(d.best.h.windDir, site.dangerousWindDirections, 35)) s -= 50;
+  if (site.foehnSensitive && d.topRisks.some(r => /föhn/i.test(r))) s -= 40;
+  if (d.best.baseAboveTO < 200) s -= 25;
+  return clamp(s, 0, 100);
+}
+function nextCriticalChange(agg, site, pilot) {
+  const idx = agg.daylightIdx(Store.state.day); if (!idx.length) return undefined;
+  const lim = Learn.effectiveLimits(pilot);
+  for (const i of idx) {
+    const h = agg.atHour(i);
+    if (h.cape > 1500) return { time: h.hh, reason: `Überentwicklung/Gewitterneigung (CAPE ${round(h.cape)})` };
+    if (h.gustKmh > lim.maxGustKmh) return { time: h.hh, reason: `Böen steigen über dein Limit (~${round(h.gustKmh)} km/h)` };
+    if (Wind.matches(h.windDir, site.dangerousWindDirections, 35)) return { time: h.hh, reason: `Wind dreht in Lee-Richtung (${Wind.toCompass(h.windDir)})` };
+    if (h.precipP > 40) return { time: h.hh, reason: `Niederschlagsrisiko steigt (${round(h.precipP)}%)` };
+  }
+  return undefined;
+}
+function buildWhyBest(d, site, stations) {
+  const w = [], h = d.best.h, to = site.takeoffs[0] || {};
+  if (!Wind.matches(h.windDir, site.dangerousWindDirections, 35) && Wind.bestMatchScore(h.windDir, to.orientation || []) > 0.5) w.push('Windrichtung passt zum Startplatz');
+  if (h.gustKmh <= Store.state.pilot.maxGustKmh) w.push(`Böen im Rahmen (~${round(h.gustKmh)} km/h)`);
+  if (d.best.baseAboveTO > 200) w.push(`Wolkenbasis ~${round(d.best.baseAboveTO)} m über Start`);
+  if (stations && stations.length && !buildForecastReality(d, stations).length) w.push('Livewind bestätigt die Prognose');
+  if (/–/.test(d.bestStartTime || '') && +String(d.bestStartTime).slice(0, 2) < 11) w.push('Talwind morgens noch schwach');
+  return w.slice(0, 4);
+}
+function rankNearbyFlyingSites({ userLocation, radiusKm, sites, bundle, pilotProfile }) {
+  const out = [];
+  for (const site of sites) {
+    const dist = Geo.haversineKm(userLocation.lat, userLocation.lon, site.lat, site.lon);
+    if (dist > radiusKm) continue;
+    const b = bundle[site.id]; if (!b || !b.agg) continue;
+    const stations = b.stations || [];
+    const lim = Learn.effectiveLimits(pilotProfile);
+    const pilot = Object.assign({}, pilotProfile, { maxGustKmh: lim.maxGustKmh, maxWindKmh: lim.maxWindKmh });
+    const d = calculateFlightDecision(b.agg, stations, site, pilot, Store.state.day, b.consensus || null);
+    if (!d.best) continue;
+    const beg = calculateFlightDecision(b.agg, stations, site, PRESET_BEGINNER, Store.state.day, b.consensus || null);
+    const exp = calculateFlightDecision(b.agg, stations, site, PRESET_EXPERT, Store.state.day, b.consensus || null);
+    const dataAge = b.fetchedAt ? Time.ageMin(b.fetchedAt) : 99;
+    const mism = buildForecastReality(d, stations);
+    const trust = calculateTrust({ stations, consensus: b.consensus || null, mismatches: mism, dataAgeMin: dataAge });
+    const dnaS = siteDnaScore(site, d);
+    const realityS = mism.length ? clamp(100 - mism.reduce((s, m) => s + m.deviationPercent, 0), 0, 100) : (stations.length ? 100 : 60);
+    const distS = clamp(100 - dist / radiusKm * 100, 0, 100);
+    let composite = Math.round(d.safetyScore * 0.45 + d.windScore * 0.25 + dnaS * 0.15 + realityS * 0.10 + distS * 0.05);
+    let status = d.status;
+    if (dataAge > MAX_GREEN_DATA_AGE_MINUTES && status === 'green') status = 'yellow';
+    if (!stations.length && status === 'green') status = 'yellow';
+    if (trust.confidencePercent < 60 && status === 'green') status = 'yellow';
+    if (trust.confidencePercent < 40) status = worseStatus(status, 'orange');
+    if (mism.some(m => m.severity === 'critical')) { status = worseStatus(status, 'orange'); composite -= 20; }
+    out.push({
+      siteId: site.id, siteName: site.name, distanceKm: round(dist, 1), status, score: clamp(composite, 0, 100),
+      beginnerStatus: beg.status, expertStatus: exp.status, bestTakeoff: d.bestTakeoff || (site.takeoffs[0] || {}).name,
+      bestStartWindow: parseWindow(d.bestStartTime), expectedFlightType: d.recommendedFlightType,
+      expectedFlightDuration: { beginner: flightDuration(d.recommendedFlightType, 'beginner'), expert: flightDuration(d.recommendedFlightType, 'expert') },
+      whyBest: buildWhyBest(d, site, stations), risks: d.topRisks.slice(0, 3).map(r => r.replace(/^[^\p{L}]+/u, '').trim()),
+      whyNotGreen: status !== 'green' ? buildGreenBlockers(d, site, pilot).map(x => `${x.factor}: ${x.currentValue} (Soll ${x.requiredValue})`) : undefined,
+      nextCriticalChange: nextCriticalChange(b.agg, site, pilotProfile), confidencePercent: trust.confidencePercent, dataAgeMinutes: round(dataAge), trust
+    });
+  }
+  out.sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.score - a.score);
+  const best = out[0] || null;
+  let globalWarning;
+  if (!out.length) globalWarning = 'Keine Fluggebiete mit Daten im Radius gefunden.';
+  else if (out.every(s => s.status === 'red' || s.status === 'black')) globalWarning = 'Heute im ganzen Umkreis kritisch — wahrscheinlich kein Flugtag.';
+  return { radiusKm, updatedAt: new Date().toISOString(), userLocation, bestSite: best, rankedSites: out, globalWarning };
+}
+
 /* ============================================================
    PRESSURE ENGINE — classify the high/low situation + flying impact
    ============================================================ */
@@ -930,6 +1093,7 @@ const Data = {
   models: { res: null, consensus: null, fetchedAt: null, error: null },
   stations: { list: [], fetchedAt: null, source: 'Demo' },
   pressure: { field: null, fetchedAt: null, error: null },
+  bestNow: { result: null, loading: false, error: null, radiusKm: 50, bundle: {}, userLocation: null, fetchedAt: null, liveAt: null },
   timers: {},
   async loadForecast(force) {
     const site = siteById(Store.state.selectedSiteId);
@@ -948,8 +1112,41 @@ const Data = {
     await this.refreshStations();
     this.loadModels();
     this.loadPressureField();
+    try { Learn.logForecastReality(site.id, this.decision(), this.stations.list); } catch (e) { /* ignore */ }
     maybeAlert();
     render();
+  },
+  // BEST SITE NOW: scan all sites in radius, fetch per-site weather + live, rank
+  async loadBestSiteNow() {
+    this.bestNow.loading = true; if (currentScreen === 'morning') renderMorning();
+    if (!this.bestNow.userLocation) this.bestNow.userLocation = await getUserLocation();
+    const loc = this.bestNow.userLocation, radius = this.bestNow.radiusKm;
+    const inR = SITES.map(s => ({ s, d: Geo.haversineKm(loc.lat, loc.lon, s.lat, s.lon) })).filter(x => x.d <= radius).sort((a, b) => a.d - b.d).slice(0, 8);
+    const bundle = {};
+    await Promise.all(inR.map(async ({ s }) => {
+      try {
+        const json = await Providers.fetchForecast(s); const agg = buildAggregation(json, s);
+        let st = []; try { st = (await Providers.fetchPioupiou(s, 60)) || []; } catch (e) { st = []; }
+        if (!st.length) st = Providers.liveStations(s, agg);
+        bundle[s.id] = { agg, fetchedAt: new Date().toISOString(), stations: st };
+      } catch (e) { /* skip site */ }
+    }));
+    this.bestNow.bundle = bundle; this.bestNow.fetchedAt = new Date().toISOString(); this.bestNow.liveAt = new Date().toISOString();
+    this.recomputeBestNow(); this.bestNow.loading = false;
+    if (currentScreen === 'morning') renderMorning();
+  },
+  async reloadBestStations() {
+    const b = this.bestNow.bundle;
+    await Promise.all(Object.keys(b).map(async id => {
+      const site = siteById(id);
+      try { let st = (await Providers.fetchPioupiou(site, 60)) || []; if (!st.length) st = Providers.liveStations(site, b[id].agg); b[id].stations = st; } catch (e) { /* keep */ }
+    }));
+    this.bestNow.liveAt = new Date().toISOString(); this.recomputeBestNow();
+    if (currentScreen === 'morning') renderMorning();
+  },
+  recomputeBestNow() {
+    const loc = this.bestNow.userLocation; if (!loc) return;
+    this.bestNow.result = rankNearbyFlyingSites({ userLocation: loc, radiusKm: this.bestNow.radiusKm, sites: SITES, bundle: this.bestNow.bundle, pilotProfile: Store.state.pilot });
   },
   async loadPressureField() {
     const site = siteById(Store.state.selectedSiteId);
@@ -993,6 +1190,33 @@ const Data = {
   }
 };
 
+/* GPS with graceful fallback to the selected site */
+function getUserLocation() {
+  return new Promise(res => {
+    const fallback = (src) => { const s = siteById(Store.state.selectedSiteId); res({ lat: s.lat, lon: s.lon, source: src }); };
+    if (!navigator.geolocation) return fallback('Gebiet (kein GPS)');
+    navigator.geolocation.getCurrentPosition(
+      p => res({ lat: p.coords.latitude, lon: p.coords.longitude, source: 'GPS' }),
+      () => fallback('Gebiet (GPS verweigert)'),
+      { timeout: 8000, maximumAge: 300000 }
+    );
+  });
+}
+let _morningTimers = { ui: null, live: null, fc: null };
+function startMorningTimers() {
+  stopMorningTimers();
+  _morningTimers.ui = setInterval(() => { if (currentScreen === 'morning') { Data.recomputeBestNow(); renderMorning(); } }, BEST_SITE_UI_REFRESH_MS);
+  _morningTimers.live = setInterval(() => { if (navigator.onLine && Object.keys(Data.bestNow.bundle).length) Data.reloadBestStations(); }, LIVE_STATION_REFRESH_MS);
+  _morningTimers.fc = setInterval(() => { if (navigator.onLine) Data.loadBestSiteNow(); }, FORECAST_REFRESH_MS);
+}
+function stopMorningTimers() { Object.values(_morningTimers).forEach(t => t && clearInterval(t)); _morningTimers = { ui: null, live: null, fc: null }; }
+function setBestRadius(km) { Data.bestNow.radiusKm = km; Data.loadBestSiteNow(); }
+function refreshBestLocation() { Data.bestNow.userLocation = null; Data.loadBestSiteNow(); }
+function recordFlightFeedback(siteId, rating) {
+  Learn.recordFeedback(siteId, rating, Data.decision());
+  const el = $('#fbResult'); if (el) { const lim = Learn.effectiveLimits(Store.state.pilot); el.innerHTML = `<div class="explain">✅ Danke! SKYWORTHY lernt mit. ${Learn.data.personal.samples >= 2 && lim.adjusted ? `Dein persönliches Böen-Limit ist jetzt ~${round(lim.maxGustKmh)} km/h.` : ''}</div>`; }
+}
+
 /* ============================================================
    UI / RENDER
    ============================================================ */
@@ -1005,7 +1229,7 @@ function render() {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
     profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute,
-    windows: renderFlightWindows, compare: renderCompare, more: renderMore
+    windows: renderFlightWindows, compare: renderCompare, morning: renderMorning, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -1199,6 +1423,67 @@ function renderMore() {
     </div>`).join('')}
   </div>
   <div class="dim small" style="text-align:center;margin-top:14px">SKYWORTHY · Elite Paragliding Decision Cockpit</div>`;
+}
+
+/* ---------- MORNING / BEST SITE NOW (killer feature) ---------- */
+function ampelWord(s) { return { green: 'Grün', yellow: 'Gelb', orange: 'Orange', red: 'Rot', black: 'No-Go', gray: '—' }[s] || s; }
+function renderMorning() {
+  const el = $('#screen-morning'); if (!el) return;
+  const bn = Data.bestNow, r = bn.result;
+  const radii = [25, 50, 75, 100];
+  const head = `
+  <div class="h" style="margin-top:6px">Wohin soll ich jetzt fahren?</div>
+  <div class="seg">${radii.map(km => `<button class="${bn.radiusKm === km ? 'on' : ''}" onclick="setBestRadius(${km})">${km} km</button>`).join('')}</div>
+  <div class="row" style="margin-bottom:10px">
+    <button class="btn sec" onclick="refreshBestLocation()">📍 Standort & Scan</button>
+    <div class="pill" style="align-self:center">${bn.userLocation ? esc(bn.userLocation.source) : 'kein Standort'}</div>
+  </div>`;
+  if (bn.loading && !r) { el.innerHTML = head + loadingCard('Umkreis wird gescannt — Wetter, Livewind & Gebiete…'); return; }
+  if (!r) { el.innerHTML = head + `<div class="card"><b>Bereit.</b><div class="small muted" style="margin-top:6px">Tippe „📍 Standort & Scan", um die beste Flugoption im ${bn.radiusKm}-km-Umkreis zu finden.</div><button class="btn" style="margin-top:12px" onclick="refreshBestLocation()">Jetzt scannen</button></div>`; return; }
+  const ages = `<div class="dim small" style="text-align:center;margin-top:6px">Ranking aktualisiert vor ${bn.result ? Time.fmtAge(bn.result.updatedAt) : '—'} · Livewind vor ${bn.liveAt ? Time.fmtAge(bn.liveAt) : '—'} · Forecast vor ${bn.fetchedAt ? Time.fmtAge(bn.fetchedAt) : '—'}</div>`;
+  if (!r.bestSite) { el.innerHTML = head + banner('orange', r.globalWarning || 'Keine Option gefunden.') + ages; return; }
+  const b = r.bestSite, sc = 's-' + b.status;
+  const drive = b.status === 'red' || b.status === 'black'
+    ? `Heute besser nicht fahren — ${esc(b.siteName)} ist die „beste" Option, aber ${ampelWord(b.status)}.`
+    : `Fahr zu ${esc(b.siteName)} / ${esc(b.bestTakeoff || '—')}.`;
+  const shortCard = `
+  <div class="hero card statusborder ${sc}">
+    <div class="ring" style="background:var(--c)"></div>
+    <div class="muted small" style="letter-spacing:2px;text-transform:uppercase;font-weight:800">Beste Flugoption jetzt</div>
+    <div class="glabel" style="color:var(--c);margin-top:6px;font-size:clamp(26px,7vw,38px);line-height:1.1">${esc(drive)}</div>
+    <div class="muted" style="margin-top:8px">${b.status !== 'red' && b.status !== 'black' ? `Beste Zeit: <b style="color:var(--c)">${esc(b.bestStartWindow.from)}–${esc(b.bestStartWindow.to)}</b> · ` : ''}${b.distanceKm} km</div>
+    <div class="meta" style="margin-top:12px">
+      <div>Anfänger<b>${sIc[b.beginnerStatus]} ${ampelWord(b.beginnerStatus)}</b></div>
+      <div>Experte<b>${sIc[b.expertStatus]} ${ampelWord(b.expertStatus)}</b></div>
+      <div>Confidence<b>${b.confidencePercent}%</b></div>
+      <div>Daten<b>${b.dataAgeMinutes} min</b></div>
+    </div>
+    ${b.whyBest.length ? `<div class="small" style="margin-top:12px;text-align:left"><b style="color:var(--c)">Warum:</b> ${esc(b.whyBest.join(' · '))}.</div>` : ''}
+    ${b.nextCriticalChange ? `<div class="small" style="margin-top:6px;text-align:left;color:var(--orange)"><b>Achtung:</b> ab ${esc(b.nextCriticalChange.time)} ${esc(b.nextCriticalChange.reason)}.</div>` : ''}
+    <div class="small dim" style="margin-top:6px;text-align:left">Vertrauen: ${esc(b.trust.finalTrustLabel)} (${b.trust.confidencePercent}%)${b.trust.conflictingSignals.length ? ' · ⚠️ ' + esc(b.trust.conflictingSignals[0]) : ''}</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" onclick="selectSite('${b.siteId}', true)">Details ansehen</button>
+      <button class="btn sec" onclick="selectSite('${b.siteId}'); go('windows')">Flugfenster</button>
+    </div>
+  </div>`;
+  const others = r.rankedSites.slice(1, 6).map(s => `<div class="card s-${s.status}" style="cursor:pointer" onclick="selectSite('${s.siteId}', true)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="gp s-${s.status}" style="min-width:auto;padding:6px 10px;border-radius:9px;font-weight:800">${sIc[s.status]} ${s.score}</div>
+      <div style="flex:1"><b>${esc(s.siteName)}</b><div class="small muted">${s.distanceKm} km · ${esc(s.bestTakeoff || '—')} · ${esc(s.expectedFlightType)}</div></div>
+      <div class="r small">${b.status !== 'red' ? esc(s.bestStartWindow.from) : ''}<br><span class="dim">A:${sIc[s.beginnerStatus]} E:${sIc[s.expertStatus]}</span></div>
+    </div>
+    ${s.whyBest && s.whyBest.length ? `<div class="small dim" style="margin-top:6px">${esc(s.whyBest.slice(0, 2).join(' · '))}</div>` : ''}
+  </div>`).join('');
+  const fb = `<div class="card"><div class="h" style="margin-top:0">🪂 Geflogen? SKYWORTHY lernt mit</div>
+    <div class="small muted">War es so wie angekündigt? Dein Feedback verbessert die Einschätzung für dieses Gebiet.</div>
+    <div class="seg" style="margin-top:8px">
+      <button onclick="recordFlightFeedback('${b.siteId}','easier')">🟢 ruhiger</button>
+      <button onclick="recordFlightFeedback('${b.siteId}','as_expected')">⚪ wie erwartet</button>
+      <button onclick="recordFlightFeedback('${b.siteId}','harder')">🔴 ruppiger</button>
+    </div><div id="fbResult"></div></div>`;
+  el.innerHTML = head + (r.globalWarning ? banner('orange', r.globalWarning) : '') + shortCard +
+    (others ? `<div class="h">Weitere Optionen</div>${others}` : '') + fb + ages +
+    `<div class="dim small" style="text-align:center">Killer-Frage beantwortet: wohin, wann, für wen, wie sicher, was kippt. Livewind & Himmel vor Ort entscheiden.</div>`;
 }
 
 /* ---------- FLIGHT WINDOWS ---------- */
@@ -2208,11 +2493,12 @@ function capeTimelineSVG(agg, dayOffset) {
 /* ============================================================
    ROUTER + ACTIONS + INIT
    ============================================================ */
-const PRIMARY = ['cockpit', 'sites', 'live', 'exam', 'more'];
-let currentScreen = 'cockpit';
-let lastPrimary = 'cockpit';
+const PRIMARY = ['morning', 'cockpit', 'sites', 'live', 'exam', 'more'];
+let currentScreen = 'morning';
+let lastPrimary = 'morning';
 function go(screen) {
   if (currentScreen === 'route' && screen !== 'route') destroyRoute();
+  if (currentScreen === 'morning' && screen !== 'morning') stopMorningTimers();
   currentScreen = screen;
   if (PRIMARY.includes(screen)) lastPrimary = screen;
   $$('.screen').forEach(s => s.classList.remove('on'));
@@ -2221,6 +2507,7 @@ function go(screen) {
   const navTarget = PRIMARY.includes(screen) ? screen : 'more';
   $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.screen === navTarget));
   const back = $('#backBtn'); if (back) back.style.display = PRIMARY.includes(screen) ? 'none' : 'grid';
+  if (screen === 'morning') { startMorningTimers(); if (!Data.bestNow.result && !Data.bestNow.loading) Data.loadBestSiteNow(); }
   window.scrollTo(0, 0);
   render();
 }
@@ -2258,7 +2545,7 @@ function toggleAlerts(on) {
   }
   Store.set({ alerts: !!on }); if (on) maybeAlert();
 }
-Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, answerContext, toggleAlerts, speakBriefing, Data });
+Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, answerContext, toggleAlerts, speakBriefing, setBestRadius, refreshBestLocation, recordFlightFeedback, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
@@ -2269,6 +2556,7 @@ function buildSiteSelect() {
 
 function init() {
   Store.load();
+  Learn.load();
   buildSiteSelect();
   // tabs
   $$('.tab').forEach(t => t.addEventListener('click', () => go(t.dataset.screen)));
@@ -2297,6 +2585,7 @@ function init() {
   Data.startAutoRefresh();
   Data.loadForecast(true);
   render();
+  if (currentScreen === 'morning') { startMorningTimers(); Data.loadBestSiteNow(); }
   if (!Store.state.onboarded) showOnboarding();
 }
 
