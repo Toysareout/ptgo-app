@@ -169,6 +169,7 @@ body.locked .app,body.locked .tabbar{display:none}
 
 <div class="app">
   <div class="topbar">
+    <button class="iconbtn" id="backBtn" title="Zurück" style="display:none">‹</button>
     <div class="brand"><b>SKYWORTHY</b><span>Decision Cockpit</span></div>
     <div class="spacer"></div>
     <div id="conn" class="pill"><span class="statusdot" id="conndot"></span><span id="conntxt">live</span></div>
@@ -195,6 +196,7 @@ body.locked .app,body.locked .tabbar{display:none}
   <div id="screen-profile" class="screen"></div>
   <div id="screen-exam" class="screen"></div>
   <div id="screen-pro" class="screen"></div>
+  <div id="screen-more" class="screen"></div>
 
   <div class="disclaimer">
     ⚠️ Diese App ersetzt keine eigene Wetterprüfung, keinen Fluglehrer, keine lokale Einweisung
@@ -207,14 +209,8 @@ body.locked .app,body.locked .tabbar{display:none}
   <button class="tab on" data-screen="cockpit"><span class="i">🛩️</span>Cockpit</button>
   <button class="tab" data-screen="sites"><span class="i">📍</span>Gebiete</button>
   <button class="tab" data-screen="live"><span class="i">📡</span>Live</button>
-  <button class="tab" data-screen="wind"><span class="i">🌬️</span>Wind</button>
-  <button class="tab" data-screen="thermal"><span class="i">🔥</span>Thermik</button>
-  <button class="tab" data-screen="cloud"><span class="i">☁️</span>Wolken</button>
-  <button class="tab" data-screen="pressure"><span class="i">🎚️</span>Druck</button>
-  <button class="tab" data-screen="models"><span class="i">🧮</span>Modelle</button>
-  <button class="tab" data-screen="profile"><span class="i">👤</span>Profil</button>
   <button class="tab" data-screen="exam"><span class="i">🎓</span>Lernen</button>
-  <button class="tab" data-screen="pro"><span class="i">⭐</span>Pro</button>
+  <button class="tab" data-screen="more"><span class="i">⊕</span>Mehr</button>
 </nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>

@@ -66,7 +66,7 @@ const Time = {
 /* ============================================================
    STORE — minimal reactive state + localStorage persistence
    ============================================================ */
-const PERSIST = ['pilot', 'favorites', 'recent', 'selectedSiteId', 'examStats', 'alerts'];
+const PERSIST = ['pilot', 'favorites', 'recent', 'selectedSiteId', 'examStats', 'alerts', 'onboarded', 'simple'];
 const Store = {
   state: {
     pilot: {
@@ -76,7 +76,7 @@ const Store = {
     },
     favorites: [], recent: [], selectedSiteId: 'brauneck', day: 0,
     examStats: { answered: 0, correct: 0, lastDailyDate: null },
-    alerts: false, online: navigator.onLine
+    alerts: false, onboarded: false, simple: true, online: navigator.onLine
   },
   subs: [],
   load() {
@@ -908,7 +908,7 @@ function render() {
   const map = {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
-    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure
+    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -931,17 +931,45 @@ function renderCockpit() {
   const rem = REMINDERS[new Date().getDate() % REMINDERS.length];
   const fav = Store.state.favorites.includes(site.id);
   const live = d.decisiveStations[0];
+  const simple = Store.state.simple;
+  const goWord = d.status === 'green' ? 'JA' : d.status === 'yellow' ? 'JA, vorsichtig' : d.status === 'orange' ? 'Nur erfahren' : 'NEIN';
+
+  const advanced = `
+  <div class="grid c2">
+    ${miniScore('Anfänger', d.beginnerScore)}
+    ${miniScore('Experte', d.expertScore)}
+    ${miniScore('Sicherheit', d.safetyScore)}
+    ${miniScore('Thermik', d.thermalScore)}
+    ${miniScore('Datenqualität', d.dataQualityScore)}
+    ${miniScore('Konsens', d.confidenceScore)}
+  </div>
+  <div class="card">
+    <div class="h" style="margin-top:0">Wahrscheinlichkeiten</div>
+    ${probBar('Haltbare Thermik', d.probabilities.thermal)}
+    ${probBar('Entspannter Flug', d.probabilities.relaxed)}
+    ${probBar('Sportliche Bedingungen', d.probabilities.sporty)}
+  </div>
+  <div class="dim small" style="text-align:center;margin-top:4px">
+    Wetter: ${Data.forecast.fetchedAt ? Time.fmtAge(Data.forecast.fetchedAt) : '—'} · Modelle: ${Data.models.fetchedAt ? Time.fmtAge(Data.models.fetchedAt) : '—'} · Live: ${Data.stations.fetchedAt ? Time.fmtAge(Data.stations.fetchedAt) : '—'}
+  </div>`;
 
   el.innerHTML = `
   ${Data.isStale() ? banner('orange', '⚠️ Daten älter als 20 Minuten — bitte aktualisieren.') : ''}
   ${!navigator.onLine ? banner('red', '📵 Offline — angezeigte Daten sind möglicherweise veraltet.') : ''}
+
+  <div class="seg" style="justify-content:flex-end;margin:2px 0 8px">
+    <button class="${simple ? 'on' : ''}" onclick="setSimple(true)">Einfach</button>
+    <button class="${!simple ? 'on' : ''}" onclick="setSimple(false)">Profi</button>
+  </div>
+
   <div class="hero card statusborder ${sc}">
     <div class="ring" style="background:var(--c)"></div>
     <div class="scorebadge"><div class="n" style="color:var(--c)">${d.overallScore}</div><div class="t">Score</div></div>
     <div style="display:flex;align-items:center;gap:8px"><span class="dot"></span>
       <span class="muted small" style="font-weight:700;letter-spacing:1px">${sIc[d.status]} ${d.status.toUpperCase()}</span></div>
-    <div class="glabel" style="color:var(--c);margin-top:6px">${esc(d.label.split('—')[0].trim())}</div>
-    <div class="gsum">${esc(d.summary)}</div>
+    <div class="glabel" style="color:var(--c);margin-top:4px;font-size:46px">${esc(goWord)}</div>
+    <div class="muted small" style="font-weight:700;margin-top:2px">Kann ich heute fliegen? · ${esc(site.name)}</div>
+    <div class="gsum" style="margin-top:8px">${esc(d.summary)}</div>
     <div class="meta">
       <div>Startfenster<b>${esc(d.bestStartTime || '—')}</b></div>
       <div>Bester Start<b>${esc(d.bestTakeoff || '—')}</b></div>
@@ -957,40 +985,57 @@ function renderCockpit() {
   </div>
 
   <div class="card ${sc}">
-    <div class="h" style="margin-top:0">Top-Risiken</div>
-    ${d.topRisks.slice(0, 4).map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
+    <div class="h" style="margin-top:0">Warum? — Top-Risiken</div>
+    ${d.topRisks.slice(0, simple ? 3 : 4).map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
   </div>
 
-  <div class="grid c2">
-    ${miniScore('Anfänger', d.beginnerScore)}
-    ${miniScore('Experte', d.expertScore)}
-    ${miniScore('Sicherheit', d.safetyScore)}
-    ${miniScore('Thermik', d.thermalScore)}
-    ${miniScore('Datenqualität', d.dataQualityScore)}
-    ${miniScore('Konsens', d.confidenceScore)}
-  </div>
-
-  <div class="card">
-    <div class="h" style="margin-top:0">Wahrscheinlichkeiten</div>
-    ${probBar('Haltbare Thermik', d.probabilities.thermal)}
-    ${probBar('Entspannter Flug', d.probabilities.relaxed)}
-    ${probBar('Sportliche Bedingungen', d.probabilities.sporty)}
-  </div>
-
-  ${live ? `<div class="card"><div class="h" style="margin-top:0">Ausschlaggebende Station</div>
+  ${live ? `<div class="card"><div class="h" style="margin-top:0">Live-Wind (ausschlaggebend)</div>
     <div class="sitecard"><div class="gp ${sc}">${windArrow(live.windDirection)}</div>
-    <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)} · ${live.elevation} m</div></div>
+    <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)}${live.elevation != null ? ' · ' + live.elevation + ' m' : ''}</div></div>
     <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">${esc(Data.stations.source)}</span></div></div></div>` : ''}
+
+  <div class="seg" style="overflow-x:auto;flex-wrap:nowrap">
+    <button onclick="go('wind')">🌬️ Wind</button>
+    <button onclick="go('thermal')">🔥 Thermik</button>
+    <button onclick="go('pressure')">🎚️ Druck</button>
+    <button onclick="go('cloud')">☁️ Wolken</button>
+    <button onclick="go('detail')">📋 Gebiet</button>
+    <button onclick="go('models')">🧮 Modelle</button>
+  </div>
+
+  ${simple ? '' : advanced}
 
   <div class="reminder"><div class="i">${rem.i}</div><div><b>${esc(rem.t)}</b><br>${esc(rem.d)}</div></div>
 
   <div class="row" style="margin-top:12px">
     <button class="btn sec" onclick="go('detail')">Gebiet-Details</button>
     <button class="btn sec" onclick="toggleFav('${site.id}')">${fav ? '★ Favorit' : '☆ Favorit'}</button>
-  </div>
-  <div class="dim small" style="text-align:center;margin-top:10px">
-    Wetter: ${Data.forecast.fetchedAt ? Time.fmtAge(Data.forecast.fetchedAt) : '—'} · Modelle: ${Data.models.fetchedAt ? Time.fmtAge(Data.models.fetchedAt) : '—'} · Live: ${Data.stations.fetchedAt ? Time.fmtAge(Data.stations.fetchedAt) : '—'}
   </div>`;
+}
+
+/* ---------- MEHR (hub) ---------- */
+function renderMore() {
+  const el = $('#screen-more');
+  const items = [
+    ['wind', '🌬️', 'Wind-Intelligenz', 'Höhenwind, Gradient, Scherung, Föhn, Windprofil'],
+    ['thermal', '🔥', 'Thermik & Emagram', 'Thermikfenster, Basis, CAPE, Sounding'],
+    ['pressure', '🎚️', 'Druck (Hoch/Tief)', 'Live-Lage, Gradient + komplettes Druckwissen'],
+    ['cloud', '☁️', 'Wolken & Gewitter', 'Bewölkung, Niederschlag, Radar, Gewitterrisiko'],
+    ['models', '🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM'],
+    ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, lokale Gefahren'],
+    ['profile', '👤', 'Pilotenprofil', 'Level, Limits, Warnungen, Datenquellen'],
+    ['pro', '⭐', 'SKYWORTHY Pro', 'Alle Elite-Features · 49 €/Jahr']
+  ];
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Mehr</div>
+  <div class="grid c2">
+    ${items.map(it => `<div class="card" style="cursor:pointer;margin-bottom:0" onclick="go('${it[0]}')">
+      <div style="font-size:26px">${it[1]}</div>
+      <b style="display:block;margin-top:6px">${esc(it[2])}</b>
+      <div class="small muted" style="margin-top:3px">${esc(it[3])}</div>
+    </div>`).join('')}
+  </div>
+  <div class="dim small" style="text-align:center;margin-top:14px">SKYWORTHY · Elite Paragliding Decision Cockpit</div>`;
 }
 
 /* ---------- NEARBY SITES ---------- */
@@ -1614,15 +1659,23 @@ function capeTimelineSVG(agg, dayOffset) {
 /* ============================================================
    ROUTER + ACTIONS + INIT
    ============================================================ */
+const PRIMARY = ['cockpit', 'sites', 'live', 'exam', 'more'];
 let currentScreen = 'cockpit';
+let lastPrimary = 'cockpit';
 function go(screen) {
   currentScreen = screen;
+  if (PRIMARY.includes(screen)) lastPrimary = screen;
   $$('.screen').forEach(s => s.classList.remove('on'));
   $('#screen-' + screen).classList.add('on');
-  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.screen === screen));
+  // highlight matching primary tab; sub-screens highlight "Mehr"
+  const navTarget = PRIMARY.includes(screen) ? screen : 'more';
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.screen === navTarget));
+  const back = $('#backBtn'); if (back) back.style.display = PRIMARY.includes(screen) ? 'none' : 'grid';
   window.scrollTo(0, 0);
   render();
 }
+function goBack() { go(currentScreen === 'detail' ? 'cockpit' : lastPrimary === 'more' ? 'more' : lastPrimary); }
+function setSimple(on) { Store.set({ simple: !!on }); render(); }
 function selectSite(id, toCockpit) {
   const recent = [id, ...Store.state.recent.filter(x => x !== id)].slice(0, 8);
   Store.set({ selectedSiteId: id, recent });
@@ -1655,7 +1708,7 @@ function toggleAlerts(on) {
   }
   Store.set({ alerts: !!on }); if (on) maybeAlert();
 }
-Object.assign(window, { go, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, Data });
+Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
@@ -1676,6 +1729,8 @@ function init() {
     if (Data.models.res) Data.models.consensus = buildModelConsensus(Data.models.res, Store.state.day);
     render();
   }));
+  // back button (sub-screens)
+  const back = $('#backBtn'); if (back) back.addEventListener('click', goBack);
   // refresh + pull-to-refresh
   $('#refreshBtn').addEventListener('click', () => Data.loadForecast(true));
   let touchStartY = 0;
@@ -1692,6 +1747,32 @@ function init() {
   Data.startAutoRefresh();
   Data.loadForecast(true);
   render();
+  if (!Store.state.onboarded) showOnboarding();
+}
+
+/* one-time, one-tap setup: pick experience level → sets sensible limits */
+function showOnboarding() {
+  const presets = {
+    beginner: { maxWindKmh: 18, maxGustKmh: 22, maxThermalStrength: 2, level: 'beginner', wingClass: 'EN-A', riskTolerance: 'low' },
+    intermediate: { maxWindKmh: 28, maxGustKmh: 35, maxThermalStrength: 4, level: 'intermediate', wingClass: 'EN-B-low', riskTolerance: 'medium' },
+    expert: { maxWindKmh: 38, maxGustKmh: 50, maxThermalStrength: 6, level: 'expert', wingClass: 'EN-C', riskTolerance: 'high' }
+  };
+  const ov = document.createElement('div');
+  ov.id = 'onboard';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:150;display:grid;place-items:center;padding:24px;background:radial-gradient(900px 500px at 50% -10%,#0e1626,#05070d 75%)';
+  ov.innerHTML = `<div style="width:100%;max-width:380px;text-align:center">
+    <div style="font-size:24px;letter-spacing:5px;font-weight:900">WILLKOMMEN</div>
+    <div class="small" style="color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin:6px 0 22px">Wie erfahren bist du?</div>
+    <button class="btn" data-lvl="beginner" style="margin-bottom:10px">🟢 Anfänger / Schüler<br><span style="font-weight:500;font-size:12px;opacity:.8">vorsichtige Limits, einfache Tage</span></button>
+    <button class="btn" data-lvl="intermediate" style="margin-bottom:10px">🟡 Fortgeschritten<br><span style="font-weight:500;font-size:12px;opacity:.8">ausgewogene Limits</span></button>
+    <button class="btn" data-lvl="expert" style="margin-bottom:10px">🟠 Experte<br><span style="font-weight:500;font-size:12px;opacity:.8">höhere Limits, sportliche Tage</span></button>
+    <div class="small dim" id="ob-skip" style="margin-top:14px;cursor:pointer;text-decoration:underline">später / überspringen</div>
+    <div class="small dim" style="margin-top:14px;line-height:1.5">Du kannst alles jederzeit im Profil ändern. SKYWORTHY entscheidet bewusst konservativ — im Zweifel: nicht fliegen.</div>
+  </div>`;
+  document.body.appendChild(ov);
+  const done = () => { Store.set({ onboarded: true }); ov.remove(); render(); };
+  ov.querySelectorAll('button[data-lvl]').forEach(b => b.addEventListener('click', () => { applyPreset(presets[b.dataset.lvl]); done(); }));
+  ov.querySelector('#ob-skip').addEventListener('click', done);
 }
 // On GitHub Pages the password gate calls startSkyworthy() after unlock (body.locked).
 // On an ungated copy (e.g. Vercel behind middleware) auto-start instead.
