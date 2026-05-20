@@ -3,109 +3,217 @@ VERSION:2.0
 PRODID:-//Alex//Blue Electric Life//DE
 CALSCALE:GREGORIAN
 METHOD:PUBLISH
-X-WR-CALNAME:Alex · Tagesplan
+X-WR-CALNAME:Alex · Blue Electric Life
+X-WR-TIMEZONE:Europe/Berlin
 BEGIN:VEVENT
-UID:alex-0-20260520@blueelectric
+UID:alex-daily-0@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T060000
 DURATION:PT60M
 RRULE:FREQ=DAILY
-SUMMARY:Morgen-Anker
-DESCRIPTION:Aufstehen\, kein Handy\, Wasser\, Fenster öffnen\, Licht reinlassen. · 5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper. · 5 Min Vision: heute soll sich wie was anfühlen? · Musik: Soul\, Funk\, Rock\, Jazz — warme analoge Sounds.
+SUMMARY:☀ Morgen-Anker
+DESCRIPTION:Wasser\, Fenster\, Licht\, kein Handy. Atmung\, Mobility\, Kraft. 5 Min Vision.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Morgen-Anker
+DESCRIPTION:☀ Morgen-Anker
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:alex-1-20260520@blueelectric
-DTSTART:20260520T070000
-DURATION:PT60M
-RRULE:FREQ=DAILY
-SUMMARY:Frühstück & Übergang
-DESCRIPTION:Espresso. Früchte. Eier oder Protein. · Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:PT0S
-DESCRIPTION:Frühstück & Übergang
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
-UID:alex-2-20260520@blueelectric
+UID:alex-daily-1@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T080000
 DURATION:PT240M
 RRULE:FREQ=DAILY
-SUMMARY:Deep Work I
-DESCRIPTION:PTGO / Masterclass / Musik / Texte / KI-Systeme. · Phone in anderem Raum. Ein Ziel pro Block\, schriftlich vorher festgelegt. · Drei Sitzungen à 75 Min mit kurzen Pausen.
+SUMMARY:✦ Deep Work
+DESCRIPTION:PTGO / Masterclass / Musik / Texte / KI. Phone weg\, ein Ziel pro Block.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Deep Work I
+DESCRIPTION:✦ Deep Work
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:alex-3-20260520@blueelectric
+UID:alex-daily-2@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T120000
-DURATION:PT120M
+DURATION:PT90M
 RRULE:FREQ=DAILY
-SUMMARY:Clean Lunch & Walk
-DESCRIPTION:Gemüse\, Fisch oder hochwertige Alternative\, kein Zucker\, wenig Brot. · 20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.
+SUMMARY:❖ Clean Lunch + Walk
+DESCRIPTION:Leicht essen\, ohne Bildschirm. 20 Min Spaziergang\, Sonne ins Gesicht.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Clean Lunch & Walk
+DESCRIPTION:❖ Clean Lunch + Walk
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:alex-4-20260520@blueelectric
-DTSTART:20260520T140000
-DURATION:PT180M
-RRULE:FREQ=DAILY
-SUMMARY:Sessions / Business
-DESCRIPTION:Sessions\, Calls\, Strategie\, Premium-Angebote. · Ruhig\, präsent\, nicht gehetzt.
-BEGIN:VALARM
-ACTION:DISPLAY
-TRIGGER:PT0S
-DESCRIPTION:Sessions / Business
-END:VALARM
-END:VEVENT
-BEGIN:VEVENT
-UID:alex-5-20260520@blueelectric
+UID:alex-daily-3@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T173000
-DURATION:PT120M
+DURATION:PT90M
 RRULE:FREQ=DAILY
-SUMMARY:Golden Hour
-DESCRIPTION:Tegernsee\, Isar\, oder Spaziergang. · Fahrt mit Musik\, offenes Fenster\, Sonnenuntergang.
+SUMMARY:△ Golden Hour
+DESCRIPTION:Isar / Tegernsee / Spaziergang. Fahrt mit Musik. Nervensystempflege.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Golden Hour
+DESCRIPTION:△ Golden Hour
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:alex-6-20260520@blueelectric
+UID:alex-daily-4@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T200000
-DURATION:PT120M
+DURATION:PT90M
 RRULE:FREQ=DAILY
-SUMMARY:Musik / Schreiben
-DESCRIPTION:Warmlicht\, Piano oder Gitarre. · Tagebuch: 3 Zeilen. Was war Würde\, was war Wachstum\, was war Korrektur?
+SUMMARY:♪ Musik / Schreiben
+DESCRIPTION:Piano oder Gitarre. Tagebuch: Würde / Wachstum / Korrektur.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Musik / Schreiben
+DESCRIPTION:♪ Musik / Schreiben
 END:VALARM
 END:VEVENT
 BEGIN:VEVENT
-UID:alex-7-20260520@blueelectric
+UID:alex-daily-5@blueelectric
+DTSTAMP:20260520T083808
 DTSTART:20260520T220000
 DURATION:PT60M
 RRULE:FREQ=DAILY
-SUMMARY:Schlafvorbereitung
-DESCRIPTION:Dusche\, Duft\, Lesen. · Kein Bildschirm im Bett. Vorhang zu\, Raum kühl.
+SUMMARY:≈ Schlafvorbereitung
+DESCRIPTION:Dusche\, Duft\, Lesen. Kein Bildschirm im Bett. Vor 23:00 Schirme aus.
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0S
-DESCRIPTION:Schlafvorbereitung
+DESCRIPTION:≈ Schlafvorbereitung
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-0@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260520T120000
+DURATION:PT180M
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:🧹 Reset Day — Wohnung
+DESCRIPTION:Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus\, eine Fläche frei.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Reset Day: ein Bereich\, nicht perfekt — atmungsfähig.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-1@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260520T183000
+DURATION:PT45M
+RRULE:FREQ=WEEKLY;BYDAY=WE
+SUMMARY:🧳 Tasche packen für Wien
+DESCRIPTION:3 Hemden\, 2 Hosen\, Mantel\, Notizbuch\, Buch\, Ladegeräte. Alles an die Tür.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Tasche für Wien packen.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-2@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260521T073000
+DURATION:PT210M
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:🚆 Wien-Anreise
+DESCRIPTION:Schwarzer Mantel\, Notizbuch\, Buch. Im Zug schreiben statt scrollen.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT13H30M
+DESCRIPTION:Morgen früh nach Wien — heute Abend Tasche & Zug checken.
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Wien-Anreise. Creative Gentleman Mode.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-3@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260521T203000
+DURATION:PT120M
+RRULE:FREQ=WEEKLY;BYDAY=TH
+SUMMARY:♫ Wien-Abend
+DESCRIPTION:Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil\, Architektur\, Ideen.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Wien-Abend: Kaffeehaus\, Jazz\, Schreiben.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-4@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260522T170000
+DURATION:PT90M
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:🔥 Sauna / Gym (Wien)
+DESCRIPTION:Körper regulieren. Hitze\, Kälte\, Atem.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Sauna oder Gym.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-5@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260523T090000
+DURATION:PT600M
+RRULE:FREQ=WEEKLY;BYDAY=SA
+SUMMARY:🜂 Wochenende — Tochter (A) / Freiheit (B)
+DESCRIPTION:A: volle\, ruhige Vaterpräsenz. B: Van\, Berge\, Fliegen\, Musik. Bewusst wählen.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-P1DT13H
+DESCRIPTION:Morgen Wochenende: A Tochter oder B Freiheit — bewusst entscheiden & vorbereiten.
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Wochenende. Voll da sein.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-weekly-6@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260524T113000
+DURATION:PT60M
+RRULE:FREQ=WEEKLY;BYDAY=SU
+SUMMARY:🪞 Wochenrückblick
+DESCRIPTION:Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Wochenrückblick: Würde / Wachstum / Korrektur.
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-monthly@blueelectric
+DTSTAMP:20260520T083808
+DTSTART:20260501T090000
+DURATION:PT60M
+RRULE:FREQ=MONTHLY;BYMONTHDAY=1
+SUMMARY:📋 Monatscheck — 10 Fragen
+DESCRIPTION:Tochter? PTGO? Musik? Körper? Natur? Frauen nicht zentral? Nervensystem? Geld? Schönheit? Freiheit & Verantwortung?
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-P1D
+DESCRIPTION:Morgen Monatscheck — die 10 ehrlichen Fragen.
+END:VALARM
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Monatscheck: die 10 Fragen.
 END:VALARM
 END:VEVENT
 END:VCALENDAR

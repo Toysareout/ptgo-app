@@ -11257,6 +11257,9 @@ _ALEX_CSS = """
   .now-line{font-size:22px;color:var(--cream);margin:10px 0 14px;font-family:'Cormorant Garamond',Georgia,serif;line-height:1.25}
   .now-line b{color:var(--gold2);font-weight:600}
   .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
+  .streak{margin-top:10px;font-size:13px;color:var(--gold2);font-weight:700;letter-spacing:.3px}
+  .day-plan{display:none}
+  .day-plan.active{display:block}
   .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
     border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:inherit}
   .ics-btn:active{transform:scale(.99)}
@@ -11357,27 +11360,33 @@ _ALEX_JS = r"""
 </script>
 
 <script>
-// Heute · geführte Tages-Timeline
+// Heute · geführte, tagesspezifische Timeline
 (function(){
-  var tl = document.querySelectorAll('#day-timeline .tl');
-  if (!tl.length) return;
   var now = new Date();
   var hr = now.getHours();
+  var dow = (now.getDay() + 6) % 7; // Mo=0 … So=6
   var wd = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   var mo = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  var dow = (now.getDay() + 6) % 7;
   var modes = window.ALEX_MODES || [];
   function setText(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
   setText('today-date', wd[now.getDay()] + ', ' + now.getDate() + '. ' + mo[now.getMonth()]);
   setText('today-mode', modes[dow] || '');
   setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
 
+  // Nur den heutigen Wochentag-Plan zeigen
+  var plan = document.querySelector('.day-plan[data-weekday="' + dow + '"]');
+  if (plan) plan.classList.add('active');
+  var tl = plan ? plan.querySelectorAll('.tl') : [];
+  var allBoxes = plan ? plan.querySelectorAll('input[type=checkbox]') : [];
+  if (!tl.length) return;
+
   var curIdx = -1;
   tl.forEach(function(b){ if (parseInt(b.dataset.hour, 10) <= hr) curIdx = parseInt(b.dataset.idx, 10); });
 
-  var key = 'alex-heute:' + now.toISOString().slice(0,10);
+  var key = 'alex-heute:' + iso(now);
   var saved; try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ saved = {}; }
-  var allBoxes = document.querySelectorAll('#day-timeline input[type=checkbox]');
 
   function blockDone(b){
     var bx = b.querySelectorAll('input[type=checkbox]');
@@ -11385,12 +11394,27 @@ _ALEX_JS = r"""
     for (var i = 0; i < bx.length; i++){ if (!bx[i].checked) return false; }
     return true;
   }
+  function computeStreak(){
+    var s; try { s = JSON.parse(localStorage.getItem('alex-streak') || '[]'); } catch(e){ s = []; }
+    var set = {}; s.forEach(function(d){ set[d] = 1; });
+    var streak = 0, day = new Date();
+    if (!set[iso(day)]) day.setDate(day.getDate() - 1); // gestern zählt, falls heute noch offen
+    while (set[iso(day)]) { streak++; day.setDate(day.getDate() - 1); }
+    return streak;
+  }
   function refresh(){
     var done = 0; allBoxes.forEach(function(x){ if (x.checked) done++; });
     setText('day-meter', done + ' / ' + allBoxes.length + ' Schritte');
     var bar = document.getElementById('day-bar');
     if (bar) bar.style.width = (allBoxes.length ? done / allBoxes.length * 100 : 0) + '%';
     tl.forEach(function(b){ b.classList.toggle('done', blockDone(b)); });
+
+    if (allBoxes.length && done === allBoxes.length){
+      var s; try { s = JSON.parse(localStorage.getItem('alex-streak') || '[]'); } catch(e){ s = []; }
+      if (s.indexOf(iso(now)) < 0){ s.push(iso(now)); localStorage.setItem('alex-streak', JSON.stringify(s)); }
+    }
+    var st = computeStreak();
+    setText('streak', st > 0 ? ('\\uD83D\\uDD25 ' + st + (st === 1 ? ' Tag' : ' Tage') + ' Serie') : 'Serie startet heute');
   }
 
   tl.forEach(function(b){
@@ -11411,39 +11435,18 @@ _ALEX_JS = r"""
     b.querySelector('.tl-head').addEventListener('click', function(){ b.classList.toggle('open'); });
   });
 
-  var cur = document.querySelector('#day-timeline .tl.now .tl-label');
+  var cur = plan.querySelector('.tl.now .tl-label');
   setText('now-label', cur ? cur.textContent : 'Tag ausklingen lassen');
   refresh();
 
   var btn = document.getElementById('ics-btn');
   if (btn){
     btn.addEventListener('click', function(){
-      var blocks = window.ALEX_BLOCKS || [];
-      function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
-      function pad(n){ return String(n).padStart(2,'0'); }
-      var d = new Date();
-      var ymd = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
-      var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alex//Blue Electric Life//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Alex · Tagesplan'];
-      blocks.forEach(function(b, i){
-        L.push('BEGIN:VEVENT');
-        L.push('UID:alex-' + i + '-' + ymd + '@blueelectric');
-        L.push('DTSTART:' + ymd + 'T' + pad(b.h) + pad(b.m) + '00');
-        L.push('DURATION:PT' + b.dur + 'M');
-        L.push('RRULE:FREQ=DAILY');
-        L.push('SUMMARY:' + esc(b.sum));
-        L.push('DESCRIPTION:' + esc(b.desc));
-        L.push('BEGIN:VALARM');
-        L.push('ACTION:DISPLAY');
-        L.push('TRIGGER:PT0S');
-        L.push('DESCRIPTION:' + esc(b.sum));
-        L.push('END:VALARM');
-        L.push('END:VEVENT');
-      });
-      L.push('END:VCALENDAR');
-      var blob = new Blob([L.join('\r\n')], {type:'text/calendar'});
+      var ics = window.ALEX_ICS || '';
+      var blob = new Blob([ics], {type:'text/calendar'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'alex-tagesplan.ics';
+      a.download = 'alex-blue-electric-life.ics';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
   }
@@ -11539,41 +11542,107 @@ def _alex_day_blocks_html() -> str:
     return blocks
 
 
-def _alex_ics_blocks():
-    blocks = []
+def _hm(t):
+    h, m = (int(x) for x in t.split(":"))
+    return h, m
+
+
+def _blocks_from_day_blocks():
+    out = []
     for b in ALEX["day_blocks"]:
-        h1, m1 = (int(x) for x in b["t1"].split(":"))
-        h2, m2 = (int(x) for x in b["t2"].split(":"))
-        dur = (h2 * 60 + m2) - (h1 * 60 + m1)
-        if dur <= 0:
-            dur = 30
-        blocks.append({"h": h1, "m": m1, "dur": dur, "sum": b["label"], "desc": " · ".join(b["items"])})
-    return blocks
+        h, m = _hm(b["t1"])
+        out.append({"t1": b["t1"], "h": h, "m": m, "label": b["label"], "items": b["items"]})
+    return out
+
+
+# Tagesspezifische Pläne (0=Montag … 6=Sonntag). Mo/Di = der tiefe Soul-Deep-Work-Tag.
+def _alex_day_plans():
+    deep = _blocks_from_day_blocks()
+    plans = {0: deep, 1: deep}
+
+    plans[2] = [  # Mittwoch — Reset Day
+        {"t1": "06:30", "label": "Morgen-Anker (sanft)", "items": ["Wasser, Fenster, Licht, kein Handy.", "10 Min Mobility, Atmung.", "Espresso, Früchte."]},
+        {"t1": "08:30", "label": "Admin & Buchhaltung", "items": ["Rechnungen, Belege, Überblick Geld.", "Posteingang leeren — Inbox Zero.", "Offene Entscheidungen treffen, nicht aufschieben."]},
+        {"t1": "10:30", "label": "Tochter- & Wien-Planung", "items": ["Tochter-Wochenende konkret planen.", "Wien Do/Fr vorbereiten: Hotel, Termine, Zug.", "Ein kleines Abenteuer für sie aussuchen."]},
+        {"t1": "12:00", "label": "Wohnungs-Reset (ein Bereich)", "items": ["Heute genau EIN Bereich (Bad / Küche / Schlafzimmer / Musikecke / Schrank).", "Ein Karton raus. Eine Fläche frei. Atmungsfähig statt perfekt.", "Bei Bedarf Reinigungskraft / Entrümpler einplanen."]},
+        {"t1": "15:00", "label": "Wäsche & Körperpflege", "items": ["Wäsche, Bügeln, Kleidung für Wien bereitlegen.", "Haare, Bart, Nägel, Haut. Gepflegt = präsent.", "Schuhe putzen."]},
+        {"t1": "17:00", "label": "Training / Spaziergang", "items": ["Langer Spaziergang oder Krafttraining.", "Sauna, wenn möglich.", "Nervensystem runterfahren."]},
+        {"t1": "18:30", "label": "Tasche packen für Wien", "items": ["Minimalistisch: 3 Hemden, 2 Hosen, Mantel/Lederjacke.", "Notizbuch, Buch, Kopfhörer, Ladegeräte.", "Alles bereit an der Tür."]},
+        {"t1": "20:00", "label": "Piano / Gitarre", "items": ["30–60 Min Musik. Ohne Ziel, nur Klang.", "Eine Voice Note aufnehmen."]},
+        {"t1": "22:30", "label": "Schlafvorbereitung", "items": ["Dusche, Duft, Lesen. Kein Bildschirm im Bett."]},
+    ]
+
+    plans[3] = [  # Donnerstag — Wien Anreise
+        {"t1": "06:30", "label": "Morgen-Anker", "items": ["Wasser, Atmung, kurze Mobility.", "Espresso, Protein."]},
+        {"t1": "07:30", "label": "Anreise Wien (Bahn)", "items": ["Schwarzer Mantel / Lederjacke, Notizbuch, Buch.", "Im Zug: schreiben, lesen, Musik — kein Doomscroll.", "Eine PTGO- oder Song-Idee festhalten."]},
+        {"t1": "11:00", "label": "Ankommen & einchecken", "items": ["Hotel/Unterkunft, das dich kennt.", "Kurzer Spaziergang durch eine schöne Straße.", "Espresso im Stammcafé."]},
+        {"t1": "14:00", "label": "Arbeit in Wien", "items": ["Präsent, fokussiert, ruhig.", "Sessions / Calls / Deep Work."]},
+        {"t1": "18:00", "label": "Duschen & gutes Essen", "items": ["Duschen, frisch machen.", "Echte Mahlzeit, bewusst, nicht to-go."]},
+        {"t1": "20:30", "label": "Kaffeehaus / Jazz / Schreiben", "items": ["Kaffeehaus oder Jazzbar.", "Notizen: Architektur, Stil, Texte, Ideen.", "Keine billige Ablenkung, kein Dating-Modus."]},
+        {"t1": "22:30", "label": "Schlafvorbereitung", "items": ["Warmes Licht, Lesen, früh ins Bett."]},
+    ]
+
+    plans[4] = [  # Freitag — Wien Deep Presence
+        {"t1": "07:00", "label": "Morgen-Anker im Hotel", "items": ["Wasser, Atmung, Mobility.", "Push-ups im Zimmer.", "Espresso, kurzer Spaziergang."]},
+        {"t1": "09:00", "label": "Arbeit in Wien", "items": ["Tiefste Präsenz der Woche.", "Sessions / Strategie."]},
+        {"t1": "13:00", "label": "Clean Lunch", "items": ["Leicht, hochwertig, ohne Bildschirm."]},
+        {"t1": "14:00", "label": "Arbeit / Sessions", "items": ["Letzter Arbeitsblock.", "Loose Ends schließen."]},
+        {"t1": "17:00", "label": "Sauna oder Gym", "items": ["Körper regulieren.", "Hitze, Kälte, Atem."]},
+        {"t1": "19:00", "label": "Hotel-Energy", "items": ["Warme Lampen, Hemd halb offen, Musik über Lautsprecher.", "Die Stadt leuchtet draußen — du lebst bewusst drin."]},
+        {"t1": "21:00", "label": "Wien-Notizen sichern", "items": ["Beste Ideen der Woche für Musik & PTGO festhalten.", "Eine Sache, die du mitnimmst."]},
+        {"t1": "22:30", "label": "Schlaf oder Abendzug", "items": ["Übernachten oder ruhig heimfahren."]},
+    ]
+
+    plans[5] = [  # Samstag — Wochenende A (Tochter) / B (Freiheit)
+        {"t1": "08:00", "label": "Langsames Frühstück", "items": ["Kein Eile, kein Handy am Tisch.", "A: mit Tochter · B: allein, still, Espresso draußen."]},
+        {"t1": "10:00", "label": "Natur / Bewegung", "items": ["A: See, Wald, Spielplatz mit Tochter.", "B: Van, Berge, Paragliding, lange Bewegung."]},
+        {"t1": "13:00", "label": "Mittag", "items": ["A: zusammen kochen, kleine Aufgabe für sie.", "B: gutes Essen unterwegs."]},
+        {"t1": "14:30", "label": "Abenteuer", "items": ["A: Museum, Boot, kleines Konzert, See.", "B: Tour, Flug, Gardasee/Dolomiten, Sauna."]},
+        {"t1": "18:00", "label": "Ruhiger Abend", "items": ["A: Abendessen, vorlesen, ruhige Vaterpräsenz.", "B: Sonnenuntergang, Gitarre, Stille."]},
+        {"t1": "21:00", "label": "Ausklang", "items": ["Lesen oder Gitarre.", "Dankbar, nicht müde."]},
+    ]
+
+    plans[6] = [  # Sonntag — Reflexion & Vorbereitung
+        {"t1": "08:30", "label": "Frühstück, langsam", "items": ["Ruhig ankommen, kein Programm."]},
+        {"t1": "10:00", "label": "Spaziergang", "items": ["Natur, frische Luft, ohne Kopfhörer einmal."]},
+        {"t1": "11:30", "label": "Wochenrückblick", "items": ["Würde: Wo war ich ich selbst?", "Wachstum: Wo bin ich gewachsen?", "Korrektur: Was ändere ich nächste Woche?"]},
+        {"t1": "13:00", "label": "Mittag", "items": ["Clean, ruhig."]},
+        {"t1": "14:00", "label": "Woche vorbereiten", "items": ["Wäsche fertig, Tasche, Mo-Vormittag klar.", "Termine & Deep-Work-Ziele festlegen."]},
+        {"t1": "17:00", "label": "Natur oder Sauna", "items": ["Nervensystem auftanken."]},
+        {"t1": "20:00", "label": "Piano / Lesen", "items": ["Ruhiger Abend, warmes Licht."]},
+        {"t1": "22:00", "label": "Früh ins Bett", "items": ["Stark in die Woche starten."]},
+    ]
+    return plans
 
 
 def _alex_heute_panel() -> str:
-    rows = ""
-    for i, b in enumerate(ALEX["day_blocks"]):
-        steps = "".join(
-            f'<label class="step"><input type="checkbox"><span>{x}</span></label>'
-            for x in b["items"]
-        )
-        rows += f"""
-        <div class="tl" data-hour="{b['h']}" data-idx="{i}">
-          <button class="tl-head" type="button">
-            <span class="tl-time">{b['t1']}</span>
-            <span class="tl-label">{b['label']}</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div>{steps}</div></div>
-        </div>"""
+    plans = _alex_day_plans()
+    all_plans_html = ""
+    for wd in range(7):
+        rows = ""
+        for i, b in enumerate(plans[wd]):
+            h, _m = _hm(b["t1"])
+            steps = "".join(
+                f'<label class="step"><input type="checkbox"><span>{x}</span></label>'
+                for x in b["items"]
+            )
+            rows += f"""
+            <div class="tl" data-hour="{h}" data-idx="{i}">
+              <button class="tl-head" type="button">
+                <span class="tl-time">{b['t1']}</span>
+                <span class="tl-label">{b['label']}</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div>{steps}</div></div>
+            </div>"""
+        all_plans_html += f'<div class="day-plan" data-weekday="{wd}">{rows}</div>'
 
     modes = [d["mode"] for d in ALEX["week"]]
     data_js = (
         "<script>window.ALEX_MODES="
         + json.dumps(modes, ensure_ascii=False)
-        + ";window.ALEX_BLOCKS="
-        + json.dumps(_alex_ics_blocks(), ensure_ascii=False)
+        + ";window.ALEX_ICS="
+        + json.dumps(_alex_build_ics(), ensure_ascii=False)
         + ";</script>"
     )
     return f"""
@@ -11583,10 +11652,11 @@ def _alex_heute_panel() -> str:
         <div class="now-line">Jetzt dran: <b id="now-label">—</b></div>
         <div class="bar"><div id="day-bar"></div></div>
         <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
+        <div class="streak" id="streak">Serie startet heute</div>
       </div>
       <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
-      <p class="ics-hint">Einmal in deinen Kalender importieren — dann erinnert dich dein Handy jeden Tag automatisch an jeden Schritt.</p>
-      <div id="day-timeline">{rows}</div>
+      <p class="ics-hint">Einmal importieren — dein Handy erinnert dich täglich an jeden Schritt, plus Wochen-Anker (Mittwoch Reset, Wien-Anreise am Vorabend, Tochter-Wochenende ab Freitag) und den Monatscheck.</p>
+      <div id="day-timeline">{all_plans_html}</div>
       {data_js}
     </section>"""
 
@@ -11990,26 +12060,74 @@ def alex_dashboard(request: Request):
 
 
 def _alex_build_ics() -> str:
-    today = _now_local().strftime("%Y%m%d")
+    from datetime import timedelta
+
+    now = _now_local()
+    today = now.strftime("%Y%m%d")
+    stamp = now.strftime("%Y%m%dT%H%M%S")
+    byday = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Alex//Blue Electric Life//DE",
-             "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Alex · Tagesplan"]
+             "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Alex · Blue Electric Life",
+             "X-WR-TIMEZONE:Europe/Berlin"]
 
     def esc(s):
         return str(s).replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
 
-    for i, b in enumerate(_alex_ics_blocks()):
-        lines += [
-            "BEGIN:VEVENT",
-            f"UID:alex-{i}-{today}@blueelectric",
-            f"DTSTART:{today}T{b['h']:02d}{b['m']:02d}00",
-            f"DURATION:PT{b['dur']}M",
-            "RRULE:FREQ=DAILY",
-            f"SUMMARY:{esc(b['sum'])}",
-            f"DESCRIPTION:{esc(b['desc'])}",
-            "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:PT0S",
-            f"DESCRIPTION:{esc(b['sum'])}", "END:VALARM",
-            "END:VEVENT",
-        ]
+    def event(uid, date_yyyymmdd, h, m, dur, summary, desc, rrule, alarms):
+        out = ["BEGIN:VEVENT", f"UID:{uid}@blueelectric", f"DTSTAMP:{stamp}",
+               f"DTSTART:{date_yyyymmdd}T{h:02d}{m:02d}00", f"DURATION:PT{dur}M",
+               f"RRULE:{rrule}", f"SUMMARY:{esc(summary)}", f"DESCRIPTION:{esc(desc)}"]
+        for trig, label in alarms:
+            out += ["BEGIN:VALARM", "ACTION:DISPLAY", f"TRIGGER:{trig}", f"DESCRIPTION:{esc(label)}", "END:VALARM"]
+        out.append("END:VEVENT")
+        return out
+
+    def next_weekday(wd):  # wd: 0=Mon … 6=Sun
+        d = now.date()
+        return (d + timedelta(days=(wd - d.weekday()) % 7)).strftime("%Y%m%d")
+
+    # — Tägliche Anker (stabiler Grundrhythmus) —
+    daily = [
+        (6, 0, 60, "☀ Morgen-Anker", "Wasser, Fenster, Licht, kein Handy. Atmung, Mobility, Kraft. 5 Min Vision."),
+        (8, 0, 240, "✦ Deep Work", "PTGO / Masterclass / Musik / Texte / KI. Phone weg, ein Ziel pro Block."),
+        (12, 0, 90, "❖ Clean Lunch + Walk", "Leicht essen, ohne Bildschirm. 20 Min Spaziergang, Sonne ins Gesicht."),
+        (17, 30, 90, "△ Golden Hour", "Isar / Tegernsee / Spaziergang. Fahrt mit Musik. Nervensystempflege."),
+        (20, 0, 90, "♪ Musik / Schreiben", "Piano oder Gitarre. Tagebuch: Würde / Wachstum / Korrektur."),
+        (22, 0, 60, "≈ Schlafvorbereitung", "Dusche, Duft, Lesen. Kein Bildschirm im Bett. Vor 23:00 Schirme aus."),
+    ]
+    for i, (h, m, dur, summ, desc) in enumerate(daily):
+        lines += event(f"alex-daily-{i}", today, h, m, dur, summ, desc,
+                       "FREQ=DAILY", [("PT0S", summ)])
+
+    # — Wochen-Anker mit Vorlauf-Erinnerung —
+    weekly = [
+        # (wd, h, m, dur, summary, desc, [(trigger, label), ...])
+        (2, 12, 0, 180, "🧹 Reset Day — Wohnung", "Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus, eine Fläche frei.",
+         [("PT0S", "Reset Day: ein Bereich, nicht perfekt — atmungsfähig.")]),
+        (2, 18, 30, 45, "🧳 Tasche packen für Wien", "3 Hemden, 2 Hosen, Mantel, Notizbuch, Buch, Ladegeräte. Alles an die Tür.",
+         [("PT0S", "Tasche für Wien packen.")]),
+        (3, 7, 30, 210, "🚆 Wien-Anreise", "Schwarzer Mantel, Notizbuch, Buch. Im Zug schreiben statt scrollen.",
+         [("-PT13H30M", "Morgen früh nach Wien — heute Abend Tasche & Zug checken."), ("PT0S", "Wien-Anreise. Creative Gentleman Mode.")]),
+        (3, 20, 30, 120, "♫ Wien-Abend", "Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil, Architektur, Ideen.",
+         [("PT0S", "Wien-Abend: Kaffeehaus, Jazz, Schreiben.")]),
+        (4, 17, 0, 90, "🔥 Sauna / Gym (Wien)", "Körper regulieren. Hitze, Kälte, Atem.",
+         [("PT0S", "Sauna oder Gym.")]),
+        (5, 9, 0, 600, "🜂 Wochenende — Tochter (A) / Freiheit (B)", "A: volle, ruhige Vaterpräsenz. B: Van, Berge, Fliegen, Musik. Bewusst wählen.",
+         [("-P1DT13H", "Morgen Wochenende: A Tochter oder B Freiheit — bewusst entscheiden & vorbereiten."), ("PT0S", "Wochenende. Voll da sein.")]),
+        (6, 11, 30, 60, "🪞 Wochenrückblick", "Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?",
+         [("PT0S", "Wochenrückblick: Würde / Wachstum / Korrektur.")]),
+    ]
+    for i, (wd, h, m, dur, summ, desc, alarms) in enumerate(weekly):
+        lines += event(f"alex-weekly-{i}", next_weekday(wd), h, m, dur, summ, desc,
+                       f"FREQ=WEEKLY;BYDAY={byday[wd]}", alarms)
+
+    # — Monatscheck (1. des Monats) —
+    first = now.replace(day=1).strftime("%Y%m%d")
+    lines += event("alex-monthly", first, 9, 0, 60, "📋 Monatscheck — 10 Fragen",
+                   "Tochter? PTGO? Musik? Körper? Natur? Frauen nicht zentral? Nervensystem? Geld? Schönheit? Freiheit & Verantwortung?",
+                   "FREQ=MONTHLY;BYMONTHDAY=1",
+                   [("-P1D", "Morgen Monatscheck — die 10 ehrlichen Fragen."), ("PT0S", "Monatscheck: die 10 Fragen.")])
+
     lines.append("END:VCALENDAR")
     return "\r\n".join(lines)
 

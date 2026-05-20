@@ -147,6 +147,9 @@
   .now-line{font-size:22px;color:var(--cream);margin:10px 0 14px;font-family:'Cormorant Garamond',Georgia,serif;line-height:1.25}
   .now-line b{color:var(--gold2);font-weight:600}
   .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
+  .streak{margin-top:10px;font-size:13px;color:var(--gold2);font-weight:700;letter-spacing:.3px}
+  .day-plan{display:none}
+  .day-plan.active{display:block}
   .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
     border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:inherit}
   .ics-btn:active{transform:scale(.99)}
@@ -196,75 +199,444 @@
         <div class="now-line">Jetzt dran: <b id="now-label">—</b></div>
         <div class="bar"><div id="day-bar"></div></div>
         <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
+        <div class="streak" id="streak">Serie startet heute</div>
       </div>
       <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
-      <p class="ics-hint">Einmal in deinen Kalender importieren — dann erinnert dich dein Handy jeden Tag automatisch an jeden Schritt.</p>
-      <div id="day-timeline">
-        <div class="tl" data-hour="6" data-idx="0">
-          <button class="tl-head" type="button">
-            <span class="tl-time">06:00</span>
-            <span class="tl-label">Morgen-Anker</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.</span></label><label class="step"><input type="checkbox"><span>5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.</span></label><label class="step"><input type="checkbox"><span>5 Min Vision: heute soll sich wie was anfühlen?</span></label><label class="step"><input type="checkbox"><span>Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="7" data-idx="1">
-          <button class="tl-head" type="button">
-            <span class="tl-time">07:00</span>
-            <span class="tl-label">Frühstück & Übergang</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Espresso. Früchte. Eier oder Protein.</span></label><label class="step"><input type="checkbox"><span>Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="8" data-idx="2">
-          <button class="tl-head" type="button">
-            <span class="tl-time">08:00</span>
-            <span class="tl-label">Deep Work I</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>PTGO / Masterclass / Musik / Texte / KI-Systeme.</span></label><label class="step"><input type="checkbox"><span>Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.</span></label><label class="step"><input type="checkbox"><span>Drei Sitzungen à 75 Min mit kurzen Pausen.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="12" data-idx="3">
-          <button class="tl-head" type="button">
-            <span class="tl-time">12:00</span>
-            <span class="tl-label">Clean Lunch & Walk</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.</span></label><label class="step"><input type="checkbox"><span>20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="14" data-idx="4">
-          <button class="tl-head" type="button">
-            <span class="tl-time">14:00</span>
-            <span class="tl-label">Sessions / Business</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sessions, Calls, Strategie, Premium-Angebote.</span></label><label class="step"><input type="checkbox"><span>Ruhig, präsent, nicht gehetzt.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="17" data-idx="5">
-          <button class="tl-head" type="button">
-            <span class="tl-time">17:30</span>
-            <span class="tl-label">Golden Hour</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tegernsee, Isar, oder Spaziergang.</span></label><label class="step"><input type="checkbox"><span>Fahrt mit Musik, offenes Fenster, Sonnenuntergang.</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="20" data-idx="6">
-          <button class="tl-head" type="button">
-            <span class="tl-time">20:00</span>
-            <span class="tl-label">Musik / Schreiben</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmlicht, Piano oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?</span></label></div></div>
-        </div>
-        <div class="tl" data-hour="22" data-idx="7">
-          <button class="tl-head" type="button">
-            <span class="tl-time">22:00</span>
-            <span class="tl-label">Schlafvorbereitung</span>
-            <span class="tl-state"></span>
-          </button>
-          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
-        </div></div>
-      <script>window.ALEX_MODES=["München · Deep Work · Soul", "Business + Musik", "Reset Day · Wohnung zurückerobern", "Wien · Anreise · Creative Gentleman", "Wien · Deep Presence · Hotel Energy", "Wochenende A: Tochter / B: Freiheit", "Reflexion · Vorbereitung · Ruhe"];window.ALEX_BLOCKS=[{"h": 6, "m": 0, "dur": 60, "sum": "Morgen-Anker", "desc": "Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen. · 5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper. · 5 Min Vision: heute soll sich wie was anfühlen? · Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds."}, {"h": 7, "m": 0, "dur": 60, "sum": "Frühstück & Übergang", "desc": "Espresso. Früchte. Eier oder Protein. · Kein Doomscroll. Erst nach dem ersten Deep-Work-Block."}, {"h": 8, "m": 0, "dur": 240, "sum": "Deep Work I", "desc": "PTGO / Masterclass / Musik / Texte / KI-Systeme. · Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt. · Drei Sitzungen à 75 Min mit kurzen Pausen."}, {"h": 12, "m": 0, "dur": 120, "sum": "Clean Lunch & Walk", "desc": "Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot. · 20-Min Spaziergang. Sonne ins Gesicht. Keine Reize."}, {"h": 14, "m": 0, "dur": 180, "sum": "Sessions / Business", "desc": "Sessions, Calls, Strategie, Premium-Angebote. · Ruhig, präsent, nicht gehetzt."}, {"h": 17, "m": 30, "dur": 120, "sum": "Golden Hour", "desc": "Tegernsee, Isar, oder Spaziergang. · Fahrt mit Musik, offenes Fenster, Sonnenuntergang."}, {"h": 20, "m": 0, "dur": 120, "sum": "Musik / Schreiben", "desc": "Warmlicht, Piano oder Gitarre. · Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?"}, {"h": 22, "m": 0, "dur": 60, "sum": "Schlafvorbereitung", "desc": "Dusche, Duft, Lesen. · Kein Bildschirm im Bett. Vorhang zu, Raum kühl."}];</script>
+      <p class="ics-hint">Einmal importieren — dein Handy erinnert dich täglich an jeden Schritt, plus Wochen-Anker (Mittwoch Reset, Wien-Anreise am Vorabend, Tochter-Wochenende ab Freitag) und den Monatscheck.</p>
+      <div id="day-timeline"><div class="day-plan" data-weekday="0">
+            <div class="tl" data-hour="6" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">06:00</span>
+                <span class="tl-label">Morgen-Anker</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.</span></label><label class="step"><input type="checkbox"><span>5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.</span></label><label class="step"><input type="checkbox"><span>5 Min Vision: heute soll sich wie was anfühlen?</span></label><label class="step"><input type="checkbox"><span>Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="7" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">07:00</span>
+                <span class="tl-label">Frühstück & Übergang</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Espresso. Früchte. Eier oder Protein.</span></label><label class="step"><input type="checkbox"><span>Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="8" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:00</span>
+                <span class="tl-label">Deep Work I</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>PTGO / Masterclass / Musik / Texte / KI-Systeme.</span></label><label class="step"><input type="checkbox"><span>Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.</span></label><label class="step"><input type="checkbox"><span>Drei Sitzungen à 75 Min mit kurzen Pausen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="12" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">12:00</span>
+                <span class="tl-label">Clean Lunch & Walk</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.</span></label><label class="step"><input type="checkbox"><span>20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Sessions / Business</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sessions, Calls, Strategie, Premium-Angebote.</span></label><label class="step"><input type="checkbox"><span>Ruhig, präsent, nicht gehetzt.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:30</span>
+                <span class="tl-label">Golden Hour</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tegernsee, Isar, oder Spaziergang.</span></label><label class="step"><input type="checkbox"><span>Fahrt mit Musik, offenes Fenster, Sonnenuntergang.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:00</span>
+                <span class="tl-label">Musik / Schreiben</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmlicht, Piano oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:00</span>
+                <span class="tl-label">Schlafvorbereitung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="1">
+            <div class="tl" data-hour="6" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">06:00</span>
+                <span class="tl-label">Morgen-Anker</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.</span></label><label class="step"><input type="checkbox"><span>5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.</span></label><label class="step"><input type="checkbox"><span>5 Min Vision: heute soll sich wie was anfühlen?</span></label><label class="step"><input type="checkbox"><span>Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="7" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">07:00</span>
+                <span class="tl-label">Frühstück & Übergang</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Espresso. Früchte. Eier oder Protein.</span></label><label class="step"><input type="checkbox"><span>Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="8" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:00</span>
+                <span class="tl-label">Deep Work I</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>PTGO / Masterclass / Musik / Texte / KI-Systeme.</span></label><label class="step"><input type="checkbox"><span>Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.</span></label><label class="step"><input type="checkbox"><span>Drei Sitzungen à 75 Min mit kurzen Pausen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="12" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">12:00</span>
+                <span class="tl-label">Clean Lunch & Walk</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.</span></label><label class="step"><input type="checkbox"><span>20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Sessions / Business</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sessions, Calls, Strategie, Premium-Angebote.</span></label><label class="step"><input type="checkbox"><span>Ruhig, präsent, nicht gehetzt.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:30</span>
+                <span class="tl-label">Golden Hour</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tegernsee, Isar, oder Spaziergang.</span></label><label class="step"><input type="checkbox"><span>Fahrt mit Musik, offenes Fenster, Sonnenuntergang.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:00</span>
+                <span class="tl-label">Musik / Schreiben</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmlicht, Piano oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:00</span>
+                <span class="tl-label">Schlafvorbereitung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="2">
+            <div class="tl" data-hour="6" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">06:30</span>
+                <span class="tl-label">Morgen-Anker (sanft)</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wasser, Fenster, Licht, kein Handy.</span></label><label class="step"><input type="checkbox"><span>10 Min Mobility, Atmung.</span></label><label class="step"><input type="checkbox"><span>Espresso, Früchte.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="8" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:30</span>
+                <span class="tl-label">Admin & Buchhaltung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Rechnungen, Belege, Überblick Geld.</span></label><label class="step"><input type="checkbox"><span>Posteingang leeren — Inbox Zero.</span></label><label class="step"><input type="checkbox"><span>Offene Entscheidungen treffen, nicht aufschieben.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="10" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">10:30</span>
+                <span class="tl-label">Tochter- & Wien-Planung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tochter-Wochenende konkret planen.</span></label><label class="step"><input type="checkbox"><span>Wien Do/Fr vorbereiten: Hotel, Termine, Zug.</span></label><label class="step"><input type="checkbox"><span>Ein kleines Abenteuer für sie aussuchen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="12" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">12:00</span>
+                <span class="tl-label">Wohnungs-Reset (ein Bereich)</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Heute genau EIN Bereich (Bad / Küche / Schlafzimmer / Musikecke / Schrank).</span></label><label class="step"><input type="checkbox"><span>Ein Karton raus. Eine Fläche frei. Atmungsfähig statt perfekt.</span></label><label class="step"><input type="checkbox"><span>Bei Bedarf Reinigungskraft / Entrümpler einplanen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="15" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">15:00</span>
+                <span class="tl-label">Wäsche & Körperpflege</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wäsche, Bügeln, Kleidung für Wien bereitlegen.</span></label><label class="step"><input type="checkbox"><span>Haare, Bart, Nägel, Haut. Gepflegt = präsent.</span></label><label class="step"><input type="checkbox"><span>Schuhe putzen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:00</span>
+                <span class="tl-label">Training / Spaziergang</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Langer Spaziergang oder Krafttraining.</span></label><label class="step"><input type="checkbox"><span>Sauna, wenn möglich.</span></label><label class="step"><input type="checkbox"><span>Nervensystem runterfahren.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="18" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">18:30</span>
+                <span class="tl-label">Tasche packen für Wien</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Minimalistisch: 3 Hemden, 2 Hosen, Mantel/Lederjacke.</span></label><label class="step"><input type="checkbox"><span>Notizbuch, Buch, Kopfhörer, Ladegeräte.</span></label><label class="step"><input type="checkbox"><span>Alles bereit an der Tür.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:00</span>
+                <span class="tl-label">Piano / Gitarre</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>30–60 Min Musik. Ohne Ziel, nur Klang.</span></label><label class="step"><input type="checkbox"><span>Eine Voice Note aufnehmen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="8">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:30</span>
+                <span class="tl-label">Schlafvorbereitung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen. Kein Bildschirm im Bett.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="3">
+            <div class="tl" data-hour="6" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">06:30</span>
+                <span class="tl-label">Morgen-Anker</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wasser, Atmung, kurze Mobility.</span></label><label class="step"><input type="checkbox"><span>Espresso, Protein.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="7" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">07:30</span>
+                <span class="tl-label">Anreise Wien (Bahn)</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Schwarzer Mantel / Lederjacke, Notizbuch, Buch.</span></label><label class="step"><input type="checkbox"><span>Im Zug: schreiben, lesen, Musik — kein Doomscroll.</span></label><label class="step"><input type="checkbox"><span>Eine PTGO- oder Song-Idee festhalten.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="11" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">11:00</span>
+                <span class="tl-label">Ankommen & einchecken</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Hotel/Unterkunft, das dich kennt.</span></label><label class="step"><input type="checkbox"><span>Kurzer Spaziergang durch eine schöne Straße.</span></label><label class="step"><input type="checkbox"><span>Espresso im Stammcafé.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Arbeit in Wien</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Präsent, fokussiert, ruhig.</span></label><label class="step"><input type="checkbox"><span>Sessions / Calls / Deep Work.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="18" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">18:00</span>
+                <span class="tl-label">Duschen & gutes Essen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Duschen, frisch machen.</span></label><label class="step"><input type="checkbox"><span>Echte Mahlzeit, bewusst, nicht to-go.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:30</span>
+                <span class="tl-label">Kaffeehaus / Jazz / Schreiben</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Kaffeehaus oder Jazzbar.</span></label><label class="step"><input type="checkbox"><span>Notizen: Architektur, Stil, Texte, Ideen.</span></label><label class="step"><input type="checkbox"><span>Keine billige Ablenkung, kein Dating-Modus.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:30</span>
+                <span class="tl-label">Schlafvorbereitung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmes Licht, Lesen, früh ins Bett.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="4">
+            <div class="tl" data-hour="7" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">07:00</span>
+                <span class="tl-label">Morgen-Anker im Hotel</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wasser, Atmung, Mobility.</span></label><label class="step"><input type="checkbox"><span>Push-ups im Zimmer.</span></label><label class="step"><input type="checkbox"><span>Espresso, kurzer Spaziergang.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="9" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">09:00</span>
+                <span class="tl-label">Arbeit in Wien</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tiefste Präsenz der Woche.</span></label><label class="step"><input type="checkbox"><span>Sessions / Strategie.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="13" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">13:00</span>
+                <span class="tl-label">Clean Lunch</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Leicht, hochwertig, ohne Bildschirm.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Arbeit / Sessions</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Letzter Arbeitsblock.</span></label><label class="step"><input type="checkbox"><span>Loose Ends schließen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:00</span>
+                <span class="tl-label">Sauna oder Gym</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Körper regulieren.</span></label><label class="step"><input type="checkbox"><span>Hitze, Kälte, Atem.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="19" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">19:00</span>
+                <span class="tl-label">Hotel-Energy</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warme Lampen, Hemd halb offen, Musik über Lautsprecher.</span></label><label class="step"><input type="checkbox"><span>Die Stadt leuchtet draußen — du lebst bewusst drin.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="21" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">21:00</span>
+                <span class="tl-label">Wien-Notizen sichern</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Beste Ideen der Woche für Musik & PTGO festhalten.</span></label><label class="step"><input type="checkbox"><span>Eine Sache, die du mitnimmst.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:30</span>
+                <span class="tl-label">Schlaf oder Abendzug</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Übernachten oder ruhig heimfahren.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="5">
+            <div class="tl" data-hour="8" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:00</span>
+                <span class="tl-label">Langsames Frühstück</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Kein Eile, kein Handy am Tisch.</span></label><label class="step"><input type="checkbox"><span>A: mit Tochter · B: allein, still, Espresso draußen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="10" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">10:00</span>
+                <span class="tl-label">Natur / Bewegung</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>A: See, Wald, Spielplatz mit Tochter.</span></label><label class="step"><input type="checkbox"><span>B: Van, Berge, Paragliding, lange Bewegung.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="13" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">13:00</span>
+                <span class="tl-label">Mittag</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>A: zusammen kochen, kleine Aufgabe für sie.</span></label><label class="step"><input type="checkbox"><span>B: gutes Essen unterwegs.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:30</span>
+                <span class="tl-label">Abenteuer</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>A: Museum, Boot, kleines Konzert, See.</span></label><label class="step"><input type="checkbox"><span>B: Tour, Flug, Gardasee/Dolomiten, Sauna.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="18" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">18:00</span>
+                <span class="tl-label">Ruhiger Abend</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>A: Abendessen, vorlesen, ruhige Vaterpräsenz.</span></label><label class="step"><input type="checkbox"><span>B: Sonnenuntergang, Gitarre, Stille.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="21" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">21:00</span>
+                <span class="tl-label">Ausklang</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Lesen oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Dankbar, nicht müde.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="6">
+            <div class="tl" data-hour="8" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:30</span>
+                <span class="tl-label">Frühstück, langsam</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Ruhig ankommen, kein Programm.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="10" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">10:00</span>
+                <span class="tl-label">Spaziergang</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Natur, frische Luft, ohne Kopfhörer einmal.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="11" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">11:30</span>
+                <span class="tl-label">Wochenrückblick</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Würde: Wo war ich ich selbst?</span></label><label class="step"><input type="checkbox"><span>Wachstum: Wo bin ich gewachsen?</span></label><label class="step"><input type="checkbox"><span>Korrektur: Was ändere ich nächste Woche?</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="13" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">13:00</span>
+                <span class="tl-label">Mittag</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Clean, ruhig.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Woche vorbereiten</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wäsche fertig, Tasche, Mo-Vormittag klar.</span></label><label class="step"><input type="checkbox"><span>Termine & Deep-Work-Ziele festlegen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:00</span>
+                <span class="tl-label">Natur oder Sauna</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Nervensystem auftanken.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:00</span>
+                <span class="tl-label">Piano / Lesen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Ruhiger Abend, warmes Licht.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="22" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">22:00</span>
+                <span class="tl-label">Früh ins Bett</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Stark in die Woche starten.</span></label></div></div>
+            </div></div></div>
+      <script>window.ALEX_MODES=["München · Deep Work · Soul", "Business + Musik", "Reset Day · Wohnung zurückerobern", "Wien · Anreise · Creative Gentleman", "Wien · Deep Presence · Hotel Energy", "Wochenende A: Tochter / B: Freiheit", "Reflexion · Vorbereitung · Ruhe"];window.ALEX_ICS="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Alex//Blue Electric Life//DE\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Alex · Blue Electric Life\r\nX-WR-TIMEZONE:Europe/Berlin\r\nBEGIN:VEVENT\r\nUID:alex-daily-0@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T060000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:☀ Morgen-Anker\r\nDESCRIPTION:Wasser\\, Fenster\\, Licht\\, kein Handy. Atmung\\, Mobility\\, Kraft. 5 Min Vision.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:☀ Morgen-Anker\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-1@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T080000\r\nDURATION:PT240M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:✦ Deep Work\r\nDESCRIPTION:PTGO / Masterclass / Musik / Texte / KI. Phone weg\\, ein Ziel pro Block.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:✦ Deep Work\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-2@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T120000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:❖ Clean Lunch + Walk\r\nDESCRIPTION:Leicht essen\\, ohne Bildschirm. 20 Min Spaziergang\\, Sonne ins Gesicht.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:❖ Clean Lunch + Walk\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-3@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T173000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:△ Golden Hour\r\nDESCRIPTION:Isar / Tegernsee / Spaziergang. Fahrt mit Musik. Nervensystempflege.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:△ Golden Hour\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-4@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T200000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:♪ Musik / Schreiben\r\nDESCRIPTION:Piano oder Gitarre. Tagebuch: Würde / Wachstum / Korrektur.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:♪ Musik / Schreiben\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-5@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T220000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:≈ Schlafvorbereitung\r\nDESCRIPTION:Dusche\\, Duft\\, Lesen. Kein Bildschirm im Bett. Vor 23:00 Schirme aus.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:≈ Schlafvorbereitung\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-0@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T120000\r\nDURATION:PT180M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧹 Reset Day — Wohnung\r\nDESCRIPTION:Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus\\, eine Fläche frei.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Reset Day: ein Bereich\\, nicht perfekt — atmungsfähig.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-1@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T183000\r\nDURATION:PT45M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧳 Tasche packen für Wien\r\nDESCRIPTION:3 Hemden\\, 2 Hosen\\, Mantel\\, Notizbuch\\, Buch\\, Ladegeräte. Alles an die Tür.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Tasche für Wien packen.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-2@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260521T073000\r\nDURATION:PT210M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:🚆 Wien-Anreise\r\nDESCRIPTION:Schwarzer Mantel\\, Notizbuch\\, Buch. Im Zug schreiben statt scrollen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT13H30M\r\nDESCRIPTION:Morgen früh nach Wien — heute Abend Tasche & Zug checken.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Anreise. Creative Gentleman Mode.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-3@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260521T203000\r\nDURATION:PT120M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:♫ Wien-Abend\r\nDESCRIPTION:Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil\\, Architektur\\, Ideen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Abend: Kaffeehaus\\, Jazz\\, Schreiben.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-4@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260522T170000\r\nDURATION:PT90M\r\nRRULE:FREQ=WEEKLY;BYDAY=FR\r\nSUMMARY:🔥 Sauna / Gym (Wien)\r\nDESCRIPTION:Körper regulieren. Hitze\\, Kälte\\, Atem.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Sauna oder Gym.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-5@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260523T090000\r\nDURATION:PT600M\r\nRRULE:FREQ=WEEKLY;BYDAY=SA\r\nSUMMARY:🜂 Wochenende — Tochter (A) / Freiheit (B)\r\nDESCRIPTION:A: volle\\, ruhige Vaterpräsenz. B: Van\\, Berge\\, Fliegen\\, Musik. Bewusst wählen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1DT13H\r\nDESCRIPTION:Morgen Wochenende: A Tochter oder B Freiheit — bewusst entscheiden & vorbereiten.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wochenende. Voll da sein.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-6@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260524T113000\r\nDURATION:PT60M\r\nRRULE:FREQ=WEEKLY;BYDAY=SU\r\nSUMMARY:🪞 Wochenrückblick\r\nDESCRIPTION:Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wochenrückblick: Würde / Wachstum / Korrektur.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-monthly@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260501T090000\r\nDURATION:PT60M\r\nRRULE:FREQ=MONTHLY;BYMONTHDAY=1\r\nSUMMARY:📋 Monatscheck — 10 Fragen\r\nDESCRIPTION:Tochter? PTGO? Musik? Körper? Natur? Frauen nicht zentral? Nervensystem? Geld? Schönheit? Freiheit & Verantwortung?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1D\r\nDESCRIPTION:Morgen Monatscheck — die 10 ehrlichen Fragen.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Monatscheck: die 10 Fragen.\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR";</script>
     </section>
     
     <section data-panel="dashboard" class="panel">
@@ -779,27 +1151,33 @@
 </script>
 
 <script>
-// Heute · geführte Tages-Timeline
+// Heute · geführte, tagesspezifische Timeline
 (function(){
-  var tl = document.querySelectorAll('#day-timeline .tl');
-  if (!tl.length) return;
   var now = new Date();
   var hr = now.getHours();
+  var dow = (now.getDay() + 6) % 7; // Mo=0 … So=6
   var wd = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   var mo = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
-  var dow = (now.getDay() + 6) % 7;
   var modes = window.ALEX_MODES || [];
   function setText(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
   setText('today-date', wd[now.getDay()] + ', ' + now.getDate() + '. ' + mo[now.getMonth()]);
   setText('today-mode', modes[dow] || '');
   setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
 
+  // Nur den heutigen Wochentag-Plan zeigen
+  var plan = document.querySelector('.day-plan[data-weekday="' + dow + '"]');
+  if (plan) plan.classList.add('active');
+  var tl = plan ? plan.querySelectorAll('.tl') : [];
+  var allBoxes = plan ? plan.querySelectorAll('input[type=checkbox]') : [];
+  if (!tl.length) return;
+
   var curIdx = -1;
   tl.forEach(function(b){ if (parseInt(b.dataset.hour, 10) <= hr) curIdx = parseInt(b.dataset.idx, 10); });
 
-  var key = 'alex-heute:' + now.toISOString().slice(0,10);
+  var key = 'alex-heute:' + iso(now);
   var saved; try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ saved = {}; }
-  var allBoxes = document.querySelectorAll('#day-timeline input[type=checkbox]');
 
   function blockDone(b){
     var bx = b.querySelectorAll('input[type=checkbox]');
@@ -807,12 +1185,27 @@
     for (var i = 0; i < bx.length; i++){ if (!bx[i].checked) return false; }
     return true;
   }
+  function computeStreak(){
+    var s; try { s = JSON.parse(localStorage.getItem('alex-streak') || '[]'); } catch(e){ s = []; }
+    var set = {}; s.forEach(function(d){ set[d] = 1; });
+    var streak = 0, day = new Date();
+    if (!set[iso(day)]) day.setDate(day.getDate() - 1); // gestern zählt, falls heute noch offen
+    while (set[iso(day)]) { streak++; day.setDate(day.getDate() - 1); }
+    return streak;
+  }
   function refresh(){
     var done = 0; allBoxes.forEach(function(x){ if (x.checked) done++; });
     setText('day-meter', done + ' / ' + allBoxes.length + ' Schritte');
     var bar = document.getElementById('day-bar');
     if (bar) bar.style.width = (allBoxes.length ? done / allBoxes.length * 100 : 0) + '%';
     tl.forEach(function(b){ b.classList.toggle('done', blockDone(b)); });
+
+    if (allBoxes.length && done === allBoxes.length){
+      var s; try { s = JSON.parse(localStorage.getItem('alex-streak') || '[]'); } catch(e){ s = []; }
+      if (s.indexOf(iso(now)) < 0){ s.push(iso(now)); localStorage.setItem('alex-streak', JSON.stringify(s)); }
+    }
+    var st = computeStreak();
+    setText('streak', st > 0 ? ('\\uD83D\\uDD25 ' + st + (st === 1 ? ' Tag' : ' Tage') + ' Serie') : 'Serie startet heute');
   }
 
   tl.forEach(function(b){
@@ -833,39 +1226,18 @@
     b.querySelector('.tl-head').addEventListener('click', function(){ b.classList.toggle('open'); });
   });
 
-  var cur = document.querySelector('#day-timeline .tl.now .tl-label');
+  var cur = plan.querySelector('.tl.now .tl-label');
   setText('now-label', cur ? cur.textContent : 'Tag ausklingen lassen');
   refresh();
 
   var btn = document.getElementById('ics-btn');
   if (btn){
     btn.addEventListener('click', function(){
-      var blocks = window.ALEX_BLOCKS || [];
-      function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
-      function pad(n){ return String(n).padStart(2,'0'); }
-      var d = new Date();
-      var ymd = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
-      var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alex//Blue Electric Life//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Alex · Tagesplan'];
-      blocks.forEach(function(b, i){
-        L.push('BEGIN:VEVENT');
-        L.push('UID:alex-' + i + '-' + ymd + '@blueelectric');
-        L.push('DTSTART:' + ymd + 'T' + pad(b.h) + pad(b.m) + '00');
-        L.push('DURATION:PT' + b.dur + 'M');
-        L.push('RRULE:FREQ=DAILY');
-        L.push('SUMMARY:' + esc(b.sum));
-        L.push('DESCRIPTION:' + esc(b.desc));
-        L.push('BEGIN:VALARM');
-        L.push('ACTION:DISPLAY');
-        L.push('TRIGGER:PT0S');
-        L.push('DESCRIPTION:' + esc(b.sum));
-        L.push('END:VALARM');
-        L.push('END:VEVENT');
-      });
-      L.push('END:VCALENDAR');
-      var blob = new Blob([L.join('\r\n')], {type:'text/calendar'});
+      var ics = window.ALEX_ICS || '';
+      var blob = new Blob([ics], {type:'text/calendar'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'alex-tagesplan.ics';
+      a.download = 'alex-blue-electric-life.ics';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
   }
