@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://api.open-meteo.com" />
 <link rel="preconnect" href="https://geocoding-api.open-meteo.com" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
 <style>
 :root{
   --bg:#05070d; --bg2:#0a0e18; --card:#10151f; --card2:#161c2a; --line:#1f2838;
@@ -74,7 +75,7 @@ a{color:var(--blue);text-decoration:none}
 .scorebadge .t{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
 /* status colors */
 .s-green{--c:var(--green)} .s-yellow{--c:var(--yellow)} .s-orange{--c:var(--orange)}
-.s-red{--c:var(--red)} .s-black{--c:var(--black)} .s-gray{--c:var(--dim)}
+.s-red{--c:var(--red)} .s-black{--c:var(--black)} .s-gray{--c:var(--dim)} .s-cyan{--c:var(--cyan)}
 .statusborder{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);vertical-align:middle}
 .pill{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);
@@ -182,6 +183,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
   <div id="screen-profile" class="screen"></div>
   <div id="screen-exam" class="screen"></div>
   <div id="screen-pro" class="screen"></div>
+  <div id="screen-route" class="screen"></div>
   <div id="screen-more" class="screen"></div>
 
   <div class="disclaimer">
@@ -200,6 +202,7 @@ hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
 </nav>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
 <script src="/skyworthy.js"></script>
 </body>
 </html>

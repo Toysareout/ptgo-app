@@ -908,7 +908,7 @@ function render() {
   const map = {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
-    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, more: renderMore
+    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -999,6 +999,7 @@ function renderCockpit() {
     <button onclick="go('thermal')">🔥 Thermik</button>
     <button onclick="go('pressure')">🎚️ Druck</button>
     <button onclick="go('cloud')">☁️ Wolken</button>
+    <button onclick="go('route')">🛰️ Flugweg 3D</button>
     <button onclick="go('detail')">📋 Gebiet</button>
     <button onclick="go('models')">🧮 Modelle</button>
   </div>
@@ -1022,6 +1023,7 @@ function renderMore() {
     ['pressure', '🎚️', 'Druck (Hoch/Tief)', 'Live-Lage, Gradient + komplettes Druckwissen'],
     ['cloud', '☁️', 'Wolken & Gewitter', 'Bewölkung, Niederschlag, Radar, Gewitterrisiko'],
     ['models', '🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM'],
+    ['route', '🛰️', 'Flugweg (3D)', 'Idealer Weg im 3D-Gelände, animiert'],
     ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, lokale Gefahren'],
     ['profile', '👤', 'Pilotenprofil', 'Level, Limits, Warnungen, Datenquellen'],
     ['pro', '⭐', 'SKYWORTHY Pro', 'Alle Elite-Features · 49 €/Jahr']
@@ -1553,6 +1555,155 @@ function pressureLessons() {
   ].join('');
 }
 
+/* ---------- FLUGWEG 3D (Google-Earth-Stil) ---------- */
+// great-circle move helper: from {lat,lon} by dist(m) on bearing(deg)
+function geoMove(lat, lon, dist, brg) {
+  const R = 6371000, d = dist / R, b = Geo.toRad(brg), la = Geo.toRad(lat), lo = Geo.toRad(lon);
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+  const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return { lat: Geo.toDeg(la2), lon: Geo.toDeg(lo2) };
+}
+// Build a schematic IDEAL flight path as [lon,lat,alt] points from the current decision.
+function buildIdealPath(site, d) {
+  const to = site.takeoffs[0], lz = site.landings[0] || { lat: site.lat, lon: site.lon, elevation: site.elevationMin };
+  const startAlt = to.elevation;
+  const base = clamp(d ? d.best.cloudBase : startAlt + 500, startAlt + 200, startAlt + 2500);
+  const ft = d ? d.recommendedFlightType : 'Soaring';
+  const idealCenter = SECTOR[site.idealWindDirections[0]] != null ? SECTOR[site.idealWindDirections[0]] : 0;
+  const ridge = (idealCenter + 90) % 360;      // ridge runs ~perpendicular to ideal wind
+  const windFrom = d ? d.best.h.windDir : idealCenter;
+  const pts = []; const add = (p, alt) => pts.push({ lat: p.lat, lon: p.lon, alt });
+  add(to, startAlt);
+
+  if (/Nicht|Groundhandling/.test(ft)) {
+    // only a reference glide line takeoff → landing
+    const steps = 6; for (let i = 1; i <= steps; i++) { const f = i / steps; add({ lat: to.lat + (lz.lat - to.lat) * f, lon: to.lon + (lz.lon - to.lon) * f }, startAlt + (lz.elevation - startAlt) * f); }
+    return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, schematic: true };
+  }
+
+  let cur = { lat: to.lat, lon: to.lon }, alt = startAlt + 25;
+  if (/Soaring|Thermik|XC|Abgleiter/.test(ft)) {
+    // ridge soaring: oscillate along the ridge, gaining height
+    const legs = /Abgleiter/.test(ft) ? 2 : 6, gain = (base - startAlt) / (legs + 4);
+    for (let i = 0; i < legs; i++) {
+      const dir = i % 2 === 0 ? ridge : (ridge + 180) % 360;
+      cur = geoMove(cur.lat, cur.lon, 420, dir);
+      alt = Math.min(base - 120, alt + gain); add(cur, alt);
+    }
+  }
+  if (/Thermik|XC/.test(ft)) {
+    // thermal spiral up to cloudbase (climbing circle)
+    const r = 110, c = geoMove(cur.lat, cur.lon, r, windFrom);
+    for (let a = 0; a <= 900; a += 60) { const p = geoMove(c.lat, c.lon, r, a); alt = Math.min(base, alt + (base - alt) * 0.08 + 12); add(p, alt); }
+    cur = pts[pts.length - 1]; cur = { lat: cur.lat, lon: cur.lon };
+  }
+  if (/XC/.test(ft)) {
+    // downwind cross-country leg (wind blows TO windFrom+180)
+    const downwind = (windFrom + 180) % 360, p = geoMove(cur.lat, cur.lon, 3500, downwind);
+    alt = base - 250; add(p, alt); cur = p;
+  }
+  // final glide to landing, descending
+  const steps = 8; const a0 = alt;
+  for (let i = 1; i <= steps; i++) { const f = i / steps; add({ lat: cur.lat + (lz.lat - cur.lat) * f, lon: cur.lon + (lz.lon - cur.lon) * f }, a0 + (lz.elevation - a0) * f); }
+  return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, schematic: true };
+}
+
+function renderRoute() {
+  const el = $('#screen-route'); const site = siteById(Store.state.selectedSiteId); const d = Data.decision();
+  if (!d) { el.innerHTML = loadingCard('Flugweg wird berechnet…'); return; }
+  const path = buildIdealPath(site, d); const sc = statusClass(d.status);
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Idealer Flugweg (3D) — ${esc(site.name)}</div>
+  ${banner(d.status === 'red' || d.status === 'black' ? 'red' : 'cyan', d.status === 'red' || d.status === 'black'
+    ? '⛔ Heute NO-GO — der gezeigte Weg ist nur eine schematische Referenz, nicht fliegen.'
+    : `Schematischer Idealweg für „${d.recommendedFlightType}". Start → Hangsoaring → Thermik bis Basis → Gleitpfad zum Landeplatz.`)}
+  <div id="routeMap" style="height:62vh;min-height:360px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--card)"></div>
+  <div class="card" style="margin-top:12px">
+    <div class="row">
+      ${kpi('Flugart', '', '', '')}
+    </div>
+    <div class="risk"><div class="ic">🟢</div><div class="tx"><b>Start</b>${esc(site.takeoffs[0].name)} · ${site.takeoffs[0].elevation} m</div></div>
+    <div class="risk"><div class="ic">☁️</div><div class="tx"><b>Arbeitshöhe / Basis</b>~${round(path.base)} m — Kreisen bis knapp unter die Wolkenbasis.</div></div>
+    <div class="risk"><div class="ic">🔴</div><div class="tx"><b>Landeplatz</b>${esc((site.landings[0] || {}).name || '—')}${site.landings[0] ? ' · ' + site.landings[0].elevation + ' m' : ''}</div></div>
+    <div class="risk"><div class="ic">🛫</div><div class="tx"><b>Empfehlung</b>${esc(d.recommendedFlightType)} · Startfenster ${esc(d.bestStartTime)}</div></div>
+  </div>
+  <div class="dim small" style="text-align:center">3D-Gelände © Esri (Satellit) & Terrarium/AWS (Höhen). Weg = schematische Empfehlung, kein Flugplan. Aktualisiert sich mit jedem Wetter-Refresh.</div>`;
+  setTimeout(() => init3DRoute(site, path, d), 30);
+}
+
+let _routeMap = null, _routeAnim = null;
+function destroyRoute() {
+  if (_routeAnim) { cancelAnimationFrame(_routeAnim); _routeAnim = null; }
+  if (_routeMap) { try { _routeMap.remove(); } catch (e) { /* ignore */ } _routeMap = null; }
+}
+function init3DRoute(site, path, d) {
+  const host = $('#routeMap'); if (!host) return;
+  const coords = path.coords;
+  if (typeof maplibregl === 'undefined') { return init2DRoute(host, site, path); }
+  destroyRoute();
+  const lons = coords.map(c => c[0]), lats = coords.map(c => c[1]);
+  const center = [(Math.min(...lons) + Math.max(...lons)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2];
+  try {
+    _routeMap = new maplibregl.Map({
+      container: host, center, zoom: 13.2, pitch: 70, bearing: 20, antialias: true,
+      style: {
+        version: 8,
+        sources: {
+          sat: { type: 'raster', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'], tileSize: 256, attribution: 'Imagery © Esri' },
+          dem: { type: 'raster-dem', tiles: ['https://elevation-tiles-prod.s3.amazonaws.com/terrarium/{z}/{x}/{y}.png'], encoding: 'terrarium', tileSize: 256, maxzoom: 14 }
+        },
+        layers: [{ id: 'sat', type: 'raster', source: 'sat' }],
+        terrain: { source: 'dem', exaggeration: 1.5 }
+      }
+    });
+  } catch (e) { return init2DRoute(host, site, path); }
+  _routeMap.on('error', () => { /* tile errors are non-fatal */ });
+  _routeMap.on('load', () => {
+    try { _routeMap.setSky({ 'sky-color': '#0a1626', 'horizon-color': '#16314a', 'fog-color': '#0a0e18', 'fog-ground-blend': 0.5 }); } catch (e) { /* older */ }
+    _routeMap.addSource('path', { type: 'geojson', data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords.map(c => [c[0], c[1]]) } } });
+    _routeMap.addLayer({ id: 'path-glow', type: 'line', source: 'path', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#2de2e6', 'line-width': 8, 'line-opacity': 0.25, 'line-blur': 4 } });
+    _routeMap.addLayer({ id: 'path', type: 'line', source: 'path', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#2de2e6', 'line-width': 3.5 } });
+    const dot = (c) => { const e = document.createElement('div'); e.style.cssText = `width:14px;height:14px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 0 8px ${c}`; return e; };
+    new maplibregl.Marker({ element: dot('#22e08a') }).setLngLat([coords[0][0], coords[0][1]]).addTo(_routeMap);
+    new maplibregl.Marker({ element: dot('#ff4d5e') }).setLngLat([coords[coords.length - 1][0], coords[coords.length - 1][1]]).addTo(_routeMap);
+    const ge = document.createElement('div'); ge.textContent = '🪂'; ge.style.cssText = 'font-size:24px;filter:drop-shadow(0 0 4px #000)';
+    const glider = new maplibregl.Marker({ element: ge }).setLngLat([coords[0][0], coords[0][1]]).addTo(_routeMap);
+    // fit then animate
+    const b = coords.reduce((bb, c) => bb.extend([c[0], c[1]]), new maplibregl.LngLatBounds([coords[0][0], coords[0][1]], [coords[0][0], coords[0][1]]));
+    _routeMap.fitBounds(b, { padding: 60, pitch: 70, bearing: 20, duration: 1200 });
+    animateRoute(coords, glider);
+  });
+}
+function animateRoute(coords, glider) {
+  // cumulative horizontal distance for constant-speed motion
+  const seg = []; let total = 0;
+  for (let i = 1; i < coords.length; i++) { const dkm = Geo.haversineKm(coords[i - 1][1], coords[i - 1][0], coords[i][1], coords[i][0]); seg.push({ from: i - 1, len: dkm }); total += dkm; }
+  const LOOP = 48000; // ms for a full flight
+  let t0 = performance.now();
+  const step = (now) => {
+    const p = ((now - t0) % LOOP) / LOOP * total;   // distance along path
+    let acc = 0, idx = 0, f = 0;
+    for (const s of seg) { if (acc + s.len >= p) { idx = s.from; f = s.len ? (p - acc) / s.len : 0; break; } acc += s.len; idx = s.from + 1; }
+    const a = coords[idx], b = coords[Math.min(idx + 1, coords.length - 1)];
+    const lng = a[0] + (b[0] - a[0]) * f, lat = a[1] + (b[1] - a[1]) * f;
+    glider.setLngLat([lng, lat]);
+    if (_routeMap) { try { _routeMap.setBearing((_routeMap.getBearing() + 0.06) % 360); } catch (e) { /* ignore */ } }
+    _routeAnim = requestAnimationFrame(step);
+  };
+  _routeAnim = requestAnimationFrame(step);
+}
+function init2DRoute(host, site, path) {
+  if (typeof L === 'undefined') { host.innerHTML = '<div class="loading small">3D-/Kartenansicht hier nicht verfügbar (WebGL/Netz). Pfad-Eckdaten siehe unten.</div>'; return; }
+  host.innerHTML = ''; const m = L.map(host, { attributionControl: false });
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 17 }).addTo(m);
+  const latlngs = path.coords.map(c => [c[1], c[0]]);
+  const line = L.polyline(latlngs, { color: '#2de2e6', weight: 4 }).addTo(m);
+  L.circleMarker(latlngs[0], { radius: 7, color: '#22e08a', fillOpacity: 1 }).addTo(m);
+  L.circleMarker(latlngs[latlngs.length - 1], { radius: 7, color: '#ff4d5e', fillOpacity: 1 }).addTo(m);
+  m.fitBounds(line.getBounds(), { padding: [40, 40] });
+  host.insertAdjacentHTML('afterbegin', '');
+}
+
 /* föhn / no-go browser alert (foreground; true background push needs a server) */
 let _lastAlertKey = null;
 function maybeAlert() {
@@ -1663,6 +1814,7 @@ const PRIMARY = ['cockpit', 'sites', 'live', 'exam', 'more'];
 let currentScreen = 'cockpit';
 let lastPrimary = 'cockpit';
 function go(screen) {
+  if (currentScreen === 'route' && screen !== 'route') destroyRoute();
   currentScreen = screen;
   if (PRIMARY.includes(screen)) lastPrimary = screen;
   $$('.screen').forEach(s => s.classList.remove('on'));
