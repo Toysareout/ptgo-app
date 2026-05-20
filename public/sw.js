@@ -1,4 +1,4 @@
-const CACHE = 'ptgo-v7';
+const CACHE = 'ptgo-v8';
 const PRECACHE = ['/', '/heal', '/musik', '/coaching.html'];
 
 self.addEventListener('install', e => {
