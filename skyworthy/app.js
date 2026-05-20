@@ -772,6 +772,102 @@ function buildModelConsensus(modelsRes, dayOffset) {
 }
 
 /* ============================================================
+   EXPLAINABLE INTELLIGENCE — beginner/expert layers, green-blockers,
+   forecast-vs-reality, contextual exam, dual decision, site DNA.
+   Additive: consumes the existing decision engine, no second engine.
+   ============================================================ */
+const RISK_EXPLANATIONS = {
+  lee: { factor: 'Lee', beginnerText: 'Der Wind kommt ungünstig über den Berg. Dahinter kann die Luft stark verwirbelt sein.', expertText: 'Lee-Risiko durch Windrichtung relativ zur Startplatzexposition — Rotoren und turbulente Rückseitenströmung möglich.', dangerTranslation: 'Nicht starten, nur weil es am Startplatz kurz ruhig aussieht.', simpleAnalogy: 'Wie Wasserwirbel hinter einem Stein im Fluss.' },
+  gusts: { factor: 'Böen', beginnerText: 'Der Wind ist nicht gleichmäßig. Plötzliche Stöße können den Schirm stark bewegen.', expertText: 'Erhöhter Böenfaktor — aktive Kappenreaktionen, Pitch-Impulse und Klapprisiko.', dangerTranslation: 'Wenn die Böen über deinem Limit sind, ist das kein Übungstag.', simpleAnalogy: 'Wie Seitenwind beim Autofahren: nicht der Schnitt zählt, sondern der plötzliche Schlag.' },
+  foehn: { factor: 'Föhn', beginnerText: 'Föhn kann gefährliche Turbulenz erzeugen, auch wenn es unten ruhig aussieht.', expertText: 'Föhnindikation — Rotoren, starke Höhenströmung, Druckgradient und Leewellen.', dangerTranslation: 'Bei Föhnverdacht nicht fliegen.', simpleAnalogy: 'Wie ein unsichtbarer Sturm über den Bergen.' },
+  thermal: { factor: 'Thermik', beginnerText: 'Warme Luft steigt auf. Das kann tragen, aber auch unruhig werden.', expertText: 'Thermikstärke, Ablösefrequenz, Basis, Labilität und Überentwicklungsrisiko bewerten.', dangerTranslation: 'Starke Thermik ist für Anfänger oft zu sportlich.', simpleAnalogy: 'Wie unsichtbare Aufzüge in der Luft.' },
+  cloudbase: { factor: 'Wolkenbasis', beginnerText: 'Liegen die Wolken tiefer als der Startplatz, drohen Sichtprobleme.', expertText: 'Cloudbase nahe/unter Startniveau reduziert Sicht, Orientierung und Sicherheitsmargen.', dangerTranslation: 'Nicht in Wolken fliegen.', simpleAnalogy: 'Wie Autofahren im Nebel ohne klare Straße.' },
+  shear: { factor: 'Windscherung', beginnerText: 'In verschiedenen Höhen weht der Wind unterschiedlich stark/aus anderer Richtung.', expertText: 'Richtungs-/Geschwindigkeitsscherung Boden↔Höhe — anspruchsvolles Handling, Klappneigung.', dangerTranslation: 'Mit ruppigem Übergang und Turbulenz rechnen.', simpleAnalogy: 'Wie zwei Flüsse, die übereinander in verschiedene Richtungen fließen.' },
+  storm: { factor: 'Gewitter', beginnerText: 'Gewitter erzeugen extreme, unberechenbare Auf- und Abwinde.', expertText: 'Cb-/Überentwicklungsrisiko — Gust-Fronten, Saugwirkung, Hagel, Blitz.', dangerTranslation: 'Bei Gewitterneigung am Boden bleiben.', simpleAnalogy: 'Wie eine riesige Waschmaschine in der Atmosphäre.' },
+  rain: { factor: 'Niederschlag', beginnerText: 'Nasse Schirme verlieren Leistung und reagieren unberechenbar.', expertText: 'Durchnässung verändert Profil/Sackflugneigung; Schauer bringen Böenfronten.', dangerTranslation: 'Regen und Gleitschirm passen nicht zusammen.', simpleAnalogy: 'Wie Reifen ohne Profil bei Nässe.' }
+};
+function explainRiskFactor(factor) {
+  return RISK_EXPLANATIONS[factor] || { factor, beginnerText: 'Dieser Faktor beeinflusst deine Flugsicherheit.', expertText: 'Sicherheitsrelevanter meteorologischer Einflussfaktor.', dangerTranslation: 'Bei Unsicherheit konservativ entscheiden.', simpleAnalogy: 'Unklare Luft ist wie unklare Straße: langsamer, vorsichtiger oder gar nicht.' };
+}
+function riskKey(text) {
+  const t = (text || '').toLowerCase();
+  if (/lee/.test(t)) return 'lee';
+  if (/böen|boen|böe|gust/.test(t)) return 'gusts';
+  if (/föhn|foehn/.test(t)) return 'foehn';
+  if (/thermik|überentw|cape/.test(t)) return 'thermal';
+  if (/basis|wolken/.test(t)) return 'cloudbase';
+  if (/scherung|shear/.test(t)) return 'shear';
+  if (/gewitter|\bcb\b|gewitterrisiko/.test(t)) return 'storm';
+  if (/regen|niederschlag/.test(t)) return 'rain';
+  return null;
+}
+// what is preventing a green rating — current vs required, in plain words
+function buildGreenBlockers(d, site, pilot) {
+  const b = [], h = d.best.h;
+  const hasRisk = re => d.topRisks.some(r => re.test(r.toLowerCase()));
+  if (h.gustKmh > pilot.maxGustKmh) b.push({ factor: 'Böen', currentValue: `${round(h.gustKmh)} km/h`, requiredValue: `< ${pilot.maxGustKmh} km/h (dein Profil)`, severity: 'high', explanation: 'Die Böen überschreiten dein persönliches Limit. Grün ist nicht verantwortbar.' });
+  if (Wind.matches(h.windDir, site.dangerousWindDirections, 35)) b.push({ factor: 'Windrichtung', currentValue: Wind.toCompass(h.windDir), requiredValue: `nicht ${site.dangerousWindDirections.join(', ')}`, severity: 'critical', explanation: 'Diese Windrichtung kann am Fluggebiet Lee oder Rotoren erzeugen.' });
+  if (hasRisk(/gewitter|cb|überentw/)) b.push({ factor: 'Gewitterrisiko', currentValue: `CAPE ${round(h.cape)} J/kg`, requiredValue: 'keine Cb-Neigung', severity: 'critical', explanation: 'Gewitterrisiko ist ein harter Sicherheitsblocker.' });
+  if (site.foehnSensitive && hasRisk(/föhn|foehn/)) b.push({ factor: 'Föhn', currentValue: 'Föhnverdacht', requiredValue: 'kein Föhnverdacht', severity: 'critical', explanation: 'Föhn kann extreme Turbulenz erzeugen, obwohl es am Start ruhig wirkt.' });
+  if (d.best.baseAboveTO < 200) b.push({ factor: 'Wolkenbasis', currentValue: `~${round(d.best.baseAboveTO)} m über Start`, requiredValue: '> 200 m über Start', severity: 'medium', explanation: 'Die Basis ist zu nah am Startplatz — Sicht und Marge reduziert.' });
+  const age = Data.forecast.fetchedAt ? Time.ageMin(Data.forecast.fetchedAt) : 0;
+  if (age > 20) b.push({ factor: 'Datenalter', currentValue: `${round(age)} min alt`, requiredValue: '< 20 min', severity: 'medium', explanation: 'Die Daten sind zu alt für eine grüne Entscheidung.' });
+  return b;
+}
+// forecast vs the strongest live station
+function buildForecastReality(d, stations) {
+  if (!stations || !stations.length) return [];
+  const st = stations.reduce((m, s) => (s.gustKmh > m.gustKmh ? s : m));
+  const out = [], h = d.best.h;
+  const gd = ((st.gustKmh - h.gustKmh) / Math.max(h.gustKmh, 1)) * 100;
+  if (gd > 25) out.push({ parameter: 'Böen', forecastValue: `${round(h.gustKmh)} km/h`, liveValue: `${st.gustKmh} km/h (${st.name})`, deviationPercent: Math.round(gd), severity: gd > 50 ? 'critical' : 'high', interpretation: 'Der Livewind ist deutlich böiger als die Prognose — Modellvertrauen sinkt.' });
+  const wd = ((st.windSpeedKmh - h.windKmh) / Math.max(h.windKmh, 1)) * 100;
+  if (wd > 30) out.push({ parameter: 'Wind', forecastValue: `${round(h.windKmh)} km/h`, liveValue: `${st.windSpeedKmh} km/h (${st.name})`, deviationPercent: Math.round(wd), severity: wd > 60 ? 'critical' : 'high', interpretation: 'Die Realität ist windiger als die Vorhersage — vor Ort besonders kritisch prüfen.' });
+  return out;
+}
+// risk-triggered quiz prompt
+function contextualExam(topRisks) {
+  const has = re => topRisks.some(r => re.test(r.toLowerCase()));
+  if (has(/lee/)) return { triggerRisk: 'Lee', question: 'Warum ist Lee beim Gleitschirmfliegen gefährlich?', options: ['Weil die Luft dort meist besonders ruhig ist', 'Weil hinter Hindernissen Rotoren und Turbulenzen entstehen können', 'Weil dort immer mehr Thermik ist', 'Weil der Schirm dort schneller steigt'], correctAnswerIndex: 1, explanation: 'Im Lee entstehen hinter Bergen verwirbelte Luftbereiche — Klapper und Kontrollverlust werden begünstigt.' };
+  if (has(/föhn|foehn/)) return { triggerRisk: 'Föhn', question: 'Was ist bei Föhnverdacht die sicherste Entscheidung?', options: ['Nur kurz starten', 'Weiter oben testen', 'Nicht fliegen', 'Nur mit kleinem Schirm fliegen'], correctAnswerIndex: 2, explanation: 'Föhn kann extreme Turbulenzen und Rotoren erzeugen. Bei Föhnverdacht ist Nichtfliegen die sichere Entscheidung.' };
+  if (has(/böen|boen|böe/)) return { triggerRisk: 'Böen', question: 'Warum sind Böen gefährlicher als gleichmäßiger Wind?', options: ['Weil sie plötzlich Kappenreaktionen auslösen können', 'Weil sie immer von vorne kommen', 'Weil sie nur am Boden auftreten', 'Weil sie Thermik verhindern'], correctAnswerIndex: 0, explanation: 'Böen verändern plötzlich Anstellwinkel und Druck im Schirm — starke Pitchbewegungen oder Klapper entstehen.' };
+  if (has(/gewitter|cb|überentw/)) return { triggerRisk: 'Gewitter', question: 'Wie verhältst du dich bei aufziehender Überentwicklung?', options: ['Schnell noch hochkreisen', 'Frühzeitig landen und Abstand zur Wolke halten', 'Unter die Wolke fliegen', 'Abwarten in der Luft'], correctAnswerIndex: 1, explanation: 'Cumulonimben erzeugen Saugwirkung und Gust-Fronten. Rechtzeitig landen und großen Abstand halten.' };
+  return { triggerRisk: 'Allgemeiner Check', question: 'Was solltest du vor jedem Flug zusätzlich zur App prüfen?', options: ['Nur die Farbe der Ampel', 'Livewind, Wolken, Start, Landeplatz und lokale Piloteninfos', 'Nur die Temperatur', 'Nur die Schirmfarbe'], correctAnswerIndex: 1, explanation: 'Eine App ersetzt nie die eigene Wetterprüfung, den Blick in den Himmel und lokale Erfahrung.' };
+}
+// rich site DNA (explicit for known sites, otherwise derived from site fields)
+const SITE_DNA = {
+  brauneck: {
+    commonTraps: ['Talwind nimmt nachmittags oft deutlich zu', 'Föhn wird am Startplatz unterschätzt', 'Lee bei südwestlicher Höhenströmung', 'Thermik kann im Tagesverlauf sportlich werden'],
+    localWindSystems: ['Talwind aus dem Isartal', 'Alpenrand-Konvergenz möglich', 'Höhenwind oft stärker als Startplatzwind'],
+    beginnerMistakes: ['Nur Startplatzwind prüfen', 'Höhenwind ignorieren', 'Zu spät starten', 'Böenfaktor unterschätzen', 'Föhnzeichen nicht ernst nehmen'],
+    expertOpportunities: ['Früher Thermikeinstieg bei moderatem Höhenwind', 'XC bei hoher Basis und guter Modellübereinstimmung', 'Hike & Fly im stabilen Morgenfenster'],
+    escapeRoutes: ['Frühzeitig Richtung Landeplatz orientieren', 'Bei zunehmendem Talwind keine späte Hangnähe erzwingen'],
+    bestSeason: ['Frühling', 'Sommer', 'Herbst'],
+    redFlagPatterns: ['Südwestlicher Höhenwind', 'Föhnverdacht', 'Böen deutlich stärker als Prognose', 'Cb-Entwicklung über den Bergen']
+  }
+};
+function siteDNA(site) {
+  if (SITE_DNA[site.id]) return SITE_DNA[site.id];
+  return {
+    commonTraps: [...(site.leeRisks || []), site.valleyWindNotes].filter(Boolean),
+    localWindSystems: [site.valleyWindNotes, site.foehnSensitive ? 'Föhnempfindlich — Höhenwind kann stärker sein als am Start' : 'Höhenwind kann vom Startplatzwind abweichen'].filter(Boolean),
+    beginnerMistakes: ['Nur Startplatzwind prüfen', 'Höhenwind ignorieren', 'Böenfaktor unterschätzen', site.foehnSensitive ? 'Föhnzeichen nicht ernst nehmen' : 'Talwind-Zunahme unterschätzen'],
+    expertOpportunities: [site.expertNotes].filter(Boolean),
+    escapeRoutes: ['Frühzeitig Richtung Landeplatz orientieren', (site.landings && site.landings[0]) ? `Landeplatz ${site.landings[0].name} im Blick behalten` : 'Erreichbarkeit des Landeplatzes sichern'],
+    bestSeason: ['Frühling', 'Sommer', 'Herbst'],
+    redFlagPatterns: [...(site.dangerousWindDirections || []).map(x => `Wind aus ${x}`), ...(site.foehnSensitive ? ['Föhnverdacht'] : []), 'Böen deutlich stärker als Prognose']
+  };
+}
+// beginner vs expert presets + dual decision
+const PRESET_BEGINNER = { name: 'Anfänger', level: 'beginner', wingClass: 'EN-A', maxWindKmh: 15, maxGustKmh: 22, maxThermalStrength: 1.5, hoursTotal: 20, riskTolerance: 'low', alpineExperience: false, sivExperience: false };
+const PRESET_EXPERT = { name: 'Experte', level: 'expert', wingClass: 'EN-C', maxWindKmh: 25, maxGustKmh: 35, maxThermalStrength: 4, hoursTotal: 600, riskTolerance: 'high', alpineExperience: true, sivExperience: true };
+function dualDecision() {
+  const agg = Data.forecast.agg; if (!agg) return null;
+  const site = siteById(Store.state.selectedSiteId), cons = Data.models.consensus, day = Store.state.day, st = Data.stations.list;
+  return { beginner: calculateFlightDecision(agg, st, site, PRESET_BEGINNER, day, cons), expert: calculateFlightDecision(agg, st, site, PRESET_EXPERT, day, cons) };
+}
+
+/* ============================================================
    PRESSURE ENGINE — classify the high/low situation + flying impact
    ============================================================ */
 function analyzePressure(agg, field, site) {
@@ -908,7 +1004,8 @@ function render() {
   const map = {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
-    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute, more: renderMore
+    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute,
+    windows: renderFlightWindows, compare: renderCompare, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -937,6 +1034,16 @@ function renderCockpit() {
   const confLabel = confV >= 75 ? 'sehr sicher' : confV >= 58 ? 'ziemlich sicher' : confV >= 42 ? 'mäßig sicher' : 'unsicher – Modelle uneinig';
   const briefing = buildBriefing(d, site);
   window.__briefingText = briefing.text;
+  const blockers = buildGreenBlockers(d, site, Store.state.pilot);
+  const mismatches = buildForecastReality(d, Data.stations.list);
+  const explainKeys = [...new Set(d.topRisks.map(r => riskKey(r)).filter(Boolean))].slice(0, 3);
+  const sevColor = { critical: 'black', high: 'red', medium: 'orange', low: 'yellow' };
+  const blockersCard = blockers.length ? `<div class="card s-orange"><div class="h" style="margin-top:0">Was fehlt für Grün?</div>
+    ${blockers.map(b => `<div class="risk"><div class="ic">${sIc[sevColor[b.severity]] || '🟠'}</div><div class="tx"><b>${esc(b.factor)}: ${esc(b.currentValue)}</b>Soll: ${esc(b.requiredValue)} — ${esc(b.explanation)}</div></div>`).join('')}</div>` : '';
+  const realityCard = mismatches.length ? `<div class="card s-red"><div class="h" style="margin-top:0">Prognose vs. Realität</div>
+    ${mismatches.map(m => `<div class="risk"><div class="ic">${m.severity === 'critical' ? '🔴' : '🟠'}</div><div class="tx"><b>${esc(m.parameter)}: +${m.deviationPercent}%</b>Prognose ${esc(m.forecastValue)} → Live ${esc(m.liveValue)}. ${esc(m.interpretation)}</div></div>`).join('')}</div>` : '';
+  const explainCard = explainKeys.length ? `<div class="card"><div class="h" style="margin-top:0">Verstehen — was bedeutet das?</div>
+    ${explainKeys.map(k => { const e = explainRiskFactor(k); return `<div class="risk"><div class="ic">💡</div><div class="tx"><b>${esc(e.factor)}</b>${esc(simple ? e.beginnerText : e.expertText)}<div class="small dim" style="margin-top:4px">🧠 ${esc(e.simpleAnalogy)} · ⚠️ ${esc(e.dangerTranslation)}</div></div></div>`; }).join('')}</div>` : '';
 
   const advanced = `
   <div class="grid c3">
@@ -994,6 +1101,9 @@ function renderCockpit() {
     <div class="h" style="margin-top:0">Warum? — Top-Risiken</div>
     ${d.topRisks.slice(0, simple ? 3 : 4).map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
   </div>
+  ${blockersCard}
+  ${realityCard}
+  ${explainCard}
 
   ${live ? `<div class="card"><div class="h" style="margin-top:0">Live-Wind (ausschlaggebend)</div>
     <div class="sitecard"><div class="gp ${sc}">${windArrow(live.windDirection)}</div>
@@ -1071,9 +1181,11 @@ function renderMore() {
     ['thermal', '🔥', 'Thermik & Emagram', 'Thermikfenster, Basis, CAPE, Sounding'],
     ['pressure', '🎚️', 'Druck (Hoch/Tief)', 'Live-Lage, Gradient + komplettes Druckwissen'],
     ['cloud', '☁️', 'Wolken & Gewitter', 'Bewölkung, Niederschlag, Radar, Gewitterrisiko'],
+    ['windows', '🪟', 'Flugfenster', 'Tagesfenster mit Status & Anfänger/Experten-Rat'],
+    ['compare', '⚖️', 'Anfänger vs. Experte', 'Dieselbe Lage aus zwei Perspektiven'],
     ['models', '🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM'],
     ['route', '🛰️', 'Flugweg (3D)', 'Idealer Weg im 3D-Gelände, animiert'],
-    ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, lokale Gefahren'],
+    ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, Gebiets-DNA'],
     ['profile', '👤', 'Pilotenprofil', 'Level, Limits, Warnungen, Datenquellen'],
     ['pro', '⭐', 'SKYWORTHY Pro', 'Alle Elite-Features · 49 €/Jahr']
   ];
@@ -1087,6 +1199,81 @@ function renderMore() {
     </div>`).join('')}
   </div>
   <div class="dim small" style="text-align:center;margin-top:14px">SKYWORTHY · Elite Paragliding Decision Cockpit</div>`;
+}
+
+/* ---------- FLIGHT WINDOWS ---------- */
+function buildFlightWindows(agg, site, pilot, day) {
+  const idx = agg.daylightIdx(day); if (!idx.length) return [];
+  const clsOf = i => {
+    const h = agg.atHour(i);
+    const lee = Wind.matches(h.windDir, site.dangerousWindDirections, 35);
+    const storm = h.cape > 1500 || h.precipP > 50;
+    if (storm || lee || h.gustKmh > pilot.maxGustKmh + 10) return 'red';
+    if (h.gustKmh > pilot.maxGustKmh || h.windKmh > pilot.maxWindKmh || h.precipP > 30) return 'orange';
+    if (h.gustKmh > pilot.maxGustKmh * 0.8 || h.cape > 900 || h.windKmh > pilot.maxWindKmh * 0.85) return 'yellow';
+    return 'green';
+  };
+  const rank = { green: 0, yellow: 1, orange: 2, red: 3 };
+  const wins = []; let cur = null;
+  idx.forEach(i => {
+    const st = clsOf(i), h = agg.atHour(i);
+    if (!cur || cur.st !== st) { if (cur) wins.push(cur); cur = { st, startI: i, endI: i, peakGust: h.gustKmh, peakCape: h.cape, dir: h.windDir }; }
+    else { cur.endI = i; cur.peakGust = Math.max(cur.peakGust, h.gustKmh); cur.peakCape = Math.max(cur.peakCape, h.cape); }
+  });
+  if (cur) wins.push(cur);
+  return wins.map(w => {
+    const sH = agg.atHour(w.startI), eH = agg.atHour(w.endI);
+    const ft = w.st === 'red' ? 'Nicht fliegen' : w.peakCape > 1200 ? 'Thermikflug / XC' : w.peakCape > 350 ? 'Thermikflug' : 'Abgleiter / Soaring';
+    const reason = w.st === 'green' ? 'Wind & Böen im Rahmen, ruhige Bedingungen.'
+      : w.st === 'yellow' ? 'Bedingungen werden aktiver — aufmerksam fliegen.'
+      : w.st === 'orange' ? `Kräftig: Böen bis ~${round(w.peakGust)} km/h${w.peakCape > 900 ? ', Thermik aktiv' : ''}.`
+      : `Kritisch: ${Wind.matches(w.dir, site.dangerousWindDirections, 35) ? 'Lee-Richtung' : w.peakCape > 1500 ? 'Überentwicklung' : 'Böen über Limit'}.`;
+    return { start: sH.hh, end: eH.hh, status: w.st, reason, flightType: ft,
+      beginnerAdvice: w.st === 'green' ? 'Gutes Fenster für Anfänger, wenn der Startplatzwind sauber ansteht.' : w.st === 'yellow' ? 'Nur fliegen, wenn du aktiv steuern kannst und die Lage klar passt.' : 'Für Anfänger nicht geeignet — lieber ein ruhigeres Fenster wählen.',
+      expertAdvice: w.st === 'red' ? 'Auch für Erfahrene heikel — Lage genau prüfen, im Zweifel No-Go.' : w.st === 'orange' ? 'Machbar bei kontrollierbarem Wind und ohne Überentwicklung.' : 'Gutes Fenster für Thermik/XC.' };
+  });
+}
+function renderFlightWindows() {
+  const el = $('#screen-windows'); const agg = Data.forecast.agg; const site = siteById(Store.state.selectedSiteId);
+  if (!agg) { el.innerHTML = loadingCard('Flugfenster…'); return; }
+  const wins = buildFlightWindows(agg, site, Store.state.pilot, Store.state.day);
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Flugfenster — ${esc(site.name)}</div>
+  <div class="small dim" style="margin:-4px 4px 10px">Tagesverlauf in Fenstern, bewertet für dein Profil (Böen-Limit ${Store.state.pilot.maxGustKmh} km/h). Wechsle Tag oben um.</div>
+  ${wins.length ? wins.map(w => `<div class="card s-${w.status}">
+    <div style="display:flex;align-items:center;gap:10px"><div class="gp s-${w.status}" style="min-width:auto;padding:4px 10px;border-radius:8px;font-weight:800">${w.start}–${w.end}</div>
+      <div><b>${sIc[w.status]} ${esc(w.flightType)}</b><div class="small muted">${esc(w.reason)}</div></div></div>
+    <div class="risk" style="margin-top:8px"><div class="ic">🟢</div><div class="tx"><b>Anfänger</b>${esc(w.beginnerAdvice)}</div></div>
+    <div class="risk"><div class="ic">🚀</div><div class="tx"><b>Experte</b>${esc(w.expertAdvice)}</div></div>
+  </div>`).join('') : '<div class="card small muted">Keine Tagesdaten verfügbar.</div>'}
+  <div class="dim small" style="text-align:center">Fenster sind eine Orientierung — Livewind & Himmel vor Ort entscheiden.</div>`;
+}
+
+/* ---------- BEGINNER vs EXPERT COMPARISON ---------- */
+function renderCompare() {
+  const el = $('#screen-compare'); const dual = dualDecision();
+  if (!dual) { el.innerHTML = loadingCard('Vergleich…'); return; }
+  const col = (title, icon, d) => `<div class="card s-${d.status}">
+    <div class="small muted" style="font-weight:800;letter-spacing:1px">${icon} ${esc(title)}</div>
+    <div class="glabel" style="color:var(--c);font-size:30px;margin-top:4px">${sIc[d.status]} ${d.overallScore}</div>
+    <div class="muted small" style="font-weight:700">${esc(d.label)}</div>
+    <hr class="sep">
+    <div class="small"><b>Empfehlung:</b> ${esc(d.recommendedFlightType)}</div>
+    <div class="small" style="margin-top:3px"><b>Startfenster:</b> ${esc(d.bestStartTime || '—')}</div>
+    <div class="small" style="margin-top:3px"><b>Top-Risiko:</b> ${esc((d.topRisks[0] || '—').replace(/^[^\p{L}]+/u, '').trim())}</div>
+  </div>`;
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Anfänger vs. Experte</div>
+  <div class="small dim" style="margin:-4px 4px 10px">Dieselbe Wetterlage, zwei Profile (EN-A, 22 km/h-Böen vs. EN-C, 35 km/h-Böen). So siehst du, warum „fliegbar" relativ ist.</div>
+  <div class="grid c2">
+    ${col('Anfänger', '🟢', dual.beginner)}
+    ${col('Experte', '🚀', dual.expert)}
+  </div>
+  <div class="card"><div class="h" style="margin-top:0">Der Unterschied</div>
+    <div class="risk"><div class="ic">💡</div><div class="tx">${dual.beginner.status === dual.expert.status
+      ? esc('Beide Profile kommen heute zur selben Einschätzung — die Lage ist eindeutig.')
+      : esc(`Für Anfänger „${dual.beginner.label}", für Experten „${dual.expert.label}". Erfahrung, Schirmklasse und höhere Limits verschieben die Grenze — nicht der Himmel ändert sich, sondern wer ihn sicher nutzen kann.`)}</div></div>
+  </div>`;
 }
 
 /* ---------- NEARBY SITES ---------- */
@@ -1240,7 +1427,17 @@ function renderDetail() {
   <div class="h">Experten</div><div class="card small muted">${esc(site.expertNotes)}</div>
   <div class="h">Regeln & Notfall</div>
   <div class="card">${site.siteRules.map(r => `<div class="risk"><div class="ic">📋</div><div class="tx">${esc(r)}</div></div>`).join('')}
-    ${site.emergencyNotes.map(r => `<div class="risk"><div class="ic">🚨</div><div class="tx">${esc(r)}</div></div>`).join('')}</div>`;
+    ${site.emergencyNotes.map(r => `<div class="risk"><div class="ic">🚨</div><div class="tx">${esc(r)}</div></div>`).join('')}</div>
+
+  ${(() => { const dna = siteDNA(site); const blk = (icon, title, arr) => arr && arr.length ? `<div class="card"><div class="h" style="margin-top:0">${icon} ${esc(title)}</div>${arr.map(x => `<div class="risk"><div class="ic">${icon}</div><div class="tx">${esc(x)}</div></div>`).join('')}</div>` : '';
+    return `<div class="h">Gebiets-DNA</div>
+    ${blk('🪤', 'Typische Fallen', dna.commonTraps)}
+    ${blk('🌬️', 'Lokale Windsysteme', dna.localWindSystems)}
+    ${blk('🟢', 'Häufige Anfängerfehler', dna.beginnerMistakes)}
+    ${blk('🚀', 'Chancen für Experten', dna.expertOpportunities)}
+    ${blk('🪂', 'Rückzug / Escape', dna.escapeRoutes)}
+    ${blk('🚩', 'Red Flags', dna.redFlagPatterns)}
+    <div class="card small muted">Beste Saison: ${dna.bestSeason.join(' · ')}</div>`; })()}`;
 }
 
 /* ---------- LIVE STATIONS ---------- */
@@ -1478,6 +1675,12 @@ function renderExam() {
   const cats = ['alle', ...new Set(EXAM_QUESTIONS.map(q => q.category))];
   if (!examState.current) examState.current = pickQuestion();
   const q = examState.current;
+  const d = Data.decision(); _ctxExam = d ? contextualExam(d.topRisks) : null;
+  const ctxCard = _ctxExam ? `<div class="card s-orange">
+    <div class="small muted" style="font-weight:700">🎯 Passend zu heute · ${esc(_ctxExam.triggerRisk)}</div>
+    <div style="font-size:15px;font-weight:700;margin:8px 0 12px">${esc(_ctxExam.question)}</div>
+    <div id="ctxOpts">${_ctxExam.options.map((o, k) => `<button class="opt" data-k="${k}" onclick="answerContext(${k})">${esc(o)}</button>`).join('')}</div>
+    <div id="ctxExplain"></div></div>` : '';
   el.innerHTML = `
   <div class="h" style="margin-top:6px">ExamTrainer</div>
   <div class="grid c3">
@@ -1485,6 +1688,7 @@ function renderExam() {
     ${kpi('Richtig', st.correct, '', st.answered ? round(st.correct / st.answered * 100) + '%' : '')}
     ${kpi('Quote', st.answered ? round(st.correct / st.answered * 100) : 0, '%', '')}
   </div>
+  ${ctxCard}
   <div class="reminder" style="margin-bottom:12px"><div class="i">📅</div><div><b>Tägliche Mini-Frage</b><br>Wiederhole regelmäßig Prüfungswissen — just for fun und für die Sicherheit.</div></div>
   <div class="seg" id="catSeg">${cats.map(c => `<button data-c="${c}" class="${examState.cat === c ? 'on' : ''}">${c}</button>`).join('')}</div>
   <div class="card">
@@ -1510,6 +1714,12 @@ function answerExam(k) {
     <button class="btn" style="margin-top:12px" onclick="nextExam()">Nächste Frage →</button></div>`;
 }
 function nextExam() { examState.current = pickQuestion(); examState.answered = false; renderExam(); }
+let _ctxExam = null;
+function answerContext(k) {
+  if (!_ctxExam) return; const correct = _ctxExam.correctAnswerIndex;
+  $$('#ctxOpts .opt').forEach(b => { const kk = +b.dataset.k; if (kk === correct) b.classList.add('correct'); else if (kk === k) b.classList.add('wrong'); b.disabled = true; });
+  const ex = $('#ctxExplain'); if (ex) ex.innerHTML = `<div class="explain"><b>${k === correct ? '✅ Richtig!' : '❌ Nicht ganz.'}</b><br>${esc(_ctxExam.explanation)}</div>`;
+}
 
 /* ---------- PRO / PRICING ---------- */
 function renderPro() {
@@ -2048,7 +2258,7 @@ function toggleAlerts(on) {
   }
   Store.set({ alerts: !!on }); if (on) maybeAlert();
 }
-Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, speakBriefing, Data });
+Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, answerContext, toggleAlerts, speakBriefing, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
