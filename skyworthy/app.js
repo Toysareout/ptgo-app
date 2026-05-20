@@ -287,7 +287,7 @@ const Providers = {
       'temperature_2m', 'relative_humidity_2m', 'dew_point_2m', 'precipitation', 'precipitation_probability',
       'cloud_cover', 'cloud_cover_low', 'cloud_cover_mid', 'cloud_cover_high',
       'wind_speed_10m', 'wind_direction_10m', 'wind_gusts_10m', 'cape', 'freezing_level_height',
-      'surface_pressure', 'wind_speed_80m', 'wind_direction_80m', 'wind_speed_120m', 'wind_speed_180m'
+      'surface_pressure', 'pressure_msl', 'wind_speed_80m', 'wind_direction_80m', 'wind_speed_120m', 'wind_speed_180m'
     ];
     PRESSURE_LEVELS.forEach(p => {
       hourly.push(`wind_speed_${p}hPa`, `wind_direction_${p}hPa`, `geopotential_height_${p}hPa`, `temperature_${p}hPa`, `relative_humidity_${p}hPa`);
@@ -380,6 +380,34 @@ const Providers = {
       });
     }
     return out.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 10);
+  },
+  /* REAL spatial pressure field: sample MSL pressure at the site + 4 neighbours
+     (~80 km N/S/E/W) in one Open-Meteo call and compute the horizontal pressure
+     gradient and the geostrophic (gradient) wind direction. */
+  async fetchPressureField(site) {
+    const dLat = 0.72, dLon = 0.72 / Math.max(0.2, Math.cos(Geo.toRad(site.lat)));
+    const lats = [site.lat, site.lat + dLat, site.lat - dLat, site.lat, site.lat];
+    const lons = [site.lon, site.lon, site.lon, site.lon + dLon, site.lon - dLon];
+    const q = new URLSearchParams({ latitude: lats.join(','), longitude: lons.join(','), current: 'pressure_msl', timezone: 'auto' });
+    const r = await fetch(`https://api.open-meteo.com/v1/forecast?${q}`, { cache: 'no-store' });
+    if (!r.ok) throw new Error('Pressure field HTTP ' + r.status);
+    const j = await r.json();
+    const arr = Array.isArray(j) ? j : [j];
+    const P = arr.map(o => o && o.current ? o.current.pressure_msl : null);
+    if (P.some(p => p == null)) return null;
+    const distNS = 2 * dLat * 111195;                                  // m
+    const distEW = 2 * dLon * 111195 * Math.cos(Geo.toRad(site.lat));  // m
+    const dPdN = (P[1] - P[2]) / distNS;  // hPa per m, +N
+    const dPdE = (P[3] - P[4]) / distEW;  // hPa per m, +E
+    const gradPer100km = Math.sqrt(dPdN * dPdN + dPdE * dPdE) * 100000;
+    // direction toward LOWEST pressure (down-gradient), meteorological bearing
+    const toLow = (Geo.toDeg(Math.atan2(-dPdE, -dPdN)) + 360) % 360;
+    // geostrophic wind: NH low to the left → vector ∝ (dPdN east, -dPdE north); SH reversed
+    const sign = site.lat >= 0 ? 1 : -1;
+    const vE = sign * dPdN, vN = -sign * dPdE;
+    const windTo = (Geo.toDeg(Math.atan2(vE, vN)) + 360) % 360;
+    const windFrom = (windTo + 180) % 360;
+    return { pMsl: P[0], gradPer100km, toLow, geoWindFrom: windFrom, points: P, fetchedAt: new Date().toISOString() };
   }
 };
 
@@ -395,7 +423,7 @@ function buildAggregation(json, site) {
     precip: get('precipitation'), precipP: get('precipitation_probability'),
     cloud: get('cloud_cover'), cloudL: get('cloud_cover_low'), cloudM: get('cloud_cover_mid'), cloudH: get('cloud_cover_high'),
     wind: get('wind_speed_10m'), windDir: get('wind_direction_10m'), gust: get('wind_gusts_10m'),
-    cape: get('cape'), frz: get('freezing_level_height'), sp: get('surface_pressure'),
+    cape: get('cape'), frz: get('freezing_level_height'), sp: get('surface_pressure'), pmsl: get('pressure_msl'),
     w80: get('wind_speed_80m'), w120: get('wind_speed_120m'), w180: get('wind_speed_180m'), wd80: get('wind_direction_80m')
   };
   PRESSURE_LEVELS.forEach(p => {
@@ -413,7 +441,7 @@ function buildAggregation(json, site) {
     precip: num(fields.precip[i]), precipP: num(fields.precipP[i]),
     cloud: num(fields.cloud[i]), cloudL: num(fields.cloudL[i]), cloudM: num(fields.cloudM[i]), cloudH: num(fields.cloudH[i]),
     windKmh: num(fields.wind[i]), windDir: num(fields.windDir[i]), gustKmh: num(fields.gust[i]),
-    cape: num(fields.cape[i]), frz: num(fields.frz[i]),
+    cape: num(fields.cape[i]), frz: num(fields.frz[i]), pmsl: num(fields.pmsl[i]), sp: num(fields.sp[i]),
     upper: PRESSURE_LEVELS.map(p => ({ p, h: num(fields[`gh${p}`][i]), spd: num(fields[`w${p}`][i]), dir: num(fields[`wd${p}`][i]), temp: num(fields[`t${p}`][i]), rh: num(fields[`rh${p}`][i]) }))
   });
 
@@ -459,6 +487,12 @@ function buildAggregation(json, site) {
         const hh = +t[i].slice(11, 13); if (hh >= 7 && hh <= 20) out.push(i);
       }
       return out;
+    },
+    // index of the hour closest to "now" (falls back to first index)
+    nowIdx() {
+      const now = Date.now(); let best = 0, bestD = Infinity;
+      for (let i = 0; i < n; i++) { const d = Math.abs(new Date(t[i]).getTime() - now); if (d < bestD) { bestD = d; best = i; } }
+      return best;
     }
   };
 }
@@ -738,12 +772,68 @@ function buildModelConsensus(modelsRes, dayOffset) {
 }
 
 /* ============================================================
+   PRESSURE ENGINE — classify the high/low situation + flying impact
+   ============================================================ */
+function analyzePressure(agg, field, site) {
+  const i = agg.nowIdx(), h = agg.atHour(i);
+  const pmsl = h.pmsl || (field && field.pMsl) || 1013;
+  // tendency: change over the next ~12 h (positive = building high, negative = approaching low)
+  const jl = Math.min(agg.n - 1, i + 12), je = Math.min(agg.n - 1, i + 3);
+  const trend12 = round((agg.atHour(jl).pmsl || pmsl) - pmsl, 1);
+  const trend3 = round((agg.atHour(je).pmsl || pmsl) - pmsl, 1);
+  // 500 hPa pattern (ridge vs trough)
+  const gh500 = (h.upper.find(u => u.p === 500) || {}).h || 0;
+  const ridgeTrough = gh500 ? (gh500 > 5650 ? { k: 'ridge', t: `Höhenrücken (500 hPa ~${round(gh500)} m) → Hochdruckeinfluss in der Höhe, absinkende Luft.` }
+    : gh500 < 5500 ? { k: 'trough', t: `Höhentrog (500 hPa ~${round(gh500)} m) → Hebung, labiler, oft Schauer/Gewitter.` }
+    : { k: 'flat', t: `Flache Höhenströmung (500 hPa ~${round(gh500)} m).` }) : null;
+
+  const pClass = pmsl >= 1018 ? 'hoch' : pmsl <= 1008 ? 'tief' : 'uebergang';
+  const grad = field ? field.gradPer100km : null;
+  const gradCat = grad == null ? null : grad < 1 ? { k: 'schwach', c: 'green' } : grad < 2 ? { k: 'mäßig', c: 'yellow' } : grad < 3.5 ? { k: 'kräftig', c: 'orange' } : { k: 'stürmisch', c: 'red' };
+
+  const tendIcon = trend12 > 1.5 ? '📈' : trend12 < -1.5 ? '📉' : '➖';
+  const tendText = trend12 > 1.5 ? `Druck steigt (+${trend12} hPa/12 h) → Wetterberuhigung, Hochdruck baut auf/verstärkt sich.`
+    : trend12 < -1.5 ? `Druck fällt (${trend12} hPa/12 h) → Tief/Front nähert sich, Wind & Wolken nehmen zu.`
+    : 'Druck nahezu konstant → Lage stabil, keine schnelle Änderung.';
+
+  const effects = [], risks = [];
+  if (pClass === 'hoch') {
+    effects.push(['🌤️', 'Stabile Schichtung', 'Absinkende Luft (Subsidenz) → oft ruhiges, beständiges Flugwetter. Gut für Anfänger.']);
+    effects.push(['🧱', 'Inversion / Deckel', 'Absink-Inversion deckelt die Thermik → niedrige Basis, häufig Dunst/Hochnebel am Morgen.']);
+    effects.push(['🍃', 'Schwacher Gradientwind', 'Thermik- und Talwinde dominieren über den synoptischen Wind.']);
+    if (site.foehnSensitive) risks.push('🟠 Bei kräftigem Hoch + Druckunterschied über den Alpen: Föhngefahr — Höhenwind & Föhnzeichen prüfen.');
+    if (gh500 && gh500 > 5750) effects.push(['🅾️', 'Blockierendes Hoch / Omega', 'Mehrtägig stabil und gleichförmig — ideal planbar, aber Thermik oft schwach/blau.']);
+  } else if (pClass === 'tief') {
+    effects.push(['🌧️', 'Labile Schichtung', 'Hebung → Quellwolken, Schauer und Gewitter wahrscheinlich. Überentwicklung möglich.']);
+    effects.push(['💨', 'Kräftiger Gradientwind', 'Enge Isobaren → starker, böiger Wind. Häufig No-Go, v. a. an Lee-Hängen.']);
+    effects.push(['🌬️', 'Fronten', 'Kaltfront = Böenfront + Winddreher; Warmfront = Aufgleiten + Dauerregen. Frontdurchgang meiden.']);
+    risks.push('🔴 Tiefdruck dominiert: erhöhte Gefahr durch Wind, Böen, Fronten und Gewitter.');
+  } else {
+    effects.push(['⚖️', 'Übergangslage', 'Zwischen Hoch und Tief — Gradient, Fronten und Trend genau beobachten.']);
+  }
+  if (gradCat && (gradCat.k === 'kräftig' || gradCat.k === 'stürmisch')) risks.push(`🔴 Druckgradient ${gradCat.k} (${round(grad,1)} hPa/100 km) → kräftiger Höhen-/Gradientwind.`);
+  if (ridgeTrough && ridgeTrough.k === 'trough') risks.push('🟠 Höhentrog → labil, Schauer-/Gewitterneigung erhöht.');
+  if (trend12 < -3) risks.push('🟠 Deutlich fallender Druck → markante Wetterverschlechterung/Front im Anmarsch.');
+
+  return {
+    pmsl: round(pmsl), pClass,
+    label: pClass === 'hoch' ? 'Hochdruck dominiert' : pClass === 'tief' ? 'Tiefdruck dominiert' : 'Übergangslage',
+    statusColor: pClass === 'hoch' ? 'green' : pClass === 'tief' ? 'red' : 'yellow',
+    trend12, trend3, tendIcon, tendText,
+    grad: grad != null ? round(grad, 1) : null, gradCat,
+    geoWindFrom: field ? round(field.geoWindFrom) : null, toLow: field ? round(field.toLow) : null,
+    gh500: round(gh500), ridgeTrough, effects, risks, hemisphere: site.lat >= 0 ? 'Nordhalbkugel' : 'Südhalbkugel'
+  };
+}
+
+/* ============================================================
    DATA LAYER — fetch + cache + auto refresh (React-Query-like)
    ============================================================ */
 const Data = {
   forecast: { json: null, agg: null, fetchedAt: null, error: null, loading: false },
   models: { res: null, consensus: null, fetchedAt: null, error: null },
   stations: { list: [], fetchedAt: null, source: 'Demo' },
+  pressure: { field: null, fetchedAt: null, error: null },
   timers: {},
   async loadForecast(force) {
     const site = siteById(Store.state.selectedSiteId);
@@ -761,7 +851,15 @@ const Data = {
     }
     await this.refreshStations();
     this.loadModels();
+    this.loadPressureField();
     maybeAlert();
+    render();
+  },
+  async loadPressureField() {
+    const site = siteById(Store.state.selectedSiteId);
+    try { this.pressure.field = await Providers.fetchPressureField(site); this.pressure.error = null; }
+    catch (e) { this.pressure.field = null; this.pressure.error = e.message; }
+    this.pressure.fetchedAt = new Date().toISOString();
     render();
   },
   async loadModels() {
@@ -810,7 +908,7 @@ function render() {
   const map = {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
-    profile: renderProfile, exam: renderExam, pro: renderPro
+    profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -1345,6 +1443,69 @@ function renderPro() {
     ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Jetzt für ${c.price}/${c.interval} freischalten →</a>`
     : `<div class="card s-yellow"><b style="color:var(--c)">Checkout noch nicht aktiv</b><div class="small muted" style="margin-top:6px">Erstelle in Stripe ein ${c.price}/${c.interval}-Abo, generiere einen <b>Payment Link</b> und trage ihn in <code>SKYWORTHY_CONFIG.stripePaymentLink</code> ein. Für erzwungene Lizenzprüfung die App über Vercel/Netlify mit Stripe-Webhook ausliefern.</div></div>`}
   <div class="disclaimer" style="border:0">Preis & Leistungsumfang sind ein Vorschlag — anpassbar in <code>SKYWORTHY_CONFIG</code>.</div>`;
+}
+
+/* ---------- PRESSURE INTELLIGENCE (Hoch/Tief) ---------- */
+function renderPressure() {
+  const el = $('#screen-pressure'); const agg = Data.forecast.agg; const site = siteById(Store.state.selectedSiteId);
+  if (!agg) { el.innerHTML = loadingCard('Druckdaten…'); return; }
+  const p = analyzePressure(agg, Data.pressure.field, site);
+  const sc = 's-' + p.statusColor;
+  const gaugePct = clamp((p.pmsl - 980) / (1045 - 980) * 100, 0, 100);
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Druck-Intelligenz — ${esc(site.name)}</div>
+
+  <div class="hero card statusborder ${sc}">
+    <div class="ring" style="background:var(--c)"></div>
+    <div class="scorebadge"><div class="n" style="color:var(--c)">${p.pmsl}</div><div class="t">hPa MSL</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><span class="dot"></span>
+      <span class="muted small" style="font-weight:700;letter-spacing:1px">${p.pClass === 'hoch' ? '🅗 HOCH' : p.pClass === 'tief' ? '🅣 TIEF' : '⚖ ÜBERGANG'}</span></div>
+    <div class="glabel" style="color:var(--c);margin-top:6px;font-size:30px">${esc(p.label)}</div>
+    <div class="gsum">${p.tendIcon} ${esc(p.tendText)}</div>
+    <div class="bar" style="margin-top:14px"><i style="width:${gaugePct}%"></i></div>
+    <div class="small dim" style="display:flex;justify-content:space-between;margin-top:3px"><span>980 (Sturmtief)</span><span>1013</span><span>1045 (kräftiges Hoch)</span></div>
+  </div>
+
+  <div class="grid c2">
+    ${kpi('Druckgradient', p.grad != null ? p.grad : '—', 'hPa/100km', p.gradCat ? p.gradCat.k + ' (≈ Windstärke)' : 'lokal nicht verfügbar')}
+    ${kpi('Gradientwind', p.geoWindFrom != null ? Wind.toCompass(p.geoWindFrom) : '—', '', p.geoWindFrom != null ? 'aus ' + p.geoWindFrom + '° (geostroph.)' : '')}
+    ${kpi('Tendenz 3 h', (p.trend3 > 0 ? '+' : '') + p.trend3, 'hPa', 'Barometer-Trend')}
+    ${kpi('500 hPa', p.gh500 || '—', 'm', p.ridgeTrough ? ({ ridge: 'Höhenrücken', trough: 'Höhentrog', flat: 'flach' }[p.ridgeTrough.k]) : '')}
+  </div>
+
+  ${p.gradCat ? `<div class="card ${'s-' + p.gradCat.c}"><div class="risk"><div class="ic">🧭</div><div class="tx"><b>Isobaren & Wind (real berechnet)</b>
+    Druck fällt Richtung ${Wind.toCompass(p.toLow)} (${p.toLow}°). Auf der ${p.hemisphere} weht der Gradientwind nahezu parallel zu den Isobaren — Tief zur Linken (Buys-Ballot). Geschätzter Höhenwind aus <b>${Wind.toCompass(p.geoWindFrom)}</b>. Enge Isobaren = ${p.gradCat.k}er Wind.</div></div></div>` : banner('yellow', 'ℹ️ Lokaler Druckgradient gerade nicht verfügbar — wird beim nächsten Refresh berechnet.')}
+
+  ${p.ridgeTrough ? `<div class="card"><div class="risk"><div class="ic">${p.ridgeTrough.k === 'ridge' ? '⛰️' : p.ridgeTrough.k === 'trough' ? '🕳️' : '〰️'}</div><div class="tx"><b>Höhenwetterlage (500 hPa)</b>${esc(p.ridgeTrough.t)}</div></div></div>` : ''}
+
+  <div class="card ${sc}"><div class="h" style="margin-top:0">Auswirkung aufs Fliegen — jetzt</div>
+    ${p.effects.map(e => `<div class="risk"><div class="ic">${e[0]}</div><div class="tx"><b>${esc(e[1])}</b>${esc(e[2])}</div></div>`).join('')}
+    ${p.risks.map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
+  </div>
+
+  <div class="h">Druck verstehen — das komplette Wissen</div>
+  <div class="small dim" style="margin:-4px 4px 8px">Wer Hoch & Tief wirklich versteht, fliegt sicherer. Tippe zum Aufklappen.</div>
+  ${pressureLessons()}
+
+  <div class="dim small" style="text-align:center;margin-top:10px">Druckfeld: ${Data.pressure.fetchedAt ? Time.fmtAge(Data.pressure.fetchedAt) : '—'} · Quelle Open-Meteo (pressure_msl, 5-Punkt-Gitter).</div>`;
+}
+
+function lesson(icon, title, html) {
+  return `<details class="card" style="padding:0"><summary style="list-style:none;cursor:pointer;padding:14px 16px;font-weight:700;display:flex;align-items:center;gap:10px"><span style="font-size:18px">${icon}</span>${esc(title)}<span style="margin-left:auto;color:var(--dim)">▾</span></summary><div style="padding:0 16px 16px;font-size:13.5px;line-height:1.6;color:var(--muted)">${html}</div></details>`;
+}
+function pressureLessons() {
+  return [
+    lesson('📏', 'Luftdruck — die Grundlage', `Der Luftdruck ist das Gewicht der Luftsäule über dir, gemessen in <b>Hektopascal (hPa)</b>. Standard auf Meereshöhe: <b>1013,25 hPa</b>. Damit Orte vergleichbar sind, wird auf Meeresniveau reduziert (<b>MSL / QFF</b>). Mit der Höhe fällt der Druck (~1 hPa pro 8 m unten). Aus Druckunterschieden entsteht <b>Wind</b> — das ist der Schlüssel.`),
+    lesson('🅗', 'Hochdruck (Antizyklone)', `Absinkende Luft, am Boden auseinanderströmend. Rotation: <b>Nordhalbkugel im Uhrzeigersinn</b>, Südhalbkugel gegen den Uhrzeigersinn. Folgen: <ul><li><b>Subsidenz-Inversion</b> → deckelt die Thermik, niedrige Basis, Dunst/Hochnebel.</li><li>Meist <b>schwacher Wind</b> → Thermik- & Talwinde dominieren.</li><li>Beständig, oft mehrere Tage (planbar).</li><li>Sommer: Blauthermik & Hitze; Winter: Hochnebel, Frost, Inversion.</li></ul>Fürs Fliegen: ruhig & anfängerfreundlich, aber Thermik oft schwach und gedeckelt.`),
+    lesson('🅣', 'Tiefdruck (Zyklone)', `Aufsteigende Luft, am Boden zusammenströmend (Konvergenz). Rotation: <b>Nordhalbkugel gegen den Uhrzeigersinn</b>, Süden im Uhrzeigersinn. Folgen: <ul><li><b>Hebung</b> → Wolken, Schauer, Gewitter, Überentwicklung.</li><li>Enge Isobaren → <b>kräftiger, böiger Wind</b>.</li><li>Bringt <b>Fronten</b> (siehe unten).</li></ul>Fürs Fliegen: meist anspruchsvoll bis No-Go. Sturmtief = nicht fliegen.`),
+    lesson('🧭', 'Vom Druck zum Wind — Gradient & Coriolis', `Die <b>Druckgradientkraft</b> zeigt vom Hoch zum Tief und treibt den Wind an: <b>enge Isobaren = starker Wind</b>. Die <b>Corioliskraft</b> (Erdrotation) lenkt ab — rechts auf der Nord-, links auf der Südhalbkugel. Im Gleichgewicht weht der <b>geostrophische Wind parallel zu den Isobaren</b>. <b>Buys-Ballot-Regel:</b> Stehst du (Nordhalbkugel) mit dem Rücken zum Wind, liegt das Tief links. Am Boden bremst die Reibung → der Wind dreht etwas zum Tief hin. SKYWORTHY berechnet den Gradienten oben aus echten Nachbar-Druckwerten.`),
+    lesson('🌬️', 'Fronten — Warm, Kalt, Okklusion', `Grenzflächen zwischen Luftmassen, an ein Tief gebunden: <ul><li><b>Warmfront:</b> warme Luft gleitet auf → hohe Cirren, dann tiefere Schichtwolken, lang anhaltender Regen, Wind dreht. Vorlaufend.</li><li><b>Kaltfront:</b> Kaltluft schiebt sich unter Warmluft → <b>Böenfront</b>, Schauer/Gewitter, markanter Winddreher (Nord-H.: rechtsdrehend), danach Aufklaren mit Quellwolken. Gefährlich!</li><li><b>Okklusion:</b> Kaltfront holt Warmfront ein — Mischung aus beidem.</li></ul>Fürs Fliegen: <b>Frontdurchgang konsequent meiden</b> — plötzliche Böen & Winddreher.`),
+    lesson('⛰️', 'Föhn — der Druck-Trick der Berge', `Föhn entsteht durch einen <b>Druckunterschied quer über das Gebirge</b> (z. B. Süd > Nord über den Alpen). Luft wird übers Gebirge gepresst, fällt auf der Lee-Seite ab, erwärmt sich, wird trocken, böig und stark. Zeichen: Föhnfische (Lentikularis), extreme Fernsicht, warmer böiger Wind, Föhnmauer am Kamm. <b>Föhnverdacht = nicht fliegen.</b> Lokale Windstille am Start täuscht — der Föhn kann schlagartig durchbrechen.`),
+    lesson('🧱', 'Inversion & Stabilität', `Normalerweise nimmt die Temperatur mit der Höhe ab. Bei einer <b>Inversion</b> ist eine Schicht oben wärmer als unten — sie wirkt wie ein Deckel und <b>stoppt die Thermik</b> abrupt (Basis begrenzt). Typisch unter Hochdruck (Absink-Inversion) oder morgens (Bodeninversion). Im Emagram (Thermik-Tab) als Knick im Temperaturprofil sichtbar. <b>Stabil</b> (Hoch) = ruhig, schwache Thermik; <b>labil</b> (Tief/Trog) = kräftige Thermik, aber Überentwicklung.`),
+    lesson('🗺️', 'Großwetterlagen weltweit', `<ul><li><b>Omega-/Blocking-Hoch:</b> stabiles Hoch, von Tiefs flankiert (Form wie Ω) → tagelang beständig.</li><li><b>Höhentrog/-rücken (500 hPa):</b> Trog = labil & wechselhaft, Rücken = stabil & sonnig.</li><li><b>Genuatief / Vb-Lage:</b> Tief über Oberitalien, zieht nordostwärts → Stau & Dauerregen am Alpenostrand.</li><li><b>Land-/Seewind & Talwind:</b> lokale, thermisch getriebene Druckunterschiede — überlagern den synoptischen Wind bei schwachem Gradient.</li><li><b>Passat/ITCZ (Tropen), Roaring Forties (Südhalbkugel):</b> die globale Druckverteilung steuert die großen Windgürtel.</li></ul>`),
+    lesson('🌍', 'Nord- vs. Südhalbkugel', `Die Corioliskraft kehrt sich um: Auf der <b>Südhalbkugel</b> rotieren Tiefs im Uhrzeigersinn, Hochs gegen den Uhrzeigersinn — und die Buys-Ballot-Regel ist gespiegelt (Tief zur Rechten, wenn der Wind im Rücken steht). SKYWORTHY berücksichtigt die Hemisphäre des gewählten Gebiets automatisch bei der Gradientwind-Richtung.`),
+    lesson('🎒', 'Vorflug-Routine des Piloten', `<ol><li><b>Barometer-Trend:</b> steigend = Beruhigung, fallend = Verschlechterung/Front.</li><li><b>Isobarenabstand:</b> eng = viel Wind → kritisch.</li><li><b>Front in Sicht?</b> Timing & Durchgang meiden.</li><li><b>Föhn?</b> Druckdifferenz übers Gebirge + Höhenwind prüfen.</li><li><b>Inversion/Basis:</b> reicht der Spielraum über dem Start?</li></ol>Merke: <b>Livewind schlägt Prognose</b> — und im Zweifel nicht fliegen.`)
+  ].join('');
 }
 
 /* föhn / no-go browser alert (foreground; true background push needs a server) */
