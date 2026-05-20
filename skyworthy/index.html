@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#05070d" />
+<title>SKYWORTHY — Elite Paragliding Decision Cockpit</title>
+<link rel="preconnect" href="https://api.open-meteo.com" />
+<link rel="preconnect" href="https://geocoding-api.open-meteo.com" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<style>
+:root{
+  --bg:#05070d; --bg2:#0a0e18; --card:#10151f; --card2:#161c2a; --line:#1f2838;
+  --txt:#eef3fb; --muted:#8a96ab; --dim:#5d6878;
+  --green:#22e08a; --yellow:#ffd23f; --orange:#ff9d2e; --red:#ff4d5e; --black:#b026ff;
+  --blue:#3aa0ff; --cyan:#2de2e6; --shadow:0 8px 30px rgba(0,0,0,.45);
+  --r:18px; font-synthesis:none;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;overscroll-behavior-y:contain}
+body{background:radial-gradient(1200px 600px at 50% -10%,#0e1626 0%,var(--bg) 60%)}
+a{color:var(--blue);text-decoration:none}
+.app{max-width:680px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;
+  padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+.topbar{position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(5,7,13,.92),rgba(5,7,13,.6));
+  border-bottom:1px solid var(--line);padding:10px 14px;display:flex;align-items:center;gap:10px}
+.brand{display:flex;flex-direction:column;line-height:1}
+.brand b{font-size:17px;letter-spacing:3px;font-weight:800}
+.brand span{font-size:9px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase;margin-top:3px}
+.topbar .spacer{flex:1}
+.iconbtn{background:var(--card);border:1px solid var(--line);color:var(--txt);
+  width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:16px;cursor:pointer}
+.iconbtn:active{transform:scale(.94)}
+.statusdot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.statusdot.off{background:var(--red);box-shadow:0 0 8px var(--red)}
+.statusdot.stale{background:var(--orange);box-shadow:0 0 8px var(--orange)}
+.sitesel{display:flex;align-items:center;gap:8px;padding:10px 14px 4px}
+.sitesel select{flex:1;background:var(--card);color:var(--txt);border:1px solid var(--line);
+  border-radius:12px;padding:11px 12px;font-size:15px;font-weight:600;appearance:none}
+.daytoggle{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.daytoggle button{background:transparent;border:0;color:var(--muted);padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer}
+.daytoggle button.on{background:var(--blue);color:#021022}
+.screen{display:none;padding:8px 14px 24px;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.h{font-size:13px;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;font-weight:700;margin:18px 4px 8px}
+.card{background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);
+  border-radius:var(--r);padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.grid{display:grid;gap:10px}
+.grid.c2{grid-template-columns:1fr 1fr}.grid.c3{grid-template-columns:1fr 1fr 1fr}
+.kpi{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.kpi .val{font-size:26px;font-weight:800;margin-top:4px;letter-spacing:-.5px}
+.kpi .val small{font-size:13px;color:var(--muted);font-weight:600}
+.kpi .sub{font-size:11px;color:var(--dim);margin-top:2px}
+.hero{position:relative;border-radius:24px;padding:22px;overflow:hidden;border:1px solid var(--line)}
+.hero .ring{position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;filter:blur(30px);opacity:.5}
+.hero .glabel{font-size:42px;font-weight:900;letter-spacing:-1px;line-height:1}
+.hero .gsum{font-size:14px;color:var(--txt);margin-top:8px;opacity:.92;max-width:90%}
+.hero .meta{display:flex;gap:18px;margin-top:14px;flex-wrap:wrap}
+.hero .meta div{font-size:12px;color:var(--muted)}
+.hero .meta b{display:block;font-size:16px;color:var(--txt);margin-top:2px}
+.scorebadge{position:absolute;right:16px;top:16px;text-align:center}
+.scorebadge .n{font-size:40px;font-weight:900;line-height:1}
+.scorebadge .t{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+.s-green{--c:var(--green)} .s-yellow{--c:var(--yellow)} .s-orange{--c:var(--orange)}
+.s-red{--c:var(--red)} .s-black{--c:var(--black)} .s-gray{--c:var(--dim)}
+.statusborder{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);vertical-align:middle}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);
+  border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700;color:var(--txt)}
+.pill .dot{width:8px;height:8px}
+.tag{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:8px;
+  padding:3px 9px;font-size:11px;color:var(--muted);margin:2px 3px 2px 0;font-weight:600}
+.risk{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+.risk:last-child{border-bottom:0}
+.risk .ic{font-size:16px;width:22px;text-align:center}
+.risk .tx{flex:1;font-size:13.5px;line-height:1.45}
+.risk .tx b{display:block;font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:right;padding:9px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td b{font-weight:800}
+.bar{height:8px;border-radius:6px;background:var(--card2);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:6px;background:var(--c,var(--blue))}
+.map{height:300px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--card)}
+.leaflet-container{background:#0a0e18}
+.opt{display:block;width:100%;text-align:left;background:var(--card2);border:1px solid var(--line);
+  color:var(--txt);border-radius:12px;padding:13px 14px;font-size:14px;margin-bottom:9px;cursor:pointer;transition:.15s}
+.opt:active{transform:scale(.99)}
+.opt.correct{border-color:var(--green);background:color-mix(in srgb,var(--green) 14%,var(--card2))}
+.opt.wrong{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--card2))}
+.explain{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:13px;font-size:13.5px;line-height:1.5;margin-top:6px}
+.tabbar{position:fixed;bottom:0;left:0;right:0;z-index:50;display:flex;gap:2px;overflow-x:auto;
+  background:linear-gradient(180deg,rgba(5,7,13,.6),rgba(5,7,13,.97));backdrop-filter:blur(16px);
+  border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom));scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;min-width:62px;background:transparent;border:0;color:var(--dim);
+  display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 6px;cursor:pointer;font-size:9.5px;font-weight:700}
+.tab .i{font-size:19px}
+.tab.on{color:var(--cyan)}
+.tab.on .i{filter:drop-shadow(0 0 6px var(--cyan))}
+.muted{color:var(--muted)} .dim{color:var(--dim)} .small{font-size:12px}
+.btn{background:var(--blue);color:#021022;border:0;border-radius:12px;padding:12px 16px;font-weight:800;font-size:14px;cursor:pointer;width:100%}
+.btn.sec{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.input,select.input{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:12px;font-size:14px;margin-top:6px}
+label.fld{display:block;margin-bottom:12px}
+label.fld>span{font-size:12px;color:var(--muted);font-weight:700}
+.disclaimer{font-size:11px;color:var(--dim);line-height:1.5;border-top:1px solid var(--line);
+  padding:14px;text-align:center;margin-top:6px}
+.loading{text-align:center;color:var(--muted);padding:30px;font-size:14px}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--cyan);
+  border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.windarrow{display:inline-block;transition:transform .3s}
+.sitecard{display:flex;align-items:center;gap:12px;cursor:pointer}
+.sitecard .gp{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:900;font-size:18px;
+  background:color-mix(in srgb,var(--c) 18%,var(--card2));color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,var(--line))}
+.sitecard .info{flex:1;min-width:0}
+.sitecard .info b{font-size:15px} .sitecard .info div{font-size:12px;color:var(--muted)}
+.sitecard .r{text-align:right;font-size:12px;color:var(--muted)}
+.fav{cursor:pointer;color:var(--dim);font-size:18px}.fav.on{color:var(--yellow)}
+.banner{border-radius:12px;padding:11px 13px;font-size:13px;font-weight:600;margin-bottom:10px;
+  border:1px solid color-mix(in srgb,var(--c) 50%,var(--line));background:color-mix(in srgb,var(--c) 12%,var(--card));color:var(--txt)}
+.reminder{display:flex;gap:10px;align-items:center;background:color-mix(in srgb,var(--cyan) 8%,var(--card));
+  border:1px solid color-mix(in srgb,var(--cyan) 30%,var(--line));border-radius:14px;padding:13px;font-size:13px;line-height:1.4}
+.reminder .i{font-size:20px}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.seg button{background:var(--card2);border:1px solid var(--line);color:var(--muted);border-radius:999px;
+  padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--blue);color:#021022;border-color:var(--blue)}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0}
+hr.sep{border:0;border-top:1px solid var(--line);margin:14px 0}
+/* password gate */
+#gate{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;
+  background:radial-gradient(900px 500px at 50% -10%,#0e1626,#05070d 70%)}
+#gate .box{width:100%;max-width:360px;text-align:center}
+#gate .logo{font-size:26px;letter-spacing:6px;font-weight:900}
+#gate .sub{font-size:10px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;margin:6px 0 26px}
+#gate input{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+  border-radius:12px;padding:14px;font-size:16px;text-align:center;letter-spacing:2px}
+#gate button{margin-top:12px}
+#gate .err{color:var(--red);font-size:13px;min-height:18px;margin-top:10px}
+#gate .note{color:var(--dim);font-size:11px;margin-top:18px;line-height:1.5}
+body.locked .app,body.locked .tabbar{display:none}
+</style>
+</head>
+<body class="locked">
+
+<div id="gate">
+  <div class="box">
+    <div class="logo">SKYWORTHY</div>
+    <div class="sub">Elite Paragliding Decision Cockpit</div>
+    <form id="gateForm" autocomplete="off">
+      <input id="gatePw" type="password" inputmode="text" placeholder="Passwort" aria-label="Passwort" autofocus />
+      <button class="btn" type="submit">Cockpit öffnen</button>
+      <div class="err" id="gateErr"></div>
+    </form>
+    <div class="note">Zugang geschützt. Hinweis: Auf einem statischen Host (GitHub Pages)
+      erfolgt die Prüfung clientseitig — kein Ersatz für echte Server-Authentifizierung.</div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><b>SKYWORTHY</b><span>Decision Cockpit</span></div>
+    <div class="spacer"></div>
+    <div id="conn" class="pill"><span class="statusdot" id="conndot"></span><span id="conntxt">live</span></div>
+    <button class="iconbtn" id="refreshBtn" title="Aktualisieren">⟳</button>
+  </div>
+
+  <div class="sitesel">
+    <select id="siteSelect"></select>
+    <div class="daytoggle">
+      <button data-day="0" class="on">Heute</button>
+      <button data-day="1">Morgen</button>
+    </div>
+  </div>
+
+  <div id="screen-cockpit" class="screen on"></div>
+  <div id="screen-sites" class="screen"></div>
+  <div id="screen-detail" class="screen"></div>
+  <div id="screen-live" class="screen"></div>
+  <div id="screen-wind" class="screen"></div>
+  <div id="screen-thermal" class="screen"></div>
+  <div id="screen-cloud" class="screen"></div>
+  <div id="screen-models" class="screen"></div>
+  <div id="screen-profile" class="screen"></div>
+  <div id="screen-exam" class="screen"></div>
+
+  <div class="disclaimer">
+    ⚠️ Diese App ersetzt keine eigene Wetterprüfung, keinen Fluglehrer, keine lokale Einweisung
+    und keine Verantwortung des Piloten. Bei Unsicherheit: <b>nicht fliegen.</b><br>
+    Datenquelle: Open-Meteo (CC-BY 4.0) · Live-Stationen teils simuliert (Demo).
+  </div>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button class="tab on" data-screen="cockpit"><span class="i">🛩️</span>Cockpit</button>
+  <button class="tab" data-screen="sites"><span class="i">📍</span>Gebiete</button>
+  <button class="tab" data-screen="live"><span class="i">📡</span>Live</button>
+  <button class="tab" data-screen="wind"><span class="i">🌬️</span>Wind</button>
+  <button class="tab" data-screen="thermal"><span class="i">🔥</span>Thermik</button>
+  <button class="tab" data-screen="cloud"><span class="i">☁️</span>Wolken</button>
+  <button class="tab" data-screen="models"><span class="i">🧮</span>Modelle</button>
+  <button class="tab" data-screen="profile"><span class="i">👤</span>Profil</button>
+  <button class="tab" data-screen="exam"><span class="i">🎓</span>Lernen</button>
+</nav>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+(function(){
+  var KEY='skyworthy_unlocked';
+  var HASH=3538207967; // hash('flyptgo') — client-side gate only
+  function h(s){var x=0;for(var i=0;i<s.length;i++)x=(x*31+s.charCodeAt(i))>>>0;return x;}
+  function unlock(){
+    document.body.classList.remove('locked');
+    var g=document.getElementById('gate'); if(g) g.remove();
+    if(window.startSkyworthy) window.startSkyworthy();
+  }
+  if(sessionStorage.getItem(KEY)==='1'){ unlock(); return; }
+  var form=document.getElementById('gateForm');
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var v=document.getElementById('gatePw').value||'';
+    if(h(v)===HASH){ sessionStorage.setItem(KEY,'1'); unlock(); }
+    else{ document.getElementById('gateErr').textContent='Falsches Passwort.';
+          document.getElementById('gatePw').value=''; }
+  });
+})();
+</script>
+<script src="./app.js"></script>
+</body>
+</html>
