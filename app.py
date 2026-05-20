@@ -11124,6 +11124,18 @@ ALEX = {
     },
 }
 
+# Nachgetragen für 1:1-Treue zum Original-Auftrag (Abschnitt 13 + Identitäts-Leitsatz v1).
+ALEX["leitsatz_v1"] = "Ich bin kein Mann, der flieht. Ich bin ein Mann, der bewusst lebt."
+ALEX["nervensystem"] = {
+    "intro": "Alex lebt nie wieder gegen sein eigenes Nervensystem. Schönheit ist keine Dekoration — sie ist Regulation.",
+    "braucht": ["Ruhe", "Natur", "Schönheit", "Ordnung", "Musik", "körperliche Bewegung",
+                "Freiheit", "klare Grenzen", "Luft", "Wasser", "Rhythmus"],
+    "nicht": ["Dauerchaos", "Lärm", "emotionale Überladung", "fremde Familiensysteme",
+              "emotionaler Druck", "vollgestellte Räume", "Unordnung", "Reaktivität"],
+    "tools": ["Atmung", "Spaziergänge", "Sauna", "kaltes Wasser", "Musik", "Van-Auszeiten",
+              "Paragliding", "Tagebuch", "Training", "Natur", "klare Kommunikation"],
+}
+
 
 _ALEX_CSS = """
 <style>
@@ -11752,11 +11764,29 @@ def _alex_dashboard_panel() -> str:
       <p class="section-sub">Acht Achsen, auf denen dieses Leben getragen wird. Nicht nebeneinander, sondern miteinander.</p>
       {pillars}
       <div class="quote">„{ALEX['leitsatz']}“</div>
+      <div class="quote" style="opacity:.85;font-size:17px">„{ALEX['leitsatz_v1']}“</div>
       <div class="card" style="margin-top:18px">
         <div class="meta">Frame-Regel</div>
         <p>{ALEX['frame_rule']}</p>
       </div>
       <div class="schluss">„{ALEX['schlusssatz']}“</div>
+    </section>"""
+
+
+def _alex_nerve_panel() -> str:
+    n = ALEX["nervensystem"]
+    braucht = "".join(f"<li>{x}</li>" for x in n["braucht"])
+    nicht = "".join(f"<li>{x}</li>" for x in n["nicht"])
+    tools = " ".join(f'<span class="tag gold">{x}</span>' for x in n["tools"])
+    return f"""
+    <section data-panel="nervensystem" class="panel">
+      <h2 class="section">Nervensystem · Ruhe als Fundament</h2>
+      <p class="section-sub">{n['intro']}</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Was es braucht</div><h3>Nahrung fürs System</h3><ul>{braucht}</ul></div>
+        <div class="card dim"><div class="meta">Was es zerstört</div><h3>Worin es nicht leben darf</h3><ul>{nicht}</ul></div>
+      </div>
+      <div class="card"><div class="meta">Regulations-Tools</div><h3>Wenn es eng wird — greif hierzu</h3><div class="tag-row">{tools}</div></div>
     </section>"""
 
 
@@ -12069,6 +12099,7 @@ def alex_dashboard(request: Request):
         ("stil",        "Stil"),
         ("frauen",      "Frauen"),
         ("tochter",     "Tochter"),
+        ("nervensystem", "Nervensystem"),
         ("monat",       "Monatscheck"),
         ("jahr",        "Jahresvision"),
         ("taeglich",    "Täglich"),
@@ -12130,6 +12161,7 @@ def alex_dashboard(request: Request):
     {_alex_style_panel()}
     {_alex_frauen_panel()}
     {_alex_tochter_panel()}
+    {_alex_nerve_panel()}
     {monat_panel}
     {jahr_panel}
     {_alex_daily_panel()}
