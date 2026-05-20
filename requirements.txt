@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+starlette
+itsdangerous
+pydantic[email]
+email-validator
+sqlalchemy
+requests
+python-multipart
