@@ -3,6 +3,16 @@
    Conservative decision engine: never call "Go" lightly. */
 'use strict';
 
+/* ---- Product config (edit these to go commercial) ---------------------------
+   Create a yearly 49 € subscription in your Stripe dashboard, generate a
+   Payment Link, and paste its URL into stripePaymentLink. Real subscription
+   ENFORCEMENT needs a backend (Stripe webhook) — on a static host this page is
+   an upsell/checkout entry only. */
+const SKYWORTHY_CONFIG = {
+  price: '49 €', interval: 'Jahr',
+  stripePaymentLink: '' // e.g. 'https://buy.stripe.com/xxxxxxxx'
+};
+
 /* ============================================================
    UTILS — geo / wind / time / units / dom
    ============================================================ */
@@ -56,7 +66,7 @@ const Time = {
 /* ============================================================
    STORE — minimal reactive state + localStorage persistence
    ============================================================ */
-const PERSIST = ['pilot', 'favorites', 'recent', 'selectedSiteId', 'examStats'];
+const PERSIST = ['pilot', 'favorites', 'recent', 'selectedSiteId', 'examStats', 'alerts'];
 const Store = {
   state: {
     pilot: {
@@ -66,7 +76,7 @@ const Store = {
     },
     favorites: [], recent: [], selectedSiteId: 'brauneck', day: 0,
     examStats: { answered: 0, correct: 0, lastDailyDate: null },
-    online: navigator.onLine
+    alerts: false, online: navigator.onLine
   },
   subs: [],
   load() {
@@ -177,6 +187,66 @@ const SITES = [
     siteRules: ['Hochriesbahn vorhanden'], emergencyNotes: ['Bergrettung 140'],
     takeoffs: [{ id: 'hr-n', name: 'Hochries Nordstart', lat: 47.7445, lon: 12.2455, elevation: 1530, orientation: ['N', 'NW', 'NE'], idealWindMinKmh: 5, idealWindMaxKmh: 24, maxGustKmhBeginner: 22, maxGustKmhExpert: 36, difficulty: 'easy', notes: 'Breite Wiese.', leeDangerDirections: ['S', 'SW', 'SE'] }],
     landings: [{ id: 'hr-lz', name: 'LP Grainbach', lat: 47.7560, lon: 12.2330, elevation: 670, notes: 'Offizieller LP Samerberg.' }]
+  },
+  {
+    id: 'tegelsee', name: 'Niederhorn / Beatenberg', region: 'Berner Oberland', country: 'CH',
+    lat: 46.7000, lon: 7.7700, elevationMin: 560, elevationMax: 1950,
+    flightTypes: ['thermik', 'soaring', 'xc', 'abgleiter'], beginnerFriendly: true,
+    idealWindDirections: ['NW', 'N', 'W'], dangerousWindDirections: ['SE', 'S', 'E'], foehnSensitive: true,
+    leeRisks: ['Südföhn am Thunersee', 'Ostwind = Lee'],
+    valleyWindNotes: 'See-/Talwind vom Thunersee am Nachmittag.', thermalNotes: 'Top-Soaringkante über dem Thunersee, sehr beliebt.',
+    beginnerNotes: 'Großer LP, gut bei ruhigem NW.', expertNotes: 'XC ins Berner Oberland möglich.',
+    siteRules: ['Niederhornbahn vorhanden', 'LP Beatenbucht'], emergencyNotes: ['Euronotruf 112', 'REGA 1414'],
+    takeoffs: [{ id: 'nh-nw', name: 'Niederhorn Weststart', lat: 46.7010, lon: 7.7820, elevation: 1900, orientation: ['NW', 'N', 'W'], idealWindMinKmh: 6, idealWindMaxKmh: 24, maxGustKmhBeginner: 22, maxGustKmhExpert: 38, difficulty: 'medium', notes: 'Soaringkante.', leeDangerDirections: ['SE', 'S', 'E'] }],
+    landings: [{ id: 'nh-lz', name: 'LP Beatenbucht', lat: 46.6850, lon: 7.7700, elevation: 560, notes: 'Seenah, Talwind beachten.' }]
+  },
+  {
+    id: 'sthilaire', name: 'Saint-Hilaire-du-Touvet', region: 'Isère / Alpes', country: 'FR',
+    lat: 45.3060, lon: 5.8870, elevationMin: 270, elevationMax: 1000,
+    flightTypes: ['thermik', 'soaring', 'xc', 'abgleiter'], beginnerFriendly: true,
+    idealWindDirections: ['W', 'SW', 'NW'], dangerousWindDirections: ['E', 'SE', 'NE'], foehnSensitive: false,
+    leeRisks: ['Ostwind = Lee (Hinterland)'],
+    valleyWindNotes: 'Talwind im Grésivaudan am Nachmittag.', thermalNotes: 'Weltberühmter Schulungs- & XC-Spot (Coupe Icare).',
+    beginnerNotes: 'Sehr anfängerfreundlich bei ruhigem West.', expertNotes: 'Klassische XC-Strecken entlang der Chartreuse.',
+    siteRules: ['Standseilbahn/Zufahrt', 'Großer LP Lumbin'], emergencyNotes: ['Euronotruf 112'],
+    takeoffs: [{ id: 'sth-w', name: 'Saint-Hilaire Weststart', lat: 45.3055, lon: 5.8885, elevation: 950, orientation: ['W', 'SW', 'NW'], idealWindMinKmh: 5, idealWindMaxKmh: 24, maxGustKmhBeginner: 22, maxGustKmhExpert: 38, difficulty: 'easy', notes: 'Breite Startwiese.', leeDangerDirections: ['E', 'SE', 'NE'] }],
+    landings: [{ id: 'sth-lz', name: 'LP Lumbin', lat: 45.3030, lon: 5.8990, elevation: 270, notes: 'Sehr großer offizieller LP.' }]
+  },
+  {
+    id: 'annecy', name: 'Forclaz / Annecy', region: 'Haute-Savoie', country: 'FR',
+    lat: 45.8200, lon: 6.2300, elevationMin: 450, elevationMax: 1250,
+    flightTypes: ['thermik', 'soaring', 'xc', 'abgleiter'], beginnerFriendly: true,
+    idealWindDirections: ['W', 'SW', 'NW'], dangerousWindDirections: ['E', 'NE', 'SE'], foehnSensitive: false,
+    leeRisks: ['Ostwind = Lee über dem See'],
+    valleyWindNotes: 'Seewind am Lac d’Annecy nachmittags kräftig.', thermalNotes: 'Mekka für Soaring & Acro über dem See.',
+    beginnerNotes: 'Riesiger LP Doussard, ideal bei moderatem West.', expertNotes: 'Acro über Wasser, XC in die Aravis.',
+    siteRules: ['Auffahrt Col de la Forclaz', 'LP Doussard / Montmin'], emergencyNotes: ['Euronotruf 112'],
+    takeoffs: [{ id: 'an-w', name: 'Col de la Forclaz', lat: 45.8210, lon: 6.2360, elevation: 1240, orientation: ['W', 'SW', 'NW'], idealWindMinKmh: 6, idealWindMaxKmh: 26, maxGustKmhBeginner: 22, maxGustKmhExpert: 40, difficulty: 'easy', notes: 'Berühmter Startplatz.', leeDangerDirections: ['E', 'NE', 'SE'] }],
+    landings: [{ id: 'an-lz', name: 'LP Doussard', lat: 45.7900, lon: 6.2200, elevation: 450, notes: 'Großer Wiesen-LP am Seeufer.' }]
+  },
+  {
+    id: 'grappa', name: 'Monte Grappa / Bassano', region: 'Venetien', country: 'IT',
+    lat: 45.8700, lon: 11.8000, elevationMin: 150, elevationMax: 1600,
+    flightTypes: ['thermik', 'xc', 'soaring', 'abgleiter'], beginnerFriendly: true,
+    idealWindDirections: ['S', 'SW', 'SE'], dangerousWindDirections: ['N', 'NE', 'NW'], foehnSensitive: false,
+    leeRisks: ['Nordwind = Lee (Tramontana)'],
+    valleyWindNotes: 'Talwind aus der Po-Ebene, nachmittags zunehmend.', thermalNotes: 'XC-Klassiker, sehr verlässliche Thermik.',
+    beginnerNotes: 'Mehrere Startplätze, gut bei ruhigem Süd.', expertNotes: 'Lange XC-Strecken in die Voralpen.',
+    siteRules: ['Zufahrt zu den Startplätzen', 'LP Borso/Romano'], emergencyNotes: ['Euronotruf 112'],
+    takeoffs: [{ id: 'gr-s', name: 'Monte Grappa Südstart', lat: 45.8680, lon: 11.8050, elevation: 1500, orientation: ['S', 'SW', 'SE'], idealWindMinKmh: 5, idealWindMaxKmh: 24, maxGustKmhBeginner: 22, maxGustKmhExpert: 38, difficulty: 'medium', notes: 'Bekannter Südstart.', leeDangerDirections: ['N', 'NE', 'NW'] }],
+    landings: [{ id: 'gr-lz', name: 'LP Borso del Grappa', lat: 45.8350, lon: 11.8000, elevation: 300, notes: 'Großer offizieller LP.' }]
+  },
+  {
+    id: 'gerlitzen', name: 'Gerlitzen / Ossiacher See', region: 'Kärnten', country: 'AT',
+    lat: 46.6900, lon: 13.9100, elevationMin: 500, elevationMax: 1900,
+    flightTypes: ['thermik', 'xc', 'abgleiter', 'soaring'], beginnerFriendly: true,
+    idealWindDirections: ['SE', 'S', 'E'], dangerousWindDirections: ['NW', 'N', 'W'], foehnSensitive: false,
+    leeRisks: ['Nordwestwind = Lee'],
+    valleyWindNotes: 'See-/Talwind am Ossiacher See.', thermalNotes: 'Sonniger Hang, verlässliche Kärntner Thermik.',
+    beginnerNotes: 'Gut für Anfänger bei ruhigem Südost.', expertNotes: 'XC in die Nockberge.',
+    siteRules: ['Gerlitzenbahn / Auffahrt', 'LP am See'], emergencyNotes: ['Euronotruf 112'],
+    takeoffs: [{ id: 'ge-se', name: 'Gerlitzen Südoststart', lat: 46.6920, lon: 13.9150, elevation: 1850, orientation: ['SE', 'S', 'E'], idealWindMinKmh: 5, idealWindMaxKmh: 24, maxGustKmhBeginner: 22, maxGustKmhExpert: 38, difficulty: 'easy', notes: 'Breite Wiese.', leeDangerDirections: ['NW', 'N', 'W'] }],
+    landings: [{ id: 'ge-lz', name: 'LP Annenheim', lat: 46.6700, lon: 13.8950, elevation: 510, notes: 'LP am Ossiacher See.' }]
   }
 ];
 const siteById = id => SITES.find(s => s.id === id) || SITES[0];
@@ -220,7 +290,7 @@ const Providers = {
       'surface_pressure', 'wind_speed_80m', 'wind_direction_80m', 'wind_speed_120m', 'wind_speed_180m'
     ];
     PRESSURE_LEVELS.forEach(p => {
-      hourly.push(`wind_speed_${p}hPa`, `wind_direction_${p}hPa`, `geopotential_height_${p}hPa`, `temperature_${p}hPa`);
+      hourly.push(`wind_speed_${p}hPa`, `wind_direction_${p}hPa`, `geopotential_height_${p}hPa`, `temperature_${p}hPa`, `relative_humidity_${p}hPa`);
     });
     const q = new URLSearchParams({
       latitude: site.lat, longitude: site.lon, hourly: hourly.join(','),
@@ -282,6 +352,34 @@ const Providers = {
         reliabilityScore: d.rel, stationType: d.type
       };
     });
+  },
+  /* REAL live stations via Pioupiou open API (fair use, CC-BY).
+     Returns mapped LiveStation[] within radiusKm, or null on failure/none. */
+  async fetchPioupiou(site, radiusKm = 60) {
+    const r = await fetch('https://api.pioupiou.fr/v1/live/all', { cache: 'no-store' });
+    if (!r.ok) throw new Error('Pioupiou HTTP ' + r.status);
+    const j = await r.json();
+    const data = (j && j.data) || [];
+    const out = [];
+    for (const s of data) {
+      const loc = s.location, m = s.measurements;
+      if (!loc || !m || loc.latitude == null || loc.longitude == null) continue;
+      if (m.wind_speed_avg == null || m.wind_heading == null) continue;
+      const ageMin = m.date ? Time.ageMin(m.date) : 9999;
+      if (ageMin > 120) continue; // skip stale
+      const dist = Geo.haversineKm(site.lat, site.lon, loc.latitude, loc.longitude);
+      if (dist > radiusKm) continue;
+      out.push({
+        id: 'pio-' + s.id, provider: 'Pioupiou', name: (s.meta && s.meta.name) ? s.meta.name : 'Pioupiou ' + s.id,
+        lat: loc.latitude, lon: loc.longitude, elevation: null,
+        distanceKm: round(dist, 1), bearingToSite: round(Geo.bearing(site.lat, site.lon, loc.latitude, loc.longitude)),
+        windDirection: round(m.wind_heading), windSpeedKmh: round(m.wind_speed_avg), gustKmh: round(m.wind_speed_max != null ? m.wind_speed_max : m.wind_speed_avg),
+        temperatureC: null, updatedAt: m.date || new Date().toISOString(),
+        reliabilityScore: clamp(1 - ageMin / 120, 0.3, 0.97), stationType: 'unknown',
+        sourceUrl: 'https://www.pioupiou.fr/fr/' + s.id
+      });
+    }
+    return out.sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 10);
   }
 };
 
@@ -303,6 +401,7 @@ function buildAggregation(json, site) {
   PRESSURE_LEVELS.forEach(p => {
     fields[`w${p}`] = get(`wind_speed_${p}hPa`); fields[`wd${p}`] = get(`wind_direction_${p}hPa`);
     fields[`gh${p}`] = get(`geopotential_height_${p}hPa`); fields[`t${p}`] = get(`temperature_${p}hPa`);
+    fields[`rh${p}`] = get(`relative_humidity_${p}hPa`);
   });
 
   // day grouping by local date (timezone=auto → local ISO)
@@ -315,7 +414,7 @@ function buildAggregation(json, site) {
     cloud: num(fields.cloud[i]), cloudL: num(fields.cloudL[i]), cloudM: num(fields.cloudM[i]), cloudH: num(fields.cloudH[i]),
     windKmh: num(fields.wind[i]), windDir: num(fields.windDir[i]), gustKmh: num(fields.gust[i]),
     cape: num(fields.cape[i]), frz: num(fields.frz[i]),
-    upper: PRESSURE_LEVELS.map(p => ({ p, h: num(fields[`gh${p}`][i]), spd: num(fields[`w${p}`][i]), dir: num(fields[`wd${p}`][i]), temp: num(fields[`t${p}`][i]) }))
+    upper: PRESSURE_LEVELS.map(p => ({ p, h: num(fields[`gh${p}`][i]), spd: num(fields[`w${p}`][i]), dir: num(fields[`wd${p}`][i]), temp: num(fields[`t${p}`][i]), rh: num(fields[`rh${p}`][i]) }))
   });
 
   // wind samples for interpolation (height ASL, speed, dir)
@@ -644,7 +743,7 @@ function buildModelConsensus(modelsRes, dayOffset) {
 const Data = {
   forecast: { json: null, agg: null, fetchedAt: null, error: null, loading: false },
   models: { res: null, consensus: null, fetchedAt: null, error: null },
-  stations: { list: [], fetchedAt: null },
+  stations: { list: [], fetchedAt: null, source: 'Demo' },
   timers: {},
   async loadForecast(force) {
     const site = siteById(Store.state.selectedSiteId);
@@ -660,8 +759,9 @@ const Data = {
     } finally {
       this.forecast.loading = false;
     }
-    this.refreshStations();
+    await this.refreshStations();
     this.loadModels();
+    maybeAlert();
     render();
   },
   async loadModels() {
@@ -675,9 +775,12 @@ const Data = {
     } catch (e) { this.models.error = e.message; }
     render();
   },
-  refreshStations() {
+  async refreshStations() {
     const site = siteById(Store.state.selectedSiteId);
-    this.stations.list = Providers.liveStations(site, this.forecast.agg);
+    let real = null;
+    try { real = await Providers.fetchPioupiou(site, 60); } catch (e) { real = null; }
+    if (real && real.length) { this.stations.list = real; this.stations.source = 'Pioupiou'; }
+    else { this.stations.list = Providers.liveStations(site, this.forecast.agg); this.stations.source = 'Demo'; }
     this.stations.fetchedAt = new Date().toISOString();
   },
   decision() {
@@ -688,7 +791,7 @@ const Data = {
   startAutoRefresh() {
     clearInterval(this.timers.weather); clearInterval(this.timers.live);
     this.timers.weather = setInterval(() => { if (navigator.onLine) this.loadForecast(); }, 10 * 60 * 1000);
-    this.timers.live = setInterval(() => { this.refreshStations(); if (this.models.res) this.models.consensus = buildModelConsensus(this.models.res, Store.state.day); render(); }, 2 * 60 * 1000);
+    this.timers.live = setInterval(async () => { await this.refreshStations(); if (this.models.res) this.models.consensus = buildModelConsensus(this.models.res, Store.state.day); render(); }, 2 * 60 * 1000);
   },
   isStale() {
     if (!this.forecast.fetchedAt) return false;
@@ -707,7 +810,7 @@ function render() {
   const map = {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
-    profile: renderProfile, exam: renderExam
+    profile: renderProfile, exam: renderExam, pro: renderPro
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -779,7 +882,7 @@ function renderCockpit() {
   ${live ? `<div class="card"><div class="h" style="margin-top:0">Ausschlaggebende Station</div>
     <div class="sitecard"><div class="gp ${sc}">${windArrow(live.windDirection)}</div>
     <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)} · ${live.elevation} m</div></div>
-    <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">Demo</span></div></div></div>` : ''}
+    <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">${esc(Data.stations.source)}</span></div></div></div>` : ''}
 
   <div class="reminder"><div class="i">${rem.i}</div><div><b>${esc(rem.t)}</b><br>${esc(rem.d)}</div></div>
 
@@ -952,7 +1055,9 @@ function renderLive() {
   const list = Data.stations.list; const d = Data.decision();
   el.innerHTML = `
   <div class="h" style="margin-top:6px">Live-Stationen — ${esc(site.name)}</div>
-  ${banner('yellow', 'ℹ️ Live-Stationen sind in dieser Demo simuliert. Echte Anbindung (Holfuy, Pioupiou, Windy, Burnair) erfordert API-Keys/Partnerzugang — siehe Profil → Info.')}
+  ${Data.stations.source === 'Pioupiou'
+    ? banner('green', '✓ Echte Live-Daten von Pioupiou (CC-BY, fair use). Weitere Quellen (Holfuy, Windy, Burnair) brauchen API-Keys — siehe Profil → Info.')
+    : banner('yellow', 'ℹ️ Keine Pioupiou-Station im Umkreis (60 km) — Anzeige simuliert (Demo). Echte Quellen (Holfuy, Windy, Burnair) brauchen API-Keys — siehe Profil → Info.')}
   <div id="liveMap" class="map" style="margin-bottom:12px"></div>
   ${d && d.decisiveStations[0] ? `<div class="card ${statusClass(d.status)}"><div class="small muted">Ausschlaggebend</div><b>${esc(d.decisiveStations[0].name)}</b>
     <div class="small">Prognose ${round(d.best.h.windKmh)} km/h vs. Live ${d.decisiveStations[0].windSpeedKmh} km/h ${Math.abs(d.decisiveStations[0].windSpeedKmh - d.best.h.windKmh) > 10 ? '⚠️ Abweichung' : '✓'}</div></div>` : ''}
@@ -961,7 +1066,7 @@ function renderLive() {
     return `<div class="card"><div class="sitecard">
       <div class="gp s-${s.gustKmh > Store.state.pilot.maxGustKmh ? 'red' : s.windSpeedKmh < 5 ? 'gray' : 'green'}">${windArrow(s.windDirection)}</div>
       <div class="info"><b>${esc(s.name)}</b><div>${s.windSpeedKmh} km/h · Böen ${s.gustKmh} · ${Wind.toCompass(s.windDirection)} (${s.windDirection}°)</div>
-      <div>${s.elevation} m · ${s.distanceKm} km · ${stationTypeLabel(s.stationType)}</div></div>
+      <div>${s.elevation != null ? s.elevation + ' m · ' : ''}${s.distanceKm} km · ${stationTypeLabel(s.stationType)}${s.sourceUrl ? ` · <a href="${s.sourceUrl}" target="_blank" rel="noopener">Quelle</a>` : ''}</div></div>
       <div class="r" style="color:${ageOk ? 'var(--muted)' : 'var(--orange)'}">${Time.fmtAge(s.updatedAt)}<br><span class="dim">Zuverl. ${round(s.reliabilityScore * 100)}%</span></div>
     </div></div>`;
   }).join('')}`;
@@ -1006,7 +1111,10 @@ function renderWind() {
     ${kpi('Böen', round(h.gustKmh), 'km/h', 'Faktor ' + gustFactor + '×')}
     ${kpi('Gradient', (gradient > 0 ? '+' : '') + gradient, 'km/h', 'Boden→+1000m')}
   </div>
-  <div class="card"><div class="h" style="margin-top:0">Höhenwind</div>
+  <div class="card"><div class="h" style="margin-top:0">Windprofil</div>
+    ${windProfileSVG(agg, i, site)}
+  </div>
+  <div class="card"><div class="h" style="margin-top:0">Höhenwind-Tabelle</div>
     <table><thead><tr><th>Höhe ASL</th><th>Wind</th><th>Richtung</th></tr></thead><tbody>
       ${rows.map(r => `<tr><td>${r.alt} m</td><td><b>${round(r.w.spd)}</b> km/h</td><td>${Wind.toCompass(r.w.dir)} ${windArrow(r.w.dir)}</td></tr>`).join('')}
     </tbody></table>
@@ -1048,10 +1156,11 @@ function renderThermal() {
     ${riskRow(peak.cape > 1500 ? '🔴' : peak.cape > 800 ? '🟡' : '🟢', 'Überentwicklung', `Peak-CAPE ${round(peak.cape)} J/kg${peak.cape > 1500 ? ' — Cb/Gewitter möglich.' : '.'}`)}
     ${riskRow('🛫', 'XC-Potenzial', `XC-Score ${Data.decision()?.xcScore ?? '—'}/100 — ${esc(site.expertNotes)}`)}
   </div>
+  <div class="card"><div class="h" style="margin-top:0">Emagram / Sounding (${agg.atHour(peak.i).hh} Uhr)</div>
+    ${emagramSVG(agg, peak.i, site)}
+  </div>
   <div class="card"><div class="h" style="margin-top:0">CAPE-Tagesverlauf</div>
-    <table><thead><tr><th>Zeit</th><th>CAPE</th><th>Basis</th></tr></thead><tbody>
-    ${capeArr.filter((_, k) => k % 2 === 0).map(x => `<tr><td>${x.hh}</td><td><b>${round(x.cape)}</b></td><td>${round(x.base)} m</td></tr>`).join('')}
-    </tbody></table>
+    ${capeTimelineSVG(agg, Store.state.day)}
     <div class="small dim" style="margin-top:8px">Steigwerte/Basis sind Schätzungen aus CAPE & Taupunktspread (LCL). Inversion/CIN aus Open-Meteo nicht direkt verfügbar.</div>
   </div>`;
 }
@@ -1152,6 +1261,11 @@ function renderProfile() {
     <div class="chk"><input type="checkbox" id="p-siv" ${p.sivExperience ? 'checked' : ''}><label for="p-siv">SIV-Erfahrung</label></div>
     <button class="btn" onclick="savePilot()">Profil speichern</button>
   </div>
+  <div class="h">Warnungen</div>
+  <div class="card">
+    <div class="chk"><input type="checkbox" id="p-alerts" ${Store.state.alerts ? 'checked' : ''} onchange="toggleAlerts(this.checked)"><label for="p-alerts">Föhn-/No-Go-Browser-Warnungen aktivieren</label></div>
+    <div class="small dim" style="margin-top:6px">Warnt bei rot/schwarz für das gewählte Gebiet, während die App geöffnet ist. Echte Hintergrund-Push brauchen einen Server.</div>
+  </div>
   <div class="h">Datenquellen & API-Keys</div>
   <div class="card small muted" style="line-height:1.6">
     <b>Direkt integriert (kostenlos, kein Key):</b> Open-Meteo (Forecast, Höhenwind, CAPE, Wolken, Niederschlag), Open-Meteo Modelle (ICON, ECMWF, GFS, AROME, GEM), Open-Meteo Geocoding, RainViewer Radar, OpenStreetMap Karten.<br><br>
@@ -1203,6 +1317,49 @@ function answerExam(k) {
 }
 function nextExam() { examState.current = pickQuestion(); examState.answered = false; renderExam(); }
 
+/* ---------- PRO / PRICING ---------- */
+function renderPro() {
+  const el = $('#screen-pro'); const c = SKYWORTHY_CONFIG;
+  const features = [
+    ['🛩️', 'Konservative Go/No-Go-Engine', 'Ampel grün–schwarz, pilotenindividuell, mit Tages-Gefahren-Sperre.'],
+    ['📡', 'Echte Live-Stationen', 'Pioupiou-Live-Wind im Umkreis, Prognose-vs-Realität, ausschlaggebende Station.'],
+    ['🌬️', 'Wind- & Höhenprofil', 'Interpolierter Höhenwind, Gradient, Scherung, Föhn-Check, Windprofil-Chart.'],
+    ['🔥', 'Thermik + Emagram', 'Emagram/Sounding, CAPE-Verlauf, Basis, Blauthermik, XC-Potenzial.'],
+    ['🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM — Konsens & Widersprüche.'],
+    ['🗺️', 'Fluggebiete & Karten', 'Suche, Radius, Karte, Startplatz-Logik, Brauneck-Premium-Daten.'],
+    ['🔔', 'Föhn-/Go-Alerts', 'Browser-Warnung bei kritischen Bedingungen.'],
+    ['🎓', 'ExamTrainer', 'Prüfungsfragen & Safety-Reminder.']
+  ];
+  const link = c.stripePaymentLink;
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">SKYWORTHY Pro</div>
+  <div class="hero card statusborder s-green">
+    <div class="ring" style="background:var(--c)"></div>
+    <div class="glabel" style="color:var(--c)">${c.price}<small style="font-size:18px;color:var(--muted)"> / ${c.interval}</small></div>
+    <div class="gsum">Alle Elite-Features. Jederzeit kündbar. Günstiger als 15 Wetterseiten zu vergleichen — und sicherer.</div>
+  </div>
+  <div class="card">
+    ${features.map(f => `<div class="risk"><div class="ic">${f[0]}</div><div class="tx"><b>${esc(f[1])}</b>${esc(f[2])}</div></div>`).join('')}
+  </div>
+  ${link
+    ? `<a class="btn" href="${esc(link)}" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">Jetzt für ${c.price}/${c.interval} freischalten →</a>`
+    : `<div class="card s-yellow"><b style="color:var(--c)">Checkout noch nicht aktiv</b><div class="small muted" style="margin-top:6px">Erstelle in Stripe ein ${c.price}/${c.interval}-Abo, generiere einen <b>Payment Link</b> und trage ihn in <code>SKYWORTHY_CONFIG.stripePaymentLink</code> ein. Für erzwungene Lizenzprüfung die App über Vercel/Netlify mit Stripe-Webhook ausliefern.</div></div>`}
+  <div class="disclaimer" style="border:0">Preis & Leistungsumfang sind ein Vorschlag — anpassbar in <code>SKYWORTHY_CONFIG</code>.</div>`;
+}
+
+/* föhn / no-go browser alert (foreground; true background push needs a server) */
+let _lastAlertKey = null;
+function maybeAlert() {
+  if (!Store.state.alerts || typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+  const d = Data.decision(); if (!d) return;
+  const site = siteById(Store.state.selectedSiteId);
+  if (d.status === 'black' || d.status === 'red') {
+    const key = site.id + d.status + Store.state.day;
+    if (key === _lastAlertKey) return; _lastAlertKey = key;
+    try { new Notification(`SKYWORTHY: ${sIc[d.status]} ${site.name}`, { body: d.summary, tag: 'skyworthy-' + site.id }); } catch (e) { /* ignore */ }
+  }
+}
+
 /* ---------- small render helpers ---------- */
 function kpi(lbl, val, unit, sub) { return `<div class="kpi"><div class="lbl">${esc(lbl)}</div><div class="val">${val}<small> ${unit}</small></div>${sub ? `<div class="sub">${esc(sub)}</div>` : ''}</div>`; }
 function miniScore(lbl, v) { const c = v >= 70 ? 'green' : v >= 50 ? 'yellow' : v >= 35 ? 'orange' : 'red'; return `<div class="kpi s-${c}"><div class="lbl">${esc(lbl)}</div><div class="val" style="color:var(--c)">${v}</div><div class="bar" style="margin-top:6px"><i style="width:${v}%"></i></div></div>`; }
@@ -1212,6 +1369,86 @@ function windArrow(deg) { return `<span class="windarrow" style="transform:rotat
 function loadingCard(t) { return `<div class="card loading"><span class="spin"></span>${esc(t)}</div>`; }
 function errorCard(t) { return `<div class="card s-red"><b style="color:var(--c)">Fehler beim Laden</b><div class="small muted" style="margin-top:6px">${esc(t)}</div><button class="btn" style="margin-top:12px" onclick="Data.loadForecast(true)">Erneut versuchen</button></div>`; }
 function banner(s, t) { return `<div class="banner s-${s}">${esc(t)}</div>`; }
+
+/* ============================================================
+   PREMIUM CHARTS — inline SVG (no chart lib needed)
+   ============================================================ */
+const dewFromRh = (T, rh) => { rh = clamp(rh, 1, 100); const g = Math.log(rh / 100) + 17.625 * T / (243.04 + T); return 243.04 * g / (17.625 - g); };
+
+// vertical atmospheric profile: temperature + dewpoint vs altitude (emagram-style)
+function emagramSVG(agg, i, site) {
+  const h = agg.atHour(i);
+  const surf = { h: site.elevationMin, t: h.temp, td: h.dew };
+  const pts = [surf];
+  h.upper.forEach(u => { if (u.h > site.elevationMin + 50 && u.temp > -80) pts.push({ h: u.h, t: u.temp, td: dewFromRh(u.temp, u.rh || 30) }); });
+  pts.sort((a, b) => a.h - b.h);
+  if (pts.length < 2) return '<div class="small dim">Kein Profil verfügbar.</div>';
+  const W = 320, H = 250, pad = 34;
+  const hMin = pts[0].h, hMax = pts[pts.length - 1].h;
+  const allT = pts.flatMap(p => [p.t, p.td]); const tMin = Math.floor(Math.min(...allT) - 2), tMax = Math.ceil(Math.max(...allT) + 2);
+  const x = t => pad + (t - tMin) / (tMax - tMin) * (W - pad - 8);
+  const y = hh => H - pad - (hh - hMin) / (hMax - hMin) * (H - pad - 12);
+  const line = (key, col) => pts.map((p, k) => `${k ? 'L' : 'M'}${round(x(p[key]), 1)},${round(y(p.h), 1)}`).join(' ');
+  const cloudBase = agg.cloudBaseAsl(i);
+  const grid = [];
+  for (let gh = Math.ceil(hMin / 1000) * 1000; gh < hMax; gh += 1000) grid.push(`<line x1="${pad}" y1="${round(y(gh),1)}" x2="${W-8}" y2="${round(y(gh),1)}" stroke="#1f2838"/><text x="${pad-4}" y="${round(y(gh),1)+3}" fill="#5d6878" font-size="9" text-anchor="end">${gh}</text>`);
+  for (let gt = Math.ceil(tMin / 5) * 5; gt < tMax; gt += 5) grid.push(`<line x1="${round(x(gt),1)}" y1="12" x2="${round(x(gt),1)}" y2="${H-pad}" stroke="#141c2a"/><text x="${round(x(gt),1)}" y="${H-pad+12}" fill="#5d6878" font-size="9" text-anchor="middle">${gt}°</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
+    ${grid.join('')}
+    ${cloudBase > hMin && cloudBase < hMax ? `<line x1="${pad}" y1="${round(y(cloudBase),1)}" x2="${W-8}" y2="${round(y(cloudBase),1)}" stroke="#2de2e6" stroke-dasharray="4 3"/><text x="${W-10}" y="${round(y(cloudBase),1)-4}" fill="#2de2e6" font-size="9" text-anchor="end">Basis ~${round(cloudBase)} m</text>` : ''}
+    <path d="${line('td','#3aa0ff')}" fill="none" stroke="#3aa0ff" stroke-width="2.2"/>
+    <path d="${line('t','#ff4d5e')}" fill="none" stroke="#ff4d5e" stroke-width="2.2"/>
+    ${pts.map(p => `<circle cx="${round(x(p.t),1)}" cy="${round(y(p.h),1)}" r="2.4" fill="#ff4d5e"/><circle cx="${round(x(p.td),1)}" cy="${round(y(p.h),1)}" r="2.4" fill="#3aa0ff"/>`).join('')}
+  </svg>
+  <div class="small dim" style="margin-top:6px"><span style="color:#ff4d5e">━</span> Temperatur · <span style="color:#3aa0ff">━</span> Taupunkt · enge Spreizung = Wolken/Basis. Höhe in m ASL.</div>`;
+}
+
+// wind speed + direction vs altitude
+function windProfileSVG(agg, i, site) {
+  const targets = []; for (let a = site.elevationMin; a <= site.elevationMin + 4500; a += 500) targets.push(a);
+  const rows = targets.map(a => ({ a, w: agg.windAtAlt(i, a) })).filter(r => r.w);
+  if (rows.length < 2) return '';
+  const W = 320, H = 230, pad = 30;
+  const aMin = rows[0].a, aMax = rows[rows.length - 1].a;
+  const sMax = Math.max(20, Math.ceil(Math.max(...rows.map(r => r.w.spd)) / 10) * 10);
+  const x = s => pad + s / sMax * (W - pad - 26);
+  const y = a => H - pad - (a - aMin) / (aMax - aMin) * (H - pad - 14);
+  const path = rows.map((r, k) => `${k ? 'L' : 'M'}${round(x(r.w.spd),1)},${round(y(r.a),1)}`).join(' ');
+  const grid = [];
+  for (let s = 10; s <= sMax; s += 10) grid.push(`<line x1="${round(x(s),1)}" y1="12" x2="${round(x(s),1)}" y2="${H-pad}" stroke="#141c2a"/><text x="${round(x(s),1)}" y="${H-pad+12}" fill="#5d6878" font-size="9" text-anchor="middle">${s}</text>`);
+  for (let a = Math.ceil(aMin/1000)*1000; a < aMax; a += 1000) grid.push(`<line x1="${pad}" y1="${round(y(a),1)}" x2="${W-22}" y2="${round(y(a),1)}" stroke="#1f2838"/><text x="${pad-3}" y="${round(y(a),1)+3}" fill="#5d6878" font-size="9" text-anchor="end">${a}</text>`);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
+    ${grid.join('')}
+    <path d="${path}" fill="none" stroke="#2de2e6" stroke-width="2.4"/>
+    ${rows.map(r => `<g transform="translate(${round(x(r.w.spd),1)},${round(y(r.a),1)})"><circle r="2.4" fill="#2de2e6"/><text x="8" y="-4" fill="#8a96ab" font-size="9" transform="rotate(${(r.w.dir+180)%360})"></text></g>`).join('')}
+    ${rows.map(r => `<text x="${round(x(r.w.spd),1)+6}" y="${round(y(r.a),1)+3}" fill="#8a96ab" font-size="8">${Wind.toCompass(r.w.dir)}</text>`).join('')}
+  </svg>
+  <div class="small dim" style="margin-top:6px">Windgeschwindigkeit (km/h, x) über Höhe (m ASL, y), mit Richtung je Stufe.</div>`;
+}
+
+// CAPE area chart across the day
+function capeTimelineSVG(agg, dayOffset) {
+  const idx = agg.daylightIdx(dayOffset); if (!idx.length) return '';
+  const rows = idx.map(i => ({ hh: agg.atHour(i).hh, cape: agg.atHour(i).cape }));
+  const W = 320, H = 150, pad = 28;
+  const cMax = Math.max(500, Math.ceil(Math.max(...rows.map(r => r.cape)) / 250) * 250);
+  const x = k => pad + k / (rows.length - 1) * (W - pad - 8);
+  const y = c => H - pad - c / cMax * (H - pad - 12);
+  const path = rows.map((r, k) => `${k ? 'L' : 'M'}${round(x(k),1)},${round(y(r.cape),1)}`).join(' ');
+  const area = `M${pad},${H-pad} ${rows.map((r, k) => `L${round(x(k),1)},${round(y(r.cape),1)}`).join(' ')} L${round(x(rows.length-1),1)},${H-pad} Z`;
+  const grid = [];
+  for (let c = 0; c <= cMax; c += cMax / 2) grid.push(`<line x1="${pad}" y1="${round(y(c),1)}" x2="${W-8}" y2="${round(y(c),1)}" stroke="#1f2838"/><text x="${pad-3}" y="${round(y(c),1)+3}" fill="#5d6878" font-size="9" text-anchor="end">${round(c)}</text>`);
+  const labels = rows.map((r, k) => k % 3 === 0 ? `<text x="${round(x(k),1)}" y="${H-pad+12}" fill="#5d6878" font-size="9" text-anchor="middle">${r.hh}</text>` : '').join('');
+  const thr = 1500;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block">
+    ${grid.join('')}
+    ${thr < cMax ? `<line x1="${pad}" y1="${round(y(thr),1)}" x2="${W-8}" y2="${round(y(thr),1)}" stroke="#ff9d2e" stroke-dasharray="4 3"/><text x="${W-10}" y="${round(y(thr),1)-3}" fill="#ff9d2e" font-size="9" text-anchor="end">Cb-Schwelle</text>` : ''}
+    <path d="${area}" fill="rgba(45,226,230,.14)"/>
+    <path d="${path}" fill="none" stroke="#2de2e6" stroke-width="2.2"/>
+    ${labels}
+  </svg>
+  <div class="small dim" style="margin-top:6px">CAPE (J/kg) im Tagesverlauf. Über der Cb-Schwelle wächst das Gewitter-/Überentwicklungsrisiko.</div>`;
+}
 
 /* ============================================================
    ROUTER + ACTIONS + INIT
@@ -1250,7 +1487,14 @@ function savePilot() {
   const btn = $('#screen-profile .btn'); if (btn) { btn.textContent = '✓ Gespeichert'; setTimeout(() => btn.textContent = 'Profil speichern', 1500); }
 }
 // expose for inline handlers
-Object.assign(window, { go, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, Data });
+function toggleAlerts(on) {
+  if (on && typeof Notification !== 'undefined' && Notification.permission !== 'granted') {
+    Notification.requestPermission().then(p => { Store.set({ alerts: p === 'granted' }); maybeAlert(); render(); });
+    return;
+  }
+  Store.set({ alerts: !!on }); if (on) maybeAlert();
+}
+Object.assign(window, { go, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
@@ -1288,5 +1532,10 @@ function init() {
   Data.loadForecast(true);
   render();
 }
-// Started by the password gate in index.html (GitHub Pages = static host, no server auth).
+// On GitHub Pages the password gate calls startSkyworthy() after unlock (body.locked).
+// On an ungated copy (e.g. Vercel behind middleware) auto-start instead.
 window.startSkyworthy = () => { if (!window.__skyworthyStarted) { window.__skyworthyStarted = true; init(); } };
+if (!(document.body && document.body.classList.contains('locked'))) {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', window.startSkyworthy);
+  else window.startSkyworthy();
+}
