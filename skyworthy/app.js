@@ -932,9 +932,18 @@ function renderCockpit() {
   const fav = Store.state.favorites.includes(site.id);
   const live = d.decisiveStations[0];
   const simple = Store.state.simple;
-  const goWord = d.status === 'green' ? 'JA' : d.status === 'yellow' ? 'JA, vorsichtig' : d.status === 'orange' ? 'Nur erfahren' : 'NEIN';
+  const verdict = { green: 'FLIEG', yellow: 'FLIEG – vorsichtig', orange: 'NUR EXPERTEN', red: 'WARTE', black: 'BLEIB AM BODEN' }[d.status] || '—';
+  const confV = round((d.confidenceScore + d.dataQualityScore) / 2);
+  const confLabel = confV >= 75 ? 'sehr sicher' : confV >= 58 ? 'ziemlich sicher' : confV >= 42 ? 'mäßig sicher' : 'unsicher – Modelle uneinig';
+  const briefing = buildBriefing(d, site);
+  window.__briefingText = briefing.text;
 
   const advanced = `
+  <div class="grid c3">
+    ${kpi('Wind Start', round(d.best.h.windKmh), 'km/h', `${Wind.toCompass(d.best.h.windDir)} · Böen ${round(d.best.h.gustKmh)}`)}
+    ${kpi('Basis ü. Start', round(d.best.baseAboveTO), 'm', `Basis ${round(d.best.cloudBase)} m`)}
+    ${kpi('CAPE', round(d.best.h.cape), 'J/kg', d.best.h.cape > 1200 ? 'erhöht' : 'moderat')}
+  </div>
   <div class="grid c2">
     ${miniScore('Anfänger', d.beginnerScore)}
     ${miniScore('Experte', d.expertScore)}
@@ -962,26 +971,23 @@ function renderCockpit() {
     <button class="${!simple ? 'on' : ''}" onclick="setSimple(false)">Profi</button>
   </div>
 
-  <div class="hero card statusborder ${sc}">
+  <div class="hero card statusborder ${sc}" style="text-align:center">
     <div class="ring" style="background:var(--c)"></div>
-    <div class="scorebadge"><div class="n" style="color:var(--c)">${d.overallScore}</div><div class="t">Score</div></div>
-    <div style="display:flex;align-items:center;gap:8px"><span class="dot"></span>
-      <span class="muted small" style="font-weight:700;letter-spacing:1px">${sIc[d.status]} ${d.status.toUpperCase()}</span></div>
-    <div class="glabel" style="color:var(--c);margin-top:4px;font-size:46px">${esc(goWord)}</div>
-    <div class="muted small" style="font-weight:700;margin-top:2px">Kann ich heute fliegen? · ${esc(site.name)}</div>
-    <div class="gsum" style="margin-top:8px">${esc(d.summary)}</div>
-    <div class="meta">
+    <div class="muted small" style="letter-spacing:3px;text-transform:uppercase;font-weight:800">Flugentscheidung · ${esc(site.name)}</div>
+    <div class="glabel" style="color:var(--c);margin-top:8px;font-size:clamp(40px,13vw,66px);line-height:1.02;font-weight:900">${esc(verdict)}</div>
+    <div class="muted" style="margin-top:6px">${sIc[d.status]} ${esc(d.recommendedFlightType)} · Sicherheit: <b style="color:var(--c)">${esc(confLabel)}</b></div>
+    <div class="meta" style="margin-top:16px">
       <div>Startfenster<b>${esc(d.bestStartTime || '—')}</b></div>
       <div>Bester Start<b>${esc(d.bestTakeoff || '—')}</b></div>
-      <div>Flugart<b>${esc(d.recommendedFlightType)}</b></div>
-      ${d.latestSafeStartTime ? `<div>Spätestens<b>${esc(d.latestSafeStartTime)}</b></div>` : ''}
+      ${d.latestSafeStartTime ? `<div>Spätestens<b>${esc(d.latestSafeStartTime)}</b></div>` : `<div>Flugart<b>${esc(d.recommendedFlightType)}</b></div>`}
     </div>
   </div>
 
-  <div class="grid c3">
-    ${kpi('Wind Start', round(d.best.h.windKmh), 'km/h', `${Wind.toCompass(d.best.h.windDir)} · Böen ${round(d.best.h.gustKmh)}`)}
-    ${kpi('Basis ü. Start', round(d.best.baseAboveTO), 'm', `Basis ${round(d.best.cloudBase)} m`)}
-    ${kpi('CAPE', round(d.best.h.cape), 'J/kg', d.best.h.cape > 1200 ? 'erhöht' : 'moderat')}
+  <div class="card">
+    <div class="h" style="margin-top:0;display:flex;align-items:center;gap:8px">🎧 Dein Fluglehrer
+      <button class="btn sec" id="speakBtn" style="margin-left:auto;width:auto;padding:7px 14px" onclick="speakBriefing(this)">▶ Vorlesen</button>
+    </div>
+    <div style="font-size:15px;line-height:1.65">${esc(briefing.text)}</div>
   </div>
 
   <div class="card ${sc}">
@@ -1012,6 +1018,49 @@ function renderCockpit() {
     <button class="btn sec" onclick="go('detail')">Gebiet-Details</button>
     <button class="btn sec" onclick="toggleFav('${site.id}')">${fav ? '★ Favorit' : '☆ Favorit'}</button>
   </div>`;
+}
+
+/* plain-language mentor briefing built from the decision */
+function buildBriefing(d, site) {
+  const h = d.best.h, comp = Wind.toCompass(h.windDir);
+  const windWord = h.windKmh < 8 ? 'schwacher' : h.windKmh < 18 ? 'mäßiger' : h.windKmh < 28 ? 'kräftiger' : 'starker';
+  const gusty = h.gustKmh > h.windKmh * 1.5 + 6;
+  const s = [];
+  s.push({
+    green: `Heute ist ein guter Flugtag an ${site.name}.`,
+    yellow: `Heute geht es an ${site.name}, aber mit Vorsicht.`,
+    orange: `Anspruchsvoll heute — nur für erfahrene Piloten.`,
+    red: `Heute bleibst du besser am Boden und wartest.`,
+    black: `Heute ist ein klarer No-Go-Tag.`
+  }[d.status]);
+  s.push(`Es weht ${windWord} Wind aus ${comp} mit etwa ${round(h.windKmh)} km/h${gusty ? `, böig bis ${round(h.gustKmh)}` : ''}.`);
+  if (h.cape > 200) {
+    const base = round(d.best.cloudBase), above = round(d.best.baseAboveTO);
+    s.push(`Thermik ist zu erwarten, die Basis liegt bei rund ${base} Metern${above > 0 ? ` — etwa ${above} Meter über dem Start` : ''}.`);
+  } else {
+    s.push(`Viel Thermik ist nicht zu erwarten — eher ein ruhiger Soaring- oder Abgleiter-Tag.`);
+  }
+  if (d.status !== 'black' && d.status !== 'red') {
+    s.push(`Dein bestes Startfenster ist ${d.bestStartTime || '—'}${d.latestSafeStartTime ? `, spätestens ${d.latestSafeStartTime}` : ''}. Empfohlen: ${d.recommendedFlightType} an ${d.bestTakeoff || site.takeoffs[0].name}.`);
+  }
+  const r0 = d.topRisks && d.topRisks[0] ? d.topRisks[0].replace(/^[^\p{L}]+/u, '').trim() : '';
+  if (r0 && d.status !== 'green') s.push(`Achte besonders auf: ${r0}.`);
+  s.push(d.status === 'green' ? 'Genieß den Flug — und prüf vor dem Start nochmal den Livewind.' : 'Im Zweifel gilt immer: nicht starten.');
+  return { sentences: s, text: s.join(' ') };
+}
+let _speaking = false;
+function speakBriefing(btn) {
+  const reset = () => { _speaking = false; const b = document.getElementById('speakBtn'); if (b) b.textContent = '▶ Vorlesen'; };
+  if (typeof window.speechSynthesis === 'undefined') { if (btn) btn.textContent = 'Stimme nicht verfügbar'; return; }
+  if (_speaking) { window.speechSynthesis.cancel(); reset(); return; }
+  const text = window.__briefingText || ''; if (!text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'de-DE'; u.rate = 0.98; u.pitch = 1.0;
+  const vs = window.speechSynthesis.getVoices(); const de = vs.find(v => /^de(-|_|$)/i.test(v.lang)); if (de) u.voice = de;
+  u.onend = reset; u.onerror = reset;
+  _speaking = true; if (btn) btn.textContent = '⏹ Stopp';
+  window.speechSynthesis.speak(u);
 }
 
 /* ---------- MEHR (hub) ---------- */
@@ -1860,7 +1909,7 @@ function toggleAlerts(on) {
   }
   Store.set({ alerts: !!on }); if (on) maybeAlert();
 }
-Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, Data });
+Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, toggleAlerts, speakBriefing, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
