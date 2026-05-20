@@ -10707,17 +10707,17 @@ ALEX = {
             "Hotel oder feste Unterkunft. Duschen, Spaziergang, gutes Abendessen.",
             "Spät: Kaffeehaus, Jazzbar oder Hotelzimmer mit Lampe, Musik, Schreiben.",
             "Keine billige Ablenkung. Wien = Inspirationsquelle, nicht Belastung."]},
-        {"day": "Freitag",    "mode": "Wien · Deep Presence · Hotel Energy", "weekday": 4,
+        {"day": "Freitag",    "mode": "Wien Deep Presence / Umgangs-Freitag: Tochter ab 13:00", "weekday": 4,
          "items": [
-            "Arbeit in Wien — präsent, fokussiert, ruhig.",
-            "Sauna oder Gym am späten Nachmittag.",
-            "Freitag Nacht: warme Lampen, Hemd halb offen, Musik über Lautsprecher.",
+            "Umgangs-Wochenende (alle 2 Wochen): Vormittag fokussiert, ab 13:00 Tochter abholen — kein Wien.",
+            "Freie Wochen: Wien — präsent, fokussiert, ruhig. Sauna/Gym am Nachmittag.",
+            "Freitag Nacht (Wien): warme Lampen, Hemd halb offen, Musik über Lautsprecher.",
             "Notizen aus Wien sammeln — für Musik, PTGO, Texte.",
             "Abendzug oder Übernachtung. Keine Hetze."]},
-        {"day": "Samstag",    "mode": "Wochenende A: Tochter / B: Freiheit", "weekday": 5,
+        {"day": "Samstag",    "mode": "Umgangs-Samstag (bis 18:30) / sonst Freiheit", "weekday": 5,
          "items": [
-            "Wochenende A (gerade KW) — Tochter in München.",
-            "Wochenende B (ungerade KW) — Van, Berge, Musik, Natur.",
+            "Umgangs-Wochenende (alle 2 Wochen): Tochter bis Samstag 18:30, dann warme Übergabe.",
+            "Danach bzw. an freien Wochenenden: Van, Berge, Paragliding, Musik, Natur.",
             "Klar entscheiden, was heute ist. Keine Mischmodi."]},
         {"day": "Sonntag",    "mode": "Reflexion · Vorbereitung · Ruhe",     "weekday": 6,
          "items": [
@@ -10727,7 +10727,7 @@ ALEX = {
     ],
 
     "weekend_a_tochter": {
-        "title": "Wochenende A — Tochter / heiliger Anker",
+        "title": "Umgangs-Wochenende — Tochter (Fr 13:00 – Sa 18:30, alle 2 Wochen)",
         "rituale": [
             "Gemeinsames Frühstück ohne Eile.",
             "Natur: See, Wald, Park, Tegernsee, Isar.",
@@ -10955,7 +10955,7 @@ ALEX = {
     },
 
     "tochter": {
-        "grundsatz": "Heiliger Anker. Alle zwei Wochen volle Präsenz.",
+        "grundsatz": "Heiliger Anker. Alle zwei Wochen: Freitag 13:00 bis Samstag 18:30 — volle, ruhige Präsenz in München.",
         "rituale": [
             "Frühstück ohne Eile — kein Handy am Tisch.",
             "Ein Naturort pro Wochenende (See, Wald, Berg).",
@@ -11113,6 +11113,15 @@ ALEX = {
         "Natur.",
         "Klarheit — auch wenn sie unbequem ist.",
     ],
+
+    # Umgang: alle zwei Wochen Freitag 13:00 – Samstag 18:30. Anker = kommendes Umgangs-Wochenende.
+    "custody": {
+        "anchor": "2026-05-22",
+        "from": "Freitag 13:00",
+        "to": "Samstag 18:30",
+        "rhythm": "alle zwei Wochen",
+        "city": "München",
+    },
 }
 
 
@@ -11258,6 +11267,9 @@ _ALEX_CSS = """
   .now-line b{color:var(--gold2);font-weight:600}
   .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
   .streak{margin-top:10px;font-size:13px;color:var(--gold2);font-weight:700;letter-spacing:.3px}
+  .weekend-status{margin-top:8px;font-size:12.5px;font-weight:600;letter-spacing:.2px;padding-top:8px;border-top:1px solid rgba(200,130,30,.25)}
+  .weekend-status.custody{color:var(--gold2)}
+  .weekend-status.free{color:var(--cream)}
   .day-plan{display:none}
   .day-plan.active{display:block}
   .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
@@ -11375,8 +11387,41 @@ _ALEX_JS = r"""
   setText('today-mode', modes[dow] || '');
   setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
 
-  // Nur den heutigen Wochentag-Plan zeigen
-  var plan = document.querySelector('.day-plan[data-weekday="' + dow + '"]');
+  // Umgangs-Rhythmus: alle zwei Wochen Fr 13:00 – Sa 18:30, ab Anker-Freitag
+  var cfg = window.ALEX_CUSTODY || {anchor:'2026-05-22'};
+  var ap = cfg.anchor.split('-');
+  var ANCHOR = new Date(+ap[0], +ap[1]-1, +ap[2]); // Anker-Freitag, lokale Mitternacht
+  function strip(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function daysBetween(a, b){ return Math.round((a - b) / 86400000); }
+  function isCustodyFriday(friday){ return ((daysBetween(friday, ANCHOR) % 14) + 14) % 14 === 0; }
+  function upcomingFriday(d){ var x = strip(d); var w = (x.getDay()+6)%7; x.setDate(x.getDate() + ((4 - w) + 7) % 7); return x; }
+
+  var isCustody = false, currentWeekend = false, theFriday;
+  if (dow === 4){ theFriday = strip(now); isCustody = isCustodyFriday(theFriday); currentWeekend = true; }
+  else if (dow === 5){ theFriday = strip(now); theFriday.setDate(theFriday.getDate() - 1); isCustody = isCustodyFriday(theFriday); currentWeekend = true; }
+  else { theFriday = upcomingFriday(now); isCustody = isCustodyFriday(theFriday); currentWeekend = false; }
+
+  var ws = document.getElementById('weekend-status');
+  if (ws){
+    if (isCustody){
+      ws.textContent = currentWeekend ? '\\uD83D\\uDD3A Umgangswochenende l\\u00e4uft \\u2014 Tochter bis Sa 18:30'
+                                       : '\\uD83D\\uDD3A Dieses Wochenende: Umgang \\u2014 Tochter Fr 13:00 \\u2192 Sa 18:30';
+      ws.className = 'weekend-status custody';
+    } else {
+      ws.textContent = currentWeekend ? '\\u25B3 Freies Wochenende \\u2014 Freiheit'
+                                       : '\\u25B3 Dieses Wochenende: frei \\u2014 Van, Berge, Musik';
+      ws.className = 'weekend-status free';
+    }
+  }
+
+  // Heutigen Wochentag-Plan zeigen (Umgangs-Variante an Umgangswochenenden)
+  function pickPlan(){
+    var sel = '.day-plan[data-weekday="' + dow + '"]';
+    return document.querySelector(sel + '[data-custody="' + (isCustody ? '1' : '0') + '"]')
+        || document.querySelector(sel + '[data-custody="any"]')
+        || document.querySelector(sel);
+  }
+  var plan = pickPlan();
   if (plan) plan.classList.add('active');
   var tl = plan ? plan.querySelectorAll('.tl') : [];
   var allBoxes = plan ? plan.querySelectorAll('input[type=checkbox]') : [];
@@ -11612,15 +11657,50 @@ def _alex_day_plans():
         {"t1": "20:00", "label": "Piano / Lesen", "items": ["Ruhiger Abend, warmes Licht."]},
         {"t1": "22:00", "label": "Früh ins Bett", "items": ["Stark in die Woche starten."]},
     ]
-    return plans
+
+    # Umgangs-Wochenende — Tochter (alle zwei Wochen)
+    tochter_fri = [  # Freitag, Abholung 13:00
+        {"t1": "07:00", "label": "Morgen-Anker", "items": ["Wasser, Fenster auf, Soul leise. Heute kommt sie.", "Mobility, Atmung, kurze Kraft.", "Espresso — und ein Lächeln im Spiegel."]},
+        {"t1": "08:00", "label": "Deep Work — fokussiert", "items": ["Alles Wichtige VOR 12:00 erledigen.", "Phone weg, ein klares Ziel.", "Keinen Termin in den Nachmittag legen."]},
+        {"t1": "11:30", "label": "Wohnung tochterklar machen", "items": ["Ihre Ecke, ihre Decke, ihre Bücher bereit.", "Snacks da, Kühlschrank gefüllt.", "Ordnung = Ruhe für sie."]},
+        {"t1": "12:30", "label": "Frisch machen & losfahren", "items": ["Duschen, gutes Hemd, Duft.", "Weg klar, Playlist bereit.", "Kopf leeren — nur sie."]},
+        {"t1": "13:00", "label": "Sie abholen · Übergabe", "items": ["Pünktlich, ruhig, warm. Sonnenbrille hoch, Herz offen.", "Freundlich an der Tür — kein altes Drama.", "Die erste Minute gehört nur ihr."]},
+        {"t1": "14:00", "label": "Ankommen", "items": ["Zuhause ankommen, Snack, durchatmen.", "Kein Programmdruck — sie gibt das Tempo vor."]},
+        {"t1": "15:30", "label": "Erstes kleines Abenteuer", "items": ["Spielplatz, See, Eis, kurze Runde.", "Draußen, Bewegung, Lachen."]},
+        {"t1": "18:00", "label": "Zusammen kochen", "items": ["Sie hat eine kleine Aufgabe.", "Einfaches, gutes Essen.", "Küche, Musik, Wärme."]},
+        {"t1": "19:30", "label": "Ruhiger Abend", "items": ["Vorlesen, leise Musik, kuscheln.", "Bildschirm aus.", "Sichere Vaterenergie."]},
+        {"t1": "21:00", "label": "Sie schläft — du", "items": ["Gitarre ganz leise.", "Drei Zeilen Tagebuch über heute.", "Dankbar. Nicht müde."]},
+    ]
+    tochter_sat = [  # Samstag, Übergabe zurück 18:30
+        {"t1": "08:00", "label": "Langsames Frühstück", "items": ["Kein Wecker, kein Handy am Tisch.", "Sie wählt die Musik."]},
+        {"t1": "09:30", "label": "Natur", "items": ["See, Wald oder Berg.", "Steine werfen, Stöcke sammeln, frei sein."]},
+        {"t1": "12:00", "label": "Mittag zusammen", "items": ["Wieder zusammen kochen oder gutes Lokal.", "Ruhig, ohne Eile."]},
+        {"t1": "13:30", "label": "Das Hauptabenteuer", "items": ["Tegernsee, Boot, Museum, kleines Konzert.", "Ein Moment, an den sie sich erinnert."]},
+        {"t1": "16:30", "label": "Musik & Ruhe", "items": ["Ein Lied zusammen — hören oder erfinden.", "Malen, bauen, einfach da sein."]},
+        {"t1": "17:45", "label": "Sanft zusammenpacken", "items": ["Sachen einsammeln, kein Stress.", "Ihr sagen, dass es schön war.", "Übergang ruhig einleiten."]},
+        {"t1": "18:30", "label": "Übergabe zurück", "items": ["Pünktlich, warm, klarer liebevoller Abschied.", "Kein Drama, keine Schwere.", "'Bis in zwei Wochen' — fest und freundlich."]},
+        {"t1": "19:30", "label": "Übergang für dich", "items": ["Spaziergang oder Dusche.", "Die Stille zulassen, nicht füllen.", "Kurz fühlen, dann loslassen."]},
+        {"t1": "20:30", "label": "Abend für dich", "items": ["Gitarre, Schreiben, oder Freund:innen.", "Das Wochenende würdigen.", "Du bist frei — aber du bleibst."]},
+    ]
+
+    return [
+        {"wd": 0, "custody": "any", "blocks": plans[0]},
+        {"wd": 1, "custody": "any", "blocks": plans[1]},
+        {"wd": 2, "custody": "any", "blocks": plans[2]},
+        {"wd": 3, "custody": "any", "blocks": plans[3]},
+        {"wd": 4, "custody": "1",   "blocks": tochter_fri},
+        {"wd": 4, "custody": "0",   "blocks": plans[4]},
+        {"wd": 5, "custody": "1",   "blocks": tochter_sat},
+        {"wd": 5, "custody": "0",   "blocks": plans[5]},
+        {"wd": 6, "custody": "any", "blocks": plans[6]},
+    ]
 
 
 def _alex_heute_panel() -> str:
-    plans = _alex_day_plans()
     all_plans_html = ""
-    for wd in range(7):
+    for plan in _alex_day_plans():
         rows = ""
-        for i, b in enumerate(plans[wd]):
+        for i, b in enumerate(plan["blocks"]):
             h, _m = _hm(b["t1"])
             steps = "".join(
                 f'<label class="step"><input type="checkbox"><span>{x}</span></label>'
@@ -11635,12 +11715,14 @@ def _alex_heute_panel() -> str:
               </button>
               <div class="tl-body"><div>{steps}</div></div>
             </div>"""
-        all_plans_html += f'<div class="day-plan" data-weekday="{wd}">{rows}</div>'
+        all_plans_html += f'<div class="day-plan" data-weekday="{plan["wd"]}" data-custody="{plan["custody"]}">{rows}</div>'
 
     modes = [d["mode"] for d in ALEX["week"]]
     data_js = (
         "<script>window.ALEX_MODES="
         + json.dumps(modes, ensure_ascii=False)
+        + ";window.ALEX_CUSTODY="
+        + json.dumps(ALEX["custody"], ensure_ascii=False)
         + ";window.ALEX_ICS="
         + json.dumps(_alex_build_ics(), ensure_ascii=False)
         + ";</script>"
@@ -11653,6 +11735,7 @@ def _alex_heute_panel() -> str:
         <div class="bar"><div id="day-bar"></div></div>
         <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
         <div class="streak" id="streak">Serie startet heute</div>
+        <div class="weekend-status" id="weekend-status"></div>
       </div>
       <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
       <p class="ics-hint">Einmal importieren — dein Handy erinnert dich täglich an jeden Schritt, plus Wochen-Anker (Mittwoch Reset, Wien-Anreise am Vorabend, Tochter-Wochenende ab Freitag) und den Monatscheck.</p>
@@ -12110,16 +12193,45 @@ def _alex_build_ics() -> str:
          [("-PT13H30M", "Morgen früh nach Wien — heute Abend Tasche & Zug checken."), ("PT0S", "Wien-Anreise. Creative Gentleman Mode.")]),
         (3, 20, 30, 120, "♫ Wien-Abend", "Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil, Architektur, Ideen.",
          [("PT0S", "Wien-Abend: Kaffeehaus, Jazz, Schreiben.")]),
-        (4, 17, 0, 90, "🔥 Sauna / Gym (Wien)", "Körper regulieren. Hitze, Kälte, Atem.",
-         [("PT0S", "Sauna oder Gym.")]),
-        (5, 9, 0, 600, "🜂 Wochenende — Tochter (A) / Freiheit (B)", "A: volle, ruhige Vaterpräsenz. B: Van, Berge, Fliegen, Musik. Bewusst wählen.",
-         [("-P1DT13H", "Morgen Wochenende: A Tochter oder B Freiheit — bewusst entscheiden & vorbereiten."), ("PT0S", "Wochenende. Voll da sein.")]),
         (6, 11, 30, 60, "🪞 Wochenrückblick", "Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?",
          [("PT0S", "Wochenrückblick: Würde / Wachstum / Korrektur.")]),
     ]
     for i, (wd, h, m, dur, summ, desc, alarms) in enumerate(weekly):
         lines += event(f"alex-weekly-{i}", next_weekday(wd), h, m, dur, summ, desc,
                        f"FREQ=WEEKLY;BYDAY={byday[wd]}", alarms)
+
+    # — Umgangs- & Freiheits-Wochenenden (alle zwei Wochen, ab Anker-Freitag) —
+    from datetime import datetime as _dt
+    cust = ALEX["custody"]
+    anchor = _dt.strptime(cust["anchor"], "%Y-%m-%d").date()  # Umgangs-Freitag
+    sat = anchor + timedelta(days=1)                          # Übergabe-Samstag
+    wien_fri = anchor + timedelta(days=7)                     # Wien-Freitag (Off-Woche)
+    free_sat = anchor + timedelta(days=8)                     # Freiheits-Samstag (Off-Woche)
+    ymd = lambda d: d.strftime("%Y%m%d")
+
+    lines += event("alex-custody", ymd(anchor), 13, 0, 1770,
+                   "🜂 Umgangswochenende — Tochter (Fr 13:00 – Sa 18:30)",
+                   "Volle, ruhige Vaterpräsenz. Sonnenbrille hoch, Musik leise, Herz offen. Kein Termin im Kopf — nur sie.",
+                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR",
+                   [("-P1D", "Morgen 13:00 Tochter abholen — Wohnung tochterklar machen, Plan locker halten."),
+                    ("-PT2H", "In 2 Std abholen. Frisch machen, Playlist bereit, Kopf leeren."),
+                    ("PT0S", "Jetzt abholen — pünktlich, warm, präsent.")])
+    lines += event("alex-handover", ymd(sat), 18, 30, 30,
+                   "↩ Übergabe zurück — Tochter (18:30)",
+                   "Pünktlich, warm, klarer liebevoller Abschied. Kein Drama, keine Schwere. 'Bis in zwei Wochen.'",
+                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=SA",
+                   [("-PT45M", "In 45 Min Übergabe — langsam zusammenpacken, schön ausklingen."),
+                    ("PT0S", "Übergabe: warm, ohne Hektik. Du bist frei — aber du bleibst.")])
+    lines += event("alex-free-weekend", ymd(free_sat), 9, 0, 600,
+                   "△ Freies Wochenende — Freiheit",
+                   "Van, Berge, Paragliding, Gardasee, Musik. Bewegte Stille, kein Eskapismus.",
+                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=SA",
+                   [("-P1DT13H", "Morgen freies Wochenende — Van / Berge / Fliegen planen."),
+                    ("PT0S", "Freies Wochenende. Voll da sein für dich.")])
+    lines += event("alex-wien-sauna", ymd(wien_fri), 17, 0, 90,
+                   "🔥 Sauna / Gym (Wien)", "Körper regulieren. Hitze, Kälte, Atem. Nur Off-Wochen — Umgangs-Freitag gehört der Tochter.",
+                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR",
+                   [("PT0S", "Sauna oder Gym.")])
 
     # — Monatscheck (1. des Monats) —
     first = now.replace(day=1).strftime("%Y%m%d")

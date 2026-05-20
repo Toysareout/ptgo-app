@@ -148,6 +148,9 @@
   .now-line b{color:var(--gold2);font-weight:600}
   .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
   .streak{margin-top:10px;font-size:13px;color:var(--gold2);font-weight:700;letter-spacing:.3px}
+  .weekend-status{margin-top:8px;font-size:12.5px;font-weight:600;letter-spacing:.2px;padding-top:8px;border-top:1px solid rgba(200,130,30,.25)}
+  .weekend-status.custody{color:var(--gold2)}
+  .weekend-status.free{color:var(--cream)}
   .day-plan{display:none}
   .day-plan.active{display:block}
   .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
@@ -200,10 +203,11 @@
         <div class="bar"><div id="day-bar"></div></div>
         <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
         <div class="streak" id="streak">Serie startet heute</div>
+        <div class="weekend-status" id="weekend-status"></div>
       </div>
       <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
       <p class="ics-hint">Einmal importieren — dein Handy erinnert dich täglich an jeden Schritt, plus Wochen-Anker (Mittwoch Reset, Wien-Anreise am Vorabend, Tochter-Wochenende ab Freitag) und den Monatscheck.</p>
-      <div id="day-timeline"><div class="day-plan" data-weekday="0">
+      <div id="day-timeline"><div class="day-plan" data-weekday="0" data-custody="any">
             <div class="tl" data-hour="6" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">06:00</span>
@@ -267,7 +271,7 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="1">
+            </div></div><div class="day-plan" data-weekday="1" data-custody="any">
             <div class="tl" data-hour="6" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">06:00</span>
@@ -331,7 +335,7 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="2">
+            </div></div><div class="day-plan" data-weekday="2" data-custody="any">
             <div class="tl" data-hour="6" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">06:30</span>
@@ -403,7 +407,7 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen. Kein Bildschirm im Bett.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="3">
+            </div></div><div class="day-plan" data-weekday="3" data-custody="any">
             <div class="tl" data-hour="6" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">06:30</span>
@@ -459,7 +463,87 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmes Licht, Lesen, früh ins Bett.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="4">
+            </div></div><div class="day-plan" data-weekday="4" data-custody="1">
+            <div class="tl" data-hour="7" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">07:00</span>
+                <span class="tl-label">Morgen-Anker</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wasser, Fenster auf, Soul leise. Heute kommt sie.</span></label><label class="step"><input type="checkbox"><span>Mobility, Atmung, kurze Kraft.</span></label><label class="step"><input type="checkbox"><span>Espresso — und ein Lächeln im Spiegel.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="8" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:00</span>
+                <span class="tl-label">Deep Work — fokussiert</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Alles Wichtige VOR 12:00 erledigen.</span></label><label class="step"><input type="checkbox"><span>Phone weg, ein klares Ziel.</span></label><label class="step"><input type="checkbox"><span>Keinen Termin in den Nachmittag legen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="11" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">11:30</span>
+                <span class="tl-label">Wohnung tochterklar machen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Ihre Ecke, ihre Decke, ihre Bücher bereit.</span></label><label class="step"><input type="checkbox"><span>Snacks da, Kühlschrank gefüllt.</span></label><label class="step"><input type="checkbox"><span>Ordnung = Ruhe für sie.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="12" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">12:30</span>
+                <span class="tl-label">Frisch machen & losfahren</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Duschen, gutes Hemd, Duft.</span></label><label class="step"><input type="checkbox"><span>Weg klar, Playlist bereit.</span></label><label class="step"><input type="checkbox"><span>Kopf leeren — nur sie.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="13" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">13:00</span>
+                <span class="tl-label">Sie abholen · Übergabe</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Pünktlich, ruhig, warm. Sonnenbrille hoch, Herz offen.</span></label><label class="step"><input type="checkbox"><span>Freundlich an der Tür — kein altes Drama.</span></label><label class="step"><input type="checkbox"><span>Die erste Minute gehört nur ihr.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="14" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">14:00</span>
+                <span class="tl-label">Ankommen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Zuhause ankommen, Snack, durchatmen.</span></label><label class="step"><input type="checkbox"><span>Kein Programmdruck — sie gibt das Tempo vor.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="15" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">15:30</span>
+                <span class="tl-label">Erstes kleines Abenteuer</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Spielplatz, See, Eis, kurze Runde.</span></label><label class="step"><input type="checkbox"><span>Draußen, Bewegung, Lachen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="18" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">18:00</span>
+                <span class="tl-label">Zusammen kochen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sie hat eine kleine Aufgabe.</span></label><label class="step"><input type="checkbox"><span>Einfaches, gutes Essen.</span></label><label class="step"><input type="checkbox"><span>Küche, Musik, Wärme.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="19" data-idx="8">
+              <button class="tl-head" type="button">
+                <span class="tl-time">19:30</span>
+                <span class="tl-label">Ruhiger Abend</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Vorlesen, leise Musik, kuscheln.</span></label><label class="step"><input type="checkbox"><span>Bildschirm aus.</span></label><label class="step"><input type="checkbox"><span>Sichere Vaterenergie.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="21" data-idx="9">
+              <button class="tl-head" type="button">
+                <span class="tl-time">21:00</span>
+                <span class="tl-label">Sie schläft — du</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gitarre ganz leise.</span></label><label class="step"><input type="checkbox"><span>Drei Zeilen Tagebuch über heute.</span></label><label class="step"><input type="checkbox"><span>Dankbar. Nicht müde.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="4" data-custody="0">
             <div class="tl" data-hour="7" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">07:00</span>
@@ -523,7 +607,79 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Übernachten oder ruhig heimfahren.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="5">
+            </div></div><div class="day-plan" data-weekday="5" data-custody="1">
+            <div class="tl" data-hour="8" data-idx="0">
+              <button class="tl-head" type="button">
+                <span class="tl-time">08:00</span>
+                <span class="tl-label">Langsames Frühstück</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Kein Wecker, kein Handy am Tisch.</span></label><label class="step"><input type="checkbox"><span>Sie wählt die Musik.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="9" data-idx="1">
+              <button class="tl-head" type="button">
+                <span class="tl-time">09:30</span>
+                <span class="tl-label">Natur</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>See, Wald oder Berg.</span></label><label class="step"><input type="checkbox"><span>Steine werfen, Stöcke sammeln, frei sein.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="12" data-idx="2">
+              <button class="tl-head" type="button">
+                <span class="tl-time">12:00</span>
+                <span class="tl-label">Mittag zusammen</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Wieder zusammen kochen oder gutes Lokal.</span></label><label class="step"><input type="checkbox"><span>Ruhig, ohne Eile.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="13" data-idx="3">
+              <button class="tl-head" type="button">
+                <span class="tl-time">13:30</span>
+                <span class="tl-label">Das Hauptabenteuer</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tegernsee, Boot, Museum, kleines Konzert.</span></label><label class="step"><input type="checkbox"><span>Ein Moment, an den sie sich erinnert.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="16" data-idx="4">
+              <button class="tl-head" type="button">
+                <span class="tl-time">16:30</span>
+                <span class="tl-label">Musik & Ruhe</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Ein Lied zusammen — hören oder erfinden.</span></label><label class="step"><input type="checkbox"><span>Malen, bauen, einfach da sein.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="17" data-idx="5">
+              <button class="tl-head" type="button">
+                <span class="tl-time">17:45</span>
+                <span class="tl-label">Sanft zusammenpacken</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sachen einsammeln, kein Stress.</span></label><label class="step"><input type="checkbox"><span>Ihr sagen, dass es schön war.</span></label><label class="step"><input type="checkbox"><span>Übergang ruhig einleiten.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="18" data-idx="6">
+              <button class="tl-head" type="button">
+                <span class="tl-time">18:30</span>
+                <span class="tl-label">Übergabe zurück</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Pünktlich, warm, klarer liebevoller Abschied.</span></label><label class="step"><input type="checkbox"><span>Kein Drama, keine Schwere.</span></label><label class="step"><input type="checkbox"><span>'Bis in zwei Wochen' — fest und freundlich.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="19" data-idx="7">
+              <button class="tl-head" type="button">
+                <span class="tl-time">19:30</span>
+                <span class="tl-label">Übergang für dich</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Spaziergang oder Dusche.</span></label><label class="step"><input type="checkbox"><span>Die Stille zulassen, nicht füllen.</span></label><label class="step"><input type="checkbox"><span>Kurz fühlen, dann loslassen.</span></label></div></div>
+            </div>
+            <div class="tl" data-hour="20" data-idx="8">
+              <button class="tl-head" type="button">
+                <span class="tl-time">20:30</span>
+                <span class="tl-label">Abend für dich</span>
+                <span class="tl-state"></span>
+              </button>
+              <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gitarre, Schreiben, oder Freund:innen.</span></label><label class="step"><input type="checkbox"><span>Das Wochenende würdigen.</span></label><label class="step"><input type="checkbox"><span>Du bist frei — aber du bleibst.</span></label></div></div>
+            </div></div><div class="day-plan" data-weekday="5" data-custody="0">
             <div class="tl" data-hour="8" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">08:00</span>
@@ -571,7 +727,7 @@
                 <span class="tl-state"></span>
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Lesen oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Dankbar, nicht müde.</span></label></div></div>
-            </div></div><div class="day-plan" data-weekday="6">
+            </div></div><div class="day-plan" data-weekday="6" data-custody="any">
             <div class="tl" data-hour="8" data-idx="0">
               <button class="tl-head" type="button">
                 <span class="tl-time">08:30</span>
@@ -636,7 +792,7 @@
               </button>
               <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Stark in die Woche starten.</span></label></div></div>
             </div></div></div>
-      <script>window.ALEX_MODES=["München · Deep Work · Soul", "Business + Musik", "Reset Day · Wohnung zurückerobern", "Wien · Anreise · Creative Gentleman", "Wien · Deep Presence · Hotel Energy", "Wochenende A: Tochter / B: Freiheit", "Reflexion · Vorbereitung · Ruhe"];window.ALEX_ICS="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Alex//Blue Electric Life//DE\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Alex · Blue Electric Life\r\nX-WR-TIMEZONE:Europe/Berlin\r\nBEGIN:VEVENT\r\nUID:alex-daily-0@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T060000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:☀ Morgen-Anker\r\nDESCRIPTION:Wasser\\, Fenster\\, Licht\\, kein Handy. Atmung\\, Mobility\\, Kraft. 5 Min Vision.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:☀ Morgen-Anker\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-1@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T080000\r\nDURATION:PT240M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:✦ Deep Work\r\nDESCRIPTION:PTGO / Masterclass / Musik / Texte / KI. Phone weg\\, ein Ziel pro Block.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:✦ Deep Work\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-2@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T120000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:❖ Clean Lunch + Walk\r\nDESCRIPTION:Leicht essen\\, ohne Bildschirm. 20 Min Spaziergang\\, Sonne ins Gesicht.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:❖ Clean Lunch + Walk\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-3@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T173000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:△ Golden Hour\r\nDESCRIPTION:Isar / Tegernsee / Spaziergang. Fahrt mit Musik. Nervensystempflege.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:△ Golden Hour\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-4@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T200000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:♪ Musik / Schreiben\r\nDESCRIPTION:Piano oder Gitarre. Tagebuch: Würde / Wachstum / Korrektur.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:♪ Musik / Schreiben\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-5@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T220000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:≈ Schlafvorbereitung\r\nDESCRIPTION:Dusche\\, Duft\\, Lesen. Kein Bildschirm im Bett. Vor 23:00 Schirme aus.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:≈ Schlafvorbereitung\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-0@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T120000\r\nDURATION:PT180M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧹 Reset Day — Wohnung\r\nDESCRIPTION:Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus\\, eine Fläche frei.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Reset Day: ein Bereich\\, nicht perfekt — atmungsfähig.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-1@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260520T183000\r\nDURATION:PT45M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧳 Tasche packen für Wien\r\nDESCRIPTION:3 Hemden\\, 2 Hosen\\, Mantel\\, Notizbuch\\, Buch\\, Ladegeräte. Alles an die Tür.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Tasche für Wien packen.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-2@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260521T073000\r\nDURATION:PT210M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:🚆 Wien-Anreise\r\nDESCRIPTION:Schwarzer Mantel\\, Notizbuch\\, Buch. Im Zug schreiben statt scrollen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT13H30M\r\nDESCRIPTION:Morgen früh nach Wien — heute Abend Tasche & Zug checken.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Anreise. Creative Gentleman Mode.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-3@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260521T203000\r\nDURATION:PT120M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:♫ Wien-Abend\r\nDESCRIPTION:Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil\\, Architektur\\, Ideen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Abend: Kaffeehaus\\, Jazz\\, Schreiben.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-4@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260522T170000\r\nDURATION:PT90M\r\nRRULE:FREQ=WEEKLY;BYDAY=FR\r\nSUMMARY:🔥 Sauna / Gym (Wien)\r\nDESCRIPTION:Körper regulieren. Hitze\\, Kälte\\, Atem.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Sauna oder Gym.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-5@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260523T090000\r\nDURATION:PT600M\r\nRRULE:FREQ=WEEKLY;BYDAY=SA\r\nSUMMARY:🜂 Wochenende — Tochter (A) / Freiheit (B)\r\nDESCRIPTION:A: volle\\, ruhige Vaterpräsenz. B: Van\\, Berge\\, Fliegen\\, Musik. Bewusst wählen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1DT13H\r\nDESCRIPTION:Morgen Wochenende: A Tochter oder B Freiheit — bewusst entscheiden & vorbereiten.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wochenende. Voll da sein.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-6@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260524T113000\r\nDURATION:PT60M\r\nRRULE:FREQ=WEEKLY;BYDAY=SU\r\nSUMMARY:🪞 Wochenrückblick\r\nDESCRIPTION:Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wochenrückblick: Würde / Wachstum / Korrektur.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-monthly@blueelectric\r\nDTSTAMP:20260520T083807\r\nDTSTART:20260501T090000\r\nDURATION:PT60M\r\nRRULE:FREQ=MONTHLY;BYMONTHDAY=1\r\nSUMMARY:📋 Monatscheck — 10 Fragen\r\nDESCRIPTION:Tochter? PTGO? Musik? Körper? Natur? Frauen nicht zentral? Nervensystem? Geld? Schönheit? Freiheit & Verantwortung?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1D\r\nDESCRIPTION:Morgen Monatscheck — die 10 ehrlichen Fragen.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Monatscheck: die 10 Fragen.\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR";</script>
+      <script>window.ALEX_MODES=["München · Deep Work · Soul", "Business + Musik", "Reset Day · Wohnung zurückerobern", "Wien · Anreise · Creative Gentleman", "Wien Deep Presence / Umgangs-Freitag: Tochter ab 13:00", "Umgangs-Samstag (bis 18:30) / sonst Freiheit", "Reflexion · Vorbereitung · Ruhe"];window.ALEX_CUSTODY={"anchor": "2026-05-22", "from": "Freitag 13:00", "to": "Samstag 18:30", "rhythm": "alle zwei Wochen", "city": "München"};window.ALEX_ICS="BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Alex//Blue Electric Life//DE\r\nCALSCALE:GREGORIAN\r\nMETHOD:PUBLISH\r\nX-WR-CALNAME:Alex · Blue Electric Life\r\nX-WR-TIMEZONE:Europe/Berlin\r\nBEGIN:VEVENT\r\nUID:alex-daily-0@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T060000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:☀ Morgen-Anker\r\nDESCRIPTION:Wasser\\, Fenster\\, Licht\\, kein Handy. Atmung\\, Mobility\\, Kraft. 5 Min Vision.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:☀ Morgen-Anker\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-1@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T080000\r\nDURATION:PT240M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:✦ Deep Work\r\nDESCRIPTION:PTGO / Masterclass / Musik / Texte / KI. Phone weg\\, ein Ziel pro Block.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:✦ Deep Work\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-2@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T120000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:❖ Clean Lunch + Walk\r\nDESCRIPTION:Leicht essen\\, ohne Bildschirm. 20 Min Spaziergang\\, Sonne ins Gesicht.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:❖ Clean Lunch + Walk\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-3@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T173000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:△ Golden Hour\r\nDESCRIPTION:Isar / Tegernsee / Spaziergang. Fahrt mit Musik. Nervensystempflege.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:△ Golden Hour\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-4@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T200000\r\nDURATION:PT90M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:♪ Musik / Schreiben\r\nDESCRIPTION:Piano oder Gitarre. Tagebuch: Würde / Wachstum / Korrektur.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:♪ Musik / Schreiben\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-daily-5@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T220000\r\nDURATION:PT60M\r\nRRULE:FREQ=DAILY\r\nSUMMARY:≈ Schlafvorbereitung\r\nDESCRIPTION:Dusche\\, Duft\\, Lesen. Kein Bildschirm im Bett. Vor 23:00 Schirme aus.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:≈ Schlafvorbereitung\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-0@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T120000\r\nDURATION:PT180M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧹 Reset Day — Wohnung\r\nDESCRIPTION:Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus\\, eine Fläche frei.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Reset Day: ein Bereich\\, nicht perfekt — atmungsfähig.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-1@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260520T183000\r\nDURATION:PT45M\r\nRRULE:FREQ=WEEKLY;BYDAY=WE\r\nSUMMARY:🧳 Tasche packen für Wien\r\nDESCRIPTION:3 Hemden\\, 2 Hosen\\, Mantel\\, Notizbuch\\, Buch\\, Ladegeräte. Alles an die Tür.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Tasche für Wien packen.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-2@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260521T073000\r\nDURATION:PT210M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:🚆 Wien-Anreise\r\nDESCRIPTION:Schwarzer Mantel\\, Notizbuch\\, Buch. Im Zug schreiben statt scrollen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT13H30M\r\nDESCRIPTION:Morgen früh nach Wien — heute Abend Tasche & Zug checken.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Anreise. Creative Gentleman Mode.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-3@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260521T203000\r\nDURATION:PT120M\r\nRRULE:FREQ=WEEKLY;BYDAY=TH\r\nSUMMARY:♫ Wien-Abend\r\nDESCRIPTION:Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil\\, Architektur\\, Ideen.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wien-Abend: Kaffeehaus\\, Jazz\\, Schreiben.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-weekly-4@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260524T113000\r\nDURATION:PT60M\r\nRRULE:FREQ=WEEKLY;BYDAY=SU\r\nSUMMARY:🪞 Wochenrückblick\r\nDESCRIPTION:Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Wochenrückblick: Würde / Wachstum / Korrektur.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-custody@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260522T130000\r\nDURATION:PT1770M\r\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=FR\r\nSUMMARY:🜂 Umgangswochenende — Tochter (Fr 13:00 – Sa 18:30)\r\nDESCRIPTION:Volle\\, ruhige Vaterpräsenz. Sonnenbrille hoch\\, Musik leise\\, Herz offen. Kein Termin im Kopf — nur sie.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1D\r\nDESCRIPTION:Morgen 13:00 Tochter abholen — Wohnung tochterklar machen\\, Plan locker halten.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT2H\r\nDESCRIPTION:In 2 Std abholen. Frisch machen\\, Playlist bereit\\, Kopf leeren.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Jetzt abholen — pünktlich\\, warm\\, präsent.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-handover@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260523T183000\r\nDURATION:PT30M\r\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SA\r\nSUMMARY:↩ Übergabe zurück — Tochter (18:30)\r\nDESCRIPTION:Pünktlich\\, warm\\, klarer liebevoller Abschied. Kein Drama\\, keine Schwere. 'Bis in zwei Wochen.'\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-PT45M\r\nDESCRIPTION:In 45 Min Übergabe — langsam zusammenpacken\\, schön ausklingen.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Übergabe: warm\\, ohne Hektik. Du bist frei — aber du bleibst.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-free-weekend@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260530T090000\r\nDURATION:PT600M\r\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SA\r\nSUMMARY:△ Freies Wochenende — Freiheit\r\nDESCRIPTION:Van\\, Berge\\, Paragliding\\, Gardasee\\, Musik. Bewegte Stille\\, kein Eskapismus.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1DT13H\r\nDESCRIPTION:Morgen freies Wochenende — Van / Berge / Fliegen planen.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Freies Wochenende. Voll da sein für dich.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-wien-sauna@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260529T170000\r\nDURATION:PT90M\r\nRRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=FR\r\nSUMMARY:🔥 Sauna / Gym (Wien)\r\nDESCRIPTION:Körper regulieren. Hitze\\, Kälte\\, Atem. Nur Off-Wochen — Umgangs-Freitag gehört der Tochter.\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Sauna oder Gym.\r\nEND:VALARM\r\nEND:VEVENT\r\nBEGIN:VEVENT\r\nUID:alex-monthly@blueelectric\r\nDTSTAMP:20260520T085549\r\nDTSTART:20260501T090000\r\nDURATION:PT60M\r\nRRULE:FREQ=MONTHLY;BYMONTHDAY=1\r\nSUMMARY:📋 Monatscheck — 10 Fragen\r\nDESCRIPTION:Tochter? PTGO? Musik? Körper? Natur? Frauen nicht zentral? Nervensystem? Geld? Schönheit? Freiheit & Verantwortung?\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:-P1D\r\nDESCRIPTION:Morgen Monatscheck — die 10 ehrlichen Fragen.\r\nEND:VALARM\r\nBEGIN:VALARM\r\nACTION:DISPLAY\r\nTRIGGER:PT0S\r\nDESCRIPTION:Monatscheck: die 10 Fragen.\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR";</script>
     </section>
     
     <section data-panel="dashboard" class="panel">
@@ -735,19 +891,19 @@
           <div class="hdr">
             <div>
               <div class="dn">Freitag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
-              <div class="md">Wien · Deep Presence · Hotel Energy</div>
+              <div class="md">Wien Deep Presence / Umgangs-Freitag: Tochter ab 13:00</div>
             </div>
           </div>
-          <ul><li>Arbeit in Wien — präsent, fokussiert, ruhig.</li><li>Sauna oder Gym am späten Nachmittag.</li><li>Freitag Nacht: warme Lampen, Hemd halb offen, Musik über Lautsprecher.</li><li>Notizen aus Wien sammeln — für Musik, PTGO, Texte.</li><li>Abendzug oder Übernachtung. Keine Hetze.</li></ul>
+          <ul><li>Umgangs-Wochenende (alle 2 Wochen): Vormittag fokussiert, ab 13:00 Tochter abholen — kein Wien.</li><li>Freie Wochen: Wien — präsent, fokussiert, ruhig. Sauna/Gym am Nachmittag.</li><li>Freitag Nacht (Wien): warme Lampen, Hemd halb offen, Musik über Lautsprecher.</li><li>Notizen aus Wien sammeln — für Musik, PTGO, Texte.</li><li>Abendzug oder Übernachtung. Keine Hetze.</li></ul>
         </div>
         <div class="day" data-weekday="5">
           <div class="hdr">
             <div>
               <div class="dn">Samstag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
-              <div class="md">Wochenende A: Tochter / B: Freiheit</div>
+              <div class="md">Umgangs-Samstag (bis 18:30) / sonst Freiheit</div>
             </div>
           </div>
-          <ul><li>Wochenende A (gerade KW) — Tochter in München.</li><li>Wochenende B (ungerade KW) — Van, Berge, Musik, Natur.</li><li>Klar entscheiden, was heute ist. Keine Mischmodi.</li></ul>
+          <ul><li>Umgangs-Wochenende (alle 2 Wochen): Tochter bis Samstag 18:30, dann warme Übergabe.</li><li>Danach bzw. an freien Wochenenden: Van, Berge, Paragliding, Musik, Natur.</li><li>Klar entscheiden, was heute ist. Keine Mischmodi.</li></ul>
         </div>
         <div class="day" data-weekday="6">
           <div class="hdr">
@@ -764,7 +920,7 @@
     <div class="twin">
       <div class="card">
         <div class="meta">Wochenende A</div>
-        <h3>Wochenende A — Tochter / heiliger Anker</h3>
+        <h3>Umgangs-Wochenende — Tochter (Fr 13:00 – Sa 18:30, alle 2 Wochen)</h3>
         <div class="col"><h4 class="ok">Rituale</h4><ul><li>Gemeinsames Frühstück ohne Eile.</li><li>Natur: See, Wald, Park, Tegernsee, Isar.</li><li>Musik: ein Lied zusammen hören, ein Lied zusammen erfinden.</li><li>Kochen mit ihr — kleine Aufgaben, große Würde.</li><li>Lesen am Abend, ruhige Stimme.</li><li>Eine kleine Tradition pro Wochenende (gleicher Bäcker, gleicher Platz).</li></ul></div>
         <div class="col" style="margin-top:14px"><h4 class="danger">Nicht</h4><ul><li>Kein Dauerhandy.</li><li>Kein gestresster Vater, kein Überprogramm.</li><li>Keine Schuldgefühle kompensieren mit Geschenken.</li><li>Keine Dating-Energie, keine fremden Frauen im Bild.</li><li>Kein Van-Drama, kein Reise-Stress an diesem Wochenende.</li></ul></div>
         <p style="margin-top:14px;color:var(--cream);font-style:italic">Sie erlebt einen Vater, der stabil, warm, präsent, frei — und da ist.</p>
@@ -951,7 +1107,7 @@
     
     <section data-panel="tochter" class="panel">
       <h2 class="section">Tochter · der heilige Anker</h2>
-      <p class="section-sub">Heiliger Anker. Alle zwei Wochen volle Präsenz.</p>
+      <p class="section-sub">Heiliger Anker. Alle zwei Wochen: Freitag 13:00 bis Samstag 18:30 — volle, ruhige Präsenz in München.</p>
       <div class="twin">
         <div class="card"><div class="meta">Rituale</div><h3>Was sie erlebt</h3><ul><li>Frühstück ohne Eile — kein Handy am Tisch.</li><li>Ein Naturort pro Wochenende (See, Wald, Berg).</li><li>Eine Musikminute zusammen (Lied hören oder erfinden).</li><li>Eine kleine Tradition (Bäcker, Spielplatz, Eisdiele).</li><li>Lesen abends, ruhige Stimme.</li><li>Kleines Abenteuer — Museum, Boot, kleines Konzert.</li><li>Kochen mit ihr — sie hat eine kleine Aufgabe.</li></ul></div>
         <div class="card dim"><div class="meta">Nicht</div><h3>Was sie nicht erleben darf</h3><ul><li>Nebenbei-Handy</li><li>Gestresster Vater</li><li>Schuldgefühle kompensieren</li><li>Überprogramm</li><li>Dating-Energie</li><li>Familiensystem-Drama anderer Frauen</li></ul></div>
@@ -1166,8 +1322,41 @@
   setText('today-mode', modes[dow] || '');
   setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
 
-  // Nur den heutigen Wochentag-Plan zeigen
-  var plan = document.querySelector('.day-plan[data-weekday="' + dow + '"]');
+  // Umgangs-Rhythmus: alle zwei Wochen Fr 13:00 – Sa 18:30, ab Anker-Freitag
+  var cfg = window.ALEX_CUSTODY || {anchor:'2026-05-22'};
+  var ap = cfg.anchor.split('-');
+  var ANCHOR = new Date(+ap[0], +ap[1]-1, +ap[2]); // Anker-Freitag, lokale Mitternacht
+  function strip(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function daysBetween(a, b){ return Math.round((a - b) / 86400000); }
+  function isCustodyFriday(friday){ return ((daysBetween(friday, ANCHOR) % 14) + 14) % 14 === 0; }
+  function upcomingFriday(d){ var x = strip(d); var w = (x.getDay()+6)%7; x.setDate(x.getDate() + ((4 - w) + 7) % 7); return x; }
+
+  var isCustody = false, currentWeekend = false, theFriday;
+  if (dow === 4){ theFriday = strip(now); isCustody = isCustodyFriday(theFriday); currentWeekend = true; }
+  else if (dow === 5){ theFriday = strip(now); theFriday.setDate(theFriday.getDate() - 1); isCustody = isCustodyFriday(theFriday); currentWeekend = true; }
+  else { theFriday = upcomingFriday(now); isCustody = isCustodyFriday(theFriday); currentWeekend = false; }
+
+  var ws = document.getElementById('weekend-status');
+  if (ws){
+    if (isCustody){
+      ws.textContent = currentWeekend ? '\\uD83D\\uDD3A Umgangswochenende l\\u00e4uft \\u2014 Tochter bis Sa 18:30'
+                                       : '\\uD83D\\uDD3A Dieses Wochenende: Umgang \\u2014 Tochter Fr 13:00 \\u2192 Sa 18:30';
+      ws.className = 'weekend-status custody';
+    } else {
+      ws.textContent = currentWeekend ? '\\u25B3 Freies Wochenende \\u2014 Freiheit'
+                                       : '\\u25B3 Dieses Wochenende: frei \\u2014 Van, Berge, Musik';
+      ws.className = 'weekend-status free';
+    }
+  }
+
+  // Heutigen Wochentag-Plan zeigen (Umgangs-Variante an Umgangswochenenden)
+  function pickPlan(){
+    var sel = '.day-plan[data-weekday="' + dow + '"]';
+    return document.querySelector(sel + '[data-custody="' + (isCustody ? '1' : '0') + '"]')
+        || document.querySelector(sel + '[data-custody="any"]')
+        || document.querySelector(sel);
+  }
+  var plan = pickPlan();
   if (plan) plan.classList.add('active');
   var tl = plan ? plan.querySelectorAll('.tl') : [];
   var allBoxes = plan ? plan.querySelectorAll('input[type=checkbox]') : [];
