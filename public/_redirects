@@ -1,4 +1,5 @@
 # Clean URLs
+/alex    /alex.html    200
 /heal    /heal.html    200
 /heal-en     /heal-en.html     200
 /heal-ultra  /heal-ultra.html  200

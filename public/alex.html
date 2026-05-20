@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="de"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Alex · Blue Electric Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+<style>
+  :root{
+    --bg:#0b0805; --bg2:#160e08; --ink:#e9e4dc; --muted:#9b8f80;
+    --line:#2a1f17; --line2:#3a2a1d;
+    --gold:#c8821e; --gold2:#e2a04a; --cream:#f0e7d5;
+    --cognac:#8a4f23; --leather:#1a120c; --red:#a02c2c; --green:#5f8c5a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  body{background:
+    radial-gradient(1000px 600px at 80% -200px, rgba(200,130,30,.10), transparent 60%),
+    radial-gradient(800px 500px at 10% 100%, rgba(138,79,35,.08), transparent 60%),
+    var(--bg);
+    min-height:100vh}
+  a{color:var(--gold2);text-decoration:none}
+  a:hover{color:var(--cream)}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 22px 80px}
+
+  .hero{padding:8px 0 24px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:11px;letter-spacing:3px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .title{font-family:'Cormorant Garamond','Playfair Display',Georgia,serif;font-size:56px;line-height:1.02;
+    margin:8px 0 6px;letter-spacing:.5px;color:var(--cream);font-weight:600}
+  .title em{font-style:italic;color:var(--gold2)}
+  .sub{color:var(--muted);font-size:15px;max-width:760px;line-height:1.6;margin:8px 0 0}
+  .leitsatz{margin:22px 0 6px;padding:18px 22px;border-left:3px solid var(--gold);background:linear-gradient(90deg,rgba(200,130,30,.07),transparent);
+    font-family:'Cormorant Garamond',Georgia,serif;font-size:21px;color:var(--cream);font-style:italic;line-height:1.5}
+  .schluss{margin-top:16px;padding:14px 18px;border:1px solid var(--line2);border-radius:14px;background:rgba(0,0,0,.25);
+    color:var(--cream);font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:17px;line-height:1.6}
+
+  .tabs{display:flex;gap:6px;overflow-x:auto;padding:18px 22px 14px;margin:6px -22px 22px;
+    border-bottom:1px solid var(--line);scrollbar-width:thin}
+  .tabs::-webkit-scrollbar{height:6px}
+  .tabs::-webkit-scrollbar-thumb{background:var(--line2);border-radius:3px}
+  .tab{flex:0 0 auto;background:transparent;border:1px solid var(--line);color:var(--muted);
+    padding:9px 14px;border-radius:999px;font-size:13px;cursor:pointer;letter-spacing:.3px;
+    font-family:inherit;white-space:nowrap;transition:all .15s}
+  .tab:hover{border-color:var(--gold);color:var(--cream)}
+  .tab.active{background:linear-gradient(180deg,rgba(200,130,30,.16),rgba(200,130,30,.06));
+    border-color:var(--gold);color:var(--cream);box-shadow:0 0 0 1px rgba(200,130,30,.25)}
+
+  .panel{display:none;animation:fade .25s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  h2.section{font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;color:var(--cream);
+    margin:0 0 6px;font-weight:600;letter-spacing:.5px}
+  .section-sub{color:var(--muted);font-size:14px;margin:0 0 22px;line-height:1.6}
+
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(0,0,0,.15));
+    border:1px solid var(--line);border-radius:18px;padding:20px 22px;margin:0 0 14px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .card h3{margin:0 0 10px;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:var(--cream);font-weight:600;letter-spacing:.3px}
+  .card .meta{font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .card p{color:var(--muted);font-size:14px;line-height:1.65;margin:6px 0}
+  .card ul{margin:8px 0 0;padding:0;list-style:none}
+  .card ul li{padding:7px 0 7px 22px;color:var(--ink);font-size:14.5px;line-height:1.55;
+    position:relative;border-bottom:1px solid rgba(58,42,29,.4)}
+  .card ul li:last-child{border-bottom:none}
+  .card ul li::before{content:'';position:absolute;left:6px;top:14px;width:6px;height:6px;
+    border-radius:50%;background:var(--gold)}
+  .card.dim ul li::before{background:var(--cognac)}
+
+  .grid{display:grid;gap:14px}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:780px){.grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr}}
+
+  .pillar{padding:18px 18px;border:1px solid var(--line);border-radius:16px;background:rgba(0,0,0,.2);transition:all .2s}
+  .pillar:hover{border-color:var(--gold);background:rgba(200,130,30,.04);transform:translateY(-1px)}
+  .pillar .icn{font-size:22px;color:var(--gold2);font-family:Georgia,serif;line-height:1}
+  .pillar .tt{font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;color:var(--cream);margin:8px 0 4px;font-weight:600}
+  .pillar .ld{font-size:13px;color:var(--muted);line-height:1.55}
+
+  .day{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(0,0,0,.18)}
+  .day.today{border-color:var(--gold);background:linear-gradient(180deg,rgba(200,130,30,.10),rgba(0,0,0,.2));
+    box-shadow:0 0 0 1px rgba(200,130,30,.25)}
+  .day .hdr{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .day .dn{font-family:'Cormorant Garamond',Georgia,serif;font-size:20px;color:var(--cream);font-weight:600}
+  .day .md{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+  .day .now-tag{font-size:10px;background:var(--gold);color:#000;padding:2px 8px;border-radius:99px;font-weight:700;letter-spacing:1px}
+
+  .block{display:grid;grid-template-columns:90px 1fr;gap:14px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:12px;background:rgba(0,0,0,.18);margin-bottom:8px}
+  .block.now{border-color:var(--gold);background:linear-gradient(90deg,rgba(200,130,30,.12),rgba(0,0,0,.2))}
+  .block .tm{font-family:'Cormorant Garamond',Georgia,serif;color:var(--gold2);font-size:16px;font-weight:600;letter-spacing:.5px}
+  .block .lb{font-size:14px;color:var(--cream);font-weight:600;margin-bottom:4px}
+  .block .it{font-size:13px;color:var(--muted);line-height:1.55}
+  .block .it div{padding:2px 0}
+
+  .check-list{display:flex;flex-direction:column;gap:2px}
+  .check{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border:1px solid var(--line);
+    border-radius:11px;background:rgba(0,0,0,.18);cursor:pointer;transition:all .15s;user-select:none}
+  .check:hover{border-color:var(--line2);background:rgba(255,255,255,.02)}
+  .check input{appearance:none;width:18px;height:18px;border:1.5px solid var(--line2);border-radius:5px;
+    background:transparent;flex-shrink:0;cursor:pointer;margin-top:1px;position:relative;transition:all .15s}
+  .check input:checked{background:var(--gold);border-color:var(--gold)}
+  .check input:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #000;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .check input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--cognac)}
+  .check span{font-size:14px;color:var(--ink);line-height:1.5}
+  .check-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:14px}
+  .check-head .meter{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:var(--gold2);font-weight:600}
+  .bar{height:4px;background:var(--line);border-radius:99px;margin:6px 0 14px;overflow:hidden}
+  .bar > div{height:100%;background:linear-gradient(90deg,var(--cognac),var(--gold));border-radius:99px;
+    width:0;transition:width .3s ease}
+
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .tag{display:inline-block;font-size:11.5px;padding:4px 10px;border-radius:99px;
+    border:1px solid var(--line2);color:var(--cream);background:rgba(0,0,0,.25);letter-spacing:.3px}
+  .tag.gold{border-color:var(--gold);color:var(--gold2)}
+  .tag.warn{border-color:rgba(160,44,44,.5);color:#e08585}
+
+  .tree{font-family:'JetBrains Mono','SF Mono',Menlo,monospace;font-size:13px;color:var(--cream);
+    background:rgba(0,0,0,.35);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+    line-height:1.7;white-space:pre;overflow-x:auto}
+  .db-row{display:grid;grid-template-columns:1fr 2fr;gap:14px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .db-row:last-child{border-bottom:none}
+  .db-row b{color:var(--gold2);font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;font-weight:600}
+  .db-row span{color:var(--muted);font-size:13px;font-family:'JetBrains Mono','SF Mono',Menlo,monospace}
+
+  .quote{margin:24px 0;padding:18px 22px;border-left:2px solid var(--gold);
+    font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:19px;color:var(--cream);line-height:1.55}
+
+  .twin{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:780px){.twin{grid-template-columns:1fr}}
+  .col h4{margin:0 0 8px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:var(--cream);font-weight:600}
+  .col h4.danger{color:#e08585}
+  .col h4.ok{color:#9bd194}
+
+  .footnote{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+</style>
+
+</head><body>
+  <div class="wrap">
+    
+    <div class="hero">
+      <div class="eyebrow">Alex · Lebensdesign-System</div>
+      <h1 class="title">Blue Electric <em>Life</em></h1>
+      <p class="sub">Blue Electric Life — zwischen München, Wien, Bergen und offenen Straßen. Ein Leben mit Seele — zwischen Hotelzimmern in Wien, stillen Morgen am Tegernsee, Musik um Mitternacht, Espresso vor Sonnenaufgang, Tattoos im warmen Licht, offenen Straßen Richtung Italien, Gleitschirm über Bergen und der ruhigen Verantwortung eines Vaters.</p>
+      <div class="leitsatz">„Ich bin kein Mann, der vor dem Leben flieht. Ich bin ein Mann, der sein Leben wieder zu Kunst macht.“</div>
+    </div>
+
+    <nav class="tabs"><button class="tab active" data-tab="dashboard">Dashboard</button><button class="tab" data-tab="wochenplan">Wochenplan</button><button class="tab" data-tab="tagesplan">Tagesplan</button><button class="tab" data-tab="wien">Wien</button><button class="tab" data-tab="muenchen">München-Base</button><button class="tab" data-tab="van">Van</button><button class="tab" data-tab="paragliding">Paragliding</button><button class="tab" data-tab="ptgo">PTGO</button><button class="tab" data-tab="musik">Musik</button><button class="tab" data-tab="stil">Stil</button><button class="tab" data-tab="frauen">Frauen</button><button class="tab" data-tab="tochter">Tochter</button><button class="tab" data-tab="monat">Monatscheck</button><button class="tab" data-tab="jahr">Jahresvision</button><button class="tab" data-tab="taeglich">Täglich</button><button class="tab" data-tab="notion">Notion</button><button class="tab" data-tab="roadmap">90-Tage</button><button class="tab" data-tab="nochaos">No-Chaos</button></nav>
+
+    
+    <section data-panel="dashboard" class="panel active">
+      <h2 class="section">Die acht Säulen</h2>
+      <p class="section-sub">Acht Achsen, auf denen dieses Leben getragen wird. Nicht nebeneinander, sondern miteinander.</p>
+      <div class="grid cols-4">
+        <div class="pillar">
+          <div class="icn">🜂</div>
+          <div class="tt">Tochter / Wurzeln</div>
+          <div class="ld">Heiliger Anker. Alle zwei Wochen volle Präsenz. Sie erlebt einen stabilen, warmen, freien Vater.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">✦</div>
+          <div class="tt">PTGO / Mission</div>
+          <div class="ld">Keine Therapie-Stunden. Transformations-Kunst. Premium, ruhig, präzise, skalierbar.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">♪</div>
+          <div class="tt">Musik / Kunst</div>
+          <div class="ld">Kein Nebenprojekt — Markenkern. Soul, Rock, Blues, deutschsprachige Tiefe. Täglich.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">❖</div>
+          <div class="tt">Körper / Gesundheit</div>
+          <div class="ld">Nicht Influencer. Pantherenergie: ruhig stark, geschmeidig, sinnlich, wach.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">△</div>
+          <div class="tt">Freiheit / Van / Fliegen</div>
+          <div class="ld">Van und Gleitschirm sind Nervensystem-Regulation, nicht Flucht. Bewegte Stille.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">◐</div>
+          <div class="tt">Stil / Ästhetik</div>
+          <div class="ld">Schwarzes Leder, warme Räume, Tattoos im Goldlicht. Zeitlose Rock-Soul-Männlichkeit.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">❤︎</div>
+          <div class="tt">Frauen / Verbindung</div>
+          <div class="ld">Ergänzung, nie Zentrum. Aus voller eigener Welt heraus lieben — nicht aus Bedürftigkeit.</div>
+        </div>
+        <div class="pillar">
+          <div class="icn">≈</div>
+          <div class="tt">Nervensystem / Ruhe</div>
+          <div class="ld">Atmen, Natur, Musik, Ordnung, Schönheit. Nie wieder gegen das eigene Nervensystem leben.</div>
+        </div></div>
+      <div class="quote">„Ich bin kein Mann, der vor dem Leben flieht. Ich bin ein Mann, der sein Leben wieder zu Kunst macht.“</div>
+      <div class="card" style="margin-top:18px">
+        <div class="meta">Frame-Regel</div>
+        <p>Dieses Leben darf niemals toxisch-alpha, fake-spirituell, eskapistisch oder Instagram-künstlich werden. Es muss sich anfühlen wie: ein Mann baut sich langsam, ehrlich und stilvoll zurück ins Leben.</p>
+      </div>
+      <div class="schluss">„Ein Mann mit offenen Straßen im Herzen, Musik in den Händen, Ruhe im Nervensystem und einer Tochter, die weiß: Mein Vater ist frei — aber er bleibt.“</div>
+    </section>
+    
+    <section data-panel="wochenplan" class="panel">
+      <h2 class="section">Wochenstruktur</h2>
+      <p class="section-sub">Mo–So mit klarem Modus pro Tag. Der aktuelle Tag wird automatisch markiert.</p>
+      <div class="grid cols-2">
+        <div class="day" data-weekday="0">
+          <div class="hdr">
+            <div>
+              <div class="dn">Montag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">München · Deep Work · Soul</div>
+            </div>
+          </div>
+          <ul><li>06:00 — Aufstehen. Wasser, kalte Luft, Fenster auf. Kein Handy für 60 Min.</li><li>06:20 — Mobility, Push-ups, Schattenboxen, Atmung. Pantherenergie, kein Studio-Ego.</li><li>07:00 — Espresso, Früchte, Protein. Curtis Mayfield leise im Hintergrund.</li><li>08:00–12:00 — Deep Work: PTGO, Musik, Texte, Systeme. Kein Chaos.</li><li>12:30 — Clean Lunch, dann Spaziergang. Sonne statt Dauerreize.</li><li>14:00–17:00 — Sessions, Calls, Business. Ruhig, präsent, nicht gehetzt.</li><li>17:30 — Golden Hour: Isar oder Tegernsee. Nervensystempflege.</li><li>20:00 — Dusche, warmes Licht, Piano oder Gitarre, schreiben.</li><li>22:30 — Lesen. Schlafvorbereitung. Keine digitale Hölle.</li></ul>
+        </div>
+        <div class="day" data-weekday="1">
+          <div class="hdr">
+            <div>
+              <div class="dn">Dienstag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Business + Musik</div>
+            </div>
+          </div>
+          <ul><li>06:30 — Morgenroutine wie Montag, etwas weicher.</li><li>08:30–12:00 — PTGO-Systeme, Automatisierung, KI-Tools.</li><li>13:00 — Krafttraining oder Schwimmen. Sauna danach.</li><li>15:00–18:00 — Content, Masterclass, Calls.</li><li>20:00 — Musikproduktion oder Songwriting. Mindestens 60 Min.</li><li>22:30 — Abendroutine, früh ins Bett.</li></ul>
+        </div>
+        <div class="day" data-weekday="2">
+          <div class="hdr">
+            <div>
+              <div class="dn">Mittwoch <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Reset Day · Wohnung zurückerobern</div>
+            </div>
+          </div>
+          <ul><li>Der wichtigste Tag der Woche. Freiheit braucht Ordnung.</li><li>Vormittag — Admin, Buchhaltung, Termine, Tochterplanung, Wien-Vorbereitung.</li><li>Mittag — Wohnung 83083: ein klar definierter Bereich pro Mittwoch (Bad / Küche / Schlafzimmer / Musikecke / Kleiderschrank).</li><li>Ein Karton raus. Eine Schublade leer. Eine Fläche sichtbar. Nicht perfekt, aber atmungsfähig.</li><li>Nachmittag — Wäsche, Körperpflege, Tasche packen für Wien.</li><li>Bei Bedarf: Reinigungskraft, Entrümpler, Handwerker. Verantwortung > Chaos romantisieren.</li><li>Abends — Training oder Spaziergang, dann Piano/Gitarre.</li></ul>
+        </div>
+        <div class="day" data-weekday="3">
+          <div class="hdr">
+            <div>
+              <div class="dn">Donnerstag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Wien · Anreise · Creative Gentleman</div>
+            </div>
+          </div>
+          <ul><li>Vorabend-Anreise per Bahn, wenn möglich. Schwarzer Mantel, Lederjacke, Notizbuch.</li><li>Minimalistisches Gepäck. Eine Tasche, ein Anzug, drei Hemden, ein Buch.</li><li>Hotel oder feste Unterkunft. Duschen, Spaziergang, gutes Abendessen.</li><li>Spät: Kaffeehaus, Jazzbar oder Hotelzimmer mit Lampe, Musik, Schreiben.</li><li>Keine billige Ablenkung. Wien = Inspirationsquelle, nicht Belastung.</li></ul>
+        </div>
+        <div class="day" data-weekday="4">
+          <div class="hdr">
+            <div>
+              <div class="dn">Freitag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Wien · Deep Presence · Hotel Energy</div>
+            </div>
+          </div>
+          <ul><li>Arbeit in Wien — präsent, fokussiert, ruhig.</li><li>Sauna oder Gym am späten Nachmittag.</li><li>Freitag Nacht: warme Lampen, Hemd halb offen, Musik über Lautsprecher.</li><li>Notizen aus Wien sammeln — für Musik, PTGO, Texte.</li><li>Abendzug oder Übernachtung. Keine Hetze.</li></ul>
+        </div>
+        <div class="day" data-weekday="5">
+          <div class="hdr">
+            <div>
+              <div class="dn">Samstag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Wochenende A: Tochter / B: Freiheit</div>
+            </div>
+          </div>
+          <ul><li>Wochenende A (gerade KW) — Tochter in München.</li><li>Wochenende B (ungerade KW) — Van, Berge, Musik, Natur.</li><li>Klar entscheiden, was heute ist. Keine Mischmodi.</li></ul>
+        </div>
+        <div class="day" data-weekday="6">
+          <div class="hdr">
+            <div>
+              <div class="dn">Sonntag <span class="now-tag" style="display:none;margin-left:8px">heute</span></div>
+              <div class="md">Reflexion · Vorbereitung · Ruhe</div>
+            </div>
+          </div>
+          <ul><li>Spaziergang. Tagebuch. Wochenrückblick (3 Punkte: Würde, Wachstum, Korrektur).</li><li>Wäsche fertig, Tasche gepackt, Mo-Vormittag schon klar.</li><li>Abends — Piano oder Lesen. Früh ins Bett.</li></ul>
+        </div></div>
+      <h2 class="section" style="margin-top:30px">Die zwei Wochenenden</h2>
+      <p class="section-sub">A für Tochter. B für Freiheit. Klar getrennt — keine Mischmodi.</p>
+      
+    <div class="twin">
+      <div class="card">
+        <div class="meta">Wochenende A</div>
+        <h3>Wochenende A — Tochter / heiliger Anker</h3>
+        <div class="col"><h4 class="ok">Rituale</h4><ul><li>Gemeinsames Frühstück ohne Eile.</li><li>Natur: See, Wald, Park, Tegernsee, Isar.</li><li>Musik: ein Lied zusammen hören, ein Lied zusammen erfinden.</li><li>Kochen mit ihr — kleine Aufgaben, große Würde.</li><li>Lesen am Abend, ruhige Stimme.</li><li>Eine kleine Tradition pro Wochenende (gleicher Bäcker, gleicher Platz).</li></ul></div>
+        <div class="col" style="margin-top:14px"><h4 class="danger">Nicht</h4><ul><li>Kein Dauerhandy.</li><li>Kein gestresster Vater, kein Überprogramm.</li><li>Keine Schuldgefühle kompensieren mit Geschenken.</li><li>Keine Dating-Energie, keine fremden Frauen im Bild.</li><li>Kein Van-Drama, kein Reise-Stress an diesem Wochenende.</li></ul></div>
+        <p style="margin-top:14px;color:var(--cream);font-style:italic">Sie erlebt einen Vater, der stabil, warm, präsent, frei — und da ist.</p>
+      </div>
+      <div class="card">
+        <div class="meta">Wochenende B</div>
+        <h3>Wochenende B — Freiheit</h3>
+        <ul><li>Van-Tour</li><li>Paragliding (Tegernsee / Kössen / Gardasee)</li><li>Dolomiten / Annecy / Südtirol</li><li>Musik-Retreat</li><li>Sauna-Wochenende</li><li>Kreativtage allein</li><li>Sonntag Long Drive</li></ul>
+        <p style="margin-top:14px;color:var(--cream);font-style:italic">Bewegte Stille. Kein Eskapismus, kein Influencer-Roadtrip.</p>
+      </div>
+    </div>
+    </section>
+    
+    <section data-panel="tagesplan" class="panel">
+      <h2 class="section">Tagesplan</h2>
+      <p class="section-sub">Acht Blöcke vom Morgen-Anker bis zur Schlafvorbereitung. Der aktuelle Block ist hervorgehoben.</p>
+      
+        <div class="block" data-hour="6">
+          <div class="tm">06:00<br><span style="font-size:12px;color:var(--muted)">bis 07:00</span></div>
+          <div>
+            <div class="lb">Morgen-Anker</div>
+            <div class="it"><div>Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.</div><div>5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.</div><div>5 Min Vision: heute soll sich wie was anfühlen?</div><div>Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="7">
+          <div class="tm">07:00<br><span style="font-size:12px;color:var(--muted)">bis 08:00</span></div>
+          <div>
+            <div class="lb">Frühstück & Übergang</div>
+            <div class="it"><div>Espresso. Früchte. Eier oder Protein.</div><div>Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="8">
+          <div class="tm">08:00<br><span style="font-size:12px;color:var(--muted)">bis 12:00</span></div>
+          <div>
+            <div class="lb">Deep Work I</div>
+            <div class="it"><div>PTGO / Masterclass / Musik / Texte / KI-Systeme.</div><div>Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.</div><div>Drei Sitzungen à 75 Min mit kurzen Pausen.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="12">
+          <div class="tm">12:00<br><span style="font-size:12px;color:var(--muted)">bis 14:00</span></div>
+          <div>
+            <div class="lb">Clean Lunch & Walk</div>
+            <div class="it"><div>Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.</div><div>20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="14">
+          <div class="tm">14:00<br><span style="font-size:12px;color:var(--muted)">bis 17:00</span></div>
+          <div>
+            <div class="lb">Sessions / Business</div>
+            <div class="it"><div>Sessions, Calls, Strategie, Premium-Angebote.</div><div>Ruhig, präsent, nicht gehetzt.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="17">
+          <div class="tm">17:30<br><span style="font-size:12px;color:var(--muted)">bis 19:30</span></div>
+          <div>
+            <div class="lb">Golden Hour</div>
+            <div class="it"><div>Tegernsee, Isar, oder Spaziergang.</div><div>Fahrt mit Musik, offenes Fenster, Sonnenuntergang.</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="20">
+          <div class="tm">20:00<br><span style="font-size:12px;color:var(--muted)">bis 22:00</span></div>
+          <div>
+            <div class="lb">Musik / Schreiben</div>
+            <div class="it"><div>Warmlicht, Piano oder Gitarre.</div><div>Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?</div></div>
+          </div>
+        </div>
+        <div class="block" data-hour="22">
+          <div class="tm">22:00<br><span style="font-size:12px;color:var(--muted)">bis 23:00</span></div>
+          <div>
+            <div class="lb">Schlafvorbereitung</div>
+            <div class="it"><div>Dusche, Duft, Lesen.</div><div>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</div></div>
+          </div>
+        </div>
+      <div class="twin" style="margin-top:22px">
+        <div class="card">
+          <div class="meta">Körper · Wochenrhythmus</div>
+          <h3>Nicht Bodybuilder. Pantherenergie — geschmeidig, stark, ruhig.</h3>
+          <ul><li>Mo — Mobility + Push-ups + Schattenboxen (30 Min)</li><li>Di — Krafttraining schwer (60 Min) + Sauna</li><li>Mi — Spaziergang lang + Atemarbeit</li><li>Do — Reisemodus: Push-ups, Mobility im Hotelzimmer</li><li>Fr — Sauna oder Schwimmen</li><li>Sa — Natur lange Bewegung</li><li>So — Ruhe, leichte Mobility</li></ul>
+        </div>
+        <div class="card">
+          <div class="meta">Ernährung</div>
+          <h3>Clean. Sinnlich. Einfach.</h3>
+          <ul><li>Wasser zuerst. Espresso danach.</li><li>Früchte, Eier oder Protein.</li><li>Gemüse, Fisch, Fleisch oder hochwertige vegetarische Alternative.</li><li>Wenig Zucker, wenig Alkohol, kein emotionales Essen.</li><li>Sinnlich essen — Teller, Licht, Musik.</li></ul>
+        </div>
+      </div>
+    </section>
+    
+    <section data-panel="wien" class="panel">
+      <h2 class="section">Wien · Creative Gentleman Work Mode</h2>
+      <p class="section-sub">Creative Gentleman Work Mode — keine Belastung, keine Hetze.</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Anreise</div><h3>Schwarzer Mantel, Notizbuch</h3><ul><li>Vorabend-Anreise per Bahn, wenn möglich. Sonst früher Frühzug.</li><li>Schwarzer Mantel oder Lederjacke. Notizbuch. Buch. Kopfhörer.</li><li>Gepäck: eine Tasche, drei Hemden, zwei Hosen, ein Anzug, ein Buch.</li></ul></div>
+        <div class="card"><div class="meta">Unterkunft</div><h3>Ein Ort, der dich kennt</h3><ul><li>Feste Unterkunft oder ein Hotel, das du immer wieder buchst.</li><li>Ein Ort, der dich kennt. Vorzimmer für deinen Wien-Modus.</li><li>Sauberes Bad, gutes Licht, ruhige Lage.</li></ul></div>
+      </div>
+      <div class="card"><div class="meta">Rituale</div><h3>Espresso, Spaziergang, Notizen, Jazz</h3><ul><li>Espresso im selben Café.</li><li>Spaziergang durch eine schöne Straße zu Arbeitsbeginn.</li><li>Mittagspause mit echter Mahlzeit, nicht to-go.</li><li>Nach der Arbeit: duschen, laufen, gutes Essen.</li><li>Abends: Kaffeehaus, Jazzbar, Schreiben.</li><li>Freitag Nacht: Hotel-Energy — Lampen, Musik, Notizen.</li></ul></div>
+      <div class="card">
+        <div class="meta">Inspirationsquellen</div>
+        <h3>Wien wird Material — nicht Belastung</h3>
+        <div class="tag-row"><span class="tag gold">Architektur</span> <span class="tag gold">Musik der Stadt</span> <span class="tag gold">alte Welt-Eleganz</span> <span class="tag gold">Texte und PTGO-Ideen</span> <span class="tag gold">Stille zwischen den Terminen</span></div>
+      </div>
+      <div class="card dim"><div class="meta">Nicht</div><h3>Was Wien zerstören würde</h3><ul><li>Keine sinnlose Ablenkung</li><li>Kein Dating-Modus</li><li>Kein Übernachtsaufen</li><li>Keine Hotellobby-Doom-Scrolls</li></ul></div>
+    </section>
+    
+    <section data-panel="muenchen" class="panel">
+      <h2 class="section">München-Base · die Wohnung zurückerobern</h2>
+      <p class="section-sub">Wohnung 83083 ist heute eher Lagerhalle alter Dinge. Sie wird wieder Männerraum, Musikraum, Vaterraum.</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Atmosphäre</div><h3>Holz, warmes Licht, Leder, Pflanzen</h3><ul><li>Holz und schwere Stoffe</li><li>warme Lampen statt Deckenlicht</li><li>Lederdetails, dunkle Farben</li><li>gute Lautsprecher sichtbar platziert</li><li>Instrumente im Blickfeld</li><li>Duft (warm, holzig, rauchig)</li><li>Pflanzen, klares Bad, gutes Bett, Ordnung</li></ul></div>
+        <div class="card"><div class="meta">Funktion</div><h3>Vier Räume in einem</h3><ul><li>Vater-Ort: ihre Ecke, ihre Decke, ihre Bücher</li><li>Musik-Ort: Gitarre, Piano, Interface, Kopfhörer immer griffbereit</li><li>PTGO-Ort: ein Schreibtisch, eine Lampe, ein Sessel für Calls</li><li>Ruhe-Ort: ein Sessel am Fenster, leer und still</li><li>Dating-Ort nur, wenn es wirklich passt — nicht als Standard</li></ul></div>
+      </div>
+      <div class="card"><div class="meta">Reset · 6 Wochen</div><h3>Pro Mittwoch ein Bereich</h3><ul><li>Woche 1 — Bad: leer machen, schrubben, Duft, neue Handtücher.</li><li>Woche 2 — Küche: Schubladen aussortieren, Essentials sichtbar, alles andere weg.</li><li>Woche 3 — Schlafzimmer: nur Bett, Licht, Nachttisch, Buch. Nichts auf dem Boden.</li><li>Woche 4 — Musikecke einrichten: Instrumente, Kabel, Sound auf Punkt.</li><li>Woche 5 — Kleiderschrank: 80% raus. Style-Guide leben.</li><li>Woche 6 — Eingang, Flur, Schuhe — der erste Eindruck deines Lebens.</li></ul></div>
+      <div class="card"><div class="meta">Hilfe</div><h3>Stärke ist Verantwortung — nicht Alleingang</h3><ul><li>Reinigungskraft 1× pro Woche, fix gebucht.</li><li>Entrümpler einmalig für die großen Sachen.</li><li>Handwerker für Licht, Regale, Akustik — nicht selber machen wollen.</li></ul></div>
+    </section>
+    
+    <section data-panel="van" class="panel">
+      <h2 class="section">Van · ein mobiles Atelier</h2>
+      <p class="section-sub">Kein Fluchtfahrzeug. Ein Boutique-Hotel für einen Mann, der wieder atmen lernt.</p>
+      <div class="card"><div class="meta">Vehikel</div><h3>Mercedes Sprinter oder gleichwertig. Dunkles Exterieur (schwarz oder anthrazit).</h3><p>Frequenz: 1–2× pro Monat 3–5 Tage. Nicht öfter — sonst wird Freiheit zur Flucht.</p></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Vibe</div><h3>Holz, Licht, Leder</h3><div class="tag-row"><span class="tag">Dunkles Holz</span> <span class="tag">Warmes Licht (2700K)</span> <span class="tag">Cleanes Bett, schwere Decke</span> <span class="tag">Espresso-Setup</span> <span class="tag">Mini-Studio (Audio-Interface, Mic, Kopfhörer)</span> <span class="tag">Gute Lautsprecher</span> <span class="tag">Stauraum für Paragliding-Ausrüstung</span> <span class="tag">Laptop-Arbeitsplatz</span> <span class="tag">Duft</span> <span class="tag">Kamera</span> <span class="tag">Gitarre</span></div></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was den Van billig macht</h3><div class="tag-row"><span class="tag warn">Kein billiger Camping-Look</span> <span class="tag warn">Keine Aufkleber</span> <span class="tag warn">Keine Klimbim-Optik</span> <span class="tag warn">Kein YouTuber-Vanlife-Klischee</span></div></div>
+      </div>
+      <div class="twin">
+        <div class="card"><div class="meta">Touren</div><h3>Sechs Routen, ein Rhythmus</h3><ul><li>Tegernsee — Wochenend-Reset, 1h Anfahrt.</li><li>Kössen — Paragliding Klassiker, 1,5h.</li><li>Gardasee — Wärme & Wasser, 4h.</li><li>Dolomiten — Berge & Stille, 5h.</li><li>Annecy — Fliegen am See, 7h.</li><li>Südfrankreich / Italien — längere Solo-Touren 5+ Tage.</li></ul></div>
+        <div class="card"><div class="meta">Ritual im Van</div><h3>Stille, Espresso, Gitarre</h3><ul><li>Espresso zuerst</li><li>Eine Seite Tagebuch</li><li>30 Min Gitarre</li><li>Spaziergang</li><li>Arbeit nur 2–3 Stunden</li><li>Sonnenuntergang draußen</li></ul></div>
+      </div>
+    </section>
+    
+    <section data-panel="paragliding" class="panel">
+      <h2 class="section">Paragliding · Meditation im Himmel</h2>
+      <p class="section-sub">Nervensystem-Regulation. Meditation in Bewegung. Kein Sport-Ego.</p>
+      <div class="block" data-hour="-1"><div class="tm">Jan–Feb</div><div><div class="it">Theorie, Wetterstudium, Materialcheck, Indoor-Training.</div></div></div><div class="block" data-hour="-1"><div class="tm">März</div><div><div class="it">Saisonstart Tegernsee — kurze Flüge, Routine reaktivieren.</div></div></div><div class="block" data-hour="-1"><div class="tm">April</div><div><div class="it">Kössen — Höhenmeter und Sicherheit aufbauen.</div></div></div><div class="block" data-hour="-1"><div class="tm">Mai–Juni</div><div><div class="it">Gardasee + Dolomiten — Thermik, längere Flüge.</div></div></div><div class="block" data-hour="-1"><div class="tm">Juli</div><div><div class="it">Annecy — Akro & Höhe.</div></div></div><div class="block" data-hour="-1"><div class="tm">August</div><div><div class="it">Tochter-Wochenenden priorisieren, kürzere Flüge.</div></div></div><div class="block" data-hour="-1"><div class="tm">Sept</div><div><div class="it">Dolomiten Soaring, lange Touren.</div></div></div><div class="block" data-hour="-1"><div class="tm">Okt</div><div><div class="it">Tegernsee letzte Flüge, Saison-Reflexion.</div></div></div><div class="block" data-hour="-1"><div class="tm">Nov–Dez</div><div><div class="it">Material-Service, Theorie, mentale Vorbereitung.</div></div></div><div class="block" data-hour="-1"><div class="tm">Highlight</div><div><div class="it">Ölüdeniz (Türkei) — 1× pro Jahr als Reise.</div></div></div>
+      <div class="twin" style="margin-top:14px">
+        <div class="card"><div class="meta">Routine</div><h3>Sicher fliegen heißt: ruhig vorbereiten</h3><ul><li>Wetter 24h vorher checken (Windyty, DHV, lokaler Wetterdienst).</li><li>Gear-Check am Vorabend: Schirm, Gurtzeug, Retter, Helm, Funk.</li><li>Körper-Check morgens: Schlaf, Atmung, mentaler Zustand.</li><li>Briefing-Ritual am Startplatz, keine Hetze.</li><li>Nach Landung: 5 Min still sitzen, dann Notiz im Logbuch.</li></ul></div>
+        <div class="card"><div class="meta">Gear</div><h3>Was immer dabei ist</h3><div class="tag-row"><span class="tag">Schirm + Reserve (Service-Intervalle einhalten)</span> <span class="tag">Helm, Handschuhe, Gurtzeug</span> <span class="tag">Vario, Funkgerät</span> <span class="tag">Wetterapp</span> <span class="tag">Sonnencreme, Wasser, Riegel</span> <span class="tag">Pilotenbuch</span></div></div>
+      </div>
+    </section>
+    
+    <section data-panel="ptgo" class="panel">
+      <h2 class="section">PTGO · Premium-Kunstform</h2>
+      <p class="section-sub">Premium-Kunstform. Keine Therapiestunden — Transformationserlebnisse.</p>
+      <div class="card"><div class="meta">Elemente</div><h3>Was eine Session zu Kunst macht</h3><div class="tag-row"><span class="tag gold">Manuelle Präzision</span> <span class="tag gold">Musik im Raum</span> <span class="tag gold">Stimme & Präsenz</span> <span class="tag gold">Ritualisierter Beginn und Abschluss</span> <span class="tag gold">Premium-Preise</span> <span class="tag gold">Klare Grenzen</span></div></div>
+      <div class="card"><div class="meta">Produkte</div><h3>Sieben Türen ins gleiche Haus</h3><ul><li>1:1 High Impact Session — limitiert, hochpreisig.</li><li>PTGO Masterclass — gruppenbasiert, mehrere Wochen.</li><li>Musikbasierte Körper-/Nervensystem-Releases (Audio-Programme).</li><li>KI-gestützte Programme (Daily Check-in, Pattern Engine).</li><li>Retreats — 2–4× pro Jahr, klein, sorgfältig kuratiert.</li><li>Membership — kontinuierliche Begleitung, niederpreisig wiederkehrend.</li><li>Premium Online-System — skaliertes High-End-Programm.</li></ul></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Marke</div><h3>Wie sie klingt</h3><div class="tag-row"><span class="tag">Klar</span> <span class="tag">Tief</span> <span class="tag">Ruhig</span> <span class="tag">Transformierend</span> <span class="tag">Niemals billig</span> <span class="tag">Niemals laut</span></div></div>
+        <div class="card"><div class="meta">Rhythmus</div><h3>Wie sie atmet</h3><ul><li>Mo–Di Deep Work + Calls</li><li>Do–Fr Wien-Sessions</li><li>Monatlich 1 Content-Schub</li><li>Quartalsweise 1 Retreat oder Launch</li></ul></div>
+      </div>
+    </section>
+    
+    <section data-panel="musik" class="panel">
+      <h2 class="section">Musik · Markenkern, nicht Hobby</h2>
+      <p class="section-sub">Täglich 30–90 Min Musik. Mindestens einmal pro Woche eine Session in echter Tiefe (2–3 Std).</p>
+      <div class="card"><div class="meta">Sound-DNA</div><h3>Worauf alles ruht</h3><div class="tag-row"><span class="tag gold">Soul</span> <span class="tag gold">Rock</span> <span class="tag gold">Funk</span> <span class="tag gold">Blues</span> <span class="tag gold">deutschsprachige Tiefe</span> <span class="tag gold">warme Gitarren</span> <span class="tag gold">Piano</span> <span class="tag gold">analoge Atmosphäre</span> <span class="tag gold">verletzliche Männlichkeit</span> <span class="tag gold">Freiheit, Nacht, Straße, Liebe, Feuer, Vater, Natur</span></div></div>
+      <div class="twin">
+        <div class="card"><div class="meta">Formate</div><h3>Wie Musik aus dir herauskommt</h3><ul><li>Songs (fertig produziert)</li><li>Voice Notes (roh, ehrlich)</li><li>Live-Improvisationen (Video)</li><li>PTGO-Sounds (für Sessions, Retreats)</li><li>Masterclass-Beds (Hintergrund-Atmos)</li><li>YouTube/Instagram-Ausschnitte (kurz, atmosphärisch)</li></ul></div>
+        <div class="card"><div class="meta">Setup</div><h3>Was immer bereit steht</h3><ul><li>Gitarre + Piano sichtbar in München-Base</li><li>Audio-Interface fest am Schreibtisch</li><li>Kondensator-Mikro + Akustik-Behandlung</li><li>Eine DAW, die du beherrschst — nicht drei</li><li>Mobiler Setup für Van und Wien (Interface, Mic, Kopfhörer)</li></ul></div>
+      </div>
+    </section>
+    
+    <section data-panel="stil" class="panel">
+      <h2 class="section">Stil · zeitlose Rock-Soul-Männlichkeit</h2>
+      <p class="section-sub">Wiedererkennbar. Niemals Hype.</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Kleidung</div><h3>Was getragen wird</h3><ul><li>Schwarze Boots (1 hoch, 1 niedrig).</li><li>Lederjacke (eine, gute, die altert).</li><li>Leinenhemden (creme, weiß, schwarz).</li><li>Gute Jeans (dunkel, schmal, ehrlich).</li><li>Schwarze Shirts (dick, kein Logo).</li><li>Mantel für Wien (lang, schwer, schwarz).</li><li>Sonnenbrille (klassisch, nicht laut).</li><li>Schmuck (Silber, dezent, dauerhaft getragen).</li></ul></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was nie ins Bild passt</h3><ul><li>Funktionsjacken ohne Stil</li><li>Billige Sneaker</li><li>Überladene Outfits</li><li>Fitness-Bro-Look</li><li>Hype-Sneaker, Hype-Marken</li><li>Logos im Gesicht des Outfits</li></ul></div>
+      </div>
+      <div class="twin">
+        <div class="card"><div class="meta">Farben</div><h3>Palette</h3><div class="tag-row"><span class="tag">Schwarz</span> <span class="tag">Weiß</span> <span class="tag">Creme</span> <span class="tag">Cognac</span> <span class="tag">Dunkelbraun</span> <span class="tag">Silber</span> <span class="tag">Gold</span> <span class="tag">Oliv</span> <span class="tag">Denim</span></div></div>
+        <div class="card"><div class="meta">Düfte</div><h3>Stimmung am Körper</h3><div class="tag-row"><span class="tag gold">Warm</span> <span class="tag gold">Holzig</span> <span class="tag gold">Rauchig</span> <span class="tag gold">Sinnlich — niemals süß oder generisch</span></div></div>
+      </div>
+      <div class="quote">„Tattoos sichtbar, aber nie bemüht. Sie erzählen — sie posieren nicht.“</div>
+    </section>
+    
+    <section data-panel="frauen" class="panel">
+      <h2 class="section">Frauen · Verbindung statt Zentrum</h2>
+      <p class="section-sub">Frauen sind Ergänzung, nicht Zentrum. Sie ersetzen nicht die Mission.</p>
+      <div class="twin">
+        <div class="card dim"><div class="meta">Nicht mehr</div><h3>Alte Muster, die enden</h3><ul><li>Nicht jagen.</li><li>Nicht klammern.</li><li>Nicht emotional betteln.</li><li>Nicht kontrollieren.</li><li>Keine Dauerdiskussionen.</li><li>Keine Beziehung als Identitätsersatz.</li></ul></div>
+        <div class="card"><div class="meta">Stattdessen</div><h3>Wie Liebe jetzt klingt</h3><ul><li>Eigene Welt, eigene Routine.</li><li>Ruhige Kommunikation.</li><li>Klare Grenzen, klare Wünsche.</li><li>Sinnliche Atmosphäre statt Druck.</li><li>Führung ohne Härte, Wärme ohne Bedürftigkeit.</li></ul></div>
+      </div>
+      <div class="card"><div class="meta">Pia</div><h3>Ruhe, Grenzen, Klarheit</h3><ul><li>Keine emotionalen Kämpfe mehr.</li><li>Keine Verschmelzung, keine Chaos-Abhängigkeit.</li><li>Keine Familiensystem-Übernahme, keine Retterrolle.</li><li>Ruhe. Präsenz. Grenzen. Eigene Base. Eigene Identität.</li><li>Freundlich, aber nicht selbstaufgebend.</li></ul></div>
+      <div class="quote">„Ich bin offen für Liebe, aber ich verrate mich nicht mehr dafür.“</div>
+    </section>
+    
+    <section data-panel="tochter" class="panel">
+      <h2 class="section">Tochter · der heilige Anker</h2>
+      <p class="section-sub">Heiliger Anker. Alle zwei Wochen volle Präsenz.</p>
+      <div class="twin">
+        <div class="card"><div class="meta">Rituale</div><h3>Was sie erlebt</h3><ul><li>Frühstück ohne Eile — kein Handy am Tisch.</li><li>Ein Naturort pro Wochenende (See, Wald, Berg).</li><li>Eine Musikminute zusammen (Lied hören oder erfinden).</li><li>Eine kleine Tradition (Bäcker, Spielplatz, Eisdiele).</li><li>Lesen abends, ruhige Stimme.</li><li>Kleines Abenteuer — Museum, Boot, kleines Konzert.</li><li>Kochen mit ihr — sie hat eine kleine Aufgabe.</li></ul></div>
+        <div class="card dim"><div class="meta">Nicht</div><h3>Was sie nicht erleben darf</h3><ul><li>Nebenbei-Handy</li><li>Gestresster Vater</li><li>Schuldgefühle kompensieren</li><li>Überprogramm</li><li>Dating-Energie</li><li>Familiensystem-Drama anderer Frauen</li></ul></div>
+      </div>
+      <div class="quote">„Sie erlebt einen Vater, der stabil, warm, präsent, frei — und da ist.“</div>
+    </section>
+    
+    <section data-panel="monat" class="panel">
+      <h2 class="section">Monatscheck · zehn Fragen</h2>
+      <p class="section-sub">Einmal pro Monat ehrlich beantworten. Wird automatisch zum Monatswechsel zurückgesetzt.</p>
+      <div class="card" id="monthly-checklist">
+        <div class="check-head"><h3 style="margin:0">May 2026</h3><div class="meter">0 / 10</div></div>
+        <div class="bar"><div></div></div>
+        <div class="check-list"><label class="check"><input type="checkbox"><span>Habe ich meine Tochter wirklich präsent gesehen?</span></label><label class="check"><input type="checkbox"><span>Habe ich PTGO konkret weitergebaut?</span></label><label class="check"><input type="checkbox"><span>Habe ich Musik gemacht — nicht nur geplant?</span></label><label class="check"><input type="checkbox"><span>Habe ich trainiert und meinen Körper gepflegt?</span></label><label class="check"><input type="checkbox"><span>Habe ich Natur wirklich erlebt (nicht nur durchquert)?</span></label><label class="check"><input type="checkbox"><span>Habe ich keine Frau zum Zentrum meines Lebens gemacht?</span></label><label class="check"><input type="checkbox"><span>Habe ich mein Nervensystem geschützt?</span></label><label class="check"><input type="checkbox"><span>Habe ich Geld intelligent bewegt (Übersicht, Sparen, Investieren)?</span></label><label class="check"><input type="checkbox"><span>Habe ich Schönheit in mein Leben gebracht?</span></label><label class="check"><input type="checkbox"><span>Habe ich Freiheit und Verantwortung verbunden — nicht gegeneinander gestellt?</span></label></div>
+      </div>
+    </section>
+    
+    <section data-panel="jahr" class="panel">
+      <h2 class="section">Jahresvision · fünf Phasen</h2>
+      <p class="section-sub">Das Jahr in Atemzügen — nicht in Quartalsberichten.</p>
+      <div class="grid cols-2"><div class="card"><div class="meta">Jan–März</div><h3>Studio & Strategie</h3><ul><li>Wien-Rhythmus festziehen</li><li>PTGO-Premium-Angebot fertig</li><li>Körper-Basis stabil</li><li>Musik: 1 Song fertig</li></ul></div><div class="card"><div class="meta">Apr–Juni</div><h3>Bergluft & Build</h3><ul><li>Paragliding-Saison startet</li><li>Van recherchieren / probieren</li><li>Masterclass-Launch vorbereiten</li><li>Gardasee-Tour</li></ul></div><div class="card"><div class="meta">Juli–Aug</div><h3>Tochter & Sonne</h3><ul><li>Lange Tochter-Wochenenden</li><li>Reisen mit ihr (1 kleines Abenteuer)</li><li>Musik draußen</li><li>weniger Termine</li></ul></div><div class="card"><div class="meta">Sept–Okt</div><h3>Schreiben & Retreats</h3><ul><li>1 Retreat</li><li>Tegernsee-Phase</li><li>Musik: 2. Song produziert</li><li>PTGO-Skalierung Phase 2</li></ul></div><div class="card"><div class="meta">Nov–Dez</div><h3>Reflexion & Wien</h3><ul><li>Wien-Wochen verdichten</li><li>Musikproduktion fokussiert</li><li>Jahresplanung</li><li>Ruhe & Lesen</li></ul></div></div>
+    </section>
+    
+    <section data-panel="taeglich" class="panel">
+      <h2 class="section">Tägliche Checkliste</h2>
+      <p class="section-sub">Setzt sich um Mitternacht automatisch zurück. Kein Druck — eine Einladung.</p>
+      <div class="card" id="daily-checklist">
+        <div class="check-head"><h3 style="margin:0">Wednesday, 20. May</h3><div class="meter">0 / 13</div></div>
+        <div class="bar"><div></div></div>
+        <div class="check-list"><label class="check"><input type="checkbox"><span>60 Min ohne Handy nach dem Aufstehen.</span></label><label class="check"><input type="checkbox"><span>Wasser vor allem anderen.</span></label><label class="check"><input type="checkbox"><span>10 Min Mobility oder Bewegung.</span></label><label class="check"><input type="checkbox"><span>Espresso bewusst getrunken — nicht nebenbei.</span></label><label class="check"><input type="checkbox"><span>1 Deep-Work-Block ohne Ablenkung (mindestens 90 Min).</span></label><label class="check"><input type="checkbox"><span>Spaziergang an der frischen Luft.</span></label><label class="check"><input type="checkbox"><span>Clean Lunch ohne Bildschirm.</span></label><label class="check"><input type="checkbox"><span>Mindestens 15 Min Musik (Gitarre, Piano, Hören, Schreiben).</span></label><label class="check"><input type="checkbox"><span>Mindestens 3 Sätze Tagebuch (Würde / Wachstum / Korrektur).</span></label><label class="check"><input type="checkbox"><span>Eine Geste der Schönheit (Licht, Duft, Musik, Ordnung).</span></label><label class="check"><input type="checkbox"><span>Frauen nicht zum Zentrum gemacht.</span></label><label class="check"><input type="checkbox"><span>Nervensystem geschützt — keine emotionalen Sümpfe.</span></label><label class="check"><input type="checkbox"><span>Vor 23:00 Schirme aus.</span></label></div>
+      </div>
+    </section>
+    
+    <section data-panel="notion" class="panel">
+      <h2 class="section">Notion-Struktur</h2>
+      <p class="section-sub">Ein Workspace, der atmet wie das Leben darin.</p>
+      <div class="card"><div class="meta">Workspace-Baum</div><h3>So liegt es in Notion</h3>
+        <div class="tree">ALEX · Blue Electric Life
+├── 00 · Heute
+│   ├── Morgen-Anker
+│   ├── Deep-Work-Ziel
+│   └── 3 Zeilen Tagebuch
+├── 01 · Tochter
+│   ├── Rituale
+│   ├── Kalender (gerade KW)
+│   └── Ideen / kleine Abenteuer
+├── 02 · PTGO
+│   ├── Produkte
+│   ├── Pipeline & Calls
+│   ├── Masterclass / Retreats
+│   └── Marke & Texte
+├── 03 · Musik
+│   ├── Songs (DB)
+│   ├── Voice Notes
+│   ├── Setlists & Skizzen
+│   └── Releases
+├── 04 · Körper
+│   ├── Wochenplan
+│   ├── Ernährung
+│   └── Sauna / Cold / Schlaf
+├── 05 · Freiheit
+│   ├── Van (Setup, Touren-DB)
+│   ├── Paragliding (Flüge-DB, Gear)
+│   └── Reise-Karte
+├── 06 · Stil
+│   ├── Garderobe (DB)
+│   ├── Düfte
+│   └── Looks (Bilder)
+├── 07 · Frauen
+│   ├── Frame
+│   ├── Pia
+│   └── Kommunikations-Templates
+├── 08 · Nervensystem
+│   ├── Atem-Protokolle
+│   ├── Cold / Sauna Tracker
+│   └── Tagebuch (DB)
+├── 09 · München-Base
+│   ├── Reset-Wochenplan
+│   ├── Helfer (Reinigung, Entrümpler)
+│   └── Wunschliste (Möbel, Sound)
+├── 10 · Wien-Modus
+│   ├── Hotels & Anfahrt
+│   ├── Orte (Cafés, Bars, Spaziergänge)
+│   └── Notizen-Speicher
+├── 11 · 90-Tage-Roadmap
+└── 99 · Jahresvision</div>
+      </div>
+      <div class="card"><div class="meta">Datenbanken</div><h3>Sechs Tabellen, die das System tragen</h3>
+        <div class="db-row"><b>Tagebuch</b><span>Datum · Zustand 0–10 · Würde · Wachstum · Korrektur · Tag-Tag</span></div><div class="db-row"><b>Songs</b><span>Titel · Status · BPM · Tonart · Lyrics-Link · Audio-Link · Notiz</span></div><div class="db-row"><b>Flüge</b><span>Datum · Ort · Dauer · Bedingungen · Notiz · Bewertung</span></div><div class="db-row"><b>Tochter-Erinnerungen</b><span>Datum · Ort · was wir gemacht haben · Foto · ihr Lieblingsmoment</span></div><div class="db-row"><b>PTGO-Klient:innen</b><span>Name · Status · letzter Kontakt · Pipeline-Stufe · nächste Aktion</span></div><div class="db-row"><b>Garderobe</b><span>Stück · Kategorie · Farbe · letztes Mal getragen · Pflege</span></div>
+      </div>
+      <div class="card"><div class="meta">Tags</div><h3>Wie Einträge atmen</h3><div class="tag-row"><span class="tag gold">#tiefe</span> <span class="tag gold">#freiheit</span> <span class="tag gold">#tochter</span> <span class="tag gold">#wien</span> <span class="tag gold">#musik</span> <span class="tag gold">#korrektur</span> <span class="tag gold">#wuerde</span> <span class="tag gold">#wachstum</span></div></div>
+    </section>
+    
+    <section data-panel="roadmap" class="panel">
+      <h2 class="section">90-Tage-Roadmap</h2>
+      <p class="section-sub">Drei Phasen × 30 Tage. Foundation → Build → Expand. Häkchen bleiben gespeichert.</p>
+      <div id="roadmap-checklist">
+        <div class="check-head" style="padding:0 4px"><h3 style="margin:0">Fortschritt</h3><div class="meter">0 / 20</div></div>
+        <div class="bar"><div></div></div>
+        
+        <div class="card">
+          <div class="meta">Tag 1–30 — Foundation</div>
+          <h3>Wohnung, Körper, Routine. Das Fundament.</h3>
+          <div class="check-list"><label class="check"><input type="checkbox"><span>Wohnung 83083: Bad, Küche, Schlafzimmer freigeräumt.</span></label><label class="check"><input type="checkbox"><span>Reinigungskraft fix gebucht (1× pro Woche).</span></label><label class="check"><input type="checkbox"><span>Entrümpler einmalig durchgeführt.</span></label><label class="check"><input type="checkbox"><span>Morgen-Anker etabliert: 06:00, Wasser, Atmung, Mobility.</span></label><label class="check"><input type="checkbox"><span>Rauchen reduziert oder ersetzt durch Atemarbeit + Spaziergang.</span></label><label class="check"><input type="checkbox"><span>1 Deep-Work-Block jeden Werktag (90 Min minimum).</span></label><label class="check"><input type="checkbox"><span>Style-Reset: Kleiderschrank 80% raus, Essentials da.</span></label></div>
+        </div>
+        <div class="card">
+          <div class="meta">Tag 31–60 — Build</div>
+          <h3>PTGO Premium, Musik-Output, Van-Recherche.</h3>
+          <div class="check-list"><label class="check"><input type="checkbox"><span>PTGO Premium-Angebot finalisiert (Preisliste, Beschreibung, Buchungsweg).</span></label><label class="check"><input type="checkbox"><span>1 Song roh fertig (Voice Notes oder erste Skizze produziert).</span></label><label class="check"><input type="checkbox"><span>Wien-Rhythmus etabliert: Do/Fr fest, gleiches Hotel.</span></label><label class="check"><input type="checkbox"><span>Paragliding-Saison gestartet, erste Flüge.</span></label><label class="check"><input type="checkbox"><span>Van-Recherche: 3 konkrete Modelle, 1 Testfahrt.</span></label><label class="check"><input type="checkbox"><span>Masterclass-Outline geschrieben.</span></label></div>
+        </div>
+        <div class="card">
+          <div class="meta">Tag 61–90 — Expand</div>
+          <h3>Skalierung, Sichtbarkeit, Vater-Tiefe.</h3>
+          <div class="check-list"><label class="check"><input type="checkbox"><span>Masterclass-Launch oder Pilot durchgeführt.</span></label><label class="check"><input type="checkbox"><span>1 Song produziert und veröffentlicht (auch nur klein).</span></label><label class="check"><input type="checkbox"><span>Van entschieden oder konkret gemietet/getestet.</span></label><label class="check"><input type="checkbox"><span>1 Retreat geplant oder durchgeführt.</span></label><label class="check"><input type="checkbox"><span>Tochter-Tradition stabil etabliert.</span></label><label class="check"><input type="checkbox"><span>Pia-Dynamik geklärt — Ruhe, Grenzen, Klarheit.</span></label><label class="check"><input type="checkbox"><span>Jahresplan für die nächsten 9 Monate steht.</span></label></div>
+        </div>
+      </div>
+    </section>
+    
+    <section data-panel="nochaos" class="panel">
+      <h2 class="section">No-Chaos · Notausstieg</h2>
+      <p class="section-sub">Wenn eines der folgenden Signale dauerhaft brennt, gilt das Notprotokoll.</p>
+      <div class="twin">
+        <div class="card dim"><div class="meta">Sofort stoppen, wenn…</div><h3>Frühwarnsystem</h3><ul><li>Eine Frau zerstört dauerhaft dein Nervensystem.</li><li>Du vernachlässigst deine Arbeit für Drama.</li><li>Du verpasst deine Tochter emotional.</li><li>Du reagierst nur noch, statt zu gestalten.</li><li>Du bist permanent müde.</li><li>Du erklärst dich, statt zu leben.</li><li>Du wohnst in fremdem Chaos.</li><li>Du verlierst Zugang zu deiner Kreativität.</li></ul></div>
+        <div class="card"><div class="meta">Antwort</div><h3>Was dann passiert</h3><ul><li>Rückzug.</li><li>Ordnung in deinem Raum.</li><li>Training.</li><li>Musik.</li><li>Natur.</li><li>Klarheit — auch wenn sie unbequem ist.</li></ul></div>
+      </div>
+      <div class="quote">„Ein Mann mit offenen Straßen im Herzen, Musik in den Händen, Ruhe im Nervensystem und einer Tochter, die weiß: Mein Vater ist frei — aber er bleibt.“</div>
+    </section>
+
+    <div class="footnote">Blue Electric Life · ein Mann baut sich langsam, ehrlich und stilvoll zurück ins Leben.</div>
+    
+  </div>
+  
+<script>
+(function(){
+  var tabs = document.querySelectorAll('[data-tab]');
+  var panels = document.querySelectorAll('[data-panel]');
+  function show(name){
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab === name); });
+    panels.forEach(function(p){ p.classList.toggle('active', p.dataset.panel === name); });
+    history.replaceState(null, '', '#' + name);
+    var active = document.querySelector('[data-tab="' + name + '"]');
+    if (active && active.scrollIntoView) active.scrollIntoView({block:'nearest', inline:'center', behavior:'smooth'});
+    window.scrollTo({top:0});
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ show(t.dataset.tab); }); });
+  var hash = location.hash.slice(1);
+  if (hash && document.querySelector('[data-tab="' + hash + '"]')) show(hash);
+
+  function todayKey(){ return new Date().toISOString().slice(0,10); }
+  function monthKey(){ return new Date().toISOString().slice(0,7); }
+  function bind(id, scope){
+    var root = document.getElementById(id);
+    if (!root) return;
+    var boxes = root.querySelectorAll('input[type=checkbox]');
+    var storageKey = id + ':' + (scope === 'day' ? todayKey() : scope === 'month' ? monthKey() : 'persistent');
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e){ saved = []; }
+    var meter = root.querySelector('.meter');
+    var bar = root.querySelector('.bar > div');
+    function refresh(){
+      var done = 0;
+      boxes.forEach(function(b){ if (b.checked) done++; });
+      if (meter) meter.textContent = done + ' / ' + boxes.length;
+      if (bar) bar.style.width = (boxes.length ? (done / boxes.length * 100) : 0) + '%';
+    }
+    boxes.forEach(function(b, i){
+      b.checked = saved.indexOf(i) !== -1;
+      b.addEventListener('change', function(){
+        var arr = [];
+        boxes.forEach(function(x, j){ if (x.checked) arr.push(j); });
+        localStorage.setItem(storageKey, JSON.stringify(arr));
+        refresh();
+      });
+    });
+    refresh();
+  }
+  bind('daily-checklist', 'day');
+  bind('monthly-checklist', 'month');
+  bind('roadmap-checklist', 'persistent');
+
+  var dow = (new Date().getDay() + 6) % 7;
+  var dayEl = document.querySelector('.day[data-weekday="' + dow + '"]');
+  if (dayEl){
+    dayEl.classList.add('today');
+    var tag = dayEl.querySelector('.now-tag');
+    if (tag) tag.style.display = 'inline-block';
+  }
+  var hr = new Date().getHours();
+  var blocks = document.querySelectorAll('.block[data-hour]');
+  var current = null;
+  blocks.forEach(function(b){
+    var h = parseInt(b.dataset.hour, 10);
+    if (h >= 0 && h <= hr) current = b;
+  });
+  if (current) current.classList.add('now');
+})();
+</script>
+
+
+<script>
+(function(){
+  var wd=['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var mo=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var d=new Date();
+  var dh=document.querySelector('#daily-checklist .check-head h3');
+  if(dh) dh.textContent = wd[d.getDay()]+', '+String(d.getDate()).padStart(2,'0')+'. '+mo[d.getMonth()];
+  var mh=document.querySelector('#monthly-checklist .check-head h3');
+  if(mh) mh.textContent = mo[d.getMonth()]+' '+d.getFullYear();
+})();
+</script>
+
+</body></html>
