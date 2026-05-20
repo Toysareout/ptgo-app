@@ -35,6 +35,7 @@
     { "source": "/archive", "destination": "/archive.html" },
     { "source": "/kommunikation", "destination": "/kommunikation.html" },
     { "source": "/hub", "destination": "/hub.html" },
+    { "source": "/skyworthy", "destination": "/skyworthy.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

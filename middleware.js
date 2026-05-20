@@ -1,13 +1,23 @@
-// Vercel Edge Middleware — Passwortschutz nur für die Alex-Seite.
-// Passwort: 26 (Benutzername beliebig / leer). Übrige Site bleibt unberührt.
+// Vercel Edge Middleware — Passwortschutz für geschützte Seiten.
+// Benutzername beliebig / leer, nur das Passwort zählt.
+//   /alex      → Passwort: 26
+//   /skyworthy → Passwort: flyptgo (SKYWORTHY — Elite Paragliding Decision Cockpit)
+// Übrige Site bleibt unberührt.
 
 export const config = {
-  matcher: ['/alex', '/alex.html', '/alex-tagesplan.ics'],
+  matcher: ['/alex', '/alex.html', '/alex-tagesplan.ics', '/skyworthy', '/skyworthy.html'],
 };
 
-const PASSWORD = '26';
+const ROUTE_PASSWORDS = [
+  { match: (p) => p.startsWith('/alex'), password: '26', realm: 'Blue Electric Life' },
+  { match: (p) => p.startsWith('/skyworthy'), password: 'flyptgo', realm: 'SKYWORTHY' },
+];
 
 export default function middleware(req) {
+  const pathname = new URL(req.url).pathname;
+  const route = ROUTE_PASSWORDS.find((r) => r.match(pathname));
+  if (!route) return; // nicht geschützt
+
   const auth = req.headers.get('authorization');
   if (auth) {
     const [scheme, encoded] = auth.split(' ');
@@ -15,16 +25,16 @@ export default function middleware(req) {
       try {
         const decoded = atob(encoded); // "user:pass"
         const pass = decoded.slice(decoded.indexOf(':') + 1);
-        if (pass === PASSWORD) return; // Zugang frei
+        if (pass === route.password) return; // Zugang frei
       } catch (e) {
         // fällt unten auf 401 zurück
       }
     }
   }
-  return new Response('Zugang geschützt — Blue Electric Life', {
+  return new Response(`Zugang geschützt — ${route.realm}`, {
     status: 401,
     headers: {
-      'WWW-Authenticate': 'Basic realm="Blue Electric Life", charset="UTF-8"',
+      'WWW-Authenticate': `Basic realm="${route.realm}", charset="UTF-8"`,
       'Content-Type': 'text/plain; charset=utf-8',
     },
   });

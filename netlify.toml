@@ -77,6 +77,11 @@
   to = "/nerve.html"
   status = 200
 
+[[redirects]]
+  from = "/skyworthy"
+  to = "/skyworthy.html"
+  status = 200
+
 # Nerve Center API
 [[redirects]]
   from = "/api/nerve"
