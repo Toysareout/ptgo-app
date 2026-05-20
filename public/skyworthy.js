@@ -1621,18 +1621,18 @@ function buildIdealPath(site, d) {
   const idealCenter = SECTOR[site.idealWindDirections[0]] != null ? SECTOR[site.idealWindDirections[0]] : 0;
   const ridge = (idealCenter + 90) % 360;      // ridge runs ~perpendicular to ideal wind
   const windFrom = d ? d.best.h.windDir : idealCenter;
-  const pts = []; const add = (p, alt) => pts.push({ lat: p.lat, lon: p.lon, alt });
+  const cape = d ? d.best.h.cape : 0;
+  const strength = clamp(cape / 350 + 0.6, 0.4, 6);   // estimated climb m/s
+  const pts = []; const thermals = []; const add = (p, alt) => pts.push({ lat: p.lat, lon: p.lon, alt });
   add(to, startAlt);
 
   if (/Nicht|Groundhandling/.test(ft)) {
-    // only a reference glide line takeoff → landing
     const steps = 6; for (let i = 1; i <= steps; i++) { const f = i / steps; add({ lat: to.lat + (lz.lat - to.lat) * f, lon: to.lon + (lz.lon - to.lon) * f }, startAlt + (lz.elevation - startAlt) * f); }
-    return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, schematic: true };
+    return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, strength, thermals, schematic: true };
   }
 
   let cur = { lat: to.lat, lon: to.lon }, alt = startAlt + 25;
   if (/Soaring|Thermik|XC|Abgleiter/.test(ft)) {
-    // ridge soaring: oscillate along the ridge, gaining height
     const legs = /Abgleiter/.test(ft) ? 2 : 6, gain = (base - startAlt) / (legs + 4);
     for (let i = 0; i < legs; i++) {
       const dir = i % 2 === 0 ? ridge : (ridge + 180) % 360;
@@ -1640,32 +1640,35 @@ function buildIdealPath(site, d) {
       alt = Math.min(base - 120, alt + gain); add(cur, alt);
     }
   }
-  if (/Thermik|XC/.test(ft)) {
-    // thermal spiral up to cloudbase (climbing circle)
+  if (/Thermik|XC/.test(ft) && cape > 120) {
     const r = 110, c = geoMove(cur.lat, cur.lon, r, windFrom);
+    thermals.push({ lon: c.lon, lat: c.lat, base, ground: alt, strength });
     for (let a = 0; a <= 900; a += 60) { const p = geoMove(c.lat, c.lon, r, a); alt = Math.min(base, alt + (base - alt) * 0.08 + 12); add(p, alt); }
     cur = pts[pts.length - 1]; cur = { lat: cur.lat, lon: cur.lon };
+  } else if (cape > 200) {
+    thermals.push({ lon: cur.lon, lat: cur.lat, base, ground: alt, strength });
   }
   if (/XC/.test(ft)) {
-    // downwind cross-country leg (wind blows TO windFrom+180)
     const downwind = (windFrom + 180) % 360, p = geoMove(cur.lat, cur.lon, 3500, downwind);
+    // a second thermal mid-glide for the XC leg
+    if (cape > 150) { const mid = geoMove(cur.lat, cur.lon, 1800, downwind); thermals.push({ lon: mid.lon, lat: mid.lat, base, ground: base - 350, strength: strength * 0.85 }); }
     alt = base - 250; add(p, alt); cur = p;
   }
-  // final glide to landing, descending
   const steps = 8; const a0 = alt;
   for (let i = 1; i <= steps; i++) { const f = i / steps; add({ lat: cur.lat + (lz.lat - cur.lat) * f, lon: cur.lon + (lz.lon - cur.lon) * f }, a0 + (lz.elevation - a0) * f); }
-  return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, schematic: true };
+  return { coords: pts.map(p => [p.lon, p.lat, p.alt]), base, ft, strength, thermals, schematic: true };
 }
 
 function renderRoute() {
   const el = $('#screen-route'); const site = siteById(Store.state.selectedSiteId); const d = Data.decision();
   if (!d) { el.innerHTML = loadingCard('Flugweg wird berechnet…'); return; }
   const path = buildIdealPath(site, d); const sc = statusClass(d.status);
+  window.__briefingText = buildBriefing(d, site).text;
   el.innerHTML = `
   <div class="h" style="margin-top:6px">Idealer Flugweg (3D) — ${esc(site.name)}</div>
   ${banner(d.status === 'red' || d.status === 'black' ? 'red' : 'cyan', d.status === 'red' || d.status === 'black'
     ? '⛔ Heute NO-GO — der gezeigte Weg ist nur eine schematische Referenz, nicht fliegen.'
-    : `Schematischer Idealweg für „${d.recommendedFlightType}". Start → Hangsoaring → Thermik bis Basis → Gleitpfad zum Landeplatz.`)}
+    : `▶ Tippe „VORFLUG STARTEN" für den Ego-Vorflug aus der Pilotenperspektive — mit gesprochenem Briefing.`)}
   <div id="routeMap" style="height:62vh;min-height:360px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:var(--card)"></div>
   <div class="card" style="margin-top:12px">
     <div class="row">
@@ -1680,9 +1683,14 @@ function renderRoute() {
   setTimeout(() => init3DRoute(site, path, d), 30);
 }
 
-let _routeMap = null, _routeAnim = null;
+let _routeMap = null, _routeAnim = null, _fpvAnim = null, _routeCoords = null, _routeGlider = null, _routeMode = 'orbit', _routeTimer = null, _thermalMarkers = [], _routePath = null;
 function destroyRoute() {
   if (_routeAnim) { cancelAnimationFrame(_routeAnim); _routeAnim = null; }
+  if (_fpvAnim) { cancelAnimationFrame(_fpvAnim); _fpvAnim = null; }
+  if (_routeTimer) { clearInterval(_routeTimer); _routeTimer = null; }
+  clearThermalMarkers();
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  _routeMode = 'orbit'; _routeCoords = null; _routeGlider = null; _routePath = null;
   if (_routeMap) { try { _routeMap.remove(); } catch (e) { /* ignore */ } _routeMap = null; }
 }
 function init3DRoute(site, path, d) {
@@ -1720,26 +1728,157 @@ function init3DRoute(site, path, d) {
     // fit then animate
     const b = coords.reduce((bb, c) => bb.extend([c[0], c[1]]), new maplibregl.LngLatBounds([coords[0][0], coords[0][1]], [coords[0][0], coords[0][1]]));
     _routeMap.fitBounds(b, { padding: 60, pitch: 70, bearing: 20, duration: 1200 });
-    animateRoute(coords, glider);
+    _routeCoords = coords; _routeGlider = glider; _routePath = path;
+    host.style.position = 'relative';
+    buildRouteOverlay(host);
+    renderThermalMarkers(path.thermals);
+    animateRoute();
+    // live re-sync to current conditions every 2 s (route, thermals, altitudes)
+    if (_routeTimer) clearInterval(_routeTimer);
+    _routeTimer = setInterval(refreshRouteLive, 2000);
   });
 }
-function animateRoute(coords, glider) {
-  // cumulative horizontal distance for constant-speed motion
+// rebuild route + thermals from the latest decision without recreating the map
+function refreshRouteLive() {
+  if (!_routeMap) return;
+  const site = siteById(Store.state.selectedSiteId); const d = Data.decision(); if (!d) return;
+  const path = buildIdealPath(site, d); _routePath = path; _routeCoords = path.coords;
+  try {
+    const src = _routeMap.getSource('path');
+    if (src) src.setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: path.coords.map(c => [c[0], c[1]]) } });
+  } catch (e) { /* ignore */ }
+  renderThermalMarkers(path.thermals);
+  const sub = document.getElementById('hudSub'); if (sub) sub.textContent = `${d.recommendedFlightType} · Basis ${round(path.base)} m · ${Time.fmtAge(Data.forecast.fetchedAt || new Date().toISOString())}`;
+}
+// rising-air columns along the route, sized/coloured by estimated climb
+function clearThermalMarkers() { (_thermalMarkers || []).forEach(m => { try { m.remove(); } catch (e) { /* ignore */ } }); _thermalMarkers = []; }
+function renderThermalMarkers(thermals) {
+  if (!_routeMap) return; clearThermalMarkers();
+  (thermals || []).forEach(t => {
+    const col = t.strength >= 3 ? '#ff9d2e' : t.strength >= 1.5 ? '#ffd23e' : '#7fe8c0';
+    const el = document.createElement('div');
+    el.style.cssText = 'pointer-events:none;text-align:center';
+    el.innerHTML = `<div style="width:30px;height:30px;border-radius:50%;border:2px solid ${col};box-shadow:0 0 14px ${col};display:grid;place-items:center;animation:thpulse 2s ease-in-out infinite;background:radial-gradient(circle,${col}44,transparent 70%)"><span style="color:${col};font-size:15px">↑</span></div><div style="color:${col};font-weight:800;font-size:11px;text-shadow:0 0 4px #000;margin-top:2px">+${t.strength.toFixed(1)} m/s</div>`;
+    const m = new maplibregl.Marker({ element: el }).setLngLat([t.lon, t.lat]).addTo(_routeMap);
+    _thermalMarkers.push(m);
+  });
+}
+// distance index helper along the route (constant-speed)
+function _routeSegments(coords) {
   const seg = []; let total = 0;
   for (let i = 1; i < coords.length; i++) { const dkm = Geo.haversineKm(coords[i - 1][1], coords[i - 1][0], coords[i][1], coords[i][0]); seg.push({ from: i - 1, len: dkm }); total += dkm; }
-  const LOOP = 48000; // ms for a full flight
-  let t0 = performance.now();
+  return { seg, total };
+}
+function _posAt(coords, seg, dist) {
+  let acc = 0, idx = 0, f = 0;
+  for (const s of seg) { if (acc + s.len >= dist) { idx = s.from; f = s.len ? (dist - acc) / s.len : 0; break; } acc += s.len; idx = s.from + 1; }
+  const a = coords[Math.min(idx, coords.length - 1)], b = coords[Math.min(idx + 1, coords.length - 1)];
+  return { lng: a[0] + (b[0] - a[0]) * f, lat: a[1] + (b[1] - a[1]) * f, alt: a[2] + (b[2] - a[2]) * f };
+}
+function animateRoute() {
+  const LOOP = 48000; let t0 = performance.now();
   const step = (now) => {
-    const p = ((now - t0) % LOOP) / LOOP * total;   // distance along path
-    let acc = 0, idx = 0, f = 0;
-    for (const s of seg) { if (acc + s.len >= p) { idx = s.from; f = s.len ? (p - acc) / s.len : 0; break; } acc += s.len; idx = s.from + 1; }
-    const a = coords[idx], b = coords[Math.min(idx + 1, coords.length - 1)];
-    const lng = a[0] + (b[0] - a[0]) * f, lat = a[1] + (b[1] - a[1]) * f;
-    glider.setLngLat([lng, lat]);
-    if (_routeMap) { try { _routeMap.setBearing((_routeMap.getBearing() + 0.06) % 360); } catch (e) { /* ignore */ } }
+    if (_routeMode !== 'fpv' && _routeCoords && _routeGlider) {
+      const { seg, total } = _routeSegments(_routeCoords);
+      const p = ((now - t0) % LOOP) / LOOP * total;
+      const c = _posAt(_routeCoords, seg, p);
+      _routeGlider.setLngLat([c.lng, c.lat]);
+      if (_routeMap) { try { _routeMap.setBearing((_routeMap.getBearing() + 0.06) % 360); } catch (e) { /* ignore */ } }
+    }
     _routeAnim = requestAnimationFrame(step);
   };
   _routeAnim = requestAnimationFrame(step);
+}
+// Futuristic HUD overlay + launch / stop controls
+function buildRouteOverlay(host) {
+  const old = host.querySelector('#routeOverlay'); if (old) old.remove();
+  const ov = document.createElement('div'); ov.id = 'routeOverlay';
+  ov.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:5;font-family:ui-monospace,SFMono-Regular,Menlo,monospace';
+  ov.innerHTML = `
+    <div id="ovLaunch" style="position:absolute;left:0;right:0;bottom:18px;display:flex;justify-content:center">
+      <button id="vorflugBtn" style="pointer-events:auto;border:1px solid #2de2e6;background:rgba(8,18,28,.72);color:#2de2e6;font-weight:800;letter-spacing:2px;padding:13px 22px;border-radius:12px;font-size:14px;cursor:pointer;backdrop-filter:blur(6px);box-shadow:0 0 18px rgba(45,226,230,.45),inset 0 0 12px rgba(45,226,230,.15)">▶ VORFLUG STARTEN</button>
+    </div>
+    <div id="ovHud" style="display:none;position:absolute;inset:0">
+      <div style="position:absolute;top:10px;left:10px;width:22px;height:22px;border-left:2px solid #2de2e6;border-top:2px solid #2de2e6;opacity:.8"></div>
+      <div style="position:absolute;top:10px;right:10px;width:22px;height:22px;border-right:2px solid #2de2e6;border-top:2px solid #2de2e6;opacity:.8"></div>
+      <div style="position:absolute;bottom:10px;left:10px;width:22px;height:22px;border-left:2px solid #2de2e6;border-bottom:2px solid #2de2e6;opacity:.8"></div>
+      <div style="position:absolute;bottom:10px;right:10px;width:22px;height:22px;border-right:2px solid #2de2e6;border-bottom:2px solid #2de2e6;opacity:.8"></div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border:1px solid rgba(45,226,230,.6);border-radius:50%;box-shadow:0 0 8px rgba(45,226,230,.5)"><div style="position:absolute;top:50%;left:50%;width:6px;height:6px;background:#2de2e6;border-radius:50%;transform:translate(-50%,-50%)"></div></div>
+      <div style="position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:16px;background:rgba(6,12,20,.6);border:1px solid rgba(45,226,230,.35);border-radius:10px;padding:8px 16px;backdrop-filter:blur(6px)">
+        <div style="text-align:center"><div style="font-size:9px;color:#7fd8dc;letter-spacing:1px">HÖHE</div><div id="hudAlt" style="font-size:17px;font-weight:800;color:#eaf6ff">– m</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:#7fd8dc;letter-spacing:1px">SPEED</div><div id="hudSpd" style="font-size:17px;font-weight:800;color:#eaf6ff">– km/h</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:#7fd8dc;letter-spacing:1px">VARIO</div><div id="hudVario" style="font-size:17px;font-weight:800;color:#7fd8dc">0.0</div></div>
+        <div style="text-align:center"><div style="font-size:9px;color:#7fd8dc;letter-spacing:1px">PHASE</div><div id="hudPhase" style="font-size:17px;font-weight:800;color:#2de2e6">START</div></div>
+      </div>
+      <div id="hudSub" style="position:absolute;top:74px;left:50%;transform:translateX(-50%);font-size:10px;color:#7fd8dc;letter-spacing:1px;text-shadow:0 0 4px #000"></div>
+      <button id="fpvStop" style="pointer-events:auto;position:absolute;top:14px;right:14px;border:1px solid #ff4d5e;background:rgba(8,18,28,.7);color:#ff8a93;font-weight:800;padding:7px 12px;border-radius:9px;cursor:pointer;font-size:12px">⏹ STOPP</button>
+      <div style="position:absolute;left:14px;right:14px;bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#7fd8dc;letter-spacing:1px;margin-bottom:4px"><span>VORFLUG · schematisch</span><span id="hudPct">0%</span></div>
+        <div style="height:4px;background:rgba(45,226,230,.18);border-radius:3px;overflow:hidden"><div id="hudProg" style="height:100%;width:0;background:#2de2e6;box-shadow:0 0 8px #2de2e6"></div></div>
+      </div>
+    </div>`;
+  host.appendChild(ov);
+  const vb = ov.querySelector('#vorflugBtn'); if (vb) vb.addEventListener('click', startFPV);
+  const sb = ov.querySelector('#fpvStop'); if (sb) sb.addEventListener('click', stopFPV);
+}
+function startFPV() {
+  if (!_routeMap || !_routeCoords || _routeMode === 'fpv') return;
+  _routeMode = 'fpv';
+  const ov = document.getElementById('routeOverlay');
+  if (ov) { const l = ov.querySelector('#ovLaunch'), h = ov.querySelector('#ovHud'); if (l) l.style.display = 'none'; if (h) h.style.display = 'block'; }
+  if (_routeGlider && _routeGlider.getElement) { try { _routeGlider.getElement().style.display = 'none'; } catch (e) { /* ignore */ } }
+  try { if (window.speechSynthesis && window.__briefingText) speakBriefing(null); } catch (e) { /* ignore */ }
+  const DUR = 17000; const t0 = performance.now();
+  const hud = { alt: document.getElementById('hudAlt'), spd: document.getElementById('hudSpd'), phase: document.getElementById('hudPhase'), vario: document.getElementById('hudVario'), prog: document.getElementById('hudProg'), pct: document.getElementById('hudPct') };
+  let lastPos = null, lastT = null, lastAlt = null, spd = 32, vario = 0;
+  const step = (now) => {
+    if (_routeMode !== 'fpv') return;
+    const coords = _routeCoords; const { seg, total } = _routeSegments(coords);  // live route
+    const pr = clamp((now - t0) / DUR, 0, 1);
+    const dist = pr * total;
+    const cur = _posAt(coords, seg, dist);
+    const ahead = _posAt(coords, seg, Math.min(total, dist + Math.max(0.06, total * 0.05)));
+    try {
+      const cam = _routeMap.getFreeCameraOptions();
+      cam.position = maplibregl.MercatorCoordinate.fromLngLat([cur.lng, cur.lat], cur.alt + 6);
+      cam.lookAtPoint([ahead.lng, ahead.lat]);
+      _routeMap.setFreeCameraOptions(cam);
+    } catch (e) {
+      try { const brg = Geo.bearing(cur.lat, cur.lng, ahead.lat, ahead.lng); _routeMap.jumpTo({ center: [cur.lng, cur.lat], bearing: brg, pitch: 85, zoom: 15 }); } catch (e2) { /* ignore */ }
+    }
+    if (lastPos && lastT) {
+      const dt = (now - lastT) / 1000;
+      if (dt > 0) { const dk = Geo.haversineKm(lastPos.lat, lastPos.lng, cur.lat, cur.lng); spd = spd * 0.85 + clamp(dk / dt * 3600, 0, 90) * 0.15; vario = vario * 0.8 + ((cur.alt - lastAlt) / dt) * 0.2; }
+    }
+    lastPos = cur; lastT = now; lastAlt = cur.alt;
+    const climbing = vario > 0.3;
+    const phase = pr < 0.07 ? 'START' : pr > 0.92 ? 'LANDUNG' : climbing ? 'STEIGEN' : 'GLEITEN';
+    if (hud.alt) hud.alt.textContent = round(cur.alt) + ' m';
+    if (hud.spd) hud.spd.textContent = round(spd) + ' km/h';
+    if (hud.phase) { hud.phase.textContent = phase; hud.phase.style.color = climbing ? '#ff9d2e' : '#2de2e6'; }
+    if (hud.vario) { hud.vario.textContent = (vario >= 0 ? '+' : '') + vario.toFixed(1); hud.vario.style.color = climbing ? '#ff9d2e' : '#7fd8dc'; }
+    if (hud.prog) hud.prog.style.width = (pr * 100) + '%';
+    if (hud.pct) hud.pct.textContent = round(pr * 100) + '%';
+    if (pr >= 1) { stopFPV(); return; }
+    _fpvAnim = requestAnimationFrame(step);
+  };
+  _fpvAnim = requestAnimationFrame(step);
+}
+function stopFPV() {
+  if (_fpvAnim) { cancelAnimationFrame(_fpvAnim); _fpvAnim = null; }
+  _routeMode = 'orbit';
+  try { if (window.speechSynthesis) window.speechSynthesis.cancel(); } catch (e) { /* ignore */ }
+  const ov = document.getElementById('routeOverlay');
+  if (ov) { const l = ov.querySelector('#ovLaunch'), h = ov.querySelector('#ovHud'); if (l) l.style.display = 'flex'; if (h) h.style.display = 'none'; }
+  if (_routeGlider && _routeGlider.getElement) { try { _routeGlider.getElement().style.display = ''; } catch (e) { /* ignore */ } }
+  if (_routeMap && _routeCoords) {
+    try {
+      const coords = _routeCoords;
+      const b = coords.reduce((bb, c) => bb.extend([c[0], c[1]]), new maplibregl.LngLatBounds([coords[0][0], coords[0][1]], [coords[0][0], coords[0][1]]));
+      _routeMap.easeTo({ pitch: 70, bearing: 20, duration: 700 });
+      setTimeout(() => { try { if (_routeMap) _routeMap.fitBounds(b, { padding: 60, pitch: 70, duration: 900 }); } catch (e) { /* ignore */ } }, 720);
+    } catch (e) { /* ignore */ }
+  }
 }
 function init2DRoute(host, site, path) {
   if (typeof L === 'undefined') { host.innerHTML = '<div class="loading small">3D-/Kartenansicht hier nicht verfügbar (WebGL/Netz). Pfad-Eckdaten siehe unten.</div>'; return; }
