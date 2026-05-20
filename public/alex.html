@@ -139,6 +139,42 @@
   .col h4.ok{color:#9bd194}
 
   .footnote{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+
+  /* Heute · geführte Tages-Timeline */
+  .now-hero{background:linear-gradient(180deg,rgba(200,130,30,.13),rgba(0,0,0,.22));border:1px solid var(--gold);
+    border-radius:18px;padding:20px 22px;margin-bottom:14px}
+  .now-eyebrow{font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .now-line{font-size:22px;color:var(--cream);margin:10px 0 14px;font-family:'Cormorant Garamond',Georgia,serif;line-height:1.25}
+  .now-line b{color:var(--gold2);font-weight:600}
+  .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
+  .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
+    border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:inherit}
+  .ics-btn:active{transform:scale(.99)}
+  .ics-hint{font-size:12px;color:var(--muted);text-align:center;margin:10px 4px 20px;line-height:1.55}
+  .tl{border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:rgba(0,0,0,.18);overflow:hidden;transition:all .2s}
+  .tl-head{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;cursor:pointer;
+    padding:15px 16px;text-align:left;font-family:inherit}
+  .tl-time{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:var(--gold2);font-weight:600;flex:0 0 56px}
+  .tl-label{font-size:15px;color:var(--cream);font-weight:600;flex:1}
+  .tl-state{flex:0 0 auto;font-size:11px}
+  .tl-body{display:none;padding:2px 16px 14px}
+  .tl.open .tl-body{display:block}
+  .tl.now{border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,130,30,.3);background:linear-gradient(180deg,rgba(200,130,30,.10),rgba(0,0,0,.2))}
+  .tl.now .tl-label{color:var(--gold2)}
+  .tl.past{opacity:.5}
+  .tl.done{opacity:.6}
+  .tl.done .tl-state::after{content:'\2713 erledigt';color:var(--green)}
+  .tl.now .tl-state::after{content:'JETZT';color:var(--gold);font-weight:700;letter-spacing:1px}
+  .tl.later:not(.done) .tl-state::after{content:'sp\00e4ter';color:var(--muted)}
+  .step{display:flex;align-items:flex-start;gap:12px;padding:9px 0;cursor:pointer;user-select:none;border-bottom:1px solid rgba(58,42,29,.4)}
+  .step:last-child{border-bottom:none}
+  .step input{appearance:none;width:19px;height:19px;border:1.5px solid var(--line2);border-radius:5px;background:transparent;
+    flex-shrink:0;cursor:pointer;margin-top:1px;position:relative}
+  .step input:checked{background:var(--gold);border-color:var(--gold)}
+  .step input:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #000;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .step input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--cognac)}
+  .step span{font-size:14px;color:var(--ink);line-height:1.5}
 </style>
 
 </head><body>
@@ -151,10 +187,87 @@
       <div class="leitsatz">„Ich bin kein Mann, der vor dem Leben flieht. Ich bin ein Mann, der sein Leben wieder zu Kunst macht.“</div>
     </div>
 
-    <nav class="tabs"><button class="tab active" data-tab="dashboard">Dashboard</button><button class="tab" data-tab="wochenplan">Wochenplan</button><button class="tab" data-tab="tagesplan">Tagesplan</button><button class="tab" data-tab="wien">Wien</button><button class="tab" data-tab="muenchen">München-Base</button><button class="tab" data-tab="van">Van</button><button class="tab" data-tab="paragliding">Paragliding</button><button class="tab" data-tab="ptgo">PTGO</button><button class="tab" data-tab="musik">Musik</button><button class="tab" data-tab="stil">Stil</button><button class="tab" data-tab="frauen">Frauen</button><button class="tab" data-tab="tochter">Tochter</button><button class="tab" data-tab="monat">Monatscheck</button><button class="tab" data-tab="jahr">Jahresvision</button><button class="tab" data-tab="taeglich">Täglich</button><button class="tab" data-tab="notion">Notion</button><button class="tab" data-tab="roadmap">90-Tage</button><button class="tab" data-tab="nochaos">No-Chaos</button></nav>
+    <nav class="tabs"><button class="tab active" data-tab="heute">Heute</button><button class="tab" data-tab="dashboard">Dashboard</button><button class="tab" data-tab="wochenplan">Wochenplan</button><button class="tab" data-tab="tagesplan">Tagesplan</button><button class="tab" data-tab="wien">Wien</button><button class="tab" data-tab="muenchen">München-Base</button><button class="tab" data-tab="van">Van</button><button class="tab" data-tab="paragliding">Paragliding</button><button class="tab" data-tab="ptgo">PTGO</button><button class="tab" data-tab="musik">Musik</button><button class="tab" data-tab="stil">Stil</button><button class="tab" data-tab="frauen">Frauen</button><button class="tab" data-tab="tochter">Tochter</button><button class="tab" data-tab="monat">Monatscheck</button><button class="tab" data-tab="jahr">Jahresvision</button><button class="tab" data-tab="taeglich">Täglich</button><button class="tab" data-tab="notion">Notion</button><button class="tab" data-tab="roadmap">90-Tage</button><button class="tab" data-tab="nochaos">No-Chaos</button></nav>
 
     
-    <section data-panel="dashboard" class="panel active">
+    <section data-panel="heute" class="panel active">
+      <div class="now-hero">
+        <div class="now-eyebrow"><span id="today-date">Heute</span> · <span id="today-mode"></span></div>
+        <div class="now-line">Jetzt dran: <b id="now-label">—</b></div>
+        <div class="bar"><div id="day-bar"></div></div>
+        <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
+      </div>
+      <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
+      <p class="ics-hint">Einmal in deinen Kalender importieren — dann erinnert dich dein Handy jeden Tag automatisch an jeden Schritt.</p>
+      <div id="day-timeline">
+        <div class="tl" data-hour="6" data-idx="0">
+          <button class="tl-head" type="button">
+            <span class="tl-time">06:00</span>
+            <span class="tl-label">Morgen-Anker</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen.</span></label><label class="step"><input type="checkbox"><span>5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper.</span></label><label class="step"><input type="checkbox"><span>5 Min Vision: heute soll sich wie was anfühlen?</span></label><label class="step"><input type="checkbox"><span>Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="7" data-idx="1">
+          <button class="tl-head" type="button">
+            <span class="tl-time">07:00</span>
+            <span class="tl-label">Frühstück & Übergang</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Espresso. Früchte. Eier oder Protein.</span></label><label class="step"><input type="checkbox"><span>Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="8" data-idx="2">
+          <button class="tl-head" type="button">
+            <span class="tl-time">08:00</span>
+            <span class="tl-label">Deep Work I</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>PTGO / Masterclass / Musik / Texte / KI-Systeme.</span></label><label class="step"><input type="checkbox"><span>Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt.</span></label><label class="step"><input type="checkbox"><span>Drei Sitzungen à 75 Min mit kurzen Pausen.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="12" data-idx="3">
+          <button class="tl-head" type="button">
+            <span class="tl-time">12:00</span>
+            <span class="tl-label">Clean Lunch & Walk</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot.</span></label><label class="step"><input type="checkbox"><span>20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="14" data-idx="4">
+          <button class="tl-head" type="button">
+            <span class="tl-time">14:00</span>
+            <span class="tl-label">Sessions / Business</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Sessions, Calls, Strategie, Premium-Angebote.</span></label><label class="step"><input type="checkbox"><span>Ruhig, präsent, nicht gehetzt.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="17" data-idx="5">
+          <button class="tl-head" type="button">
+            <span class="tl-time">17:30</span>
+            <span class="tl-label">Golden Hour</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Tegernsee, Isar, oder Spaziergang.</span></label><label class="step"><input type="checkbox"><span>Fahrt mit Musik, offenes Fenster, Sonnenuntergang.</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="20" data-idx="6">
+          <button class="tl-head" type="button">
+            <span class="tl-time">20:00</span>
+            <span class="tl-label">Musik / Schreiben</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Warmlicht, Piano oder Gitarre.</span></label><label class="step"><input type="checkbox"><span>Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?</span></label></div></div>
+        </div>
+        <div class="tl" data-hour="22" data-idx="7">
+          <button class="tl-head" type="button">
+            <span class="tl-time">22:00</span>
+            <span class="tl-label">Schlafvorbereitung</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div><label class="step"><input type="checkbox"><span>Dusche, Duft, Lesen.</span></label><label class="step"><input type="checkbox"><span>Kein Bildschirm im Bett. Vorhang zu, Raum kühl.</span></label></div></div>
+        </div></div>
+      <script>window.ALEX_MODES=["München · Deep Work · Soul", "Business + Musik", "Reset Day · Wohnung zurückerobern", "Wien · Anreise · Creative Gentleman", "Wien · Deep Presence · Hotel Energy", "Wochenende A: Tochter / B: Freiheit", "Reflexion · Vorbereitung · Ruhe"];window.ALEX_BLOCKS=[{"h": 6, "m": 0, "dur": 60, "sum": "Morgen-Anker", "desc": "Aufstehen, kein Handy, Wasser, Fenster öffnen, Licht reinlassen. · 5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper. · 5 Min Vision: heute soll sich wie was anfühlen? · Musik: Soul, Funk, Rock, Jazz — warme analoge Sounds."}, {"h": 7, "m": 0, "dur": 60, "sum": "Frühstück & Übergang", "desc": "Espresso. Früchte. Eier oder Protein. · Kein Doomscroll. Erst nach dem ersten Deep-Work-Block."}, {"h": 8, "m": 0, "dur": 240, "sum": "Deep Work I", "desc": "PTGO / Masterclass / Musik / Texte / KI-Systeme. · Phone in anderem Raum. Ein Ziel pro Block, schriftlich vorher festgelegt. · Drei Sitzungen à 75 Min mit kurzen Pausen."}, {"h": 12, "m": 0, "dur": 120, "sum": "Clean Lunch & Walk", "desc": "Gemüse, Fisch oder hochwertige Alternative, kein Zucker, wenig Brot. · 20-Min Spaziergang. Sonne ins Gesicht. Keine Reize."}, {"h": 14, "m": 0, "dur": 180, "sum": "Sessions / Business", "desc": "Sessions, Calls, Strategie, Premium-Angebote. · Ruhig, präsent, nicht gehetzt."}, {"h": 17, "m": 30, "dur": 120, "sum": "Golden Hour", "desc": "Tegernsee, Isar, oder Spaziergang. · Fahrt mit Musik, offenes Fenster, Sonnenuntergang."}, {"h": 20, "m": 0, "dur": 120, "sum": "Musik / Schreiben", "desc": "Warmlicht, Piano oder Gitarre. · Tagebuch: 3 Zeilen. Was war Würde, was war Wachstum, was war Korrektur?"}, {"h": 22, "m": 0, "dur": 60, "sum": "Schlafvorbereitung", "desc": "Dusche, Duft, Lesen. · Kein Bildschirm im Bett. Vorhang zu, Raum kühl."}];</script>
+    </section>
+    
+    <section data-panel="dashboard" class="panel">
       <h2 class="section">Die acht Säulen</h2>
       <p class="section-sub">Acht Achsen, auf denen dieses Leben getragen wird. Nicht nebeneinander, sondern miteinander.</p>
       <div class="grid cols-4">
@@ -662,6 +775,100 @@
     if (h >= 0 && h <= hr) current = b;
   });
   if (current) current.classList.add('now');
+})();
+</script>
+
+<script>
+// Heute · geführte Tages-Timeline
+(function(){
+  var tl = document.querySelectorAll('#day-timeline .tl');
+  if (!tl.length) return;
+  var now = new Date();
+  var hr = now.getHours();
+  var wd = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var mo = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var dow = (now.getDay() + 6) % 7;
+  var modes = window.ALEX_MODES || [];
+  function setText(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+  setText('today-date', wd[now.getDay()] + ', ' + now.getDate() + '. ' + mo[now.getMonth()]);
+  setText('today-mode', modes[dow] || '');
+  setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
+
+  var curIdx = -1;
+  tl.forEach(function(b){ if (parseInt(b.dataset.hour, 10) <= hr) curIdx = parseInt(b.dataset.idx, 10); });
+
+  var key = 'alex-heute:' + now.toISOString().slice(0,10);
+  var saved; try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ saved = {}; }
+  var allBoxes = document.querySelectorAll('#day-timeline input[type=checkbox]');
+
+  function blockDone(b){
+    var bx = b.querySelectorAll('input[type=checkbox]');
+    if (!bx.length) return false;
+    for (var i = 0; i < bx.length; i++){ if (!bx[i].checked) return false; }
+    return true;
+  }
+  function refresh(){
+    var done = 0; allBoxes.forEach(function(x){ if (x.checked) done++; });
+    setText('day-meter', done + ' / ' + allBoxes.length + ' Schritte');
+    var bar = document.getElementById('day-bar');
+    if (bar) bar.style.width = (allBoxes.length ? done / allBoxes.length * 100 : 0) + '%';
+    tl.forEach(function(b){ b.classList.toggle('done', blockDone(b)); });
+  }
+
+  tl.forEach(function(b){
+    var idx = parseInt(b.dataset.idx, 10);
+    b.classList.remove('past','now','later','open');
+    if (idx < curIdx) b.classList.add('past');
+    else if (idx === curIdx){ b.classList.add('now','open'); }
+    else b.classList.add('later');
+    b.querySelectorAll('input[type=checkbox]').forEach(function(input, j){
+      var k = idx + ':' + j;
+      input.checked = !!saved[k];
+      input.addEventListener('change', function(){
+        saved[k] = input.checked;
+        localStorage.setItem(key, JSON.stringify(saved));
+        refresh();
+      });
+    });
+    b.querySelector('.tl-head').addEventListener('click', function(){ b.classList.toggle('open'); });
+  });
+
+  var cur = document.querySelector('#day-timeline .tl.now .tl-label');
+  setText('now-label', cur ? cur.textContent : 'Tag ausklingen lassen');
+  refresh();
+
+  var btn = document.getElementById('ics-btn');
+  if (btn){
+    btn.addEventListener('click', function(){
+      var blocks = window.ALEX_BLOCKS || [];
+      function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+      function pad(n){ return String(n).padStart(2,'0'); }
+      var d = new Date();
+      var ymd = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
+      var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alex//Blue Electric Life//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Alex · Tagesplan'];
+      blocks.forEach(function(b, i){
+        L.push('BEGIN:VEVENT');
+        L.push('UID:alex-' + i + '-' + ymd + '@blueelectric');
+        L.push('DTSTART:' + ymd + 'T' + pad(b.h) + pad(b.m) + '00');
+        L.push('DURATION:PT' + b.dur + 'M');
+        L.push('RRULE:FREQ=DAILY');
+        L.push('SUMMARY:' + esc(b.sum));
+        L.push('DESCRIPTION:' + esc(b.desc));
+        L.push('BEGIN:VALARM');
+        L.push('ACTION:DISPLAY');
+        L.push('TRIGGER:PT0S');
+        L.push('DESCRIPTION:' + esc(b.sum));
+        L.push('END:VALARM');
+        L.push('END:VEVENT');
+      });
+      L.push('END:VCALENDAR');
+      var blob = new Blob([L.join('\r\n')], {type:'text/calendar'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'alex-tagesplan.ics';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  }
 })();
 </script>
 

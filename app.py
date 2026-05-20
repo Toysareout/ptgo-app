@@ -11249,11 +11249,47 @@ _ALEX_CSS = """
   .col h4.ok{color:#9bd194}
 
   .footnote{margin-top:30px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
+
+  /* Heute · geführte Tages-Timeline */
+  .now-hero{background:linear-gradient(180deg,rgba(200,130,30,.13),rgba(0,0,0,.22));border:1px solid var(--gold);
+    border-radius:18px;padding:20px 22px;margin-bottom:14px}
+  .now-eyebrow{font-size:11px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700}
+  .now-line{font-size:22px;color:var(--cream);margin:10px 0 14px;font-family:'Cormorant Garamond',Georgia,serif;line-height:1.25}
+  .now-line b{color:var(--gold2);font-weight:600}
+  .now-progress{font-size:12px;color:var(--muted);margin-top:10px;display:flex;justify-content:space-between}
+  .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
+    border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:inherit}
+  .ics-btn:active{transform:scale(.99)}
+  .ics-hint{font-size:12px;color:var(--muted);text-align:center;margin:10px 4px 20px;line-height:1.55}
+  .tl{border:1px solid var(--line);border-radius:14px;margin-bottom:8px;background:rgba(0,0,0,.18);overflow:hidden;transition:all .2s}
+  .tl-head{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:none;cursor:pointer;
+    padding:15px 16px;text-align:left;font-family:inherit}
+  .tl-time{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:var(--gold2);font-weight:600;flex:0 0 56px}
+  .tl-label{font-size:15px;color:var(--cream);font-weight:600;flex:1}
+  .tl-state{flex:0 0 auto;font-size:11px}
+  .tl-body{display:none;padding:2px 16px 14px}
+  .tl.open .tl-body{display:block}
+  .tl.now{border-color:var(--gold);box-shadow:0 0 0 1px rgba(200,130,30,.3);background:linear-gradient(180deg,rgba(200,130,30,.10),rgba(0,0,0,.2))}
+  .tl.now .tl-label{color:var(--gold2)}
+  .tl.past{opacity:.5}
+  .tl.done{opacity:.6}
+  .tl.done .tl-state::after{content:'\\2713 erledigt';color:var(--green)}
+  .tl.now .tl-state::after{content:'JETZT';color:var(--gold);font-weight:700;letter-spacing:1px}
+  .tl.later:not(.done) .tl-state::after{content:'sp\\00e4ter';color:var(--muted)}
+  .step{display:flex;align-items:flex-start;gap:12px;padding:9px 0;cursor:pointer;user-select:none;border-bottom:1px solid rgba(58,42,29,.4)}
+  .step:last-child{border-bottom:none}
+  .step input{appearance:none;width:19px;height:19px;border:1.5px solid var(--line2);border-radius:5px;background:transparent;
+    flex-shrink:0;cursor:pointer;margin-top:1px;position:relative}
+  .step input:checked{background:var(--gold);border-color:var(--gold)}
+  .step input:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #000;border-width:0 2px 2px 0;transform:rotate(45deg)}
+  .step input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--cognac)}
+  .step span{font-size:14px;color:var(--ink);line-height:1.5}
 </style>
 """
 
 
-_ALEX_JS = """
+_ALEX_JS = r"""
 <script>
 (function(){
   var tabs = document.querySelectorAll('[data-tab]');
@@ -11317,6 +11353,100 @@ _ALEX_JS = """
     if (h >= 0 && h <= hr) current = b;
   });
   if (current) current.classList.add('now');
+})();
+</script>
+
+<script>
+// Heute · geführte Tages-Timeline
+(function(){
+  var tl = document.querySelectorAll('#day-timeline .tl');
+  if (!tl.length) return;
+  var now = new Date();
+  var hr = now.getHours();
+  var wd = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var mo = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var dow = (now.getDay() + 6) % 7;
+  var modes = window.ALEX_MODES || [];
+  function setText(id, t){ var e = document.getElementById(id); if (e) e.textContent = t; }
+  setText('today-date', wd[now.getDay()] + ', ' + now.getDate() + '. ' + mo[now.getMonth()]);
+  setText('today-mode', modes[dow] || '');
+  setText('now-clock', String(hr).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ' Uhr');
+
+  var curIdx = -1;
+  tl.forEach(function(b){ if (parseInt(b.dataset.hour, 10) <= hr) curIdx = parseInt(b.dataset.idx, 10); });
+
+  var key = 'alex-heute:' + now.toISOString().slice(0,10);
+  var saved; try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){ saved = {}; }
+  var allBoxes = document.querySelectorAll('#day-timeline input[type=checkbox]');
+
+  function blockDone(b){
+    var bx = b.querySelectorAll('input[type=checkbox]');
+    if (!bx.length) return false;
+    for (var i = 0; i < bx.length; i++){ if (!bx[i].checked) return false; }
+    return true;
+  }
+  function refresh(){
+    var done = 0; allBoxes.forEach(function(x){ if (x.checked) done++; });
+    setText('day-meter', done + ' / ' + allBoxes.length + ' Schritte');
+    var bar = document.getElementById('day-bar');
+    if (bar) bar.style.width = (allBoxes.length ? done / allBoxes.length * 100 : 0) + '%';
+    tl.forEach(function(b){ b.classList.toggle('done', blockDone(b)); });
+  }
+
+  tl.forEach(function(b){
+    var idx = parseInt(b.dataset.idx, 10);
+    b.classList.remove('past','now','later','open');
+    if (idx < curIdx) b.classList.add('past');
+    else if (idx === curIdx){ b.classList.add('now','open'); }
+    else b.classList.add('later');
+    b.querySelectorAll('input[type=checkbox]').forEach(function(input, j){
+      var k = idx + ':' + j;
+      input.checked = !!saved[k];
+      input.addEventListener('change', function(){
+        saved[k] = input.checked;
+        localStorage.setItem(key, JSON.stringify(saved));
+        refresh();
+      });
+    });
+    b.querySelector('.tl-head').addEventListener('click', function(){ b.classList.toggle('open'); });
+  });
+
+  var cur = document.querySelector('#day-timeline .tl.now .tl-label');
+  setText('now-label', cur ? cur.textContent : 'Tag ausklingen lassen');
+  refresh();
+
+  var btn = document.getElementById('ics-btn');
+  if (btn){
+    btn.addEventListener('click', function(){
+      var blocks = window.ALEX_BLOCKS || [];
+      function esc(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
+      function pad(n){ return String(n).padStart(2,'0'); }
+      var d = new Date();
+      var ymd = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate());
+      var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Alex//Blue Electric Life//DE','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Alex · Tagesplan'];
+      blocks.forEach(function(b, i){
+        L.push('BEGIN:VEVENT');
+        L.push('UID:alex-' + i + '-' + ymd + '@blueelectric');
+        L.push('DTSTART:' + ymd + 'T' + pad(b.h) + pad(b.m) + '00');
+        L.push('DURATION:PT' + b.dur + 'M');
+        L.push('RRULE:FREQ=DAILY');
+        L.push('SUMMARY:' + esc(b.sum));
+        L.push('DESCRIPTION:' + esc(b.desc));
+        L.push('BEGIN:VALARM');
+        L.push('ACTION:DISPLAY');
+        L.push('TRIGGER:PT0S');
+        L.push('DESCRIPTION:' + esc(b.sum));
+        L.push('END:VALARM');
+        L.push('END:VEVENT');
+      });
+      L.push('END:VCALENDAR');
+      var blob = new Blob([L.join('\r\n')], {type:'text/calendar'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'alex-tagesplan.ics';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+  }
 })();
 </script>
 """
@@ -11409,10 +11539,62 @@ def _alex_day_blocks_html() -> str:
     return blocks
 
 
+def _alex_ics_blocks():
+    blocks = []
+    for b in ALEX["day_blocks"]:
+        h1, m1 = (int(x) for x in b["t1"].split(":"))
+        h2, m2 = (int(x) for x in b["t2"].split(":"))
+        dur = (h2 * 60 + m2) - (h1 * 60 + m1)
+        if dur <= 0:
+            dur = 30
+        blocks.append({"h": h1, "m": m1, "dur": dur, "sum": b["label"], "desc": " · ".join(b["items"])})
+    return blocks
+
+
+def _alex_heute_panel() -> str:
+    rows = ""
+    for i, b in enumerate(ALEX["day_blocks"]):
+        steps = "".join(
+            f'<label class="step"><input type="checkbox"><span>{x}</span></label>'
+            for x in b["items"]
+        )
+        rows += f"""
+        <div class="tl" data-hour="{b['h']}" data-idx="{i}">
+          <button class="tl-head" type="button">
+            <span class="tl-time">{b['t1']}</span>
+            <span class="tl-label">{b['label']}</span>
+            <span class="tl-state"></span>
+          </button>
+          <div class="tl-body"><div>{steps}</div></div>
+        </div>"""
+
+    modes = [d["mode"] for d in ALEX["week"]]
+    data_js = (
+        "<script>window.ALEX_MODES="
+        + json.dumps(modes, ensure_ascii=False)
+        + ";window.ALEX_BLOCKS="
+        + json.dumps(_alex_ics_blocks(), ensure_ascii=False)
+        + ";</script>"
+    )
+    return f"""
+    <section data-panel="heute" class="panel active">
+      <div class="now-hero">
+        <div class="now-eyebrow"><span id="today-date">Heute</span> · <span id="today-mode"></span></div>
+        <div class="now-line">Jetzt dran: <b id="now-label">—</b></div>
+        <div class="bar"><div id="day-bar"></div></div>
+        <div class="now-progress"><span id="day-meter">0 / 0 Schritte</span><span id="now-clock"></span></div>
+      </div>
+      <button id="ics-btn" class="ics-btn" type="button">⏰  Wecker &amp; Kalender laden (.ics)</button>
+      <p class="ics-hint">Einmal in deinen Kalender importieren — dann erinnert dich dein Handy jeden Tag automatisch an jeden Schritt.</p>
+      <div id="day-timeline">{rows}</div>
+      {data_js}
+    </section>"""
+
+
 def _alex_dashboard_panel() -> str:
     pillars = _alex_pillars_html()
     return f"""
-    <section data-panel="dashboard" class="panel active">
+    <section data-panel="dashboard" class="panel">
       <h2 class="section">Die acht Säulen</h2>
       <p class="section-sub">Acht Achsen, auf denen dieses Leben getragen wird. Nicht nebeneinander, sondern miteinander.</p>
       {pillars}
@@ -11721,6 +11903,7 @@ def _alex_chaos_panel() -> str:
 @app.get("/alex", response_class=HTMLResponse)
 def alex_dashboard(request: Request):
     tabs_def = [
+        ("heute",       "Heute"),
         ("dashboard",   "Dashboard"),
         ("wochenplan",  "Wochenplan"),
         ("tagesplan",   "Tagesplan"),
@@ -11742,7 +11925,7 @@ def alex_dashboard(request: Request):
     ]
     tabs_html = ""
     for key, label in tabs_def:
-        active = " active" if key == "dashboard" else ""
+        active = " active" if key == "heute" else ""
         tabs_html += f'<button class="tab{active}" data-tab="{key}">{label}</button>'
 
     monthly_items = "".join(
@@ -11781,6 +11964,7 @@ def alex_dashboard(request: Request):
 
     <nav class="tabs">{tabs_html}</nav>
 
+    {_alex_heute_panel()}
     {_alex_dashboard_panel()}
     {_alex_week_panel()}
     {_alex_day_panel()}
@@ -11803,3 +11987,38 @@ def alex_dashboard(request: Request):
     <div class="footnote">Blue Electric Life · ein Mann baut sich langsam, ehrlich und stilvoll zurück ins Leben.</div>
     """
     return _alex_page(body)
+
+
+def _alex_build_ics() -> str:
+    today = _now_local().strftime("%Y%m%d")
+    lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Alex//Blue Electric Life//DE",
+             "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "X-WR-CALNAME:Alex · Tagesplan"]
+
+    def esc(s):
+        return str(s).replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
+
+    for i, b in enumerate(_alex_ics_blocks()):
+        lines += [
+            "BEGIN:VEVENT",
+            f"UID:alex-{i}-{today}@blueelectric",
+            f"DTSTART:{today}T{b['h']:02d}{b['m']:02d}00",
+            f"DURATION:PT{b['dur']}M",
+            "RRULE:FREQ=DAILY",
+            f"SUMMARY:{esc(b['sum'])}",
+            f"DESCRIPTION:{esc(b['desc'])}",
+            "BEGIN:VALARM", "ACTION:DISPLAY", "TRIGGER:PT0S",
+            f"DESCRIPTION:{esc(b['sum'])}", "END:VALARM",
+            "END:VEVENT",
+        ]
+    lines.append("END:VCALENDAR")
+    return "\r\n".join(lines)
+
+
+@app.get("/alex/tagesplan.ics")
+def alex_ics():
+    from starlette.responses import Response
+    return Response(
+        content=_alex_build_ics(),
+        media_type="text/calendar",
+        headers={"Content-Disposition": "attachment; filename=alex-tagesplan.ics"},
+    )

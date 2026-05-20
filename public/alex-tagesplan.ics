@@ -1,0 +1,111 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Alex//Blue Electric Life//DE
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Alex · Tagesplan
+BEGIN:VEVENT
+UID:alex-0-20260520@blueelectric
+DTSTART:20260520T060000
+DURATION:PT60M
+RRULE:FREQ=DAILY
+SUMMARY:Morgen-Anker
+DESCRIPTION:Aufstehen\, kein Handy\, Wasser\, Fenster öffnen\, Licht reinlassen. · 5 Min Atmung. 10 Min Mobility. 20 Min Kraft/Körper. · 5 Min Vision: heute soll sich wie was anfühlen? · Musik: Soul\, Funk\, Rock\, Jazz — warme analoge Sounds.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Morgen-Anker
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-1-20260520@blueelectric
+DTSTART:20260520T070000
+DURATION:PT60M
+RRULE:FREQ=DAILY
+SUMMARY:Frühstück & Übergang
+DESCRIPTION:Espresso. Früchte. Eier oder Protein. · Kein Doomscroll. Erst nach dem ersten Deep-Work-Block.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Frühstück & Übergang
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-2-20260520@blueelectric
+DTSTART:20260520T080000
+DURATION:PT240M
+RRULE:FREQ=DAILY
+SUMMARY:Deep Work I
+DESCRIPTION:PTGO / Masterclass / Musik / Texte / KI-Systeme. · Phone in anderem Raum. Ein Ziel pro Block\, schriftlich vorher festgelegt. · Drei Sitzungen à 75 Min mit kurzen Pausen.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Deep Work I
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-3-20260520@blueelectric
+DTSTART:20260520T120000
+DURATION:PT120M
+RRULE:FREQ=DAILY
+SUMMARY:Clean Lunch & Walk
+DESCRIPTION:Gemüse\, Fisch oder hochwertige Alternative\, kein Zucker\, wenig Brot. · 20-Min Spaziergang. Sonne ins Gesicht. Keine Reize.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Clean Lunch & Walk
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-4-20260520@blueelectric
+DTSTART:20260520T140000
+DURATION:PT180M
+RRULE:FREQ=DAILY
+SUMMARY:Sessions / Business
+DESCRIPTION:Sessions\, Calls\, Strategie\, Premium-Angebote. · Ruhig\, präsent\, nicht gehetzt.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Sessions / Business
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-5-20260520@blueelectric
+DTSTART:20260520T173000
+DURATION:PT120M
+RRULE:FREQ=DAILY
+SUMMARY:Golden Hour
+DESCRIPTION:Tegernsee\, Isar\, oder Spaziergang. · Fahrt mit Musik\, offenes Fenster\, Sonnenuntergang.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Golden Hour
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-6-20260520@blueelectric
+DTSTART:20260520T200000
+DURATION:PT120M
+RRULE:FREQ=DAILY
+SUMMARY:Musik / Schreiben
+DESCRIPTION:Warmlicht\, Piano oder Gitarre. · Tagebuch: 3 Zeilen. Was war Würde\, was war Wachstum\, was war Korrektur?
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Musik / Schreiben
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:alex-7-20260520@blueelectric
+DTSTART:20260520T220000
+DURATION:PT60M
+RRULE:FREQ=DAILY
+SUMMARY:Schlafvorbereitung
+DESCRIPTION:Dusche\, Duft\, Lesen. · Kein Bildschirm im Bett. Vorhang zu\, Raum kühl.
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0S
+DESCRIPTION:Schlafvorbereitung
+END:VALARM
+END:VEVENT
+END:VCALENDAR
