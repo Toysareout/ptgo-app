@@ -101,7 +101,7 @@ const Store = {
    (SiteDNA lives in SITE_DNA + siteDNA(); augmented here over time.)
    ============================================================ */
 const Learn = {
-  data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 }, providerReality: {} },
+  data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 }, providerReality: {}, contextBias: {} },
   load() { try { const raw = JSON.parse(localStorage.getItem('skyworthy.learn') || 'null'); if (raw && raw.v) this.data = Object.assign(this.data, raw); } catch (e) { /* ignore */ } },
   save() { try { localStorage.setItem('skyworthy.learn', JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
   // ModelReliabilityScore per site (1 = forecast tends to match reality)
@@ -146,7 +146,7 @@ const Learn = {
   patternMemory(siteId) { return this.data.patterns[siteId] || {}; },
   // SELF-LEARNING core: observe forecast & every model against the weighted
   // aggregate of ALL nearby stations. Runs automatically on each data tick.
-  observe(siteId, fGust, fWind, rows, stations) {
+  observe(siteId, fGust, fWind, rows, stations, ctx) {
     if (!stations || !stations.length) return;
     const now = Date.now();
     this._lastObs = this._lastObs || {};
@@ -160,7 +160,30 @@ const Learn = {
       const bag = this.data.providerReality[siteId] || (this.data.providerReality[siteId] = {});
       rows.forEach(r => { const a = bag[r.model] || (bag[r.model] = []); a.push(Math.abs(r.gust - agg.gust)); if (a.length > 30) bag[r.model] = a.slice(-30); });
     }
+    // contextual bias: signed gust deviation (live − forecast) by wind sector × daypart
+    if (ctx && ctx.dir != null) {
+      const key = Wind.toCompass(ctx.dir) + '|' + dayPart(ctx.hour);
+      const cb = this.data.contextBias[siteId] || (this.data.contextBias[siteId] = {});
+      const e = cb[key] || (cb[key] = { sum: 0, n: 0 });
+      e.sum += (agg.gust - fGust); e.n++;
+    }
     this.save();
+  },
+  contextBias(siteId, dir, hour) {
+    const cb = (this.data.contextBias[siteId] || {})[Wind.toCompass(dir) + '|' + dayPart(hour)];
+    return cb && cb.n >= 3 ? { meanDev: cb.sum / cb.n, n: cb.n } : null;
+  },
+  // conservative correction: only ADD when the model historically underforecasts gusts here
+  learnedGustCorrection(siteId, dir, hour) {
+    const c = this.contextBias(siteId, dir, hour);
+    return c && c.meanDev > 2 ? round(c.meanDev) : 0;
+  },
+  describeContextBias(siteId) {
+    const cb = this.data.contextBias[siteId] || {}; let best = null;
+    Object.keys(cb).forEach(k => { const e = cb[k]; if (e.n >= 3 && (!best || Math.abs(e.sum / e.n) > Math.abs(best.dev))) best = { key: k, dev: e.sum / e.n, n: e.n }; });
+    if (!best || Math.abs(best.dev) < 2) return null;
+    const [sector, part] = best.key.split('|');
+    return { text: `Bei ${sector} ${part}: Böen im Schnitt ${best.dev > 0 ? '+' : ''}${round(best.dev)} km/h ${best.dev > 0 ? 'stärker' : 'schwächer'} als die Prognose (n=${best.n}).`, dev: round(best.dev), n: best.n, sector, part };
   },
   providerReliability(siteId) {
     const bag = this.data.providerReality[siteId] || {};
@@ -182,6 +205,7 @@ const Learn = {
   }
 };
 function siteName(id) { const s = SITES.find(x => x.id === id); return s ? s.name : id; }
+function dayPart(hour) { return hour < 11 ? 'morgens' : hour <= 14 ? 'mittags' : 'nachmittags'; }
 // weighted aggregate of ALL stations (by reliability, freshness, proximity)
 function stationAggregate(stations) {
   let wg = 0, ww = 0, sw = 0, n = 0;
@@ -1067,12 +1091,22 @@ function rankNearbyFlyingSites({ userLocation, radiusKm, sites, bundle, pilotPro
     if (trust.confidencePercent < 60 && status === 'green') status = 'yellow';
     if (trust.confidencePercent < 40) status = worseStatus(status, 'orange');
     if (mism.some(m => m.severity === 'critical')) { status = worseStatus(status, 'orange'); composite -= 20; }
+    // apply LEARNED contextual gust bias conservatively
+    const corr = Learn.learnedGustCorrection(site.id, d.best.h.windDir, +String(d.best.h.hh).slice(0, 2));
+    const learnedRisk = [];
+    if (corr >= 3) {
+      const adjGust = d.best.h.gustKmh + corr;
+      learnedRisk.push(`Gelernt: Böen hier oft +${corr} km/h stärker → effektiv ~${round(adjGust)} km/h`);
+      composite -= Math.min(15, corr);
+      if (adjGust > pilotProfile.maxGustKmh && (status === 'green' || status === 'yellow')) status = worseStatus(status, 'orange');
+      else if (adjGust > pilotProfile.maxGustKmh * 0.85 && status === 'green') status = 'yellow';
+    }
     out.push({
       siteId: site.id, siteName: site.name, distanceKm: round(dist, 1), status, score: clamp(composite, 0, 100),
       beginnerStatus: beg.status, expertStatus: exp.status, bestTakeoff: d.bestTakeoff || (site.takeoffs[0] || {}).name,
       bestStartWindow: parseWindow(d.bestStartTime), expectedFlightType: d.recommendedFlightType,
       expectedFlightDuration: { beginner: flightDuration(d.recommendedFlightType, 'beginner'), expert: flightDuration(d.recommendedFlightType, 'expert') },
-      whyBest: buildWhyBest(d, site, stations), risks: d.topRisks.slice(0, 3).map(r => r.replace(/^[^\p{L}]+/u, '').trim()),
+      whyBest: buildWhyBest(d, site, stations), risks: [...learnedRisk, ...d.topRisks.slice(0, 3).map(r => r.replace(/^[^\p{L}]+/u, '').trim())].slice(0, 4),
       whyNotGreen: status !== 'green' ? buildGreenBlockers(d, site, pilot).map(x => `${x.factor}: ${x.currentValue} (Soll ${x.requiredValue})`) : undefined,
       nextCriticalChange: nextCriticalChange(b.agg, site, pilotProfile), confidencePercent: trust.confidencePercent, dataAgeMinutes: round(dataAge), trust
     });
@@ -1237,7 +1271,7 @@ const Data = {
     if (!this.forecast.agg) return;
     const site = siteById(Store.state.selectedSiteId);
     const d = this.decision(); if (!d || !d.best) return;
-    try { Learn.observe(site.id, d.best.h.gustKmh, d.best.h.windKmh, this.models.consensus ? this.models.consensus.rows : null, this.stations.list); } catch (e) { /* ignore */ }
+    try { Learn.observe(site.id, d.best.h.gustKmh, d.best.h.windKmh, this.models.consensus ? this.models.consensus.rows : null, this.stations.list, { dir: d.best.h.windDir, hour: +String(d.best.h.hh).slice(0, 2) }); } catch (e) { /* ignore */ }
   },
   // BEST SITE NOW: scan all sites in radius, fetch per-site weather + live, rank
   async loadBestSiteNow() {
@@ -1734,6 +1768,7 @@ function renderWhy() {
   ${ex.whyNotBetter.length ? `<div class="card s-orange"><div class="h" style="margin-top:0">Was fehlt für Grün</div>${ex.whyNotBetter.map(w => `<div class="risk"><div class="ic">🟠</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>` : ''}
   <div class="card"><div class="h" style="margin-top:0">Was vor Ort prüfen?</div>${ex.whatToCheckOnSite.map(w => `<div class="risk"><div class="ic">✅</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>
   <div class="card"><div class="h" style="margin-top:0">Was kann später kippen?</div>${ex.whatChangesLater.map(w => `<div class="risk"><div class="ic">⏱️</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>
+  ${(() => { const cb = Learn.describeContextBias(site.id); const corr = Learn.learnedGustCorrection(site.id, d.best.h.windDir, +String(d.best.h.hh).slice(0, 2)); if (!cb) return ''; return `<div class="card s-orange"><div class="h" style="margin-top:0">🧠 Lokal gelernt</div><div class="risk"><div class="ic">🧠</div><div class="tx"><b>${esc(cb.text)}</b>${corr >= 3 ? `Wird konservativ berücksichtigt: effektive Böen ~${round(d.best.h.gustKmh + corr)} km/h.` : 'Noch nicht entscheidungsrelevant, wird weiter beobachtet.'}</div></div></div>`; })()}
   <div class="row"><button class="btn sec" onclick="go('trust')">Datenqualität</button><button class="btn sec" onclick="go('cockpit')">Zum Cockpit</button></div>`;
 }
 function renderTrust() {
