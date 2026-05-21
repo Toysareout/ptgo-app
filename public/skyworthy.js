@@ -137,10 +137,36 @@ const Learn = {
     const p = this.data.personal;
     return { maxGustKmh: clamp(pilot.maxGustKmh + p.gustAdj, 8, 80), maxWindKmh: clamp(pilot.maxWindKmh + p.windAdj, 5, 60), adjusted: p.samples >= 2 && (p.gustAdj !== 0 || p.windAdj !== 0) };
   },
-  // LocalPatternMemory
+  // full post-flight questionnaire (PilotFeedback) → personal profile + memory
+  recordFullFeedback(fb) {
+    const e = Object.assign({ id: 'fb-' + Date.now(), createdAt: new Date().toISOString() }, fb);
+    this.data.feedback.push(e);
+    if (this.data.feedback.length > 300) this.data.feedback = this.data.feedback.slice(-300);
+    const p = this.data.personal;
+    if (fb.actualGustFeeling === 'much_stronger') { p.gustAdj = clamp(p.gustAdj - 2, -12, 4); }
+    else if (fb.actualGustFeeling === 'stronger' || fb.turbulenceFeeling === 'sporty') { p.gustAdj = clamp(p.gustAdj - 1, -12, 4); }
+    else if (fb.actualGustFeeling === 'weaker' && fb.turbulenceFeeling === 'calm') { p.gustAdj = clamp(p.gustAdj + 0.5, -12, 4); }
+    if (fb.actualWindFeeling === 'stronger' || fb.actualWindFeeling === 'much_stronger') p.windAdj = clamp(p.windAdj - 0.8, -8, 3);
+    if (fb.turbulenceFeeling === 'dangerous') { p.gustAdj = clamp(p.gustAdj - 3, -12, 4); }
+    p.samples++;
+    this.save();
+  },
+  // LocalPatternMemory — derive recurring biases from feedback at a site
   notePattern(siteId, key) { const m = this.data.patterns[siteId] || (this.data.patterns[siteId] = {}); m[key] = (m[key] || 0) + 1; this.save(); },
-  patternMemory(siteId) { return this.data.patterns[siteId] || {}; }
+  patternMemory(siteId) { return this.data.patterns[siteId] || {}; },
+  detectPatterns(siteId) {
+    const fb = this.data.feedback.filter(f => f.siteId === siteId && f.actualGustFeeling);
+    const out = [];
+    if (fb.length >= 3) {
+      const strong = fb.filter(f => /stronger/.test(f.actualGustFeeling)).length;
+      if (strong / fb.length >= 0.5) out.push({ patternId: 'gust_underforecast', description: `An ${siteName(siteId)} waren die Böen oft stärker als prognostiziert.`, observedBias: 'Böen unterschätzt', confidence: round(strong / fb.length * 100), sampleSize: fb.length });
+      const turb = fb.filter(f => f.turbulenceFeeling === 'sporty' || f.turbulenceFeeling === 'dangerous').length;
+      if (turb / fb.length >= 0.4) out.push({ patternId: 'turbulent', description: `An ${siteName(siteId)} wurde es häufiger ruppig/sportlich als erwartet.`, observedBias: 'Turbulenz unterschätzt', confidence: round(turb / fb.length * 100), sampleSize: fb.length });
+    }
+    return out;
+  }
 };
+function siteName(id) { const s = SITES.find(x => x.id === id); return s ? s.name : id; }
 
 // BEST SITE NOW refresh cadence (per spec)
 const BEST_SITE_UI_REFRESH_MS = 2 * 1000;
@@ -1030,6 +1056,67 @@ function rankNearbyFlyingSites({ userLocation, radiusKm, sites, bundle, pilotPro
   return { radiusKm, updatedAt: new Date().toISOString(), userLocation, bestSite: best, rankedSites: out, globalWarning };
 }
 
+/* ---- EXPLAINABLE DECISION + MASTER PRIORITY STACK ---- */
+const VERDICT = { green: 'FLIEG', yellow: 'FLIEG – vorsichtig', orange: 'NUR EXPERTEN', red: 'WARTE', black: 'BLEIB AM BODEN', gray: '—' };
+function explainDecision(d, agg, site, trust) {
+  const h = d.best.h, p = Store.state.pilot;
+  const headline = { green: 'Guter Flugtag', yellow: 'Fliegbar, aber aufmerksam', orange: 'Nur für Erfahrene', red: 'Heute besser warten', black: 'Klares No-Go' }[d.status] || '—';
+  const mainRisk = (d.topRisks[0] || '').replace(/^[^\p{L}]+/u, '').trim();
+  const shortAnswer = d.status === 'green' ? `${site.name} ist heute gut fliegbar — bestes Fenster ${d.bestStartTime}.`
+    : d.status === 'yellow' ? `${site.name} geht, aber aufmerksam${mainRisk ? ': ' + mainRisk.toLowerCase() : ''}.`
+    : d.status === 'orange' ? `${site.name} ist anspruchsvoll — nur erfahrene Piloten${mainRisk ? ', ' + mainRisk.toLowerCase() : ''}.`
+    : `${site.name} heute nicht fliegen${mainRisk ? ' — ' + mainRisk.toLowerCase() : ''}.`;
+  const ncc = nextCriticalChange(agg, site, p);
+  const dv = [
+    { label: 'Wind Start', value: `${round(h.windKmh)} km/h`, threshold: `≤ ${p.maxWindKmh}`, status: h.windKmh > p.maxWindKmh ? 'critical' : h.windKmh > p.maxWindKmh * 0.8 ? 'watch' : 'ok' },
+    { label: 'Böen', value: `${round(h.gustKmh)} km/h`, threshold: `≤ ${p.maxGustKmh}`, status: h.gustKmh > p.maxGustKmh ? 'critical' : h.gustKmh > p.maxGustKmh * 0.85 ? 'watch' : 'ok' },
+    { label: 'Basis über Start', value: `${round(d.best.baseAboveTO)} m`, threshold: '≥ 200 m', status: d.best.baseAboveTO < 0 ? 'critical' : d.best.baseAboveTO < 200 ? 'watch' : 'ok' },
+    { label: 'CAPE', value: `${round(h.cape)} J/kg`, threshold: '< 1500', status: h.cape > 1500 ? 'critical' : h.cape > 900 ? 'watch' : 'ok' }
+  ];
+  return {
+    headline, shortAnswer,
+    beginnerExplanation: d.status === 'green' ? 'Für Anfänger ein gutes, ruhiges Fenster — sauberen Startplatzwind abwarten.' : d.status === 'yellow' ? 'Für Anfänger nur das ruhigste Fenster und bei klar passenden Bedingungen.' : 'Für Anfänger heute nicht geeignet.',
+    expertExplanation: d.status === 'black' ? 'Auch für Profis ein No-Go.' : d.status === 'red' ? 'Auch für Erfahrene heikel — Lage genau prüfen.' : d.status === 'orange' ? 'Für erfahrene Piloten machbar bei kontrolliertem Wind und ohne Überentwicklung.' : 'Für erfahrene Piloten gut — Böen-/Thermikentwicklung beobachten.',
+    whyThisStatus: d.why || [],
+    whyNotBetter: buildGreenBlockers(d, site, p).map(b => `${b.factor}: ${b.currentValue} (Soll ${b.requiredValue})`),
+    whatToCheckOnSite: d.whatToCheckOnSite || [],
+    whatChangesLater: ncc ? [`Ab ${ncc.time}: ${ncc.reason}`] : ['Keine markante Verschlechterung in den Tagesdaten erkennbar.'],
+    decisiveValues: dv
+  };
+}
+function buildPriorityStack({ decision: d, bestSiteResult: best, trust }) {
+  const items = [];
+  const mainRisk = (d.topRisks[0] || '🟢 Keine dominante Gefahr — trotzdem vor Ort prüfen').replace(/^[^\p{L}]+/u, '').trim();
+  const noGo = d.status === 'red' || d.status === 'black';
+  const lowTrust = trust.confidencePercent < 60;
+  const beginner = ['student', 'beginner'].includes(Store.state.pilot.level);
+  const b = best && best.bestSite;
+  if (noGo) items.push({ id: 'danger', level: 'critical', title: 'Hauptgefahr', value: mainRisk, status: d.status, explanation: 'Heute ist diese Gefahr ausschlaggebend.' });
+  items.push({ id: 'gono', level: 'primary', title: 'Kann ich fliegen?', value: VERDICT[d.status] || '—', status: d.status, explanation: d.label });
+  if (b) {
+    items.push({ id: 'site', level: 'primary', title: 'Bestes Fluggebiet', value: b.siteName, status: b.status, explanation: `${b.distanceKm} km entfernt` });
+    items.push({ id: 'takeoff', level: 'primary', title: 'Bester Startplatz', value: b.bestTakeoff || '—', status: b.status, explanation: '' });
+    items.push({ id: 'window', level: 'primary', title: 'Beste Startzeit', value: `${b.bestStartWindow.from}–${b.bestStartWindow.to}`, status: b.status, explanation: '' });
+  } else {
+    items.push({ id: 'window', level: 'primary', title: 'Beste Startzeit', value: d.bestStartTime || '—', status: d.status, explanation: '' });
+    items.push({ id: 'takeoff', level: 'primary', title: 'Bester Startplatz', value: d.bestTakeoff || '—', status: d.status, explanation: '' });
+  }
+  if (!noGo) items.push({ id: 'danger', level: 'primary', title: 'Hauptgefahr', value: mainRisk, status: d.topRisks.length ? 'orange' : 'green', explanation: '' });
+  const begStatus = b ? b.beginnerStatus : (d.beginnerScore >= 70 ? 'green' : d.beginnerScore >= 50 ? 'yellow' : d.beginnerScore >= 35 ? 'orange' : 'red');
+  const expStatus = b ? b.expertStatus : (d.expertScore >= 70 ? 'green' : d.expertScore >= 50 ? 'yellow' : d.expertScore >= 35 ? 'orange' : 'red');
+  const begItem = { id: 'beg', level: beginner ? 'primary' : 'secondary', title: 'Anfänger-Urteil', value: ampelWord(begStatus), status: begStatus, explanation: beginner ? 'Dein Profil ist Anfänger — diese Bewertung zählt für dich.' : '' };
+  const confItem = { id: 'conf', level: lowTrust ? 'primary' : 'secondary', title: 'Wie sicher?', value: trust.confidencePercent + '%', status: trust.confidencePercent >= 70 ? 'green' : trust.confidencePercent >= 55 ? 'yellow' : 'orange', explanation: trust.finalTrustLabel };
+  const realityItem = (trust.conflictingSignals || []).some(s => /livewind|prognose/i.test(s)) ? { id: 'reality', level: 'primary', title: 'Prognose vs. Realität', value: 'Abweichung', status: 'orange', explanation: 'Livewind weicht von der Prognose ab — konservativer entscheiden.' } : null;
+  if (realityItem) items.push(realityItem);
+  if (beginner) items.push(begItem);
+  if (lowTrust) items.push(confItem);
+  items.push({ id: 'exp', level: 'secondary', title: 'Experten-Urteil', value: ampelWord(expStatus), status: expStatus, explanation: '' });
+  if (!beginner) items.push(begItem);
+  if (!lowTrust) items.push(confItem);
+  items.push({ id: 'age', level: 'secondary', title: 'Datenalter', value: (Data.forecast.fetchedAt ? Time.fmtAge(Data.forecast.fetchedAt) : '—'), status: 'neutral', explanation: 'Frische der Wetterdaten.' });
+  return items;
+}
+
 /* ============================================================
    PRESSURE ENGINE — classify the high/low situation + flying impact
    ============================================================ */
@@ -1229,7 +1316,8 @@ function render() {
     cockpit: renderCockpit, sites: renderSites, detail: renderDetail, live: renderLive,
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
     profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute,
-    windows: renderFlightWindows, compare: renderCompare, morning: renderMorning, more: renderMore
+    windows: renderFlightWindows, compare: renderCompare, morning: renderMorning,
+    why: renderWhy, trust: renderTrust, feedback: renderFeedback, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -1322,6 +1410,11 @@ function renderCockpit() {
     <div style="font-size:15px;line-height:1.65">${esc(briefing.text)}</div>
   </div>
 
+  <div class="row">
+    <button class="btn sec" onclick="go('why')">💡 Warum?</button>
+    <button class="btn sec" onclick="go('trust')">🛡️ Datenqualität</button>
+  </div>
+
   ${simple ? `<div class="card ${sc}"><div class="risk"><div class="ic">${(d.topRisks[0] || '🟢 ').slice(0, 2)}</div><div class="tx"><b>Hauptgefahr</b>${esc((d.topRisks[0] || 'Keine dominante Gefahr — trotzdem vor Ort prüfen.').slice(2).trim())}</div></div></div>`
     : `<div class="card ${sc}">
     <div class="h" style="margin-top:0">Warum? — Top-Risiken</div>
@@ -1410,6 +1503,9 @@ function renderMore() {
     ['cloud', '☁️', 'Wolken & Gewitter', 'Bewölkung, Niederschlag, Radar, Gewitterrisiko'],
     ['windows', '🪟', 'Flugfenster', 'Tagesfenster mit Status & Anfänger/Experten-Rat'],
     ['compare', '⚖️', 'Anfänger vs. Experte', 'Dieselbe Lage aus zwei Perspektiven'],
+    ['why', '💡', 'Warum?', 'Klartext-Hierarchie & entscheidende Werte'],
+    ['trust', '🛡️', 'Datenqualität', 'Wie belastbar ist die Entscheidung?'],
+    ['feedback', '🪂', 'Flug-Feedback', 'Nach dem Flug — die App lernt mit'],
     ['models', '🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM'],
     ['route', '🛰️', 'Flugweg (3D)', 'Idealer Weg im 3D-Gelände, animiert'],
     ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, Gebiets-DNA'],
@@ -1465,8 +1561,9 @@ function renderMorning() {
     ${b.nextCriticalChange ? `<div class="small" style="margin-top:6px;text-align:left;color:var(--orange)"><b>Achtung:</b> ab ${esc(b.nextCriticalChange.time)} ${esc(b.nextCriticalChange.reason)}.</div>` : ''}
     <div class="small dim" style="margin-top:6px;text-align:left">Vertrauen: ${esc(b.trust.finalTrustLabel)} (${b.trust.confidencePercent}%)${b.trust.conflictingSignals.length ? ' · ⚠️ ' + esc(b.trust.conflictingSignals[0]) : ''}</div>
     <div class="row" style="margin-top:12px">
-      <button class="btn" onclick="selectSite('${b.siteId}', true)">Details ansehen</button>
-      <a class="btn sec" href="https://www.windy.com/webcams?${siteById(b.siteId).lat.toFixed(4)},${siteById(b.siteId).lon.toFixed(4)},11" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">📷 Webcams</a>
+      <button class="btn" onclick="selectSite('${b.siteId}', true)">Details</button>
+      <button class="btn sec" onclick="selectSite('${b.siteId}'); go('why')">💡 Warum?</button>
+      <a class="btn sec" href="https://www.windy.com/webcams?${siteById(b.siteId).lat.toFixed(4)},${siteById(b.siteId).lon.toFixed(4)},11" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">📷</a>
     </div>
   </div>`;
   const others = r.rankedSites.slice(1, 6).map(s => `<div class="card s-${s.status}" style="cursor:pointer" onclick="selectSite('${s.siteId}', true)">
@@ -1483,7 +1580,8 @@ function renderMorning() {
       <button onclick="recordFlightFeedback('${b.siteId}','easier')">🟢 ruhiger</button>
       <button onclick="recordFlightFeedback('${b.siteId}','as_expected')">⚪ wie erwartet</button>
       <button onclick="recordFlightFeedback('${b.siteId}','harder')">🔴 ruppiger</button>
-    </div><div id="fbResult"></div></div>`;
+    </div><div id="fbResult"></div>
+    <div class="small" style="margin-top:8px"><a href="javascript:void(0)" onclick="selectSite('${b.siteId}'); go('feedback')">Ausführliches Feedback geben →</a></div></div>`;
   el.innerHTML = head + (r.globalWarning ? banner('orange', r.globalWarning) : '') + shortCard +
     (others ? `<div class="h">Weitere Optionen</div>${others}` : '') + fb + ages +
     `<div class="dim small" style="text-align:center">Killer-Frage beantwortet: wohin, wann, für wen, wie sicher, was kippt. Livewind & Himmel vor Ort entscheiden.</div>`;
@@ -1562,6 +1660,97 @@ function renderCompare() {
       ? esc('Beide Profile kommen heute zur selben Einschätzung — die Lage ist eindeutig.')
       : esc(`Für Anfänger „${dual.beginner.label}", für Experten „${dual.expert.label}". Erfahrung, Schirmklasse und höhere Limits verschieben die Grenze — nicht der Himmel ändert sich, sondern wer ihn sicher nutzen kann.`)}</div></div>
   </div>`;
+}
+
+/* ---------- WHY / TRUST / FEEDBACK (priority + explainability) ---------- */
+function currentTrust() {
+  const d = Data.decision();
+  const mism = d && d.best ? buildForecastReality(d, Data.stations.list) : [];
+  const age = Data.forecast.fetchedAt ? Time.ageMin(Data.forecast.fetchedAt) : 0;
+  return calculateTrust({ stations: Data.stations.list, consensus: Data.models.consensus, mismatches: mism, dataAgeMin: age });
+}
+function renderWhy() {
+  const el = $('#screen-why'); const agg = Data.forecast.agg; const site = siteById(Store.state.selectedSiteId); const d = Data.decision();
+  if (!agg || !d || !d.best) { el.innerHTML = loadingCard('Erkläre Entscheidung…'); return; }
+  const trust = currentTrust(), ex = explainDecision(d, agg, site, trust), stack = buildPriorityStack({ decision: d, bestSiteResult: Data.bestNow.result, trust });
+  const sc = 's-' + d.status;
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Warum sagt SKYWORTHY das?</div>
+  <div class="hero card statusborder ${sc}"><div class="ring" style="background:var(--c)"></div>
+    <div class="muted small" style="letter-spacing:2px;text-transform:uppercase;font-weight:800">${esc(ex.headline)}</div>
+    <div class="glabel" style="color:var(--c);font-size:23px;margin-top:6px;line-height:1.25">${esc(ex.shortAnswer)}</div>
+  </div>
+  <div class="card"><div class="h" style="margin-top:0">Das Wichtigste zuerst</div>
+    ${stack.map(it => `<div class="risk"><div class="ic">${it.status === 'neutral' ? '•' : sIc[it.status]}</div><div class="tx"><b>${esc(it.title)}: ${esc(it.value)}</b>${esc(it.explanation || '')}</div></div>`).join('')}
+  </div>
+  <div class="card"><div class="h" style="margin-top:0">Entscheidende Werte</div>
+    ${ex.decisiveValues.map(v => { const c = v.status === 'critical' ? 'red' : v.status === 'watch' ? 'orange' : 'green'; return `<div class="risk"><div class="ic">${sIc[c]}</div><div class="tx"><b>${esc(v.label)}: ${esc(v.value)}</b>Schwelle ${esc(v.threshold)}</div></div>`; }).join('')}
+  </div>
+  <div class="card"><div class="h" style="margin-top:0">Für wen?</div>
+    <div class="risk"><div class="ic">🟢</div><div class="tx"><b>Anfänger</b>${esc(ex.beginnerExplanation)}</div></div>
+    <div class="risk"><div class="ic">🚀</div><div class="tx"><b>Experte</b>${esc(ex.expertExplanation)}</div></div>
+  </div>
+  ${ex.whyThisStatus.length ? `<div class="card"><div class="h" style="margin-top:0">Warum dieser Status</div>${ex.whyThisStatus.map(w => `<div class="risk"><div class="ic">•</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>` : ''}
+  ${ex.whyNotBetter.length ? `<div class="card s-orange"><div class="h" style="margin-top:0">Was fehlt für Grün</div>${ex.whyNotBetter.map(w => `<div class="risk"><div class="ic">🟠</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>` : ''}
+  <div class="card"><div class="h" style="margin-top:0">Was vor Ort prüfen?</div>${ex.whatToCheckOnSite.map(w => `<div class="risk"><div class="ic">✅</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>
+  <div class="card"><div class="h" style="margin-top:0">Was kann später kippen?</div>${ex.whatChangesLater.map(w => `<div class="risk"><div class="ic">⏱️</div><div class="tx">${esc(w)}</div></div>`).join('')}</div>
+  <div class="row"><button class="btn sec" onclick="go('trust')">Datenqualität</button><button class="btn sec" onclick="go('cockpit')">Zum Cockpit</button></div>`;
+}
+function renderTrust() {
+  const el = $('#screen-trust'); const d = Data.decision();
+  if (!d || !d.best) { el.innerHTML = loadingCard('Datenqualität…'); return; }
+  const t = currentTrust(); const c = t.confidencePercent >= 70 ? 'green' : t.confidencePercent >= 55 ? 'yellow' : t.confidencePercent >= 40 ? 'orange' : 'red';
+  const bar = (lbl, v) => `<div style="margin:8px 0"><div style="display:flex;justify-content:space-between" class="small"><span>${esc(lbl)}</span><b>${v}</b></div><div class="bar" style="margin-top:4px"><i style="width:${v}%"></i></div></div>`;
+  const site = siteById(Store.state.selectedSiteId); const rel = Learn.modelReliability(site.id); const cons = Data.models.consensus;
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Wie sicher ist diese Entscheidung?</div>
+  <div class="hero card statusborder s-${c}"><div class="ring" style="background:var(--c)"></div>
+    <div class="glabel" style="color:var(--c)">${t.confidencePercent}%</div>
+    <div class="muted" style="font-weight:700">${esc(t.finalTrustLabel)}</div>
+    <div class="gsum">${esc(t.trustExplanationBeginner)}</div></div>
+  <div class="card"><div class="h" style="margin-top:0">Bausteine</div>
+    ${bar('Datenfrische', t.dataFreshnessScore)}${bar('Modellkonsens', t.modelAgreementScore)}${bar('Live-Abdeckung', t.liveStationScore)}${bar('Prognose vs. Realität', t.forecastRealityScore)}
+  </div>
+  ${t.decisiveSignals.length ? `<div class="card s-green"><div class="h" style="margin-top:0">Spricht dafür</div>${t.decisiveSignals.map(s => `<div class="risk"><div class="ic">✅</div><div class="tx">${esc(s)}</div></div>`).join('')}</div>` : ''}
+  ${(t.conflictingSignals.length || t.missingData.length || t.staleDataWarnings.length) ? `<div class="card s-orange"><div class="h" style="margin-top:0">Vorsicht</div>${[...t.conflictingSignals, ...t.missingData, ...t.staleDataWarnings].map(s => `<div class="risk"><div class="ic">⚠️</div><div class="tx">${esc(s)}</div></div>`).join('')}</div>` : ''}
+  <div class="card"><div class="h" style="margin-top:0">Modell-Verlässlichkeit · ${esc(site.name)}</div>
+    <div class="small muted">${rel.reliability != null ? `Aus ${rel.samples} Vergleichen: Prognose-Treffer ~${round(rel.reliability * 100)}% (Ø Böen-Abweichung ${rel.avgGustDev} km/h). Wird mit jedem Tag genauer.` : 'Noch zu wenige Vergleiche — SKYWORTHY lernt die lokale Modellgüte mit der Zeit.'}</div>
+    ${cons ? `<div class="small dim" style="margin-top:8px">Modelle aktuell: Konsens ${cons.agreement}%${cons.conflicts.length ? ' · ⚠️ ' + esc(cons.conflicts[0]) : ''}.</div>` : ''}
+  </div>
+  <div class="small dim" style="margin-top:8px">${esc(t.trustExplanationExpert)}</div>`;
+}
+function renderFeedback() {
+  const el = $('#screen-feedback'); const site = siteById(Store.state.selectedSiteId);
+  const seg = (key, label, opts) => `<div class="fld"><span>${esc(label)}</span><div class="seg" data-fb="${key}" style="flex-wrap:wrap">${opts.map(o => `<button data-v="${o.v}">${esc(o.t)}</button>`).join('')}</div></div>`;
+  const pats = Learn.detectPatterns(site.id);
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Feedback nach dem Flug · ${esc(site.name)}</div>
+  <div class="small dim" style="margin:-4px 4px 10px">Dein ehrliches Feedback macht SKYWORTHY für dieses Gebiet schlauer.</div>
+  ${pats.length ? `<div class="card s-orange"><div class="h" style="margin-top:0">🧠 Gelerntes Muster hier</div>${pats.map(p => `<div class="risk"><div class="ic">🧠</div><div class="tx"><b>${esc(p.observedBias)} (${p.confidence}%, n=${p.sampleSize})</b>${esc(p.description)}</div></div>`).join('')}</div>` : ''}
+  <div class="card">
+    ${seg('wasFlyable', 'War es fliegbar?', [{ v: 'yes', t: 'Ja' }, { v: 'no', t: 'Nein' }])}
+    ${seg('actualWindFeeling', 'Wind real vs. erwartet', [{ v: 'weaker', t: 'schwächer' }, { v: 'as_forecast', t: 'wie erwartet' }, { v: 'stronger', t: 'stärker' }, { v: 'much_stronger', t: 'viel stärker' }])}
+    ${seg('actualGustFeeling', 'Böen real vs. erwartet', [{ v: 'weaker', t: 'schwächer' }, { v: 'as_forecast', t: 'wie erwartet' }, { v: 'stronger', t: 'stärker' }, { v: 'much_stronger', t: 'viel stärker' }])}
+    ${seg('thermalFeeling', 'Thermik', [{ v: 'none', t: 'keine' }, { v: 'weak', t: 'schwach' }, { v: 'as_forecast', t: 'wie erwartet' }, { v: 'stronger', t: 'stärker' }, { v: 'too_strong', t: 'zu stark' }])}
+    ${seg('turbulenceFeeling', 'Turbulenz', [{ v: 'calm', t: 'ruhig' }, { v: 'moderate', t: 'mäßig' }, { v: 'sporty', t: 'sportlich' }, { v: 'dangerous', t: 'gefährlich' }])}
+    ${seg('appRecommendationWasHelpful', 'App-Empfehlung hilfreich?', [{ v: 'yes', t: 'Ja' }, { v: 'no', t: 'Nein' }])}
+    ${seg('wouldFlyAgain', 'Wieder fliegen?', [{ v: 'yes', t: 'Ja' }, { v: 'no', t: 'Nein' }])}
+    <label class="fld"><span>Notiz</span><input class="input" id="fb-notes" placeholder="optional…"></label>
+    <button class="btn" onclick="submitFeedback()">Feedback speichern</button>
+    <div id="fbDone"></div>
+  </div>`;
+  $$('#screen-feedback .seg[data-fb]').forEach(s => s.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { s.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); })));
+}
+function submitFeedback() {
+  const get = key => { const s = $(`#screen-feedback .seg[data-fb="${key}"] .on`); return s ? s.dataset.v : null; };
+  const site = siteById(Store.state.selectedSiteId);
+  const fb = { siteId: site.id, forecastTime: Data.forecast.fetchedAt || new Date().toISOString(),
+    wasFlyable: get('wasFlyable') === 'yes', actualWindFeeling: get('actualWindFeeling') || 'as_forecast', actualGustFeeling: get('actualGustFeeling') || 'as_forecast',
+    thermalFeeling: get('thermalFeeling') || 'as_forecast', turbulenceFeeling: get('turbulenceFeeling') || 'moderate',
+    appRecommendationWasHelpful: get('appRecommendationWasHelpful') === 'yes', wouldFlyAgain: get('wouldFlyAgain') === 'yes', notes: ($('#fb-notes') || {}).value || '' };
+  Learn.recordFullFeedback(fb); Data.recomputeBestNow();
+  const pat = Learn.detectPatterns(site.id), lim = Learn.effectiveLimits(Store.state.pilot);
+  const done = $('#fbDone'); if (done) done.innerHTML = `<div class="explain">✅ Gespeichert — SKYWORTHY lernt.${lim.adjusted ? ` Dein Böen-Limit ist jetzt ~${round(lim.maxGustKmh)} km/h.` : ''}${pat.length ? `<br>🧠 Muster: ${esc(pat[0].description)}` : ''}</div>`;
 }
 
 /* ---------- NEARBY SITES ---------- */
@@ -2578,7 +2767,7 @@ function toggleAlerts(on) {
   }
   Store.set({ alerts: !!on }); if (on) maybeAlert();
 }
-Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, answerContext, toggleAlerts, speakBriefing, setBestRadius, refreshBestLocation, recordFlightFeedback, Data });
+Object.assign(window, { go, goBack, setSimple, selectSite, toggleFav, applyPreset, savePilot, answerExam, nextExam, answerContext, toggleAlerts, speakBriefing, setBestRadius, refreshBestLocation, recordFlightFeedback, submitFeedback, Data });
 
 function buildSiteSelect() {
   const sel = $('#siteSelect');
