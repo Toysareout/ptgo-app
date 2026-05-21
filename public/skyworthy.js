@@ -1248,6 +1248,7 @@ function renderCockpit() {
   if (Data.forecast.loading && !Data.forecast.agg) { el.innerHTML = loadingCard('Wetterdaten werden geladen…'); return; }
   if (Data.forecast.error && !Data.forecast.agg) { el.innerHTML = errorCard(Data.forecast.error); return; }
   const d = Data.decision(); if (!d) { el.innerHTML = loadingCard('Berechne Flugentscheidung…'); return; }
+  if (!d.best) { el.innerHTML = `<div class="card">Für den gewählten Tag liegen keine Tagesdaten vor. Wechsle den Tag oben oder tippe „Aktualisieren".</div>`; return; }
   const sc = statusClass(d.status);
   const rem = REMINDERS[new Date().getDate() % REMINDERS.length];
   const fav = Store.state.favorites.includes(site.id);
@@ -1321,18 +1322,14 @@ function renderCockpit() {
     <div style="font-size:15px;line-height:1.65">${esc(briefing.text)}</div>
   </div>
 
-  <div class="card ${sc}">
+  ${simple ? `<div class="card ${sc}"><div class="risk"><div class="ic">${(d.topRisks[0] || '🟢 ').slice(0, 2)}</div><div class="tx"><b>Hauptgefahr</b>${esc((d.topRisks[0] || 'Keine dominante Gefahr — trotzdem vor Ort prüfen.').slice(2).trim())}</div></div></div>`
+    : `<div class="card ${sc}">
     <div class="h" style="margin-top:0">Warum? — Top-Risiken</div>
-    ${d.topRisks.slice(0, simple ? 3 : 4).map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
+    ${d.topRisks.slice(0, 4).map(r => `<div class="risk"><div class="ic">${r.slice(0, 2)}</div><div class="tx">${esc(r.slice(2).trim())}</div></div>`).join('')}
   </div>
   ${blockersCard}
   ${realityCard}
-  ${explainCard}
-
-  ${live ? `<div class="card"><div class="h" style="margin-top:0">Live-Wind (ausschlaggebend)</div>
-    <div class="sitecard"><div class="gp ${sc}">${windArrow(live.windDirection)}</div>
-    <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)}${live.elevation != null ? ' · ' + live.elevation + ' m' : ''}</div></div>
-    <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">${esc(Data.stations.source)}</span></div></div></div>` : ''}
+  ${explainCard}`}
 
   <div class="seg" style="overflow-x:auto;flex-wrap:nowrap">
     <button onclick="go('wind')">🌬️ Wind</button>
@@ -1344,9 +1341,13 @@ function renderCockpit() {
     <button onclick="go('models')">🧮 Modelle</button>
   </div>
 
-  ${simple ? '' : advanced}
+  ${live ? `<div class="card"><div class="h" style="margin-top:0">Live-Wind (ausschlaggebend)</div>
+    <div class="sitecard"><div class="gp ${sc}">${windArrow(live.windDirection)}</div>
+    <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)}${live.elevation != null ? ' · ' + live.elevation + ' m' : ''}</div></div>
+    <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">${esc(Data.stations.source)}</span></div></div></div>` : ''}
 
-  <div class="reminder"><div class="i">${rem.i}</div><div><b>${esc(rem.t)}</b><br>${esc(rem.d)}</div></div>
+  ${simple ? '' : advanced}
+  ${simple ? '' : `<div class="reminder"><div class="i">${rem.i}</div><div><b>${esc(rem.t)}</b><br>${esc(rem.d)}</div></div>`}
 
   <div class="row" style="margin-top:12px">
     <button class="btn sec" onclick="go('detail')">Gebiet-Details</button>
@@ -1771,8 +1772,6 @@ function renderWind() {
   const el = $('#screen-wind'); const agg = Data.forecast.agg; const site = siteById(Store.state.selectedSiteId);
   if (!agg) { el.innerHTML = loadingCard('Winddaten…'); return; }
   const i = agg.bestHourIdx; const h = agg.atHour(i);
-  const targets = [500, 1000, 1500, 2000, 2500, 3000];
-  const rows = targets.map(alt => { const w = agg.windAtAlt(i, alt); return { alt, w }; }).filter(r => r.w);
   // gradient surface→1500
   const w0 = agg.windAtAlt(i, site.elevationMin + 10), wHi = agg.windAtAlt(i, site.elevationMin + 1000);
   const gradient = wHi && w0 ? round(wHi.spd - w0.spd) : 0;
@@ -1787,14 +1786,12 @@ function renderWind() {
     ${kpi('Böen', round(h.gustKmh), 'km/h', 'Faktor ' + gustFactor + '×')}
     ${kpi('Gradient', (gradient > 0 ? '+' : '') + gradient, 'km/h', 'Boden→+1000m')}
   </div>
-  <div class="card"><div class="h" style="margin-top:0">Windprofil</div>
-    ${windProfileSVG(agg, i, site)}
+  <div class="card"><div class="h" style="margin-top:0">Winddiagramm · Höhe × Stunde</div>
+    ${windGrid(agg, site, Store.state.day)}
+    <div class="small dim" style="margin-top:8px">Farbe = Stärke, Pfeil = Richtung (zeigt mit dem Wind). Interpoliert aus Boden-, 80/120/180 m- & Druckflächenwinden (Open-Meteo). Seitlich scrollen.</div>
   </div>
-  <div class="card"><div class="h" style="margin-top:0">Höhenwind-Tabelle</div>
-    <table><thead><tr><th>Höhe ASL</th><th>Wind</th><th>Richtung</th></tr></thead><tbody>
-      ${rows.map(r => `<tr><td>${r.alt} m</td><td><b>${round(r.w.spd)}</b> km/h</td><td>${Wind.toCompass(r.w.dir)} ${windArrow(r.w.dir)}</td></tr>`).join('')}
-    </tbody></table>
-    <div class="small dim" style="margin-top:8px">Interpoliert aus Boden-, 80/120/180 m- und Druckflächenwinden (Open-Meteo).</div>
+  <div class="card"><div class="h" style="margin-top:0">Windprofil (Bestzeit)</div>
+    ${windProfileSVG(agg, i, site)}
   </div>
   <div class="card">
     ${riskRow(foehn ? '🟣' : '🟢', 'Föhn', foehn ? 'Föhnverdacht: starker Höhenwind aus Süd-/Gefahrenrichtung über föhnanfälligem Gebiet.' : 'Keine eindeutige Föhnsignatur in den Modelldaten.')}
@@ -1803,6 +1800,25 @@ function renderWind() {
     ${riskRow(gustFactor !== '—' && gustFactor > 1.6 ? '🟡' : '🟢', 'Böenfaktor', `Böe/Mittelwind = ${gustFactor}×.`)}
     ${riskRow('🌬️', 'Talwind', esc(site.valleyWindNotes))}
   </div>`;
+}
+// own meteo-parapente-style altitude × hour wind grid (free, from Open-Meteo)
+function windColor(s) { return s < 10 ? '#22e08a' : s < 18 ? '#7fe0a0' : s < 25 ? '#ffd23f' : s < 35 ? '#ff9d2e' : s < 45 ? '#ff4d5e' : '#b026ff'; }
+function windGrid(agg, site, day) {
+  const idx = agg.daylightIdx(day); if (!idx.length) return '<div class="small dim">Keine Tagesdaten.</div>';
+  const top = 4000, bottom = Math.max(1000, Math.floor(site.elevationMin / 500) * 500);
+  const alts = []; for (let a = top; a >= bottom; a -= 500) alts.push(a);
+  const CW = 44;
+  const header = `<div style="display:flex;position:sticky;top:0"><div style="min-width:40px"></div>${idx.map(i => `<div style="min-width:${CW}px;text-align:center;font-size:11px;color:var(--muted);font-weight:700">${agg.atHour(i).hh.slice(0, 2)}</div>`).join('')}</div>`;
+  const rows = alts.map(a => {
+    const cells = idx.map(i => {
+      const w = agg.windAtAlt(i, a);
+      if (!w) return `<div style="min-width:${CW}px"></div>`;
+      const c = windColor(w.spd);
+      return `<div style="min-width:${CW}px;text-align:center;padding:2px 0"><span style="display:inline-block;color:${c};transform:rotate(${(w.dir + 180) % 360}deg);font-size:15px;line-height:1;font-weight:800">↑</span><div style="font-size:10px;color:${c};font-weight:700;line-height:1.1">${round(w.spd)}</div></div>`;
+    }).join('');
+    return `<div style="display:flex;align-items:center;border-top:1px solid var(--line)"><div style="min-width:40px;font-size:10px;color:var(--muted);text-align:right;padding-right:6px">${a}</div>${cells}</div>`;
+  }).join('');
+  return `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px">${header}${rows}</div>`;
 }
 
 /* ---------- THERMAL INTELLIGENCE ---------- */
