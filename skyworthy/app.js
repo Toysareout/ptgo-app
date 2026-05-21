@@ -1275,7 +1275,7 @@ const Data = {
   },
   // BEST SITE NOW: scan all sites in radius, fetch per-site weather + live, rank
   async loadBestSiteNow() {
-    this.bestNow.loading = true; if (currentScreen === 'morning') renderMorning();
+    this.bestNow.loading = true; if (currentScreen === 'morning' || currentScreen === 'coach') render();
     if (!this.bestNow.userLocation) this.bestNow.userLocation = await getUserLocation();
     const loc = this.bestNow.userLocation, radius = this.bestNow.radiusKm;
     const inR = SITES.map(s => ({ s, d: Geo.haversineKm(loc.lat, loc.lon, s.lat, s.lon) })).filter(x => x.d <= radius).sort((a, b) => a.d - b.d).slice(0, 8);
@@ -1290,7 +1290,7 @@ const Data = {
     }));
     this.bestNow.bundle = bundle; this.bestNow.fetchedAt = new Date().toISOString(); this.bestNow.liveAt = new Date().toISOString();
     this.recomputeBestNow(); this.bestNow.loading = false;
-    if (currentScreen === 'morning') renderMorning();
+    if (currentScreen === 'morning' || currentScreen === 'coach') render();
   },
   async reloadBestStations() {
     const b = this.bestNow.bundle;
@@ -1299,7 +1299,7 @@ const Data = {
       try { let st = (await Providers.fetchPioupiou(site, 60)) || []; if (!st.length) st = Providers.liveStations(site, b[id].agg); b[id].stations = st; } catch (e) { /* keep */ }
     }));
     this.bestNow.liveAt = new Date().toISOString(); this.recomputeBestNow();
-    if (currentScreen === 'morning') renderMorning();
+    if (currentScreen === 'morning' || currentScreen === 'coach') render();
   },
   recomputeBestNow() {
     const loc = this.bestNow.userLocation; if (!loc) return;
@@ -1364,7 +1364,7 @@ function getUserLocation() {
 let _morningTimers = { ui: null, live: null, fc: null };
 function startMorningTimers() {
   stopMorningTimers();
-  _morningTimers.ui = setInterval(() => { if (currentScreen === 'morning') { Data.recomputeBestNow(); renderMorning(); } }, BEST_SITE_UI_REFRESH_MS);
+  _morningTimers.ui = setInterval(() => { if (currentScreen === 'morning' || currentScreen === 'coach') { Data.recomputeBestNow(); render(); } }, BEST_SITE_UI_REFRESH_MS);
   _morningTimers.live = setInterval(() => { if (navigator.onLine && Object.keys(Data.bestNow.bundle).length) Data.reloadBestStations(); }, LIVE_STATION_REFRESH_MS);
   _morningTimers.fc = setInterval(() => { if (navigator.onLine) Data.loadBestSiteNow(); }, FORECAST_REFRESH_MS);
 }
@@ -1389,7 +1389,7 @@ function render() {
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
     profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute,
     windows: renderFlightWindows, compare: renderCompare, morning: renderMorning,
-    why: renderWhy, trust: renderTrust, feedback: renderFeedback, windymap: renderWindyMap, more: renderMore
+    why: renderWhy, trust: renderTrust, feedback: renderFeedback, windymap: renderWindyMap, coach: renderCoach, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -1588,6 +1588,8 @@ function renderWindyMap() {
 function renderMore() {
   const el = $('#screen-more');
   const items = [
+    ['morning', '🧭', 'Beste Option jetzt', 'Umkreis-Scan & Ranking aller Gebiete'],
+    ['exam', '🎓', 'Lernen', 'ExamTrainer & Kontextfragen'],
     ['wind', '🌬️', 'Wind-Intelligenz', 'Höhenwind, Gradient, Scherung, Föhn, Windprofil'],
     ['thermal', '🔥', 'Thermik & Emagram', 'Thermikfenster, Basis, CAPE, Sounding'],
     ['pressure', '🎚️', 'Druck (Hoch/Tief)', 'Live-Lage, Gradient + komplettes Druckwissen'],
@@ -1614,6 +1616,68 @@ function renderMore() {
     </div>`).join('')}
   </div>
   <div class="dim small" style="text-align:center;margin-top:14px">SKYWORTHY · Elite Paragliding Decision Cockpit</div>`;
+}
+
+/* ---------- COACH — maximal reduced flight-instructor bot ---------- */
+function buildCoachScript() {
+  const site = siteById(Store.state.selectedSiteId);
+  const d = Data.decision();
+  const r = Data.bestNow.result, best = r && r.bestSite;
+  const trust = (d && d.best) ? currentTrust() : null;
+  const lines = [];
+  const beginner = ['student', 'beginner'].includes(Store.state.pilot.level);
+  if (best) {
+    const noGo = best.status === 'red' || best.status === 'black';
+    if (noGo) {
+      lines.push({ ic: sIc[best.status], t: `Heute nicht fliegen. Selbst die beste Option (${best.siteName}) ist ${ampelWord(best.status)}.` });
+      if (best.risks && best.risks[0]) lines.push({ ic: '⚠️', t: `Grund: ${best.risks[0]}.` });
+      if (r.globalWarning) lines.push({ ic: '🚫', t: r.globalWarning });
+      lines.push({ ic: '🎓', t: 'Nutz den Tag fürs Lernen — und check morgen wieder.' });
+    } else {
+      lines.push({ ic: sIc[best.status], t: `Heute geht's. Fahr zu ${best.siteName}${best.bestTakeoff ? ' / ' + best.bestTakeoff : ''}.` });
+      lines.push({ ic: '🕘', t: `Starte zwischen ${best.bestStartWindow.from} und ${best.bestStartWindow.to} Uhr.` });
+      lines.push({ ic: '🪂', t: `Geplant: ${best.expectedFlightType}. ${best.distanceKm} km Anfahrt.` });
+      const who = beginner ? best.beginnerStatus : best.expertStatus;
+      lines.push({ ic: '🎓', t: `Für dich: ${ampelWord(who)}.${beginner && best.beginnerStatus !== 'green' ? ' Nimm nur das ruhigste Fenster.' : ''}` });
+      if (best.risks && best.risks[0]) lines.push({ ic: '⚠️', t: `Achte auf: ${best.risks[0]}.` });
+      if (best.nextCriticalChange) lines.push({ ic: '⏱️', t: `Nicht zu spät: ab ${best.nextCriticalChange.time} ${best.nextCriticalChange.reason}.` });
+      lines.push({ ic: '👍', t: 'Vor dem Start: Livewind und Himmel prüfen. Im Zweifel nicht starten.' });
+    }
+    if (best.confidencePercent != null) lines.push({ ic: '🛡️', t: `Verlässlichkeit dieser Aussage: ${best.confidencePercent}%.` });
+  } else if (d && d.best) {
+    const b = buildBriefing(d, site);
+    b.sentences.forEach(s => lines.push({ ic: '🎧', t: s }));
+  } else {
+    lines.push({ ic: '🎧', t: 'Einen Moment — ich hole die aktuellen Bedingungen…' });
+  }
+  return { lines, status: best ? best.status : (d ? d.status : 'gray') };
+}
+function renderCoach() {
+  const el = $('#screen-coach'); if (!el) return;
+  const bn = Data.bestNow;
+  const sc = buildCoachScript();
+  const c = 's-' + (sc.status === 'gray' ? 'cyan' : sc.status);
+  window.__briefingText = sc.lines.map(l => l.t).join(' ');
+  const bubbles = sc.lines.map((l, i) => `<div style="display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;opacity:0;animation:fade .35s ease forwards;animation-delay:${i * 0.06}s">
+    <div style="font-size:20px;line-height:1.3;width:26px;text-align:center;flex:none">${l.ic}</div>
+    <div style="background:var(--card2);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:11px 14px;font-size:16px;line-height:1.5">${esc(l.t)}</div>
+  </div>`).join('');
+  el.innerHTML = `
+  <div class="statusborder ${c}" style="border:0;border-top:3px solid var(--c);margin:2px -14px 0;padding:0"></div>
+  <div style="display:flex;align-items:center;gap:10px;margin:16px 2px 14px">
+    <div style="width:42px;height:42px;border-radius:50%;background:var(--card2);border:1px solid var(--line);display:grid;place-items:center;font-size:22px;box-shadow:0 0 16px color-mix(in srgb,var(--c) 40%,transparent)">🎧</div>
+    <div><div style="font-weight:800;letter-spacing:.3px">Dein Fluglehrer</div><div class="small" style="color:var(--c);font-weight:700">${bn.loading && !bn.result ? 'analysiert…' : sc.status === 'gray' ? 'bereit' : ampelWord(sc.status)}</div></div>
+    <button class="iconbtn" style="margin-left:auto;width:auto;padding:0 14px;height:40px;font-weight:700" onclick="speakBriefing(this)" id="speakBtn">▶ Vorlesen</button>
+  </div>
+  <div style="margin-bottom:18px">${bubbles}</div>
+  <div class="seg" style="overflow-x:auto;flex-wrap:nowrap">
+    <button onclick="go('why')">💡 Warum?</button>
+    <button onclick="go('morning')">📍 Alle Optionen</button>
+    <button onclick="go('cockpit')">🛩️ Details</button>
+    <button onclick="go('feedback')">🪂 Feedback</button>
+    <button onclick="go('more')">⊕ Mehr</button>
+  </div>
+  <div class="dim small" style="text-align:center;margin-top:14px">${bn.fetchedAt ? 'Aktualisiert vor ' + Time.fmtAge(bn.fetchedAt) : ''} · ${esc((bn.userLocation && bn.userLocation.source) || '')} · ${bn.radiusKm} km</div>`;
 }
 
 /* ---------- MORNING / BEST SITE NOW (killer feature) ---------- */
@@ -2813,12 +2877,12 @@ function capeTimelineSVG(agg, dayOffset) {
 /* ============================================================
    ROUTER + ACTIONS + INIT
    ============================================================ */
-const PRIMARY = ['morning', 'cockpit', 'sites', 'live', 'exam', 'more'];
-let currentScreen = 'morning';
-let lastPrimary = 'morning';
+const PRIMARY = ['coach', 'cockpit', 'sites', 'live', 'more'];
+let currentScreen = 'coach';
+let lastPrimary = 'coach';
 function go(screen) {
   if (currentScreen === 'route' && screen !== 'route') destroyRoute();
-  if (currentScreen === 'morning' && screen !== 'morning') stopMorningTimers();
+  if ((currentScreen === 'morning' || currentScreen === 'coach') && !(screen === 'morning' || screen === 'coach')) stopMorningTimers();
   currentScreen = screen;
   if (PRIMARY.includes(screen)) lastPrimary = screen;
   $$('.screen').forEach(s => s.classList.remove('on'));
@@ -2827,7 +2891,7 @@ function go(screen) {
   const navTarget = PRIMARY.includes(screen) ? screen : 'more';
   $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.screen === navTarget));
   const back = $('#backBtn'); if (back) back.style.display = PRIMARY.includes(screen) ? 'none' : 'grid';
-  if (screen === 'morning') { startMorningTimers(); if (!Data.bestNow.result && !Data.bestNow.loading) Data.loadBestSiteNow(); }
+  if (screen === 'morning' || screen === 'coach') { startMorningTimers(); if (!Data.bestNow.result && !Data.bestNow.loading) Data.loadBestSiteNow(); }
   window.scrollTo(0, 0);
   render();
 }
@@ -2911,7 +2975,7 @@ function init() {
   Data.startAutoRefresh();
   Data.loadForecast(true);
   render();
-  if (currentScreen === 'morning') { startMorningTimers(); Data.loadBestSiteNow(); }
+  if (currentScreen === 'morning' || currentScreen === 'coach') { startMorningTimers(); Data.loadBestSiteNow(); }
   if (!Store.state.onboarded) showOnboarding();
 }
 
