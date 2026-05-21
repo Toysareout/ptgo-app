@@ -9,7 +9,7 @@ const path = require('path');
 
 const APP = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8')
   .replace('if (!(document.body', 'if (false && !(document.body')   // disable auto-start
-  + '\n;globalThis.__T = { Store, Learn, Data, SITES, render, go, currentScreen: () => currentScreen, buildAggregation, calculateFlightDecision };';
+  + '\n;globalThis.__T = { Store, Learn, Data, SITES, Providers, render, go, currentScreen: () => currentScreen, buildAggregation, calculateFlightDecision };';
 
 /* ---- realistic mocked payloads ---- */
 const N = 48;
@@ -66,8 +66,11 @@ function pioupiouJSON(lat, lon) {
     { id: 102, meta: { name: 'Testtal' }, location: { latitude: lat - 0.02, longitude: lon - 0.01 }, measurements: { date: now, wind_heading: 50, wind_speed_avg: 9, wind_speed_max: 15 } }
   ] };
 }
+let FAIL = null; // null | 'all' | 'pioupiou'  (toggled by the degradation tests)
 function mockFetch(url) {
   const u = String(url);
+  if (FAIL === 'all') return Promise.reject(new Error('network down'));
+  if (FAIL === 'pioupiou' && u.includes('api.pioupiou.fr')) return Promise.reject(new Error('pioupiou down'));
   let body;
   if (u.includes('api.pioupiou.fr')) body = pioupiouJSON(47.66, 11.50);
   else if (u.includes('current=pressure_msl')) { const lats = (new URL(u)).searchParams.get('latitude').split(','); body = lats.map(() => ({ current: { pressure_msl: 1016 + Math.random() * 4 } })); }
@@ -148,6 +151,16 @@ const SCREENS = ['morning', 'cockpit', 'sites', 'detail', 'live', 'wind', 'therm
   try { A.Data.bestNow.radiusKm = 75; A.Data.recomputeBestNow(); A.go('morning'); ok('radius recompute', true); } catch (e) { fails++; checks++; console.log('  ✗ radius ' + e.message); }
   try { const before = A.Learn.data.feedback.length; A.Learn.recordFullFeedback({ siteId: 'brauneck', forecastTime: new Date().toISOString(), wasFlyable: true, actualWindFeeling: 'stronger', actualGustFeeling: 'much_stronger', thermalFeeling: 'as_forecast', turbulenceFeeling: 'sporty', appRecommendationWasHelpful: true, wouldFlyAgain: true }); ok('feedback stored + learns', A.Learn.data.feedback.length === before + 1 && A.Learn.data.personal.samples > 0); } catch (e) { fails++; checks++; console.log('  ✗ feedback ' + e.message); }
   try { A.Data.recomputeBestNow(); ok('recompute after learning', !!A.Data.bestNow.result); } catch (e) { fails++; checks++; console.log('  ✗ recompute ' + e.message); }
+
+  console.log('— degradation / resilience —');
+  // Pioupiou down → fall back to demo stations, no crash
+  try { FAIL = 'pioupiou'; A.Providers._ppCache = null; /* expire cache so the outage is real */ await A.Data.refreshStations(); ok('pioupiou failure → demo fallback', A.Data.stations.list.length > 0 && A.Data.stations.source === 'Demo', A.Data.stations.source); } catch (e) { fails++; checks++; console.log('  ✗ pioupiou-fallback ' + e.message); }
+  // full network outage → loadForecast records error, screens still render (old data), no throw
+  try { FAIL = 'all'; await A.Data.loadForecast(true); ok('network outage handled (error set, no throw)', typeof A.Data.forecast.error === 'string' && A.Data.forecast.error.length > 0, 'error=' + A.Data.forecast.error); A.go('cockpit'); ok('cockpit renders during outage', !/Render-Fehler/.test((elCache['#screen-cockpit'] || {}).innerHTML || '')); } catch (e) { fails++; checks++; console.log('  ✗ outage ' + e.message); }
+  // best-site scan with all fetches failing → graceful warning, no throw
+  try { await A.Data.loadBestSiteNow(); const r = A.Data.bestNow.result; A.go('morning'); ok('morning handles empty scan', !!r && (!!r.globalWarning || r.rankedSites.length >= 0) && !/Render-Fehler/.test((elCache['#screen-morning'] || {}).innerHTML || '')); } catch (e) { fails++; checks++; console.log('  ✗ empty-scan ' + e.message); }
+  // recover
+  try { FAIL = null; await A.Data.loadForecast(true); ok('recovers after outage', !A.Data.forecast.error && !!A.Data.forecast.agg); } catch (e) { fails++; checks++; console.log('  ✗ recover ' + e.message); }
 
   console.log(`\n${fails ? '✗ FAIL' : '✓ PASS'} — ${checks - fails}/${checks} checks`);
   process.exit(fails ? 1 : 0);
