@@ -104,16 +104,6 @@ const Learn = {
   data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 }, providerReality: {} },
   load() { try { const raw = JSON.parse(localStorage.getItem('skyworthy.learn') || 'null'); if (raw && raw.v) this.data = Object.assign(this.data, raw); } catch (e) { /* ignore */ } },
   save() { try { localStorage.setItem('skyworthy.learn', JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
-  // ForecastRealityHistory: log forecast vs strongest live station (max 1/site/30min)
-  logForecastReality(siteId, d, stations) {
-    if (!d || !d.best || !stations || !stations.length) return;
-    const st = stations.reduce((m, s) => (s.gustKmh > m.gustKmh ? s : m));
-    const h = d.best.h, now = Date.now();
-    if (this.data.forecastReality.some(x => x.siteId === siteId && now - x.ts < 30 * 60000)) return;
-    this.data.forecastReality.push({ ts: now, siteId, fGust: round(h.gustKmh), lGust: st.gustKmh, fWind: round(h.windKmh), lWind: st.windSpeedKmh, devGust: Math.abs(st.gustKmh - h.gustKmh), devWind: Math.abs(st.windSpeedKmh - h.windKmh) });
-    if (this.data.forecastReality.length > 400) this.data.forecastReality = this.data.forecastReality.slice(-400);
-    this.save();
-  },
   // ModelReliabilityScore per site (1 = forecast tends to match reality)
   modelReliability(siteId) {
     const rows = this.data.forecastReality.filter(x => x.siteId === siteId).slice(-20);
@@ -154,18 +144,22 @@ const Learn = {
   // LocalPatternMemory — derive recurring biases from feedback at a site
   notePattern(siteId, key) { const m = this.data.patterns[siteId] || (this.data.patterns[siteId] = {}); m[key] = (m[key] || 0) + 1; this.save(); },
   patternMemory(siteId) { return this.data.patterns[siteId] || {}; },
-  // per-provider ModelReliabilityScore: log each model's gust vs strongest live station
-  logProviderReality(siteId, consensusRows, stations) {
-    if (!consensusRows || !consensusRows.length || !stations || !stations.length) return;
-    const live = stations.reduce((m, s) => (s.gustKmh > m.gustKmh ? s : m));
-    const bag = this.data.providerReality[siteId] || (this.data.providerReality[siteId] = {});
+  // SELF-LEARNING core: observe forecast & every model against the weighted
+  // aggregate of ALL nearby stations. Runs automatically on each data tick.
+  observe(siteId, fGust, fWind, rows, stations) {
+    if (!stations || !stations.length) return;
     const now = Date.now();
-    if (bag._ts && now - bag._ts < 30 * 60000) return; bag._ts = now;
-    consensusRows.forEach(r => {
-      const arr = bag[r.model] || (bag[r.model] = []);
-      arr.push(Math.abs(r.gust - live.gustKmh));
-      if (arr.length > 25) bag[r.model] = arr.slice(-25);
-    });
+    this._lastObs = this._lastObs || {};
+    if (this._lastObs[siteId] && now - this._lastObs[siteId] < 12 * 60000) return; // accumulate a few times/hour
+    this._lastObs[siteId] = now;
+    const agg = stationAggregate(stations);
+    if (!agg.n) return;
+    this.data.forecastReality.push({ ts: now, siteId, fGust: round(fGust), lGust: round(agg.gust), fWind: round(fWind), lWind: round(agg.wind), devGust: Math.abs(agg.gust - fGust), devWind: Math.abs(agg.wind - fWind), stations: agg.n });
+    if (this.data.forecastReality.length > 500) this.data.forecastReality = this.data.forecastReality.slice(-500);
+    if (rows && rows.length) {
+      const bag = this.data.providerReality[siteId] || (this.data.providerReality[siteId] = {});
+      rows.forEach(r => { const a = bag[r.model] || (bag[r.model] = []); a.push(Math.abs(r.gust - agg.gust)); if (a.length > 30) bag[r.model] = a.slice(-30); });
+    }
     this.save();
   },
   providerReliability(siteId) {
@@ -188,6 +182,18 @@ const Learn = {
   }
 };
 function siteName(id) { const s = SITES.find(x => x.id === id); return s ? s.name : id; }
+// weighted aggregate of ALL stations (by reliability, freshness, proximity)
+function stationAggregate(stations) {
+  let wg = 0, ww = 0, sw = 0, n = 0;
+  (stations || []).forEach(s => {
+    if (s.gustKmh == null || s.windSpeedKmh == null) return;
+    const ageMin = s.updatedAt ? Time.ageMin(s.updatedAt) : 0;
+    const w = (s.reliabilityScore || 0.6) * Math.max(0.2, 1 - ageMin / 120) / (1 + (s.distanceKm || 0) / 20);
+    wg += s.gustKmh * w; ww += s.windSpeedKmh * w; sw += w; n++;
+  });
+  if (sw <= 0) return { gust: 0, wind: 0, n: 0 };
+  return { gust: wg / sw, wind: ww / sw, n };
+}
 
 // BEST SITE NOW refresh cadence (per spec)
 const BEST_SITE_UI_REFRESH_MS = 2 * 1000;
@@ -1222,9 +1228,16 @@ const Data = {
     await this.refreshStations();
     this.loadModels();
     this.loadPressureField();
-    try { Learn.logForecastReality(site.id, this.decision(), this.stations.list); } catch (e) { /* ignore */ }
+    this.observeLearning();
     maybeAlert();
     render();
+  },
+  // self-learning tick: compare forecast + every model against ALL stations
+  observeLearning() {
+    if (!this.forecast.agg) return;
+    const site = siteById(Store.state.selectedSiteId);
+    const d = this.decision(); if (!d || !d.best) return;
+    try { Learn.observe(site.id, d.best.h.gustKmh, d.best.h.windKmh, this.models.consensus ? this.models.consensus.rows : null, this.stations.list); } catch (e) { /* ignore */ }
   },
   // BEST SITE NOW: scan all sites in radius, fetch per-site weather + live, rank
   async loadBestSiteNow() {
@@ -1273,7 +1286,7 @@ const Data = {
       this.models.consensus = buildModelConsensus(res, Store.state.day);
       this.models.fetchedAt = new Date().toISOString();
       this.models.error = null;
-      try { Learn.logProviderReality(siteById(Store.state.selectedSiteId).id, this.models.consensus.rows, this.stations.list); } catch (e) { /* ignore */ }
+      this.observeLearning();
     } catch (e) { this.models.error = e.message; }
     render();
   },
@@ -1284,6 +1297,7 @@ const Data = {
     if (real && real.length) { this.stations.list = real; this.stations.source = 'Pioupiou'; }
     else { this.stations.list = Providers.liveStations(site, this.forecast.agg); this.stations.source = 'Demo'; }
     this.stations.fetchedAt = new Date().toISOString();
+    this.observeLearning();
   },
   decision() {
     if (!this.forecast.agg) return null;
@@ -1739,8 +1753,8 @@ function renderTrust() {
   </div>
   ${t.decisiveSignals.length ? `<div class="card s-green"><div class="h" style="margin-top:0">Spricht dafür</div>${t.decisiveSignals.map(s => `<div class="risk"><div class="ic">✅</div><div class="tx">${esc(s)}</div></div>`).join('')}</div>` : ''}
   ${(t.conflictingSignals.length || t.missingData.length || t.staleDataWarnings.length) ? `<div class="card s-orange"><div class="h" style="margin-top:0">Vorsicht</div>${[...t.conflictingSignals, ...t.missingData, ...t.staleDataWarnings].map(s => `<div class="risk"><div class="ic">⚠️</div><div class="tx">${esc(s)}</div></div>`).join('')}</div>` : ''}
-  <div class="card"><div class="h" style="margin-top:0">Modell-Verlässlichkeit · ${esc(site.name)}</div>
-    <div class="small muted">${rel.reliability != null ? `Aus ${rel.samples} Vergleichen: Prognose-Treffer ~${round(rel.reliability * 100)}% (Ø Böen-Abweichung ${rel.avgGustDev} km/h). Wird mit jedem Tag genauer.` : 'Noch zu wenige Vergleiche — SKYWORTHY lernt die lokale Modellgüte mit der Zeit.'}</div>
+  <div class="card"><div class="h" style="margin-top:0">Selbstlernende Modell-Verlässlichkeit · ${esc(site.name)}</div>
+    ${(() => { const rows = Learn.data.forecastReality.filter(x => x.siteId === site.id); const avgN = rows.length ? round(rows.reduce((s, x) => s + (x.stations || 1), 0) / rows.length, 1) : 0; return `<div class="small muted">${rel.reliability != null ? `Aus ${rel.samples} Vergleichen gegen ⌀ ${avgN} Live-Stationen: Prognose-Treffer ~${round(rel.reliability * 100)}% (Ø Böen-Abweichung ${rel.avgGustDev} km/h). SKYWORTHY vergleicht laufend alle Stationen und wird mit jedem Tag genauer.` : 'SKYWORTHY vergleicht laufend alle Live-Stationen im Umkreis mit Prognose & Modellen — das Ranking entsteht über die nächsten Tage automatisch.'}</div>`; })()}
     ${(() => { const pr = Learn.providerReliability(site.id); if (!pr.length) return '<div class="small dim" style="margin-top:8px">Pro-Modell-Ranking entsteht nach einigen Tagen mit Live-Abgleich.</div>';
       const NAMES = { icon_seamless: 'ICON', ecmwf_ifs025: 'ECMWF', gfs_seamless: 'GFS', meteofrance_seamless: 'AROME', gem_seamless: 'GEM' };
       return `<div style="margin-top:10px">${pr.map((p, i) => `<div class="risk"><div class="ic">${i === 0 ? '🥇' : i === 1 ? '🥈' : '•'}</div><div class="tx"><b>${esc(NAMES[p.model] || p.model)} — ${round(p.score * 100)}%</b>Ø Böen-Abweichung ${p.avgGustDev} km/h · n=${p.samples}</div></div>`).join('')}
