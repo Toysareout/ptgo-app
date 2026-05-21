@@ -101,7 +101,7 @@ const Store = {
    (SiteDNA lives in SITE_DNA + siteDNA(); augmented here over time.)
    ============================================================ */
 const Learn = {
-  data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 } },
+  data: { v: 1, forecastReality: [], feedback: [], patterns: {}, personal: { gustAdj: 0, windAdj: 0, samples: 0 }, providerReality: {} },
   load() { try { const raw = JSON.parse(localStorage.getItem('skyworthy.learn') || 'null'); if (raw && raw.v) this.data = Object.assign(this.data, raw); } catch (e) { /* ignore */ } },
   save() { try { localStorage.setItem('skyworthy.learn', JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
   // ForecastRealityHistory: log forecast vs strongest live station (max 1/site/30min)
@@ -154,6 +154,27 @@ const Learn = {
   // LocalPatternMemory — derive recurring biases from feedback at a site
   notePattern(siteId, key) { const m = this.data.patterns[siteId] || (this.data.patterns[siteId] = {}); m[key] = (m[key] || 0) + 1; this.save(); },
   patternMemory(siteId) { return this.data.patterns[siteId] || {}; },
+  // per-provider ModelReliabilityScore: log each model's gust vs strongest live station
+  logProviderReality(siteId, consensusRows, stations) {
+    if (!consensusRows || !consensusRows.length || !stations || !stations.length) return;
+    const live = stations.reduce((m, s) => (s.gustKmh > m.gustKmh ? s : m));
+    const bag = this.data.providerReality[siteId] || (this.data.providerReality[siteId] = {});
+    const now = Date.now();
+    if (bag._ts && now - bag._ts < 30 * 60000) return; bag._ts = now;
+    consensusRows.forEach(r => {
+      const arr = bag[r.model] || (bag[r.model] = []);
+      arr.push(Math.abs(r.gust - live.gustKmh));
+      if (arr.length > 25) bag[r.model] = arr.slice(-25);
+    });
+    this.save();
+  },
+  providerReliability(siteId) {
+    const bag = this.data.providerReality[siteId] || {};
+    return Object.keys(bag).filter(k => k !== '_ts').map(model => {
+      const arr = bag[model]; const avg = arr.reduce((s, x) => s + x, 0) / arr.length;
+      return { model, samples: arr.length, avgGustDev: round(avg, 1), score: clamp(1 - avg / 30, 0.1, 0.99) };
+    }).filter(x => x.samples >= 3).sort((a, b) => b.score - a.score);
+  },
   detectPatterns(siteId) {
     const fb = this.data.feedback.filter(f => f.siteId === siteId && f.actualGustFeeling);
     const out = [];
@@ -955,12 +976,14 @@ function dualDecision() {
 }
 
 /* ---- TRUST ENGINE: how dependable is this decision? ---- */
-function calculateTrust({ stations, consensus, mismatches, dataAgeMin }) {
+function calculateTrust({ stations, consensus, mismatches, dataAgeMin, reliability }) {
   const dataFreshness = clamp(100 - dataAgeMin * 4, 0, 100);
   const modelAgreement = consensus ? consensus.agreement : 55;
   const liveScore = stations && stations.length ? clamp(55 + stations.length * 12, 0, 100) : 25;
   const realityScore = mismatches && mismatches.length ? clamp(100 - mismatches.reduce((s, m) => s + m.deviationPercent, 0), 0, 100) : (stations && stations.length ? 100 : 70);
-  const confidence = Math.round(dataFreshness * 0.25 + modelAgreement * 0.30 + liveScore * 0.20 + realityScore * 0.25);
+  let confidence = Math.round(dataFreshness * 0.25 + modelAgreement * 0.30 + liveScore * 0.20 + realityScore * 0.25);
+  // learned local model reliability nudges confidence (±8) once enough samples exist
+  if (reliability != null) confidence = clamp(Math.round(confidence + (reliability - 0.6) * 20), 0, 99);
   const decisive = [], conflicting = [], missing = [], stale = [];
   if (modelAgreement >= 70) decisive.push('Wettermodelle weitgehend einig'); else if (modelAgreement < 45) conflicting.push('Modelle widersprechen sich');
   if (stations && stations.length) decisive.push(`${stations.length} Live-Station(en) im Umkreis`); else missing.push('Keine Live-Stationen im Umkreis');
@@ -1250,6 +1273,7 @@ const Data = {
       this.models.consensus = buildModelConsensus(res, Store.state.day);
       this.models.fetchedAt = new Date().toISOString();
       this.models.error = null;
+      try { Learn.logProviderReality(siteById(Store.state.selectedSiteId).id, this.models.consensus.rows, this.stations.list); } catch (e) { /* ignore */ }
     } catch (e) { this.models.error = e.message; }
     render();
   },
@@ -1667,7 +1691,9 @@ function currentTrust() {
   const d = Data.decision();
   const mism = d && d.best ? buildForecastReality(d, Data.stations.list) : [];
   const age = Data.forecast.fetchedAt ? Time.ageMin(Data.forecast.fetchedAt) : 0;
-  return calculateTrust({ stations: Data.stations.list, consensus: Data.models.consensus, mismatches: mism, dataAgeMin: age });
+  const pr = Learn.providerReliability(siteById(Store.state.selectedSiteId).id);
+  const reliability = pr.length ? pr[0].score : null;
+  return calculateTrust({ stations: Data.stations.list, consensus: Data.models.consensus, mismatches: mism, dataAgeMin: age, reliability });
 }
 function renderWhy() {
   const el = $('#screen-why'); const agg = Data.forecast.agg; const site = siteById(Store.state.selectedSiteId); const d = Data.decision();
@@ -1715,6 +1741,10 @@ function renderTrust() {
   ${(t.conflictingSignals.length || t.missingData.length || t.staleDataWarnings.length) ? `<div class="card s-orange"><div class="h" style="margin-top:0">Vorsicht</div>${[...t.conflictingSignals, ...t.missingData, ...t.staleDataWarnings].map(s => `<div class="risk"><div class="ic">⚠️</div><div class="tx">${esc(s)}</div></div>`).join('')}</div>` : ''}
   <div class="card"><div class="h" style="margin-top:0">Modell-Verlässlichkeit · ${esc(site.name)}</div>
     <div class="small muted">${rel.reliability != null ? `Aus ${rel.samples} Vergleichen: Prognose-Treffer ~${round(rel.reliability * 100)}% (Ø Böen-Abweichung ${rel.avgGustDev} km/h). Wird mit jedem Tag genauer.` : 'Noch zu wenige Vergleiche — SKYWORTHY lernt die lokale Modellgüte mit der Zeit.'}</div>
+    ${(() => { const pr = Learn.providerReliability(site.id); if (!pr.length) return '<div class="small dim" style="margin-top:8px">Pro-Modell-Ranking entsteht nach einigen Tagen mit Live-Abgleich.</div>';
+      const NAMES = { icon_seamless: 'ICON', ecmwf_ifs025: 'ECMWF', gfs_seamless: 'GFS', meteofrance_seamless: 'AROME', gem_seamless: 'GEM' };
+      return `<div style="margin-top:10px">${pr.map((p, i) => `<div class="risk"><div class="ic">${i === 0 ? '🥇' : i === 1 ? '🥈' : '•'}</div><div class="tx"><b>${esc(NAMES[p.model] || p.model)} — ${round(p.score * 100)}%</b>Ø Böen-Abweichung ${p.avgGustDev} km/h · n=${p.samples}</div></div>`).join('')}
+      <div class="small dim" style="margin-top:6px">${esc((NAMES[pr[0].model] || pr[0].model))} lag hier zuletzt am nächsten an der Realität.</div></div>`; })()}
     ${cons ? `<div class="small dim" style="margin-top:8px">Modelle aktuell: Konsens ${cons.agreement}%${cons.conflicts.length ? ' · ⚠️ ' + esc(cons.conflicts[0]) : ''}.</div>` : ''}
   </div>
   <div class="small dim" style="margin-top:8px">${esc(t.trustExplanationExpert)}</div>`;
