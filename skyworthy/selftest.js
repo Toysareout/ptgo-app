@@ -17,29 +17,31 @@ const T = [];
 const base = new Date(); base.setHours(0, 0, 0, 0);
 for (let i = 0; i < N; i++) T.push(new Date(base.getTime() + i * 3600000).toISOString().slice(0, 16));
 function diurnal(i, lo, hi) { const h = i % 24; const f = Math.max(0, Math.sin((h - 6) / 12 * Math.PI)); return lo + (hi - lo) * f; }
-function forecastJSON() {
+function forecastJSON(opts) {
+  opts = opts || {};
+  const drop = new Set(opts.drop || []);
   const H = { time: T };
-  const set = (k, fn) => H[k] = T.map((_, i) => fn(i));
+  const set = (k, fn) => { if (!drop.has(k)) H[k] = T.map((_, i) => fn(i)); };
   set('temperature_2m', i => round(diurnal(i, 4, 18)));
   set('relative_humidity_2m', i => 60);
   set('dew_point_2m', i => 5);
-  set('precipitation', i => 0);
-  set('precipitation_probability', i => 5);
+  set('precipitation', i => opts.precip != null ? opts.precip : 0);
+  set('precipitation_probability', i => opts.precipP != null ? opts.precipP : 5);
   set('cloud_cover', i => 30); set('cloud_cover_low', i => 10); set('cloud_cover_mid', i => 15); set('cloud_cover_high', i => 20);
-  set('wind_speed_10m', i => round(diurnal(i, 6, 16)));
-  set('wind_direction_10m', i => 40);
-  set('wind_gusts_10m', i => round(diurnal(i, 9, 24)));
-  set('cape', i => round(diurnal(i, 30, 700)));
+  set('wind_speed_10m', i => round(diurnal(i, 6, opts.wind != null ? opts.wind : 16)));
+  set('wind_direction_10m', i => opts.dir != null ? opts.dir : 40);
+  set('wind_gusts_10m', i => round(diurnal(i, 9, opts.gust != null ? opts.gust : 24)));
+  set('cape', i => round(diurnal(i, 30, opts.cape != null ? opts.cape : 700)));
   set('freezing_level_height', i => 3200);
   set('surface_pressure', i => 955);
-  set('pressure_msl', i => 1018);
+  set('pressure_msl', i => opts.pmsl != null ? opts.pmsl : 1018);
   set('wind_speed_80m', i => round(diurnal(i, 10, 22)));
-  set('wind_direction_80m', i => 45);
+  set('wind_direction_80m', i => opts.dir != null ? opts.dir : 45);
   set('wind_speed_120m', i => round(diurnal(i, 12, 26)));
   set('wind_speed_180m', i => round(diurnal(i, 14, 30)));
   [925, 850, 800, 700, 600, 500].forEach((p, k) => {
-    set(`wind_speed_${p}hPa`, i => 16 + k * 6);
-    set(`wind_direction_${p}hPa`, i => 45 + k * 6);
+    set(`wind_speed_${p}hPa`, i => (opts.upperWind != null ? opts.upperWind : 16) + k * 6);
+    set(`wind_direction_${p}hPa`, i => (opts.dir != null ? opts.dir : 45) + k * 6);
     set(`geopotential_height_${p}hPa`, i => [800, 1500, 2000, 3000, 4200, 5600][k]);
     set(`temperature_${p}hPa`, i => 6 - k * 6);
     set(`relative_humidity_${p}hPa`, i => 55 - k * 6);
@@ -123,6 +125,8 @@ function ok(name, cond, detail) { checks++; if (!cond) { fails++; console.log(' 
 const SCREENS = ['morning', 'cockpit', 'sites', 'detail', 'live', 'wind', 'thermal', 'cloud', 'pressure', 'models', 'route', 'windows', 'compare', 'why', 'trust', 'feedback', 'profile', 'exam', 'pro', 'more'];
 
 (async () => {
+  console.log('— deploy sync —');
+  try { const a = fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'); const b = fs.readFileSync(path.join(__dirname, '..', 'public', 'skyworthy.js'), 'utf8'); ok('public/skyworthy.js matches skyworthy/app.js', a === b, 'OUT OF SYNC — run: cp skyworthy/app.js public/skyworthy.js'); } catch (e) { fails++; checks++; console.log('  ✗ sync check ' + e.message); }
   A.Store.load(); A.Learn.load();
   console.log('— async data flows —');
   await A.Data.loadForecast(true);
@@ -151,6 +155,17 @@ const SCREENS = ['morning', 'cockpit', 'sites', 'detail', 'live', 'wind', 'therm
   try { A.Data.bestNow.radiusKm = 75; A.Data.recomputeBestNow(); A.go('morning'); ok('radius recompute', true); } catch (e) { fails++; checks++; console.log('  ✗ radius ' + e.message); }
   try { const before = A.Learn.data.feedback.length; A.Learn.recordFullFeedback({ siteId: 'brauneck', forecastTime: new Date().toISOString(), wasFlyable: true, actualWindFeeling: 'stronger', actualGustFeeling: 'much_stronger', thermalFeeling: 'as_forecast', turbulenceFeeling: 'sporty', appRecommendationWasHelpful: true, wouldFlyAgain: true }); ok('feedback stored + learns', A.Learn.data.feedback.length === before + 1 && A.Learn.data.personal.samples > 0); } catch (e) { fails++; checks++; console.log('  ✗ feedback ' + e.message); }
   try { A.Data.recomputeBestNow(); ok('recompute after learning', !!A.Data.bestNow.result); } catch (e) { fails++; checks++; console.log('  ✗ recompute ' + e.message); }
+
+  console.log('— edge cases (engine) —');
+  const pilot = A.Store.state.pilot;
+  const decide = (site, json, day) => A.calculateFlightDecision(A.buildAggregation(json, site), [], site, pilot, day || 0, null);
+  const brauneck = A.SITES.find(s => s.id === 'brauneck') || A.SITES[0];
+  try { const d = decide(brauneck, forecastJSON({ cape: 2800, precip: 3, gust: 55 })); ok('storm day → not flyable', ['orange', 'red', 'black'].includes(d.status), d.status); } catch (e) { fails++; checks++; console.log('  ✗ storm ' + e.message); }
+  try { const dir = (brauneck.dangerousWindDirections[0] === 'S' ? 195 : 200); const d = decide(brauneck, forecastJSON({ dir, wind: 22, upperWind: 45 })); ok('lee/dangerous direction → not green', d.status !== 'green', d.status); } catch (e) { fails++; checks++; console.log('  ✗ lee ' + e.message); }
+  try { const d = decide(brauneck, forecastJSON({ cape: 40, gust: 12, wind: 8 })); ok('no-thermal calm day → flyable + Abgleiter/Soaring', d.best && /Abgleiter|Soaring/.test(d.recommendedFlightType), d.recommendedFlightType + '/' + d.status); } catch (e) { fails++; checks++; console.log('  ✗ no-thermal ' + e.message); }
+  try { const d = decide(brauneck, forecastJSON({ drop: ['cape', 'wind_gusts_10m', 'cloud_cover_low', 'precipitation_probability'] })); ok('partial/missing fields → no crash, valid status', d && ['green', 'yellow', 'orange', 'red', 'black', 'gray'].includes(d.status), d && d.status); } catch (e) { fails++; checks++; console.log('  ✗ partial ' + e.message); }
+  try { const d = decide(brauneck, forecastJSON({}), 1); ok('tomorrow (day=1) decision works', !!(d && d.best), 'no best'); } catch (e) { fails++; checks++; console.log('  ✗ day1 ' + e.message); }
+  try { let allOk = true, bad = ''; for (const s of A.SITES) { const d = decide(s, forecastJSON({})); if (!d || !['green', 'yellow', 'orange', 'red', 'black', 'gray'].includes(d.status)) { allOk = false; bad = s.id; break; } } ok('all ' + A.SITES.length + ' sites decide cleanly', allOk, bad); } catch (e) { fails++; checks++; console.log('  ✗ all-sites ' + e.message); }
 
   console.log('— degradation / resilience —');
   // Pioupiou down → fall back to demo stations, no crash
