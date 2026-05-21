@@ -122,7 +122,7 @@ const A = ctx.__T;
 let fails = 0, checks = 0;
 function ok(name, cond, detail) { checks++; if (!cond) { fails++; console.log('  ✗ ' + name + (detail ? ' — ' + detail : '')); } else console.log('  ✓ ' + name); }
 
-const SCREENS = ['morning', 'cockpit', 'sites', 'detail', 'live', 'wind', 'thermal', 'cloud', 'pressure', 'models', 'route', 'windows', 'compare', 'why', 'trust', 'feedback', 'profile', 'exam', 'pro', 'more'];
+const SCREENS = ['morning', 'cockpit', 'sites', 'detail', 'live', 'wind', 'thermal', 'cloud', 'pressure', 'models', 'route', 'windows', 'compare', 'why', 'trust', 'feedback', 'windymap', 'profile', 'exam', 'pro', 'more'];
 
 (async () => {
   console.log('— deploy sync —');
