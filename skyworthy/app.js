@@ -1389,7 +1389,7 @@ function render() {
     wind: renderWind, thermal: renderThermal, cloud: renderCloud, models: renderModels,
     profile: renderProfile, exam: renderExam, pro: renderPro, pressure: renderPressure, route: renderRoute,
     windows: renderFlightWindows, compare: renderCompare, morning: renderMorning,
-    why: renderWhy, trust: renderTrust, feedback: renderFeedback, more: renderMore
+    why: renderWhy, trust: renderTrust, feedback: renderFeedback, windymap: renderWindyMap, more: renderMore
   };
   const cur = currentScreen;
   try { (map[cur] || renderCockpit)(); } catch (e) { console.error(e); const el = $('#screen-' + cur); if (el) el.innerHTML = `<div class="card">Render-Fehler: ${esc(e.message)}</div>`; }
@@ -1502,6 +1502,7 @@ function renderCockpit() {
     <button onclick="go('pressure')">🎚️ Druck</button>
     <button onclick="go('cloud')">☁️ Wolken</button>
     <button onclick="go('route')">🛰️ Flugweg 3D</button>
+    <button onclick="go('windymap')">🗺️ Windy</button>
     <button onclick="go('detail')">📋 Gebiet</button>
     <button onclick="go('models')">🧮 Modelle</button>
   </div>
@@ -1565,6 +1566,24 @@ function speakBriefing(btn) {
   window.speechSynthesis.speak(u);
 }
 
+/* ---------- WINDY PRO MAP (free official embed, no key) ---------- */
+function renderWindyMap() {
+  const el = $('#screen-windymap'); const site = siteById(Store.state.selectedSiteId);
+  const lat = site.lat.toFixed(4), lon = site.lon.toFixed(4);
+  const src = `https://embed.windy.com/embed2.html?lat=${lat}&lon=${lon}&detailLat=${lat}&detailLon=${lon}&zoom=10&level=surface&overlay=wind&product=ecmwf&menu=&message=true&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1`;
+  el.innerHTML = `
+  <div class="h" style="margin-top:6px">Profi-Windkarte (Windy) · ${esc(site.name)}</div>
+  <div class="small dim" style="margin:-4px 4px 10px">Offizielle Windy-Karte mit Partikelanimation — ergänzend zur SKYWORTHY-Analyse. Quelle: windy.com.</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <iframe title="Windy" src="${src}" loading="lazy" style="width:100%;height:64vh;min-height:380px;border:0;display:block"></iframe>
+  </div>
+  <div class="row">
+    <a class="btn sec" href="https://www.windy.com/${lat}/${lon}?${lat},${lon},10" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">In Windy öffnen</a>
+    <a class="btn sec" href="https://www.windy.com/webcams?${lat},${lon},11" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">📷 Webcams</a>
+  </div>
+  <div class="dim small" style="text-align:center;margin-top:8px">Eingebettet via offiziellem windy.com-Embed (kostenlos). SKYWORTHYs eigene Entscheidung bleibt maßgeblich.</div>`;
+}
+
 /* ---------- MEHR (hub) ---------- */
 function renderMore() {
   const el = $('#screen-more');
@@ -1579,6 +1598,7 @@ function renderMore() {
     ['trust', '🛡️', 'Datenqualität', 'Wie belastbar ist die Entscheidung?'],
     ['feedback', '🪂', 'Flug-Feedback', 'Nach dem Flug — die App lernt mit'],
     ['models', '🧮', 'Modellvergleich', 'ICON · ECMWF · GFS · AROME · GEM'],
+    ['windymap', '🗺️', 'Profi-Windkarte', 'Windy-Karte mit Partikelanimation'],
     ['route', '🛰️', 'Flugweg (3D)', 'Idealer Weg im 3D-Gelände, animiert'],
     ['detail', '📋', 'Gebiet-Details', 'Startplätze, Landeplätze, Gebiets-DNA'],
     ['profile', '👤', 'Pilotenprofil', 'Level, Limits, Warnungen, Datenquellen'],
