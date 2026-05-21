@@ -1,6 +1,10 @@
 {
   "name": "thetoysareout",
   "private": true,
+  "scripts": {
+    "test": "node skyworthy/selftest.js",
+    "test:skyworthy": "node skyworthy/selftest.js"
+  },
   "dependencies": {
     "stripe": "^14.0.0",
     "@supabase/supabase-js": "^2.39.0",
