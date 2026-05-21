@@ -1346,6 +1346,8 @@ function renderCockpit() {
     <div class="info"><b>${esc(live.name)}</b><div>${live.windSpeedKmh} km/h · Böen ${live.gustKmh} · ${Wind.toCompass(live.windDirection)}${live.elevation != null ? ' · ' + live.elevation + ' m' : ''}</div></div>
     <div class="r">${Time.fmtAge(live.updatedAt)}<br><span class="dim">${esc(Data.stations.source)}</span></div></div></div>` : ''}
 
+  ${webcamCard(site)}
+
   ${simple ? '' : advanced}
   ${simple ? '' : `<div class="reminder"><div class="i">${rem.i}</div><div><b>${esc(rem.t)}</b><br>${esc(rem.d)}</div></div>`}
 
@@ -1464,7 +1466,7 @@ function renderMorning() {
     <div class="small dim" style="margin-top:6px;text-align:left">Vertrauen: ${esc(b.trust.finalTrustLabel)} (${b.trust.confidencePercent}%)${b.trust.conflictingSignals.length ? ' · ⚠️ ' + esc(b.trust.conflictingSignals[0]) : ''}</div>
     <div class="row" style="margin-top:12px">
       <button class="btn" onclick="selectSite('${b.siteId}', true)">Details ansehen</button>
-      <button class="btn sec" onclick="selectSite('${b.siteId}'); go('windows')">Flugfenster</button>
+      <a class="btn sec" href="https://www.windy.com/webcams?${siteById(b.siteId).lat.toFixed(4)},${siteById(b.siteId).lon.toFixed(4)},11" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">📷 Webcams</a>
     </div>
   </div>`;
   const others = r.rankedSites.slice(1, 6).map(s => `<div class="card s-${s.status}" style="cursor:pointer" onclick="selectSite('${s.siteId}', true)">
@@ -1678,6 +1680,8 @@ function renderDetail() {
     <div class="small muted" style="margin-top:8px">${esc(site.thermalNotes)}</div>
     <div class="small muted" style="margin-top:4px"><b>Talwind:</b> ${esc(site.valleyWindNotes)}</div>
   </div>
+
+  ${webcamCard(site)}
 
   ${d ? `<div class="card ${statusClass(d.status)}"><div class="row">
     <div><div class="kpi"><div class="lbl">Heute</div><div class="val" style="color:var(--c)">${sIc[d.status]} ${d.overallScore}</div><div class="sub">${esc(d.recommendedFlightType)}</div></div></div>
@@ -2425,6 +2429,18 @@ function windArrow(deg) { return `<span class="windarrow" style="transform:rotat
 function loadingCard(t) { return `<div class="card loading"><span class="spin"></span>${esc(t)}</div>`; }
 function errorCard(t) { return `<div class="card s-red"><b style="color:var(--c)">Fehler beim Laden</b><div class="small muted" style="margin-top:6px">${esc(t)}</div><button class="btn" style="margin-top:12px" onclick="Data.loadForecast(true)">Erneut versuchen</button></div>`; }
 function banner(s, t) { return `<div class="banner s-${s}">${esc(t)}</div>`; }
+// live webcams near a site (coordinate-deep-link — embedding frames needs an API key)
+function webcamCard(site) {
+  const lat = site.lat.toFixed(4), lon = site.lon.toFixed(4);
+  const windy = `https://www.windy.com/webcams?${lat},${lon},11`;
+  const meteo = `https://www.meteoblue.com/de/wetter/webcams/${lat}N${lon}E`;
+  return `<div class="card"><div class="h" style="margin-top:0">📷 Live-Webcams · ${esc(site.name)}</div>
+    <div class="small muted">Echte Live-Bilder aus der Umgebung — vor dem Losfahren der Blick zum Himmel.</div>
+    <div class="row" style="margin-top:10px">
+      <a class="btn sec" href="${windy}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Windy Cams</a>
+      <a class="btn sec" href="${meteo}" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">meteoblue Cams</a>
+    </div></div>`;
+}
 
 /* ============================================================
    PREMIUM CHARTS — inline SVG (no chart lib needed)
@@ -2540,7 +2556,7 @@ function toggleFav(id) {
   const fav = Store.state.favorites.includes(id) ? Store.state.favorites.filter(x => x !== id) : [...Store.state.favorites, id];
   Store.set({ favorites: fav }); render();
 }
-function applyPreset(p) { Store.set({ pilot: { ...Store.state.pilot, ...p } }); render(); }
+function applyPreset(p) { Store.set({ pilot: { ...Store.state.pilot, ...p } }); Data.recomputeBestNow(); render(); }
 function savePilot() {
   const g = id => $('#' + id);
   Store.set({ pilot: {
@@ -2550,6 +2566,7 @@ function savePilot() {
     hoursTotal: +g('p-hours').value || 0, riskTolerance: g('p-risk').value,
     alpineExperience: g('p-alpine').checked, sivExperience: g('p-siv').checked
   } });
+  Data.recomputeBestNow();
   render();
   const btn = $('#screen-profile .btn'); if (btn) { btn.textContent = '✓ Gespeichert'; setTimeout(() => btn.textContent = 'Profil speichern', 1500); }
 }
@@ -2581,6 +2598,7 @@ function init() {
     $$('.daytoggle button').forEach(x => x.classList.remove('on')); b.classList.add('on');
     Store.set({ day: +b.dataset.day });
     if (Data.models.res) Data.models.consensus = buildModelConsensus(Data.models.res, Store.state.day);
+    Data.recomputeBestNow();
     render();
   }));
   // back button (sub-screens)
@@ -2597,6 +2615,10 @@ function init() {
   window.addEventListener('offline', () => { Store.set({ online: false }); renderTopbar(); });
   // periodic topbar age update
   setInterval(renderTopbar, 30 * 1000);
+  // keep passive data screens visibly live (ages, recomputed decision from cached data)
+  setInterval(() => {
+    if (['cockpit', 'detail', 'wind', 'thermal', 'cloud', 'pressure', 'models'].includes(currentScreen)) render();
+  }, 20 * 1000);
 
   Data.startAutoRefresh();
   Data.loadForecast(true);
