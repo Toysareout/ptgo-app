@@ -11136,6 +11136,29 @@ ALEX["nervensystem"] = {
               "Paragliding", "Tagebuch", "Training", "Natur", "klare Kommunikation"],
 }
 
+ALEX["wege"] = {
+    "base_note": "Base: 83083, Region Rosenheim / Chiemsee — Tor zu den Bergen. ~1 Std von München, ~3:50 von Wien.",
+    "routes": [
+        ("München · Tochter / Übergabe", "60 km", "~55 Min Auto"),
+        ("Wien · Arbeit", "375 km", "~3:50 Bahn / ~3:40 Auto"),
+        ("Chiemsee", "20 km", "~25 Min Auto"),
+        ("Tegernsee", "60 km", "~55 Min Auto"),
+        ("Kössen · Paragliding", "45 km", "~40 Min Auto"),
+        ("Gardasee · Riva", "300 km", "~3:30 Auto"),
+        ("Dolomiten · Cortina", "280 km", "~3:15 Auto"),
+        ("Annecy", "520 km", "~5:30 Auto"),
+        ("Ölüdeniz · Highlight", "Flug", "München → Dalaman ~3:00"),
+    ],
+    "rules": [
+        "Nie ein Wien-Tag und die Übergabe am selben Tag. In Umgangswochen endet Wien spätestens Mittwochabend.",
+        "Umgangswoche: Wien Di/Mi, Mittwochabend zurück zur Base. Do/Fr gehören der Tochter.",
+        "Umgangs-Freitag: Vormittag Base, 11:45 los (60 km / ~55 Min), 13:00 in München — immer mit Puffer.",
+        "30 Minuten Puffer als Regel. Lieber früher da und ein Espresso, als gehetzt ankommen.",
+        "Bahn nach Wien = Schreib- und Arbeitszeit. Auto für Berge, Seen, Van-Touren.",
+        "Lange Strecke ist kein verlorener Tag: Playlist, Fenster runter, Goldlicht. Die Straße gehört zum Leben.",
+    ],
+}
+
 
 _ALEX_CSS = """
 <style>
@@ -11434,7 +11457,7 @@ _ALEX_JS = r"""
         || document.querySelector(sel);
   }
   var plan = pickPlan();
-  if (plan) plan.classList.add('active');
+  if (plan){ plan.classList.add('active'); if (plan.dataset.mode) setText('today-mode', plan.dataset.mode); }
   var tl = plan ? plan.querySelectorAll('.tl') : [];
   var allBoxes = plan ? plan.querySelectorAll('input[type=checkbox]') : [];
   if (!tl.length) return;
@@ -11670,41 +11693,75 @@ def _alex_day_plans():
         {"t1": "22:00", "label": "Früh ins Bett", "items": ["Stark in die Woche starten."]},
     ]
 
-    # Umgangs-Wochenende — Tochter (alle zwei Wochen)
-    tochter_fri = [  # Freitag, Abholung 13:00
+    # === Umgangswoche (alle zwei Wochen): Wien wird auf Di/Mi vorgezogen ===
+    cw_tue = [  # Dienstag — Wien-Anreise (Umgangswoche)
+        {"t1": "06:30", "label": "Morgen-Anker", "items": ["Wasser, Atmung, kurze Mobility.", "Espresso, Protein."]},
+        {"t1": "07:30", "label": "Bahn nach Wien", "items": ["Rosenheim → Wien ~375 km / ~3:50.", "Im Zug: schreiben, lesen — kein Doomscroll.", "Eine PTGO- oder Song-Idee festhalten."]},
+        {"t1": "12:00", "label": "Ankommen Wien", "items": ["Einchecken, Espresso, kurzer Spaziergang.", "Schwarzer Mantel, Notizbuch."]},
+        {"t1": "14:00", "label": "Arbeit in Wien", "items": ["Präsent, fokussiert, ruhig.", "Sessions / Calls / Deep Work."]},
+        {"t1": "18:00", "label": "Duschen & gutes Essen", "items": ["Frisch machen.", "Echte Mahlzeit, bewusst."]},
+        {"t1": "20:30", "label": "Kaffeehaus / Jazz / Schreiben", "items": ["Notizen: Stil, Architektur, Ideen.", "Keine billige Ablenkung."]},
+        {"t1": "22:30", "label": "Schlafvorbereitung", "items": ["Warmes Licht, Lesen, früh ins Bett."]},
+    ]
+    cw_wed = [  # Mittwoch — Arbeit Wien + Rückfahrt (Umgangswoche)
+        {"t1": "07:00", "label": "Morgen-Anker im Hotel", "items": ["Wasser, Atmung, Push-ups.", "Espresso, kurzer Spaziergang."]},
+        {"t1": "09:00", "label": "Arbeit in Wien", "items": ["Letzter Block — Loose Ends schließen.", "Tiefste Präsenz."]},
+        {"t1": "13:00", "label": "Clean Lunch", "items": ["Leicht, hochwertig, ohne Bildschirm."]},
+        {"t1": "14:30", "label": "🚗 Rückfahrt Wien → Base", "items": ["~375 km / ~3:50. Bahn = Arbeit, Auto = Playlist & Goldlicht.", "Mittwochabend zurück — Freitag wartet die Tochter.", "30 Min Puffer einplanen."]},
+        {"t1": "18:30", "label": "Ankommen Base", "items": ["Auspacken, durchatmen, ankommen.", "Kurzer Spaziergang."]},
+        {"t1": "20:00", "label": "Gitarre / Piano", "items": ["Leicht, ohne Ziel. Runterfahren."]},
+        {"t1": "22:30", "label": "Schlafvorbereitung", "items": ["Dusche, Duft, Lesen."]},
+    ]
+    cw_thu = [  # Donnerstag — Reset & Tochter-Vorbereitung (Umgangswoche)
+        {"t1": "07:00", "label": "Morgen-Anker", "items": ["Wasser, Atmung, Mobility, Kraft.", "Espresso, Früchte."]},
+        {"t1": "08:30", "label": "Admin & Buchhaltung", "items": ["Rechnungen, Belege, Überblick Geld.", "Inbox Zero, offene Entscheidungen treffen."]},
+        {"t1": "10:30", "label": "Wohnungs-Reset + tochterklar", "items": ["Ein Bereich aufräumen, ihre Ecke herrichten.", "Snacks, Decke, Bücher bereit.", "Ordnung = Ruhe für sie."]},
+        {"t1": "13:00", "label": "Lunch", "items": ["Clean, ruhig."]},
+        {"t1": "14:00", "label": "Einkauf fürs Wochenende", "items": ["Ihre Lieblingssachen besorgen.", "Plan locker halten — Raum für Spontanes."]},
+        {"t1": "16:00", "label": "Training / Spaziergang", "items": ["Körper bewegen, Sauna wenn möglich.", "Nervensystem runterfahren."]},
+        {"t1": "20:00", "label": "Gitarre, früh runterfahren", "items": ["30 Min Musik.", "Morgen kommt sie — ausgeruht sein."]},
+        {"t1": "22:30", "label": "Schlafvorbereitung", "items": ["Früh ins Bett."]},
+    ]
+
+    # === Umgangs-Wochenende — Tochter (mit echten Fahrten, Base ⇄ München ~60 km) ===
+    tochter_fri = [  # Freitag, Abholung 13:00 in München
         {"t1": "07:00", "label": "Morgen-Anker", "items": ["Wasser, Fenster auf, Soul leise. Heute kommt sie.", "Mobility, Atmung, kurze Kraft.", "Espresso — und ein Lächeln im Spiegel."]},
-        {"t1": "08:00", "label": "Deep Work — fokussiert", "items": ["Alles Wichtige VOR 12:00 erledigen.", "Phone weg, ein klares Ziel.", "Keinen Termin in den Nachmittag legen."]},
-        {"t1": "11:30", "label": "Wohnung tochterklar machen", "items": ["Ihre Ecke, ihre Decke, ihre Bücher bereit.", "Snacks da, Kühlschrank gefüllt.", "Ordnung = Ruhe für sie."]},
-        {"t1": "12:30", "label": "Frisch machen & losfahren", "items": ["Duschen, gutes Hemd, Duft.", "Weg klar, Playlist bereit.", "Kopf leeren — nur sie."]},
+        {"t1": "08:00", "label": "Deep Work — fokussiert", "items": ["Alles Wichtige VOR 11:00 erledigen.", "Phone weg, ein klares Ziel."]},
+        {"t1": "11:00", "label": "Wohnung tochterklar + Tasche", "items": ["Ihre Ecke, Snacks, Decke bereit.", "Frisch machen, gutes Hemd, Duft.", "Kopf leeren — nur sie."]},
+        {"t1": "11:45", "label": "🚗 Abfahrt nach München", "items": ["Base → München ~60 km / ~55 Min.", "11:45 los = 13:00 da, mit Puffer.", "Playlist an, Fenster runter, Goldlicht. Nie gehetzt."]},
         {"t1": "13:00", "label": "Sie abholen · Übergabe", "items": ["Pünktlich, ruhig, warm. Sonnenbrille hoch, Herz offen.", "Freundlich an der Tür — kein altes Drama.", "Die erste Minute gehört nur ihr."]},
-        {"t1": "14:00", "label": "Ankommen", "items": ["Zuhause ankommen, Snack, durchatmen.", "Kein Programmdruck — sie gibt das Tempo vor."]},
-        {"t1": "15:30", "label": "Erstes kleines Abenteuer", "items": ["Spielplatz, See, Eis, kurze Runde.", "Draußen, Bewegung, Lachen."]},
-        {"t1": "18:00", "label": "Zusammen kochen", "items": ["Sie hat eine kleine Aufgabe.", "Einfaches, gutes Essen.", "Küche, Musik, Wärme."]},
-        {"t1": "19:30", "label": "Ruhiger Abend", "items": ["Vorlesen, leise Musik, kuscheln.", "Bildschirm aus.", "Sichere Vaterenergie."]},
+        {"t1": "14:00", "label": "🚗 Rückfahrt zur Base — mit ihr", "items": ["~60 km / ~55 Min. Sie quatscht, du hörst zu.", "Eis oder Snack unterwegs.", "Kein Programmdruck — sie gibt das Tempo vor."]},
+        {"t1": "15:30", "label": "Ankommen & kleines Abenteuer", "items": ["Snack, durchatmen.", "Chiemsee, Spielplatz, kurze Runde. Draußen, Lachen."]},
+        {"t1": "18:00", "label": "Zusammen kochen", "items": ["Sie hat eine kleine Aufgabe.", "Einfaches, gutes Essen. Küche, Musik, Wärme."]},
+        {"t1": "19:30", "label": "Ruhiger Abend", "items": ["Vorlesen, leise Musik, kuscheln.", "Bildschirm aus. Sichere Vaterenergie."]},
         {"t1": "21:00", "label": "Sie schläft — du", "items": ["Gitarre ganz leise.", "Drei Zeilen Tagebuch über heute.", "Dankbar. Nicht müde."]},
     ]
-    tochter_sat = [  # Samstag, Übergabe zurück 18:30
-        {"t1": "08:00", "label": "Langsames Frühstück", "items": ["Kein Wecker, kein Handy am Tisch.", "Sie wählt die Musik."]},
-        {"t1": "09:30", "label": "Natur", "items": ["See, Wald oder Berg.", "Steine werfen, Stöcke sammeln, frei sein."]},
-        {"t1": "12:00", "label": "Mittag zusammen", "items": ["Wieder zusammen kochen oder gutes Lokal.", "Ruhig, ohne Eile."]},
-        {"t1": "13:30", "label": "Das Hauptabenteuer", "items": ["Tegernsee, Boot, Museum, kleines Konzert.", "Ein Moment, an den sie sich erinnert."]},
-        {"t1": "16:30", "label": "Musik & Ruhe", "items": ["Ein Lied zusammen — hören oder erfinden.", "Malen, bauen, einfach da sein."]},
-        {"t1": "17:45", "label": "Sanft zusammenpacken", "items": ["Sachen einsammeln, kein Stress.", "Ihr sagen, dass es schön war.", "Übergang ruhig einleiten."]},
-        {"t1": "18:30", "label": "Übergabe zurück", "items": ["Pünktlich, warm, klarer liebevoller Abschied.", "Kein Drama, keine Schwere.", "'Bis in zwei Wochen' — fest und freundlich."]},
-        {"t1": "19:30", "label": "Übergang für dich", "items": ["Spaziergang oder Dusche.", "Die Stille zulassen, nicht füllen.", "Kurz fühlen, dann loslassen."]},
+    tochter_sat = [  # Samstag, Übergabe zurück 18:30 in München
+        {"t1": "08:00", "label": "Langsames Frühstück (Base)", "items": ["Kein Wecker, kein Handy am Tisch.", "Sie wählt die Musik."]},
+        {"t1": "09:30", "label": "Natur", "items": ["Chiemsee, Tegernsee oder Wald.", "Steine werfen, Stöcke sammeln, frei sein."]},
+        {"t1": "12:00", "label": "Mittag zusammen", "items": ["Zusammen kochen oder gutes Lokal.", "Ruhig, ohne Eile."]},
+        {"t1": "13:30", "label": "Das Hauptabenteuer", "items": ["Boot, See, kleines Konzert.", "Ein Moment, an den sie sich erinnert."]},
+        {"t1": "16:00", "label": "Musik & Ruhe", "items": ["Ein Lied zusammen — hören oder erfinden.", "Malen, bauen, einfach da sein."]},
+        {"t1": "17:00", "label": "Sanft zusammenpacken", "items": ["Ihre Sachen einsammeln, kein Stress.", "Ihr sagen, dass es schön war."]},
+        {"t1": "17:30", "label": "🚗 Aufbruch nach München", "items": ["Base → München ~60 km / ~55 Min.", "17:30 los = 18:30 Übergabe, mit Puffer.", "Ruhig fahren, sanfter Übergang."]},
+        {"t1": "18:30", "label": "Übergabe zurück (München)", "items": ["Pünktlich, warm, klarer liebevoller Abschied.", "Kein Drama, keine Schwere.", "'Bis in zwei Wochen' — fest und freundlich."]},
+        {"t1": "19:15", "label": "🚗 Rückfahrt & Übergang", "items": ["~55 Min zurück. Die Stille zulassen, nicht füllen.", "Kurz fühlen, dann loslassen."]},
         {"t1": "20:30", "label": "Abend für dich", "items": ["Gitarre, Schreiben, oder Freund:innen.", "Das Wochenende würdigen.", "Du bist frei — aber du bleibst."]},
     ]
 
     return [
-        {"wd": 0, "custody": "any", "blocks": plans[0]},
-        {"wd": 1, "custody": "any", "blocks": plans[1]},
-        {"wd": 2, "custody": "any", "blocks": plans[2]},
-        {"wd": 3, "custody": "any", "blocks": plans[3]},
-        {"wd": 4, "custody": "1",   "blocks": tochter_fri},
-        {"wd": 4, "custody": "0",   "blocks": plans[4]},
-        {"wd": 5, "custody": "1",   "blocks": tochter_sat},
-        {"wd": 5, "custody": "0",   "blocks": plans[5]},
-        {"wd": 6, "custody": "any", "blocks": plans[6]},
+        {"wd": 0, "custody": "any", "mode": "München · Deep Work · Soul",        "blocks": plans[0]},
+        {"wd": 1, "custody": "0",   "mode": "Business + Musik (Base)",            "blocks": plans[1]},
+        {"wd": 1, "custody": "1",   "mode": "Wien-Anreise · Di (Umgangswoche)",   "blocks": cw_tue},
+        {"wd": 2, "custody": "0",   "mode": "Reset Day · Wohnung",                "blocks": plans[2]},
+        {"wd": 2, "custody": "1",   "mode": "Wien + Rückfahrt · Mi (Umgangswoche)", "blocks": cw_wed},
+        {"wd": 3, "custody": "0",   "mode": "Wien-Anreise · Do",                  "blocks": plans[3]},
+        {"wd": 3, "custody": "1",   "mode": "Reset & Tochter-Prep · Base",        "blocks": cw_thu},
+        {"wd": 4, "custody": "1",   "mode": "Umgangs-Freitag · Tochter ab 13:00", "blocks": tochter_fri},
+        {"wd": 4, "custody": "0",   "mode": "Wien · Deep Presence",               "blocks": plans[4]},
+        {"wd": 5, "custody": "1",   "mode": "Umgangs-Samstag · Tochter bis 18:30","blocks": tochter_sat},
+        {"wd": 5, "custody": "0",   "mode": "Freies Wochenende · Freiheit",       "blocks": plans[5]},
+        {"wd": 6, "custody": "any", "mode": "Reflexion · Vorbereitung",           "blocks": plans[6]},
     ]
 
 
@@ -11727,7 +11784,7 @@ def _alex_heute_panel() -> str:
               </button>
               <div class="tl-body"><div>{steps}</div></div>
             </div>"""
-        all_plans_html += f'<div class="day-plan" data-weekday="{plan["wd"]}" data-custody="{plan["custody"]}">{rows}</div>'
+        all_plans_html += f'<div class="day-plan" data-weekday="{plan["wd"]}" data-custody="{plan["custody"]}" data-mode="{plan["mode"]}">{rows}</div>'
 
     modes = [d["mode"] for d in ALEX["week"]]
     data_js = (
@@ -11770,6 +11827,22 @@ def _alex_dashboard_panel() -> str:
         <p>{ALEX['frame_rule']}</p>
       </div>
       <div class="schluss">„{ALEX['schlusssatz']}“</div>
+    </section>"""
+
+
+def _alex_wege_panel() -> str:
+    w = ALEX["wege"]
+    rows = "".join(f'<div class="db-row"><b>{ort}</b><span>{km} · {zeit}</span></div>' for ort, km, zeit in w["routes"])
+    rules = "".join(f"<li>{r}</li>" for r in w["rules"])
+    return f"""
+    <section data-panel="wege" class="panel">
+      <h2 class="section">Wege & Kilometer</h2>
+      <p class="section-sub">{w['base_note']}</p>
+      <div class="card"><div class="meta">Distanzen ab Base</div><h3>Was wie weit ist</h3>
+        {rows}
+      </div>
+      <div class="card"><div class="meta">Reise-Regeln</div><h3>Damit Wien und Tochter nie kollidieren</h3><ul>{rules}</ul></div>
+      <div class="quote">„Die Straße ist kein verlorener Tag. Playlist, Fenster runter, Goldlicht im Rückspiegel — Bewegung gehört zum Leben.“</div>
     </section>"""
 
 
@@ -12092,6 +12165,7 @@ def alex_dashboard(request: Request):
         ("tagesplan",   "Tagesplan"),
         ("wien",        "Wien"),
         ("muenchen",    "München-Base"),
+        ("wege",        "Wege & km"),
         ("van",         "Van"),
         ("paragliding", "Paragliding"),
         ("ptgo",        "PTGO"),
@@ -12154,6 +12228,7 @@ def alex_dashboard(request: Request):
     {_alex_day_panel()}
     {_alex_wien_panel()}
     {_alex_muc_panel()}
+    {_alex_wege_panel()}
     {_alex_van_panel()}
     {_alex_para_panel()}
     {_alex_ptgo_panel()}
@@ -12214,56 +12289,86 @@ def _alex_build_ics() -> str:
         lines += event(f"alex-daily-{i}", today, h, m, dur, summ, desc,
                        "FREQ=DAILY", [("PT0S", summ)])
 
-    # — Wochen-Anker mit Vorlauf-Erinnerung —
-    weekly = [
-        # (wd, h, m, dur, summary, desc, [(trigger, label), ...])
-        (2, 12, 0, 180, "🧹 Reset Day — Wohnung", "Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus, eine Fläche frei.",
-         [("PT0S", "Reset Day: ein Bereich, nicht perfekt — atmungsfähig.")]),
-        (2, 18, 30, 45, "🧳 Tasche packen für Wien", "3 Hemden, 2 Hosen, Mantel, Notizbuch, Buch, Ladegeräte. Alles an die Tür.",
-         [("PT0S", "Tasche für Wien packen.")]),
-        (3, 7, 30, 210, "🚆 Wien-Anreise", "Schwarzer Mantel, Notizbuch, Buch. Im Zug schreiben statt scrollen.",
-         [("-PT13H30M", "Morgen früh nach Wien — heute Abend Tasche & Zug checken."), ("PT0S", "Wien-Anreise. Creative Gentleman Mode.")]),
-        (3, 20, 30, 120, "♫ Wien-Abend", "Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil, Architektur, Ideen.",
-         [("PT0S", "Wien-Abend: Kaffeehaus, Jazz, Schreiben.")]),
-        (6, 11, 30, 60, "🪞 Wochenrückblick", "Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?",
-         [("PT0S", "Wochenrückblick: Würde / Wachstum / Korrektur.")]),
-    ]
-    for i, (wd, h, m, dur, summ, desc, alarms) in enumerate(weekly):
-        lines += event(f"alex-weekly-{i}", next_weekday(wd), h, m, dur, summ, desc,
-                       f"FREQ=WEEKLY;BYDAY={byday[wd]}", alarms)
+    # — Jede Woche —
+    lines += event("alex-rueckblick", next_weekday(6), 11, 30, 60,
+                   "🪞 Wochenrückblick", "Würde: wo war ich ich selbst? Wachstum: wo bin ich gewachsen? Korrektur: was ändere ich?",
+                   "FREQ=WEEKLY;BYDAY=SU", [("PT0S", "Wochenrückblick: Würde / Wachstum / Korrektur.")])
 
-    # — Umgangs- & Freiheits-Wochenenden (alle zwei Wochen, ab Anker-Freitag) —
+    # — Zwei-Wochen-Rhythmus mit echten Wegen & Kilometern —
+    # Base 83083 (Region Rosenheim/Chiemsee): München ~60 km/~55 Min · Wien ~375 km/~3:50.
+    # Umgangswoche: Wien VORziehen (Di/Mi), Mi-Abend zurück; Do Reset/Prep; Fr 13:00 Tochter.
     from datetime import datetime as _dt
-    cust = ALEX["custody"]
-    anchor = _dt.strptime(cust["anchor"], "%Y-%m-%d").date()  # Umgangs-Freitag
-    sat = anchor + timedelta(days=1)                          # Übergabe-Samstag
-    wien_fri = anchor + timedelta(days=7)                     # Wien-Freitag (Off-Woche)
-    free_sat = anchor + timedelta(days=8)                     # Freiheits-Samstag (Off-Woche)
-    ymd = lambda d: d.strftime("%Y%m%d")
+    anchor = _dt.strptime(ALEX["custody"]["anchor"], "%Y-%m-%d").date()  # Umgangs-Freitag
+    ymd = lambda off: (anchor + timedelta(days=off)).strftime("%Y%m%d")
+    BW = "FREQ=WEEKLY;INTERVAL=2"
 
-    lines += event("alex-custody", ymd(anchor), 13, 0, 1770,
+    # Umgangswoche
+    lines += event("alex-cw-wien-anreise", ymd(-3), 7, 30, 270,
+                   "🚆 Wien-Anreise (Umgangswoche · Di)",
+                   "Wien VORziehen: Rosenheim → Wien ca. 375 km / ~3:50 Bahn. Im Zug schreiben statt scrollen.",
+                   BW + ";BYDAY=TU",
+                   [("-PT13H30M", "Morgen früh nach Wien — Tasche & Ticket heute Abend."), ("PT0S", "Wien-Anreise. Creative Gentleman Mode.")])
+    lines += event("alex-cw-wien-rueck", ymd(-2), 14, 30, 240,
+                   "🚗 Rückfahrt Wien → Base (Umgangswoche · Mi)",
+                   "Mittwochabend zurück, ca. 375 km / ~3:50. Bahn = Arbeitszeit, Auto = Playlist & Goldlicht. Freitag musst du in München sein.",
+                   BW + ";BYDAY=WE",
+                   [("-PT30M", "In 30 Min Rückfahrt — Freitag wartet die Tochter."), ("PT0S", "Heimfahren. Wien-Tage erledigt.")])
+    lines += event("alex-cw-prep", ymd(-1), 8, 30, 480,
+                   "🧹 Reset & Tochter-Vorbereitung (Umgangswoche · Do)",
+                   "Base: Wohnung tochterklar machen, ihre Ecke, Einkauf, Plan locker. Kein Wien heute — du bist zu Hause.",
+                   BW + ";BYDAY=TH",
+                   [("PT0S", "Reset + alles für sie vorbereiten.")])
+    lines += event("alex-cw-drive-pickup", ymd(0), 11, 45, 75,
+                   "🚗 Abfahrt München — Tochter abholen",
+                   "Base → München ca. 60 km / ~55 Min. 11:45 los = 13:00 da, mit Puffer. Nie auf den letzten Drücker. Playlist an, Fenster runter.",
+                   BW + ";BYDAY=FR",
+                   [("-PT15M", "In 15 Min losfahren — Puffer einplanen."), ("PT0S", "Losfahren. 13:00 in München sein.")])
+    lines += event("alex-custody", ymd(0), 13, 0, 1770,
                    "🜂 Umgangswochenende — Tochter (Fr 13:00 – Sa 18:30)",
                    "Volle, ruhige Vaterpräsenz. Sonnenbrille hoch, Musik leise, Herz offen. Kein Termin im Kopf — nur sie.",
-                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR",
-                   [("-P1D", "Morgen 13:00 Tochter abholen — Wohnung tochterklar machen, Plan locker halten."),
-                    ("-PT2H", "In 2 Std abholen. Frisch machen, Playlist bereit, Kopf leeren."),
-                    ("PT0S", "Jetzt abholen — pünktlich, warm, präsent.")])
-    lines += event("alex-handover", ymd(sat), 18, 30, 30,
-                   "↩ Übergabe zurück — Tochter (18:30)",
+                   BW + ";BYDAY=FR",
+                   [("-P1D", "Morgen 13:00 Tochter abholen — Wohnung tochterklar machen, Plan locker."),
+                    ("PT0S", "Abholen — pünktlich, warm, präsent.")])
+    lines += event("alex-cw-drive-return", ymd(1), 17, 30, 60,
+                   "🚗 Aufbruch zur Übergabe (Base → München)",
+                   "Ca. 60 km / ~55 Min. 17:30 los = 18:30 Übergabe in München. Sachen vorher gepackt, ruhig fahren.",
+                   BW + ";BYDAY=SA",
+                   [("-PT15M", "Gleich losfahren zur Übergabe — mit Puffer."), ("PT0S", "Losfahren — ruhig.")])
+    lines += event("alex-handover", ymd(1), 18, 30, 30,
+                   "↩ Übergabe zurück — Tochter (18:30, München)",
                    "Pünktlich, warm, klarer liebevoller Abschied. Kein Drama, keine Schwere. 'Bis in zwei Wochen.'",
-                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=SA",
+                   BW + ";BYDAY=SA",
                    [("-PT45M", "In 45 Min Übergabe — langsam zusammenpacken, schön ausklingen."),
                     ("PT0S", "Übergabe: warm, ohne Hektik. Du bist frei — aber du bleibst.")])
-    lines += event("alex-free-weekend", ymd(free_sat), 9, 0, 600,
+
+    # Freie Woche
+    lines += event("alex-ow-reset", ymd(5), 12, 0, 180,
+                   "🧹 Reset Day — Wohnung (freie Woche · Mi)",
+                   "Ein Bereich heute (Bad/Küche/Schlafzimmer/Musikecke/Schrank). Ein Karton raus, eine Fläche frei.",
+                   BW + ";BYDAY=WE", [("PT0S", "Reset Day: ein Bereich, atmungsfähig.")])
+    lines += event("alex-ow-pack", ymd(5), 18, 30, 45,
+                   "🧳 Tasche packen für Wien (freie Woche · Mi)",
+                   "3 Hemden, 2 Hosen, Mantel, Notizbuch, Buch, Ladegeräte. Alles an die Tür.",
+                   BW + ";BYDAY=WE", [("PT0S", "Tasche für Wien packen.")])
+    lines += event("alex-ow-wien-anreise", ymd(6), 7, 30, 270,
+                   "🚆 Wien-Anreise (freie Woche · Do)",
+                   "Rosenheim → Wien ca. 375 km / ~3:50 Bahn. Schwarzer Mantel, Notizbuch, Buch.",
+                   BW + ";BYDAY=TH",
+                   [("-PT13H30M", "Morgen früh nach Wien — Tasche & Ticket."), ("PT0S", "Wien-Anreise.")])
+    lines += event("alex-ow-wien-abend", ymd(6), 20, 30, 120,
+                   "♫ Wien-Abend (freie Woche · Do)",
+                   "Kaffeehaus / Jazzbar / Schreiben. Notizen: Stil, Architektur, Ideen.",
+                   BW + ";BYDAY=TH", [("PT0S", "Wien-Abend: Kaffeehaus, Jazz, Schreiben.")])
+    lines += event("alex-ow-sauna", ymd(7), 17, 0, 90,
+                   "🔥 Sauna / Gym (Wien · freie Woche · Fr)",
+                   "Körper regulieren. Hitze, Kälte, Atem.",
+                   BW + ";BYDAY=FR", [("PT0S", "Sauna oder Gym.")])
+    lines += event("alex-free-weekend", ymd(8), 9, 0, 600,
                    "△ Freies Wochenende — Freiheit",
                    "Van, Berge, Paragliding, Gardasee, Musik. Bewegte Stille, kein Eskapismus.",
-                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=SA",
+                   BW + ";BYDAY=SA",
                    [("-P1DT13H", "Morgen freies Wochenende — Van / Berge / Fliegen planen."),
                     ("PT0S", "Freies Wochenende. Voll da sein für dich.")])
-    lines += event("alex-wien-sauna", ymd(wien_fri), 17, 0, 90,
-                   "🔥 Sauna / Gym (Wien)", "Körper regulieren. Hitze, Kälte, Atem. Nur Off-Wochen — Umgangs-Freitag gehört der Tochter.",
-                   "FREQ=WEEKLY;INTERVAL=2;BYDAY=FR",
-                   [("PT0S", "Sauna oder Gym.")])
 
     # — Monatscheck (1. des Monats) —
     first = now.replace(day=1).strftime("%Y%m%d")
