@@ -58,3 +58,12 @@ der **richtigen Lösung** und einer kurzen Begründung aus dem Lernmaterial.
 - **Begründung / Merksatz:** Bei zu starkem Wind nicht gegen den Wind ankämpfen (man kommt nicht voran und wird zurückgesetzt). Stattdessen Höhe gewinnen und mit Rückenwind das Lee/die Turbulenzzone schnell und hoch genug überfliegen, um sicher zu landen.
 - **Quelle:** [`lernmaterial/flugpraxis-thermik-aufwindfliegen.md`](./lernmaterial/flugpraxis-thermik-aufwindfliegen.md)
 - **Status:** offen
+
+### F-005 · Flugpraxis – Landeeinteilung (Starkwindlandung)
+
+- **Frage:** Bei einer Starkwindlandung …
+- **Deine Antwort:** _(falsch – Wortlaut nicht ersichtlich)_ ❌
+- **Richtige Antwort:** … darf der Schirm während des Landens und nach dem Aufsetzen nicht durchgebremst werden ✅
+- **Begründung / Merksatz:** Bei Starkwind nicht voll durchbremsen – sonst kann der Schirm hinter dem Piloten aufsteigen bzw. ihn nach dem Aufsetzen zurückziehen/umwerfen. Schirm kontrolliert führen und nach dem Aufsetzen durch Anlaufen zum Schirm / Zug an den hinteren Tragegurten (C/D) sofort zum Kollaps bringen.
+- **Quelle:** [`lernmaterial/flugpraxis-landeeinteilung.md`](./lernmaterial/flugpraxis-landeeinteilung.md)
+- **Status:** offen
