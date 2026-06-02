@@ -67,3 +67,21 @@ der **richtigen Lösung** und einer kurzen Begründung aus dem Lernmaterial.
 - **Begründung / Merksatz:** Bei Starkwind nicht voll durchbremsen – sonst kann der Schirm hinter dem Piloten aufsteigen bzw. ihn nach dem Aufsetzen zurückziehen/umwerfen. Schirm kontrolliert führen und nach dem Aufsetzen durch Anlaufen zum Schirm / Zug an den hinteren Tragegurten (C/D) sofort zum Kollaps bringen.
 - **Quelle:** [`lernmaterial/flugpraxis-landeeinteilung.md`](./lernmaterial/flugpraxis-landeeinteilung.md)
 - **Status:** offen
+
+### F-006 · Notfälle und Besondere Gefahren (Wasserlandung)
+
+- **Frage:** Ist eine Landung in einem Gewässer nicht zu verhindern, gelten für den Piloten folgende Verhaltensregeln:
+- **Deine Antwort:** _(falsch – Wortlaut nicht ersichtlich)_ ❌
+- **Richtige Antwort:** Gurtzeug-Verschlüsse vor der Landung öffnen, bei Wasserberührung aus dem Gurtzeug rutschen und vom Gleitschirm wegschwimmen ✅
+- **Begründung / Merksatz:** Reihenfolge: Verschlüsse **vor** der Landung öffnen → bei **Wasserberührung** aus dem Gurtzeug rutschen → **vom Schirm wegschwimmen** (Gefahr, sich unter dem Tuch zu verfangen).
+- **Quelle:** [`lernmaterial/notfaelle-besondere-gefahren.md`](./lernmaterial/notfaelle-besondere-gefahren.md)
+- **Status:** offen
+
+### F-007 · Notfälle und Besondere Gefahren (Alpines Notsignal)
+
+- **Frage:** Das „alpine Notsignal" signalisiert im Gebirge unmittelbaren Bedarf an Hilfe. Es besteht aus …
+- **Deine Antwort:** _(falsch – Wortlaut nicht ersichtlich)_ ❌
+- **Richtige Antwort:** 6 optischen oder akustischen Zeichen in der Minute in gleichmäßigem Abstand und einer Minute Pause ✅
+- **Begründung / Merksatz:** **Notruf = 6 mal pro Minute** (alle 10 s ein Zeichen), dann **1 Minute Pause**, wiederholen. **Antwort = 3 mal pro Minute.** Merke: 6 = Hilferuf, 3 = Antwort.
+- **Quelle:** [`lernmaterial/notfaelle-besondere-gefahren.md`](./lernmaterial/notfaelle-besondere-gefahren.md)
+- **Status:** offen
