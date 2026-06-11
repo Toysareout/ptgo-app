@@ -91,9 +91,8 @@ button.send:disabled{opacity:.5}
       <label class="q">Beschreib es in deinen eigenen Worten <span class="hint">genau so, wie es sich anfühlt</span></label>
       <textarea id="verbatim" placeholder="z.B. „Nach SIV ist mein Nacken zwei Tage wie blockiert …“"></textarea>
 
-      <label class="q">Optional: dein Name &amp; WhatsApp/E-Mail</label>
+      <label class="q">Optional: dein Name <span class="hint">deine Nummer kommt automatisch über WhatsApp mit</span></label>
       <input type="text" id="name" placeholder="Name (optional)">
-      <input type="text" id="contact" placeholder="WhatsApp oder E-Mail (optional)" style="margin-top:8px">
 
       <label class="follow">
         <input type="checkbox" id="wants_followup">
@@ -101,21 +100,22 @@ button.send:disabled{opacity:.5}
       </label>
 
       <div class="err" id="err"></div>
-      <button type="submit" class="send" id="send">Absenden</button>
-      <p class="foot">Deine Angaben werden vertraulich behandelt und nur zur Entwicklung des Recovery-Systems genutzt.</p>
+      <button type="submit" class="send" id="send">📲 Per WhatsApp senden</button>
+      <p class="foot">Beim Absenden öffnet sich WhatsApp mit deinen Angaben — du tippst dort nur noch auf „Senden". Deine Angaben werden vertraulich behandelt und nur zur Entwicklung des Recovery-Systems genutzt.</p>
     </form>
 
     <div class="ok" id="ok">
       <div class="big">🪂</div>
-      <h2>Danke — angekommen!</h2>
-      <p>Deine Rückmeldung hilft uns, Piloten wieder schneller in die Luft zu bringen.</p>
+      <h2>Fast geschafft!</h2>
+      <p>WhatsApp hat sich geöffnet — tippe dort nur noch auf <strong>Senden</strong>. Danke, dass du mithilfst!</p>
+      <a id="waLink" class="send" href="#" style="display:inline-block;text-decoration:none;text-align:center;margin-top:18px">WhatsApp öffnen</a>
     </div>
   </div>
 </div>
 
 <script>
-const ENDPOINT = '/.netlify/functions/recovery-survey';
-const FALLBACK_EMAIL = 'thetoysareout@gmx.de'; // Mail-Fallback, falls Backend nicht erreichbar
+// WhatsApp-Zielnummer (international, ohne + und ohne führende 0): +49 176 83231000
+const WHATSAPP = '4917683231000';
 
 // Chip-Auswahl
 document.querySelectorAll('.chips').forEach(group => {
@@ -133,68 +133,43 @@ sev.addEventListener('input', () => sevVal.textContent = sev.value);
 function selected(group) {
   return [...document.querySelectorAll(`[data-group="${group}"] .chip.on`)].map(c => c.textContent.trim());
 }
-function payload() {
-  return {
-    name: document.getElementById('name').value.trim(),
-    contact: document.getElementById('contact').value.trim(),
-    disciplines: selected('disciplines'),
-    regions: selected('regions'),
-    onset: (selected('onset')[0] || ''),
-    severity: sev.value,
-    current_solution: document.getElementById('current_solution').value.trim(),
-    verbatim: document.getElementById('verbatim').value.trim(),
-    wants_followup: document.getElementById('wants_followup').checked,
-    source: 'web-check'
-  };
-}
-function showOk() {
-  document.getElementById('f').style.display = 'none';
-  document.getElementById('ok').style.display = 'block';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-function mailtoFallback(d) {
-  const body = [
-    'Flight Recovery Check', '',
-    'Name: ' + (d.name || '(anonym)'),
-    'Kontakt: ' + (d.contact || '-'),
-    'Disziplin: ' + (d.disciplines.join(', ') || '-'),
-    'Bereiche: ' + (d.regions.join(', ') || '-'),
-    'Ab wann: ' + (d.onset || '-'),
-    'Stärke: ' + d.severity,
-    'Aktuelle Lösung: ' + (d.current_solution || '-'),
-    'In eigenen Worten: ' + (d.verbatim || '-'),
-    'Rückmeldung erwünscht: ' + (d.wants_followup ? 'JA' : 'nein'),
+function buildMessage() {
+  const name = document.getElementById('name').value.trim();
+  return [
+    '🪂 Flight Recovery Check',
+    '',
+    'Name: ' + (name || '(anonym)'),
+    'Disziplin: ' + (selected('disciplines').join(', ') || '-'),
+    'Bereiche: ' + (selected('regions').join(', ') || '-'),
+    'Am stärksten: ' + (selected('onset')[0] || '-'),
+    'Stärke (0-10): ' + sev.value,
+    'Aktuell dagegen: ' + (document.getElementById('current_solution').value.trim() || '-'),
+    'In eigenen Worten: ' + (document.getElementById('verbatim').value.trim() || '-'),
+    'Rückmeldung gewünscht: ' + (document.getElementById('wants_followup').checked ? 'JA' : 'nein'),
   ].join('\n');
-  window.location.href = 'mailto:' + FALLBACK_EMAIL +
-    '?subject=' + encodeURIComponent('Flight Recovery Check') +
-    '&body=' + encodeURIComponent(body);
+}
+function hasInput() {
+  return selected('disciplines').length || selected('regions').length ||
+         document.getElementById('verbatim').value.trim();
 }
 
-document.getElementById('f').addEventListener('submit', async (e) => {
+document.getElementById('f').addEventListener('submit', (e) => {
   e.preventDefault();
-  const d = payload();
   const err = document.getElementById('err');
-  if (!d.disciplines.length && !d.regions.length && !d.verbatim) {
+  if (!hasInput()) {
     err.textContent = 'Bitte wähle mindestens eine Angabe aus.';
     err.style.display = 'block';
     return;
   }
   err.style.display = 'none';
-  const btn = document.getElementById('send');
-  btn.disabled = true; btn.textContent = 'Wird gesendet …';
-  try {
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(d),
-    });
-    if (!res.ok) throw new Error('bad status');
-    showOk();
-  } catch (_) {
-    // Backend nicht erreichbar → nichts geht verloren: Mail-Fallback
-    mailtoFallback(d);
-    showOk();
-  }
+  const url = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(buildMessage());
+  // Fallback-Button auf dem Erfolgsscreen mit demselben Link belegen
+  document.getElementById('waLink').setAttribute('href', url);
+  document.getElementById('f').style.display = 'none';
+  document.getElementById('ok').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // WhatsApp direkt öffnen (Mobil: App, Desktop: WhatsApp Web)
+  window.location.href = url;
 });
 </script>
 </body>
