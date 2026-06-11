@@ -41,6 +41,7 @@
     { "source": "/discovery", "destination": "/flight-recovery-discovery.html" },
     { "source": "/check", "destination": "/flight-recovery-check.html" },
     { "source": "/recovery-check", "destination": "/flight-recovery-check.html" },
+    { "source": "/recovery", "destination": "/flight-recovery.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

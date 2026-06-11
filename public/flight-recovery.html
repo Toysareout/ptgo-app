@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>PTGO Flight Recovery — Schmerzfrei fliegen. Stärker landen.</title>
+<meta name="description" content="PTGO Flight Recovery: Das Regenerations- und Performance-System für Gleitschirmpiloten. Nach SIV, harten Landungen, Strecke und Hike-and-Fly. Von einem Therapeuten, der selbst fliegt.">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--gold:#c9a84c;--green:#2dffa8;--text:#e0ddd4;--dim:#666680;--orange:#ff8c00;--glow-gold:0 0 24px rgba(201,168,76,.35);--glow-cyan:0 0 24px rgba(0,240,255,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.15;z-index:9999;animation:scan 6s linear infinite;pointer-events:none}
+@keyframes scan{0%{top:0}100%{top:100vh}}
+.wrap{max-width:780px;margin:0 auto;padding:22px 16px 90px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:15px;background:linear-gradient(135deg,var(--orange),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);border:1px solid var(--gold);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+.hero{text-align:center;padding:34px 0 8px}
+.kicker{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:4px;text-transform:uppercase;margin-bottom:16px}
+h1{font-family:'Orbitron',sans-serif;font-size:32px;font-weight:900;letter-spacing:1px;line-height:1.12;margin:6px 0 16px;background:linear-gradient(135deg,var(--text),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.lead{font-size:15px;color:var(--text);line-height:1.7;max-width:620px;margin:0 auto}
+.authority{display:inline-block;font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:1px;color:var(--gold);border:1px solid var(--gold);padding:8px 16px;margin:18px 0 4px;text-transform:uppercase;box-shadow:var(--glow-gold)}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:40px 0 16px;color:var(--gold);text-transform:uppercase;text-align:center}
+p{color:var(--dim);line-height:1.7;margin-bottom:10px;font-size:13px}
+.hr{height:1px;background:var(--border);margin:30px 0}
+/* Funnel-Pfade */
+.paths{display:grid;gap:16px;grid-template-columns:1fr 1fr;margin-top:8px}
+@media(max-width:560px){.paths{grid-template-columns:1fr}}
+.path{background:var(--surface);border:1px solid var(--border);padding:24px 20px;display:flex;flex-direction:column;transition:border-color .25s,transform .2s;position:relative;overflow:hidden}
+.path:hover{transform:translateY(-3px)}
+.path.primary{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.path.secondary:hover{border-color:var(--cyan)}
+.path .step{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+.path h3{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;letter-spacing:.5px;margin-bottom:8px;color:var(--text)}
+.path p{font-size:12.5px;margin-bottom:18px;flex:1}
+.cta{display:inline-block;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--bg);background:linear-gradient(135deg,var(--orange),var(--gold));padding:14px 22px;text-align:center;border:none;cursor:pointer;box-shadow:var(--glow-gold);transition:transform .2s}
+.cta:hover{transform:translateY(-2px)}
+.cta.ghost{background:none;color:var(--cyan);border:1px solid var(--cyan);box-shadow:none}
+/* Module */
+.mods{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.mod{background:var(--surface);border:1px solid var(--border);padding:16px;text-align:center}
+.mod .t{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--text);letter-spacing:.5px}
+.mod .d{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.5}
+.tick{font-size:13px;color:var(--text);line-height:1.6;padding:8px 0 8px 26px;position:relative;border-bottom:1px solid var(--border)}
+.tick::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+.foot{text-align:center;margin-top:42px;padding-top:22px;border-top:1px solid var(--border)}
+.badge{display:inline-block;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--cyan);border:1px solid var(--border);padding:4px 10px;margin:3px;text-transform:uppercase}
+.center{text-align:center}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brand">PTGO · FLIGHT RECOVERY</span>
+    <span class="pill">Elite</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="kicker">Für Gleitschirmpiloten</div>
+    <h1>Schmerzfrei fliegen.<br>Klarer entscheiden.<br>Stärker landen.</h1>
+    <p class="lead">Axiale Kompression nach harten Landungen. Nacken und Schultern im Gurtzeug. Die Belastung am zweiten Tag nach SIV, Strecke oder Hike-and-Fly.<br>
+    PTGO Flight Recovery reguliert genau das — als System, das du dabei hast, nicht als endlose Termine.</p>
+    <div class="authority">✈ Von einem Therapeuten, der selbst fliegt · Lizenzierter Gleitschirmpilot</div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- DIE ZWEI WEGE (Funnel) -->
+  <section>
+    <h2>Wo stehst du?</h2>
+    <div class="paths">
+      <div class="path primary">
+        <div class="step">Schritt 1 · 2 Minuten</div>
+        <h3>Der Piloten-Check</h3>
+        <p>Sag mir in 2 Minuten, was das Fliegen mit deinem Körper macht. Anonym möglich, kein Verkauf. Du bekommst Klarheit — ich verstehe dein Muster.</p>
+        <a class="cta" href="/check">Check starten →</a>
+      </div>
+      <div class="path secondary">
+        <div class="step">Bereit für mehr</div>
+        <h3>Das Programm</h3>
+        <p>Du weißt schon, dass dein Körper dich ausbremst? Sieh dir an, wie PTGO Flight Recovery dich wieder schneller und schmerzfrei in die Luft bringt.</p>
+        <a class="cta ghost" href="/flight">Programm ansehen →</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- MODULE / KATEGORIE -->
+  <section>
+    <h2>Recovery nach jeder Belastung</h2>
+    <div class="mods">
+      <div class="mod"><div class="t">SIV Recovery</div><div class="d">Nach Stalls, Klappern, Sicherheitstraining</div></div>
+      <div class="mod"><div class="t">Landing Recovery</div><div class="d">Nach harten Landungen & axialer Kompression</div></div>
+      <div class="mod"><div class="t">XC Recovery</div><div class="d">Nach langen Streckenflügen im Gurtzeug</div></div>
+      <div class="mod"><div class="t">Hike-and-Fly Reset</div><div class="d">Regeneration für Aufstieg + Flug</div></div>
+    </div>
+    <p class="center small" style="margin-top:14px">HWS · BWS · LWS · Hüfte · Schulter · Nervensystem — präzise reguliert.</p>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- WARUM ICH -->
+  <section>
+    <h2>Warum ausgerechnet ich</h2>
+    <p class="lead" style="color:var(--text)">Ich behandle nicht aus dem Lehrbuch. Ich sitze selbst im Gurtzeug — lizenzierter Gleitschirmpilot. Ich kenne den steifen Nacken nach der Stunde Luft, die Anspannung am Startplatz und den Rücken, der über den nächsten Flugtag entscheidet. <strong>PTGO Flight Recovery ist aus genau dieser Erfahrung gebaut</strong> — von jemandem, der fliegt und behandelt.</p>
+    <div style="margin-top:16px">
+      <div class="tick">Manuelle Präzision & Strukturarbeit statt Symptompflaster</div>
+      <div class="tick">Dekompression & Nervensystem-Regulation</div>
+      <div class="tick">App-gestützt — wirkt am Startplatz, nicht nur in der Praxis</div>
+      <div class="tick">Transformation statt 30-Minuten-Behandlung</div>
+    </div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- FÜR SCHULEN -->
+  <section class="center">
+    <h2>Für Flugschulen & Sicherheitstrainings</h2>
+    <p class="lead">Deine Piloten klagen über Nacken, Rücken, Erschöpfung nach dem Training? Werde Recovery-Partner — deine Teilnehmer regenerieren schneller, du bietest mehr.</p>
+    <a class="cta ghost" href="/check" style="margin-top:16px">Check an deine Piloten geben →</a>
+  </section>
+
+  <div class="foot">
+    <div class="brand" style="font-size:13px">PTGO · FLIGHT RECOVERY</div>
+    <div style="margin:12px 0">
+      <span class="badge">App-gestützt</span>
+      <span class="badge">Evidenzbasiert</span>
+      <span class="badge">Ergebnis statt Stunden</span>
+    </div>
+    <p class="small">PTGO (Pain/Trauma/Growth/Outcome) · Therapeutisches Recovery-System.<br>Kein zertifiziertes Fluginstrument. Ersetzt keine medizinische oder fliegerische Ausbildung.</p>
+    <p class="small" style="margin-top:8px"><a href="/check">Piloten-Check</a> · <a href="/flight">Programm</a> · <a href="/zeis.html">ZEIS Protocol</a></p>
+  </div>
+
+</div>
+</body>
+</html>

@@ -16,3 +16,4 @@
 /discovery     /flight-recovery-discovery.html   200
 /check         /flight-recovery-check.html   200
 /recovery-check /flight-recovery-check.html   200
+/recovery      /flight-recovery.html   200
