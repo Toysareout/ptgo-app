@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flight Recovery — Discovery-Feldblatt</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#111;background:#f4f4f4;line-height:1.4;padding:24px}
+.sheet{max-width:780px;margin:0 auto 24px;background:#fff;padding:32px 36px;border:1px solid #ccc;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:18px}
+.brand{font-size:18px;font-weight:800;letter-spacing:.5px}
+.brand small{display:block;font-size:10px;font-weight:600;letter-spacing:2px;color:#666;text-transform:uppercase;margin-top:2px}
+.sub{font-size:11px;color:#666;text-align:right}
+h2{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#444;margin:18px 0 8px;border-bottom:1px solid #ddd;padding-bottom:3px}
+.row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:6px}
+.f{flex:1;min-width:150px;margin-bottom:8px}
+.f label{display:block;font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.line{border-bottom:1px solid #999;height:22px}
+.lines{border-bottom:1px solid #999;height:22px;margin-bottom:4px}
+.opts{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px}
+.opt{display:flex;align-items:center;gap:5px}
+.box{width:13px;height:13px;border:1.5px solid #333;display:inline-block;flex-shrink:0}
+.q{background:#f7f7f4;border-left:3px solid #c9a84c;padding:8px 12px;margin-bottom:7px;font-size:12px}
+.q b{display:block;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;margin-bottom:2px}
+.quote-area{border:1px dashed #aaa;min-height:60px;padding:8px;font-size:12px;color:#999;font-style:italic}
+.note{font-size:10px;color:#888;margin-top:6px}
+.tag{display:inline-block;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#111;color:#fff;padding:3px 8px;border-radius:2px}
+.target{display:flex;align-items:center;gap:6px;margin-top:4px}
+@media print{
+  body{background:#fff;padding:0}
+  .sheet{box-shadow:none;border:none;margin:0;page-break-after:always;max-width:100%;padding:18mm}
+  .noprint{display:none}
+}
+.noprint{text-align:center;margin:0 auto 18px;max-width:780px}
+.noprint button{font-size:13px;font-weight:700;padding:10px 22px;background:#111;color:#fff;border:none;cursor:pointer;letter-spacing:1px}
+</style>
+</head>
+<body>
+
+<div class="noprint">
+  <button onclick="window.print()">🖨 Drucken / als PDF speichern</button>
+  <p style="font-size:11px;color:#888;margin-top:8px">Ein Blatt pro Pilot. Phase 1 = zuhören &amp; dokumentieren, nicht verkaufen.</p>
+</div>
+
+<div class="sheet">
+  <div class="head">
+    <div class="brand">PTGO · FLIGHT RECOVERY<small>Discovery-Feldblatt · Phase 1</small></div>
+    <div class="sub">Datum: ____________<br>Ort / Event: ____________<br>Pilot (Kürzel): ________</div>
+  </div>
+
+  <h2>1 · Profil &amp; Mechanismus</h2>
+  <div class="row">
+    <div class="f"><label>Erfahrung / Stunden</label><div class="line"></div></div>
+    <div class="f"><label>Schirmklasse</label><div class="line"></div></div>
+  </div>
+  <div class="f"><label>Disziplin / Belastungsquelle</label>
+    <div class="opts" style="margin-top:4px">
+      <span class="opt"><span class="box"></span>XC / Strecke</span>
+      <span class="opt"><span class="box"></span>Akro</span>
+      <span class="opt"><span class="box"></span>Hike-and-Fly</span>
+      <span class="opt"><span class="box"></span>SIV / Sicherheitstraining</span>
+      <span class="opt"><span class="box"></span>Schulung</span>
+      <span class="opt"><span class="box"></span>harte Landung</span>
+    </div>
+  </div>
+
+  <h2>2 · Betroffene Struktur</h2>
+  <div class="opts">
+    <span class="opt"><span class="box"></span>HWS (Nacken)</span>
+    <span class="opt"><span class="box"></span>BWS (oberer Rücken)</span>
+    <span class="opt"><span class="box"></span>LWS (unterer Rücken)</span>
+    <span class="opt"><span class="box"></span>Hüfte</span>
+    <span class="opt"><span class="box"></span>Schulter</span>
+    <span class="opt"><span class="box"></span>Nervensystem / Unruhe</span>
+    <span class="opt"><span class="box"></span>Sonstiges: ________</span>
+  </div>
+  <div class="f" style="margin-top:8px"><label>Wo genau / wie stark (0–10)</label><div class="lines"></div></div>
+
+  <h2>3 · Onset-Timing <span class="tag">Schlüsselfrage</span></h2>
+  <div class="opts">
+    <span class="opt"><span class="box"></span>sofort</span>
+    <span class="opt"><span class="box"></span>am Abend</span>
+    <span class="opt"><span class="box"></span><b>zweiter Tag</b></span>
+    <span class="opt"><span class="box"></span>schleichend / kumulativ</span>
+  </div>
+  <div class="note">→ Bestätigt sich die „zweiter Tag"-These? Das ist das Nachfrage-Fenster.</div>
+
+  <h2>4 · Aktuelle Lösung des Piloten</h2>
+  <div class="opts">
+    <span class="opt"><span class="box"></span>nichts</span>
+    <span class="opt"><span class="box"></span>Schmerzmittel</span>
+    <span class="opt"><span class="box"></span>Physio</span>
+    <span class="opt"><span class="box"></span>Dehnen / selbst</span>
+    <span class="opt"><span class="box"></span>aussitzen</span>
+  </div>
+  <div class="f" style="margin-top:8px"><label>Womit positioniere ich mich also dagegen?</label><div class="lines"></div></div>
+
+  <h2>5 · Intervention &amp; Ergebnis</h2>
+  <div class="f"><label>Was habe ich gemacht (FDM / Faszie / Dekompression / Regulation)</label><div class="lines"></div><div class="lines"></div></div>
+  <div class="f"><label>Sofortige Veränderung / Reaktion des Piloten</label><div class="lines"></div></div>
+
+  <h2>6 · Wörtliche Sprache des Piloten <span class="tag">IP-Gold</span></h2>
+  <div class="quote-area">Exakt notieren, wie der Pilot die Beschwerde beschreibt — diese Worte werden später Headline &amp; Verkaufstext …</div>
+
+  <h2>7 · Kalibrierte Fragen (Spickzettel)</h2>
+  <div class="q"><b>Einstieg</b>„Wie geht ihr aktuell mit den körperlichen Belastungen nach dem Training um?"</div>
+  <div class="q"><b>Schlüssel</b>„Wie fühlt sich euer Körper am <b>zweiten Tag</b> nach einem SIV / langen Streckenflug an?"</div>
+  <div class="q"><b>Accusation Audit</b>„Wahrscheinlich klingt es übertrieben, dem Körper nach dem Fliegen so viel Aufmerksamkeit zu schenken …"</div>
+  <div class="q"><b>Label → Ziel: „Das stimmt genau."</b>„Es scheint, dass euch der zweite Tag am meisten kostet …"</div>
+  <div class="note">Nur How/What — nie „warum". Nicht verkaufen. Zuhören, spiegeln, dokumentieren.</div>
+
+</div>
+
+</body>
+</html>

@@ -38,6 +38,7 @@
     { "source": "/skyworthy", "destination": "/skyworthy.html" },
     { "source": "/flight-performance", "destination": "/flight-performance.html" },
     { "source": "/flight", "destination": "/flight-performance.html" },
+    { "source": "/discovery", "destination": "/flight-recovery-discovery.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

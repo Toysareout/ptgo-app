@@ -92,6 +92,11 @@
   to = "/flight-performance.html"
   status = 200
 
+[[redirects]]
+  from = "/discovery"
+  to = "/flight-recovery-discovery.html"
+  status = 200
+
 # Nerve Center API
 [[redirects]]
   from = "/api/nerve"
