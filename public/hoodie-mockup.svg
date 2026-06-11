@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="820" viewBox="0 0 1240 820" font-family="'Orbitron','Arial Black',sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#06060c"/><stop offset="1" stop-color="#020206"/>
+    </linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1b24"/><stop offset="1" stop-color="#101018"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8c00"/><stop offset="1" stop-color="#c9a84c"/>
+    </linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+
+  <rect width="1240" height="820" fill="url(#bg)"/>
+  <!-- scanline accent -->
+  <rect x="0" y="64" width="1240" height="2" fill="#ff8c00" opacity="0.18"/>
+
+  <!-- Title -->
+  <text x="620" y="44" fill="#c9a84c" font-size="22" font-weight="900" letter-spacing="6" text-anchor="middle">PTGO · FLIGHT RECOVERY — HOODIE</text>
+  <text x="620" y="788" fill="#666680" font-size="13" letter-spacing="3" text-anchor="middle" font-family="'Space Mono',monospace">Heavy Charcoal · 400 gsm · Bio-Baumwolle/Poly · Gold + Cyan Print</text>
+
+  <!-- ===================== FRONT ===================== -->
+  <g transform="translate(40,110)">
+    <text x="280" y="0" fill="#00f0ff" font-size="13" letter-spacing="4" text-anchor="middle">VORDERSEITE</text>
+    <!-- hoodie body -->
+    <g stroke="#2a2a38" stroke-width="2">
+      <!-- sleeves -->
+      <path d="M70 150 L20 360 L95 390 L130 220 Z" fill="url(#cloth)"/>
+      <path d="M490 150 L540 360 L465 390 L430 220 Z" fill="url(#cloth)"/>
+      <!-- body -->
+      <path d="M130 150 Q280 110 430 150 L455 560 Q280 590 105 560 Z" fill="url(#cloth)"/>
+      <!-- hood -->
+      <path d="M175 150 Q280 60 385 150 Q330 110 280 110 Q230 110 175 150 Z" fill="#16161f"/>
+      <path d="M175 150 Q280 95 385 150" fill="none" stroke="#2a2a38" stroke-width="2"/>
+      <!-- pocket -->
+      <path d="M170 430 L390 430 L375 520 L185 520 Z" fill="none" stroke="#23232f" stroke-width="2"/>
+      <!-- drawstrings -->
+      <line x1="255" y1="150" x2="250" y2="250" stroke="#3a3a48" stroke-width="3"/>
+      <line x1="305" y1="150" x2="310" y2="250" stroke="#3a3a48" stroke-width="3"/>
+      <circle cx="250" cy="252" r="5" fill="#c9a84c"/><circle cx="310" cy="252" r="5" fill="#c9a84c"/>
+    </g>
+    <!-- LEFT CHEST PRINT -->
+    <g transform="translate(330,235)" filter="url(#glow)">
+      <!-- wing mark -->
+      <path d="M-8 0 Q35 -22 78 0 Q35 -8 -8 0 Z" fill="url(#gold)"/>
+      <text x="-10" y="34" fill="#c9a84c" font-size="26" font-weight="900" letter-spacing="2">PTGO</text>
+      <text x="-9" y="52" fill="#00f0ff" font-size="9.5" letter-spacing="4">FLIGHT RECOVERY</text>
+    </g>
+  </g>
+
+  <!-- ===================== BACK ===================== -->
+  <g transform="translate(640,110)">
+    <text x="280" y="0" fill="#00f0ff" font-size="13" letter-spacing="4" text-anchor="middle">RÜCKSEITE</text>
+    <g stroke="#2a2a38" stroke-width="2">
+      <path d="M70 150 L20 360 L95 390 L130 220 Z" fill="url(#cloth)"/>
+      <path d="M490 150 L540 360 L465 390 L430 220 Z" fill="url(#cloth)"/>
+      <path d="M130 150 Q280 110 430 150 L455 560 Q280 590 105 560 Z" fill="url(#cloth)"/>
+      <!-- hood back -->
+      <path d="M180 150 Q280 70 380 150 L360 168 Q280 120 200 168 Z" fill="#16161f"/>
+    </g>
+    <!-- BIG BACK PRINT -->
+    <g transform="translate(280,300)" text-anchor="middle">
+      <!-- large paraglider wing arc -->
+      <path d="M-150 -70 Q0 -135 150 -70 Q120 -86 90 -92 L60 -64 L30 -90 L0 -60 L-30 -90 L-60 -64 L-90 -92 Q-120 -86 -150 -70 Z"
+            fill="none" stroke="url(#gold)" stroke-width="4" filter="url(#glow)"/>
+      <!-- pilot line -->
+      <path d="M0 -70 L0 -18" stroke="#c9a84c" stroke-width="2"/>
+      <circle cx="0" cy="-10" r="6" fill="#c9a84c"/>
+      <text x="0" y="60" fill="#c9a84c" font-size="34" font-weight="900" letter-spacing="3">FLIGHT RECOVERY</text>
+      <text x="0" y="92" fill="#00f0ff" font-size="13" letter-spacing="3" font-family="'Space Mono',monospace">SCHMERZFREI FLIEGEN · STÄRKER LANDEN</text>
+      <text x="0" y="250" fill="#666680" font-size="12" letter-spacing="3" font-family="'Space Mono',monospace">recovery.ptgo.de</text>
+    </g>
+  </g>
+</svg>
