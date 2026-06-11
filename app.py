@@ -953,6 +953,13 @@ PATTERNS = {
     "avoidance_pattern":   "Avoidance Pattern",
     "low_mood":            "Low Mood",
     "balanced":            "Balanced",
+    # ----- FLIGHT PERFORMANCE -----
+    "harness_neck_load":   "Gurtzeug-Nacken",
+    "shoulder_flight_load":"Schultergürtel-Last",
+    "launch_anxiety":      "Start-Anspannung",
+    "inflight_tension":    "In-Flight Tension",
+    "postflight_overload": "Post-Flight Overload",
+    "flight_ready":        "Flight Ready",
 }
 
 def detect_pattern(data: Dict[str, Any]) -> tuple:
@@ -979,6 +986,50 @@ def detect_pattern(data: Dict[str, Any]) -> tuple:
     if mood < 4:
         return "low_mood", PATTERNS["low_mood"]
     return "balanced", PATTERNS["balanced"]
+
+
+# Flugphasen, die der Flight-Performance-Check-in setzen kann
+FLIGHT_PHASES = ("preflight", "inflight", "postflight", "general")
+
+def detect_flight_pattern(data: Dict[str, Any]) -> tuple:
+    """Flight-Performance-Mustererkennung für Gleitschirmpiloten.
+
+    Erwartet zusätzlich zum Standard-Check-in das Feld `flight_phase`
+    (preflight | inflight | postflight | general). Fällt auf die
+    allgemeine Mustererkennung zurück, wenn keine Flugphase gesetzt ist.
+    """
+    phase     = str(data.get("flight_phase", "general") or "general").lower()
+    stress    = _clamp_int(data.get("stress", 5), 0, 10)
+    body      = _clamp_int(data.get("body", 5), 0, 10)
+    pain_region = data.get("pain_region", "")
+
+    # Phasen-spezifische Priorisierung
+    if phase == "preflight" and stress >= 5:
+        return "launch_anxiety", PATTERNS["launch_anxiety"]
+    if phase == "inflight" and stress >= 5:
+        return "inflight_tension", PATTERNS["inflight_tension"]
+    if phase == "postflight" and (stress >= 6 or body <= 4):
+        return "postflight_overload", PATTERNS["postflight_overload"]
+
+    # Körperregion-getriebene Flugmuster (gelten in jeder Phase)
+    if pain_region == "neck":
+        return "harness_neck_load", PATTERNS["harness_neck_load"]
+    if pain_region in ("shoulder", "upper_back"):
+        return "shoulder_flight_load", PATTERNS["shoulder_flight_load"]
+
+    # Phasen-Defaults ohne erhöhte Belastung
+    if phase == "preflight":
+        return "launch_anxiety", PATTERNS["launch_anxiety"]
+    if phase == "postflight":
+        return "postflight_overload", PATTERNS["postflight_overload"]
+    if phase == "inflight":
+        return "inflight_tension", PATTERNS["inflight_tension"]
+
+    # Kein Flugbezug erkennbar → allgemeine Erkennung, sonst Flight Ready
+    base_code, base_label = detect_pattern(data)
+    if base_code == "balanced":
+        return "flight_ready", PATTERNS["flight_ready"]
+    return base_code, base_label
 
 
 # =========================================================
@@ -1049,6 +1100,43 @@ ACTION_LIBRARY = {
         "duration": "3 Minuten",
         "voice_script": "Stift. Papier. Alles raus was im Kopf ist.",
     },
+
+    # ----- FLIGHT PERFORMANCE — piloten-spezifische Interventionen -----
+    "harness_neck_release": {
+        "label": "Gurtzeug-Nacken Release",
+        "why": "Im Gurtzeug hält der Nacken den Kopf stundenlang gegen Fahrtwind und Beschleunigung. Diese Schutzspannung sitzt genau in der oberen Halswirbelsäule und in der Schädelbasis.",
+        "instructions": "Aufrecht sitzen. Kinn 2cm zurückziehen (Doppelkinn), 5 Sekunden halten — das streckt den Nacken. Dann Kopf langsam zur rechten Schulter, 10 Sekunden, zur linken, 10 Sekunden. 3 Runden. Schultern dabei bewusst tief.",
+        "duration": "3 Minuten",
+        "voice_script": "Kinn zurück... Nacken lang... und langsam zur Seite. Atme in die Schädelbasis.",
+    },
+    "shoulder_girdle_reset": {
+        "label": "Schultergürtel Reset",
+        "why": "Aktives Steuern am Schirm und ständige Korrektur belasten Schultergürtel und oberen Rücken. Hier entsteht die Verspannung, die nach dem Flug bleibt.",
+        "instructions": "Beide Schultern 5x kreisen — groß, langsam, nach hinten. Dann Hände hinter dem Rücken verschränken, Brust öffnen, 15 Sekunden. Zum Schluss Schulterblätter 5x bewusst nach unten-hinten ziehen.",
+        "duration": "3 Minuten",
+        "voice_script": "Schultern kreisen... Brust auf... Schulterblätter runter und nach hinten.",
+    },
+    "preflight_downshift": {
+        "label": "Pre-Flight Downshift",
+        "why": "Anspannung vor dem Start verengt Wahrnehmung und Atmung — genau dann, wenn du den klarsten Kopf brauchst. Verlängertes Ausatmen holt dich in den ruhigen, wachen Zustand.",
+        "instructions": "Vor dem Start, aufrecht stehend: 4 Sekunden durch die Nase ein, 8 Sekunden durch den Mund aus. 6 Runden. Beim Ausatmen Schultern und Kiefer locker lassen. Blick weit, nicht eng.",
+        "duration": "2 Minuten",
+        "voice_script": "Einatmen 2-3-4... lang ausatmen 2-3-4-5-6-7-8. Schultern locker. Blick weit.",
+    },
+    "inflight_focus_anchor": {
+        "label": "In-Flight Focus Anchor",
+        "why": "In der Luft verengt Stress die Wahrnehmung zum Tunnel. Ein Atem-Anker hält dich ruhig und die Wahrnehmung offen — ohne dass du die Hände vom Schirm nimmst.",
+        "instructions": "Nur Atmung, Hände bleiben am Schirm. Ruhig durch die Nase ein, betont lang aus. Mit jedem Ausatmen den Blick bewusst weiten: Horizont, Wolken, Gelände. Schultern tief, Kiefer locker. Fortlaufend bei Bedarf.",
+        "duration": "Laufend",
+        "voice_script": "Lang ausatmen. Blick weit machen. Schultern tief. Du bist ruhig, du bist wach.",
+    },
+    "postlanding_reset": {
+        "label": "Post-Landing Reset",
+        "why": "Nach der Landung bleibt der Körper im Aktivierungsmodus. Ein bewusster Reset bringt das Nervensystem runter und beugt dem Schmerzmuster vor, das sonst am nächsten Tag sitzt.",
+        "instructions": "Nach dem Packen: 10 Minuten ruhig gehen, kein Handy. Dann doppelter Einatemzug durch die Nase, langes Ausatmen — 5x. Zum Schluss Nacken und Schultern locker ausschütteln. Wasser trinken.",
+        "duration": "12 Minuten",
+        "voice_script": "Geh. Atme runter. Schultern ausschütteln. Der Flug ist im Körper — lass ihn los.",
+    },
 }
 
 
@@ -1065,6 +1153,13 @@ PATTERN_TO_ACTION = {
     "avoidance_pattern":  "five_minute_start",
     "low_mood":           "walk_reset",
     "balanced":           "write_down_reset",
+    # ----- FLIGHT PERFORMANCE -----
+    "harness_neck_load":   "harness_neck_release",
+    "shoulder_flight_load":"shoulder_girdle_reset",
+    "launch_anxiety":      "preflight_downshift",
+    "inflight_tension":    "inflight_focus_anchor",
+    "postflight_overload": "postlanding_reset",
+    "flight_ready":        "preflight_downshift",
 }
 
 def get_action(pattern_code: str) -> tuple:
