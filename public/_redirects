@@ -14,3 +14,5 @@
 /flight-performance   /flight-performance.html   200
 /flight        /flight-performance.html   200
 /discovery     /flight-recovery-discovery.html   200
+/check         /flight-recovery-check.html   200
+/recovery-check /flight-recovery-check.html   200
