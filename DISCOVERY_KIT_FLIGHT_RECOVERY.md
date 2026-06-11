@@ -21,7 +21,7 @@ Pro Pilot dokumentierst du strukturiert (siehe Feldblatt `flight-recovery-discov
 2. **Betroffene Struktur** — HWS · BWS · LWS · Hüfte · Schulter · Nervensystem
 3. **Onset-Timing** — sofort / Abend / **zweiter Tag** / schleichend
 4. **Aktuelle Lösung** — was tut der Pilot HEUTE dagegen (meist: nichts / Ibuprofen / aussitzen)
-5. **Intervention** — was du gemacht hast (FDM, Faszie, Dekompression, Regulation)
+5. **Intervention** — was du gemacht hast (Strukturarbeit, Faszie, Dekompression, Regulation)
 6. **Ergebnis** — sofortige Veränderung, Pilot-Reaktion
 7. **WÖRTLICHE SPRACHE** — exakt wie der Pilot es beschreibt. Diese Worte werden dein Verkauf.
 
