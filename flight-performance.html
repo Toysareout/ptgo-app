@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#030308">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>PTGO Flight Performance — Schmerzfrei fliegen. Stärker landen.</title>
+<meta name="description" content="PTGO Flight Performance: Das therapeutische Performance-System für Gleitschirmpiloten. App-gestützte Schmerz- und Spannungsregulation für Nacken, Schultern und Konzentration im Gurtzeug.">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030308;--surface:#0a0a14;--surface2:#10101f;--border:#1a1a2e;--cyan:#00f0ff;--pink:#ff2d8e;--green:#2dffa8;--gold:#c9a84c;--purple:#a855f7;--red:#ff4444;--text:#e0ddd4;--dim:#666680;--orange:#ff8c00;--glow-cyan:0 0 20px rgba(0,240,255,.3);--glow-gold:0 0 20px rgba(201,168,76,.3);--glow-orange:0 0 20px rgba(255,140,0,.3)}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;overflow-x:hidden}
+::selection{background:var(--cyan);color:var(--bg)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+a{color:var(--cyan);text-decoration:none}
+.scanline{position:fixed;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--orange),transparent);opacity:.15;z-index:9999;animation:scanline 5s linear infinite;pointer-events:none}
+@keyframes scanline{0%{top:0}100%{top:100vh}}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 100px}
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.brand{font-family:'Orbitron',sans-serif;font-weight:900;letter-spacing:3px;font-size:15px;background:linear-gradient(135deg,var(--orange),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.pill{font-family:'Orbitron',sans-serif;font-size:9px;color:var(--gold);border:1px solid var(--gold);padding:5px 12px;letter-spacing:2px;text-transform:uppercase}
+h1{font-family:'Orbitron',sans-serif;font-size:30px;font-weight:900;letter-spacing:1px;line-height:1.15;margin:8px 0 16px;background:linear-gradient(135deg,var(--text),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;margin:36px 0 14px;color:var(--gold);text-transform:uppercase}
+h3{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;margin:0 0 8px;color:var(--text)}
+p{color:var(--dim);line-height:1.7;margin-bottom:10px;font-size:13px}
+.lead{font-size:15px;color:var(--text);line-height:1.7}
+.small{font-size:10px;color:var(--dim);letter-spacing:1px}
+.hr{height:1px;background:var(--border);margin:28px 0}
+.hero{text-align:center;padding:30px 0 10px}
+.kicker{font-family:'Orbitron',sans-serif;font-size:10px;color:var(--cyan);letter-spacing:4px;text-transform:uppercase;margin-bottom:14px}
+.cta{display:inline-block;font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--bg);background:linear-gradient(135deg,var(--orange),var(--gold));padding:16px 34px;margin:18px 0;border:none;cursor:pointer;box-shadow:var(--glow-gold);transition:transform .2s}
+.cta:hover{transform:translateY(-2px)}
+.cta.ghost{background:none;color:var(--cyan);border:1px solid var(--cyan);box-shadow:none}
+.grid{display:grid;gap:14px}
+.cols-3{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);padding:20px;position:relative}
+.card.feature{border-color:rgba(255,140,0,.2)}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px}
+.step-num{font-family:'Orbitron',sans-serif;font-weight:900;font-size:22px;color:var(--orange);min-width:36px;text-align:center;opacity:.7}
+.pkg{background:var(--surface);border:1px solid var(--border);padding:24px 20px;display:flex;flex-direction:column}
+.pkg.highlight{border-color:var(--gold);box-shadow:var(--glow-gold)}
+.pkg .tag{font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+.pkg.highlight .tag{color:var(--gold)}
+.pkg .price{font-family:'Orbitron',sans-serif;font-size:26px;font-weight:900;color:var(--text);margin:6px 0 4px}
+.pkg .per{font-size:10px;color:var(--dim);margin-bottom:14px}
+.pkg ul{list-style:none;margin:6px 0 18px}
+.pkg li{font-size:12px;color:var(--text);line-height:1.5;padding:6px 0 6px 20px;position:relative;border-bottom:1px solid rgba(26,26,46,.5)}
+.pkg li::before{content:"›";position:absolute;left:0;color:var(--gold);font-weight:700}
+.pkg .cta{margin-top:auto;text-align:center}
+.quote{background:var(--surface2);border-left:2px solid var(--gold);padding:14px 18px;margin-bottom:12px}
+.quote p{color:var(--text);font-size:13px;font-style:italic;margin:0}
+.quote .who{font-size:10px;color:var(--dim);letter-spacing:1px;margin-top:8px;font-style:normal}
+.tick{font-size:13px;color:var(--text);line-height:1.6;padding:7px 0 7px 26px;position:relative;border-bottom:1px solid var(--border)}
+.tick::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:700}
+details.faq{background:var(--surface);border:1px solid var(--border);margin-bottom:8px}
+details.faq summary{font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px;padding:14px 16px;cursor:pointer;color:var(--text);list-style:none}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq[open] summary{color:var(--gold)}
+details.faq .body{padding:0 16px 16px;font-size:12px;color:var(--dim);line-height:1.7}
+.foot{text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid var(--border)}
+.badge{display:inline-block;font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:2px;color:var(--cyan);border:1px solid var(--border);padding:4px 10px;margin:3px;text-transform:uppercase}
+.center{text-align:center}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrap">
+
+  <div class="top">
+    <span class="brand">PTGO · FLIGHT PERFORMANCE</span>
+    <span class="pill">Elite</span>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="kicker">Für Gleitschirmpiloten</div>
+    <h1>Schmerzfrei fliegen.<br>Klarer entscheiden.<br>Stärker landen.</h1>
+    <p class="lead">Nacken, Schultern, Rücken im Gurtzeug. Anspannung vor dem Start. Konzentration in der Thermik.<br>
+    PTGO Flight Performance reguliert genau das — mit einem System, das du in der Hand hältst, nicht mit endlosen Terminen.</p>
+    <a class="cta" href="#pakete">Paket wählen</a>
+    <a class="cta ghost" href="#kontakt">Erstgespräch</a>
+    <div class="small" style="margin-top:12px">App-gestützt · evidenzbasiert · in Dänemark & Portugal im Einsatz</div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- PROBLEM -->
+  <section>
+    <h2>Das Problem, über das niemand spricht</h2>
+    <p class="lead">Du fliegst, um frei zu sein. Aber dein Körper hält dich am Boden:</p>
+    <div style="margin-top:12px">
+      <div class="tick">Verspannter Nacken und Schultern nach jeder Stunde im Gurtzeug</div>
+      <div class="tick">Rückenschmerzen, die den nächsten Flugtag entscheiden — nicht das Wetter</div>
+      <div class="tick">Innere Anspannung beim Start, die deine Wahrnehmung verengt</div>
+      <div class="tick">Alte Schmerzmuster (Hexenschuss, Hüfte, Knie), die immer wiederkommen</div>
+    </div>
+    <p style="margin-top:14px">Du brauchst keinen weiteren Termin, der von der Anwesenheit eines Therapeuten abhängt.
+    Du brauchst ein <strong style="color:var(--text)">System, das dich trägt — am Startplatz, in der Luft, nach der Landung.</strong></p>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- HOW IT WORKS -->
+  <section>
+    <h2>So funktioniert es</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Assessment in der App</h3>
+        <p>Dein Check-in erfasst Schmerz, Spannung, Schlaf und Belastung. Das PTGO-System erkennt dein individuelles Muster aus 18 Schmerzverzerrungen — präzise, in Minuten, ohne Wartezimmer.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Dein Protokoll</h3>
+        <p>Du erhältst geführte, piloten-spezifische Self-Treatment-Skripte — atembasierte Regulation, Schulter- und Nacken-Release, Pre-Flight-Downshift. Jederzeit abrufbar, direkt am Startplatz.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Performance & Tracking</h3>
+        <p>Du fliegst regulierter, entscheidest klarer, erholst dich schneller. Dein Fortschritt wird sichtbar — und mit SkyCoach lässt sich körperlicher Zustand mit deinen Flügen zusammenführen.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- BENEFITS -->
+  <section>
+    <h2>Was sich verändert</h2>
+    <div class="grid cols-3">
+      <div class="card feature"><h3>Im Gurtzeug</h3><p>Weniger Nacken- und Schulterlast, bessere Sitzhaltung, längere Flüge ohne Verspannung.</p></div>
+      <div class="card feature"><h3>Vor dem Start</h3><p>Ruhe statt Anspannung. Ein klarer Kopf trifft bessere Entscheidungen.</p></div>
+      <div class="card feature"><h3>Nach der Landung</h3><p>Schnellere Erholung, weniger Schmerzmuster, mehr Flugtage pro Saison.</p></div>
+    </div>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- PAKETE -->
+  <section id="pakete">
+    <h2>Pakete</h2>
+    <p>Du zahlst für ein <strong style="color:var(--text)">Ergebnis</strong>, nicht für eine Stunde. Wähle die Tiefe, die zu dir passt.</p>
+    <div class="grid cols-3" style="margin-top:16px">
+
+      <div class="pkg">
+        <div class="tag">Assessment</div>
+        <div class="price">490&nbsp;€</div>
+        <div class="per">einmalig · der Einstieg</div>
+        <ul>
+          <li>Vollständiges App-Assessment</li>
+          <li>Analyse deines Schmerz- & Spannungsmusters</li>
+          <li>Persönliche Auswertung</li>
+          <li>3 sofort nutzbare Self-Treatment-Skripte</li>
+        </ul>
+        <a class="cta ghost" href="#kontakt">Starten</a>
+      </div>
+
+      <div class="pkg highlight">
+        <div class="tag">Flight Performance Program</div>
+        <div class="price">2.900&nbsp;€</div>
+        <div class="per">4–6 Wochen · das Kernprogramm</div>
+        <ul>
+          <li>Alles aus Assessment</li>
+          <li>Vollständiges piloten-spezifisches Protokoll</li>
+          <li>App-Begleitung über die gesamte Laufzeit</li>
+          <li>Performance-Session (1-zu-viele)</li>
+          <li>Fortschritts-Tracking</li>
+        </ul>
+        <a class="cta" href="#kontakt">Platz sichern</a>
+      </div>
+
+      <div class="pkg">
+        <div class="tag">Elite Retreat</div>
+        <div class="price">ab 7.500&nbsp;€</div>
+        <div class="per">Dänemark · Portugal · kleine Gruppe</div>
+        <ul>
+          <li>Fliegen + PTGO an einem Ort</li>
+          <li>Intensiv-Betreuung vor Ort</li>
+          <li>Komplettes Protokoll & App</li>
+          <li>Performance auf höchstem Niveau</li>
+          <li>Limitierte Plätze</li>
+        </ul>
+        <a class="cta ghost" href="#kontakt">Anfragen</a>
+      </div>
+
+    </div>
+    <p class="small center" style="margin-top:14px">Alle Preise inkl. MwSt. Firmen-/Vereins- und Flugschul-Konditionen auf Anfrage.</p>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- STIMMEN -->
+  <section>
+    <h2>Stimmen</h2>
+    <div class="quote"><p>„Schmerzfrei. Ich hätte nicht gedacht, dass das nochmal geht."</p><div class="who">— Teilnehmer, Schmerz-Programm</div></div>
+    <div class="quote"><p>„Der Hexenschuss ist vielleicht Geschichte."</p><div class="who">— Teilnehmer</div></div>
+    <div class="quote"><p>„Wir reden wieder über Golf, Reisen und das Leben — nicht mehr über Symptome."</p><div class="who">— Angehörige eines Teilnehmers</div></div>
+    <p class="small" style="margin-top:8px">Aussagen aus laufenden PTGO-Programmen. Ergebnisse sind individuell.</p>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- FAQ -->
+  <section>
+    <h2>Häufige Fragen</h2>
+    <details class="faq"><summary>Ersetzt das meine Flugausbildung oder einen Arzt?</summary><div class="body">Nein. PTGO Flight Performance ist ein Trainings- und Regulationssystem für Körper und Zustand. Es ersetzt keine medizinische Behandlung und keine fachliche Beurteilung durch Fluglehrer oder Ärzte.</div></details>
+    <details class="faq"><summary>Warum kostet es so viel mehr als eine einzelne Behandlung?</summary><div class="body">Weil du kein Zeitfenster kaufst, sondern ein Ergebnis und ein System, das dich über Wochen trägt — unabhängig davon, ob jemand neben dir steht. Genau das macht den Wert aus.</div></details>
+    <details class="faq"><summary>Muss ich für jede Übung einen Termin haben?</summary><div class="body">Nein. Das Herzstück ist die App: Assessment, Muster-Erkennung und geführte Skripte hast du jederzeit dabei — am Startplatz, zuhause, unterwegs.</div></details>
+    <details class="faq"><summary>Für welches Level ist das geeignet?</summary><div class="body">Vom ambitionierten Hobbypiloten bis zum Profi. Das Protokoll passt sich deinem Muster und deiner Belastung an.</div></details>
+  </section>
+
+  <div class="hr"></div>
+
+  <!-- KONTAKT / CTA -->
+  <section id="kontakt" class="center">
+    <h2 style="color:var(--gold)">Bereit?</h2>
+    <p class="lead">Sichere dir dein Erstgespräch. Wir klären in 15 Minuten, welches Paket zu deinem Fliegen passt.</p>
+    <!-- TODO: Kontakt-Daten anpassen (E-Mail / WhatsApp-Nummer) -->
+    <a class="cta" href="mailto:alexander.zeis@gmx.de?subject=PTGO%20Flight%20Performance%20%E2%80%94%20Erstgespr%C3%A4ch&body=Hi%2C%20ich%20interessiere%20mich%20f%C3%BCr%20PTGO%20Flight%20Performance.%20Mein%20Level%2FSchirm%3A%20...%20Meine%20gr%C3%B6%C3%9Fte%20Baustelle%20beim%20Fliegen%3A%20...">Erstgespräch anfragen</a>
+    <div style="margin-top:18px">
+      <span class="badge">App-gestützt</span>
+      <span class="badge">Evidenzbasiert</span>
+      <span class="badge">Ergebnis statt Stunden</span>
+    </div>
+  </section>
+
+  <div class="foot">
+    <div class="brand" style="font-size:13px">PTGO · FLIGHT PERFORMANCE</div>
+    <p class="small" style="margin-top:8px">PTGO (Pain/Trauma/Growth/Outcome) · Therapeutisches Performance-System.<br>Kein zertifiziertes Fluginstrument. Ersetzt keine medizinische oder fliegerische Ausbildung.</p>
+    <p class="small" style="margin-top:8px"><a href="/index.html">PTGO Home</a> · <a href="/zeis.html">ZEIS Protocol</a> · <a href="/skyworthy.html">Skyworthy</a></p>
+  </div>
+
+</div>
+</body>
+</html>
