@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
+<script>
+/* Host-Weiche: recovery.ptgo.de zeigt direkt den Flight-Recovery-Hub.
+   Greift NUR auf der recovery-Subdomain — Hauptseite bleibt unberührt. */
+(function(){
+  var h = location.hostname.split('.')[0];
+  var p = location.pathname;
+  if (h === 'recovery' && (p === '/' || p === '/index.html')) {
+    location.replace('/flight-recovery.html');
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 <meta name="theme-color" content="#030308">
