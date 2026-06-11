@@ -38,7 +38,7 @@ Stopp. Nicht weiterreden. Lass die Stille arbeiten. Wer fragt, ist warm.
 
 Ja = Markt da → verkaufen. Nein = wertvollste Info der Woche → Positionierung schärfen.
 
-**QR-Code:** auf `https://ptgo.de/flight` zeigen lassen (z. B. über einen kostenlosen QR-Generator), als Sticker oder Handy-Hintergrund dabei.
+**QR-Code:** auf `https://recovery.ptgo.de/flight` zeigen lassen (z. B. über einen kostenlosen QR-Generator), als Sticker oder Handy-Hintergrund dabei.
 
 ---
 
@@ -92,7 +92,7 @@ Bring es ruhig, an einem guten Moment. Ein Satz reicht. Damit du nie wieder der 
 
 ## 8. CHECKLISTE — BEVOR DU VERKAUFST
 
-- [ ] Seite live: `ptgo.de/flight`
+- [ ] Seite live: `recovery.ptgo.de/flight`
 - [ ] Kontakt-Link auf der Seite auf deine echte Mail/WhatsApp gesetzt
 - [ ] QR-Code generiert & dabei (Sticker/Handy)
 - [ ] App-Zugang/Onboarding für einen neuen Piloten getestet

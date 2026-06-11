@@ -1,7 +1,7 @@
 # CONTENT-PACK — PTGO FLIGHT PERFORMANCE
 
 > Fertig zum Rauskopieren. Speed schlägt Politur. Raus damit.
-> Link überall: **ptgo.de/flight** · QR: `public/qr-flight.png`
+> Link überall: **recovery.ptgo.de/flight** · QR: `public/qr-flight.png`
 
 ---
 
@@ -18,7 +18,7 @@
 >
 > Schmerzfrei fliegen. Klarer entscheiden. Stärker landen.
 >
-> 👉 ptgo.de/flight
+> 👉 recovery.ptgo.de/flight
 
 **Hashtags:** #gleitschirm #paragliding #flugschule #schmerzfrei #performance
 
@@ -36,7 +36,7 @@
 >
 > Du brauchst keinen weiteren Termin. Du brauchst ein System, das dich am Startplatz trägt.
 >
-> 👉 ptgo.de/flight
+> 👉 recovery.ptgo.de/flight
 
 ---
 
@@ -51,7 +51,7 @@
 >
 > PTGO Flight Performance — von einem Therapeuten, der selbst fliegt.
 >
-> 👉 ptgo.de/flight
+> 👉 recovery.ptgo.de/flight
 
 ---
 
@@ -61,7 +61,7 @@
 > Hey [Name], kurze Sache: Ich teste gerade ein Schmerz- und Performance-System speziell für Piloten — Nacken, Schultern, Rücken im Gurtzeug. Willst du das kostenlose Assessment mal ausprobieren? Würde mich über dein ehrliches Feedback freuen.
 
 **Variante B — nach einem Flugtag:**
-> War ein guter Tag heute. Sag mal — wie ist dein Nacken/Rücken nach so einer Stunde Luft? Ich hab dafür was gebaut, das genau da ansetzt. Schick dir den Link, schau's dir an: ptgo.de/flight
+> War ein guter Tag heute. Sag mal — wie ist dein Nacken/Rücken nach so einer Stunde Luft? Ich hab dafür was gebaut, das genau da ansetzt. Schick dir den Link, schau's dir an: recovery.ptgo.de/flight
 
 **Variante C — Fluglehrer / Schule:**
 > Hast du Schüler/Piloten, die über Nacken oder Rücken klagen? Ich hab ein App-gestütztes System dafür — könnten wir uns mal kurz anschauen, ob das für deine Leute passt?
@@ -80,5 +80,5 @@ Dann Stille. Wer fragt, ist warm.
 
 - **1 Piece pro Tag.** Speed > Perfektion.
 - Jeder Flug = Rohmaterial. Filmen, nicht nur erinnern.
-- Jeder Post endet mit **ptgo.de/flight**.
+- Jeder Post endet mit **recovery.ptgo.de/flight**.
 - Nicht prahlen — **beweisen**. Du fliegst und du behandelst. Das ist der Frame.
