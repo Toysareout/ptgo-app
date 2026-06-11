@@ -36,6 +36,8 @@
     { "source": "/kommunikation", "destination": "/kommunikation.html" },
     { "source": "/hub", "destination": "/hub.html" },
     { "source": "/skyworthy", "destination": "/skyworthy.html" },
+    { "source": "/flight-performance", "destination": "/flight-performance.html" },
+    { "source": "/flight", "destination": "/flight-performance.html" },
     { "source": "/.netlify/functions/:path*", "destination": "/api/:path*" }
   ],
   "headers": [

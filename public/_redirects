@@ -11,3 +11,5 @@
 /setup        /setup-supabase.html  200
 /bot-admin    /bot-admin.html       200
 /skyworthy    /skyworthy.html       200
+/flight-performance   /flight-performance.html   200
+/flight        /flight-performance.html   200
