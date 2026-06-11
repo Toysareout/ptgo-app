@@ -108,7 +108,7 @@ button.send:disabled{opacity:.5}
       <div class="big">🪂</div>
       <h2>Fast geschafft!</h2>
       <p>WhatsApp hat sich geöffnet — tippe dort nur noch auf <strong>Senden</strong>. Danke, dass du mithilfst!</p>
-      <a id="waLink" class="send" href="#" style="display:inline-block;text-decoration:none;text-align:center;margin-top:18px">WhatsApp öffnen</a>
+      <a id="waLink" class="send" href="#" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;text-align:center;margin-top:18px">WhatsApp öffnen</a>
     </div>
   </div>
 </div>
@@ -168,8 +168,13 @@ document.getElementById('f').addEventListener('submit', (e) => {
   document.getElementById('f').style.display = 'none';
   document.getElementById('ok').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  // WhatsApp direkt öffnen (Mobil: App, Desktop: WhatsApp Web)
-  window.location.href = url;
+  // WhatsApp öffnen — eingebettet (iframe auf ptgo.de) in neuem Tab, sonst direkt
+  const inIframe = window.self !== window.top;
+  if (inIframe) {
+    window.open(url, '_blank');
+  } else {
+    window.location.href = url;
+  }
 });
 </script>
 </body>
