@@ -11254,6 +11254,94 @@ ALEX["wege"] = {
     ],
 }
 
+# 159% Manifest — Axl-Rose-Energie (1985–1990) + Eigenverantwortung + PTGO/Musik/Fliegen/Vater
+ALEX["manifest"] = {
+    "subtitle": "Axl-Rose-Energie (1985–1990), Eigenverantwortung, Freiheit, Kunst — PTGO, Musik, Fliegen, Vater.",
+    "vorwort": "Kein Regelwerk für andere. Ein Kodex für das eigene Leben. Drei Quellen: der kompromisslose Hunger des jungen Axl Rose, Disziplin & Eigenverantwortung, deine eigene Erfahrung als Therapeut, Musiker, Unternehmer, Vater, Pilot. Ziel ist nicht, jemand anderes zu werden — die stärksten eigenen Eigenschaften bewusst kultivieren.",
+    "grundprinzipien": [
+        "Ich handle, bevor ich perfekt vorbereitet bin.",
+        "Ich lerne schneller durch Praxis als durch Grübeln.",
+        "Mein Selbstvertrauen wird durch Leistung genährt.",
+        "Fehler sind Daten.",
+        "Freiheit entsteht durch Kompetenz.",
+        "Meine Gesundheit ist ein Vermögenswert.",
+        "Ich baue Fähigkeiten, die mir niemand nehmen kann.",
+        "Ich halte mein Wort.",
+        "Ich entwickle meine Kunst.",
+        "Ich übernehme Verantwortung für mein Leben.",
+    ],
+    "kapitel": [
+        ("Das Feuer", "Lebe so, dass du etwas fühlst. Die besten Geschichten entstehen dort, wo Mut auf Unsicherheit trifft."),
+        ("Die Bühne gehört dir", "Du bist nicht Zuschauer. Du bist Hauptdarsteller. Warte nicht auf Erlaubnis."),
+        ("Freiheit über Komfort", "Komfort macht bequem. Freiheit macht lebendig. Wähle Freiheit."),
+        ("Geschichten statt Ausreden", "Erinnerungen, Reisen, Begegnungen, Abenteuer — der Rohstoff eines außergewöhnlichen Lebens."),
+        ("Geld als Werkzeug", "Freiheit in komprimierter Form. Zeit, Optionen, Handlungsspielraum."),
+        ("Kreativität", "Erschaffen schlägt Konsumieren."),
+        ("Rückschläge", "Dornenflüge sind Kapitel — nicht das Ende der Geschichte."),
+        ("Körper", "Kraft, Ausdauer, Regeneration. Ein starker Körper gibt einem starken Geist Raum."),
+        ("Beziehungen", "Verbinden, ohne abhängig zu werden."),
+        ("Unternehmer", "Systeme bauen. Ergebnisse liefern. Verantwortung übernehmen."),
+        ("Musiker", "Kunst ist kein Luxus. Kunst ist Ausdruck."),
+        ("Pilot", "Risiko respektieren. Wachstum suchen. Aus jedem Flug lernen."),
+        ("Vater", "Präsenz ist wertvoller als Perfektion."),
+        ("Der tägliche Standard", "Handle so, dass dein zukünftiges Ich stolz darauf sein kann."),
+    ],
+    "situationen": [
+        ("Du scheiterst", "Analysieren, lernen, weitermachen."),
+        ("Du wirst kritisiert", "Prüfen, nutzen — emotional nicht kleben bleiben."),
+        ("Jemand lacht über dich", "Sein Film, nicht deiner."),
+        ("Du verdienst viel Geld", "Nicht rechtfertigen, sondern liefern."),
+        ("Du verdienst wenig Geld", "Fähigkeiten ausbauen."),
+        ("Du hast Angst", "Einen Schritt trotzdem machen."),
+        ("Du bist verletzt", "Vernünftig regenerieren."),
+        ("Du fliegst in die Dornen", "Lektion mitnehmen — nicht dramatisieren."),
+        ("Du hast einen schlechten Tag", "Bewegung, Musik, Natur."),
+        ("Du hast einen großartigen Tag", "Dankbarkeit."),
+        ("Ein Kunde ist begeistert", "Demütig bleiben."),
+        ("Ein Kunde ist unzufrieden", "Zuhören und verbessern."),
+        ("Du lernst etwas Neues", "Direkt ins Feld."),
+        ("Du willst aufgeben", "Noch einen Versuch."),
+        ("Du bist müde", "Prioritäten setzen."),
+        ("Du bist krank", "Erholen statt beweisen."),
+        ("Du wirst unterschätzt", "Arbeiten."),
+        ("Du wirst überschätzt", "Arbeiten."),
+        ("Du bekommst Lob", "Nicht davon abhängig werden."),
+        ("Du bekommst Ablehnung", "Nicht davon definieren lassen."),
+        ("Du reist", "Erfahrungen sammeln."),
+        ("Du bist allein", "Kreativ werden."),
+        ("Du bist unter Menschen", "Präsenz zeigen."),
+        ("Du hast Geld", "Investieren."),
+        ("Du hast kein Geld", "Fähigkeiten erhöhen."),
+        ("Du hast Streit", "Ruhig bleiben."),
+        ("Du hast Erfolg", "Nicht arrogant werden."),
+        ("Du scheiterst öffentlich", "Wieder antreten."),
+        ("Du lernst Musik", "Üben."),
+        ("Du lernst Fliegen", "Respekt vor dem Prozess."),
+        ("Du liebst", "Ehrlich sein."),
+        ("Du vermisst jemanden", "Nicht bedürftig werden."),
+        ("Du hast Angst vor Fehlern", "Handeln."),
+        ("Du vergleichst dich", "Fokus zurück auf dich."),
+        ("Du willst Freiheit", "Verantwortung übernehmen."),
+        ("Du willst Respekt", "Erst Leistung."),
+        ("Du willst Gesundheit", "Schlafen, trainieren, essen."),
+        ("Du willst Einfluss", "Ergebnisse liefern."),
+        ("Du willst Glück", "Sinnvolle Tage bauen."),
+        ("Du wirst provoziert", "Kontrolle behalten."),
+        ("Du bist verletzt worden", "Lernen."),
+        ("Du bekommst eine Chance", "Zugreifen."),
+        ("Du bekommst keine Chance", "Eigene schaffen."),
+        ("Du hast einen Traum", "Termin dafür setzen."),
+        ("Du bist am Meer", "Durchatmen."),
+        ("Du stehst auf einer Bühne", "Alles geben."),
+        ("Du behandelst Menschen", "Wirkung vor Ego."),
+        ("Du bist Vater", "Vorbild sein."),
+        ("Du bist Unternehmer", "Wert schaffen."),
+        ("Du gehst schlafen", "Gewinnen beginnt morgen erneut."),
+    ],
+    "schwur_morgen": "Ich werde nicht auf Motivation warten. Ich werde handeln. Ich werde Fehler machen. Ich werde daraus lernen. Ich werde meine Fähigkeiten ausbauen. Ich werde meine Freiheit vergrößern. Ich werde Musik machen. Ich werde Menschen helfen. Ich werde Abenteuer erleben. Ich werde mein Leben aktiv gestalten.",
+    "schwur_abend": "Ich bin nicht hier, um allen zu gefallen. Ich bin nicht hier, um perfekt zu sein. Ich bin hier, um mein Potenzial zu leben. Ich sammle Geschichten statt Ausreden. Ich erschaffe mehr, als ich konsumiere. Ich gehe meinen eigenen Weg. Ich führe ein Leben, über das es sich lohnt, einen Song zu schreiben.",
+}
+
 
 _ALEX_CSS = """
 <style>
@@ -11402,6 +11490,37 @@ _ALEX_CSS = """
   .weekend-status.free{color:var(--cream)}
   .day-plan{display:none}
   .day-plan.active{display:block}
+
+  /* Manifest */
+  .principle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:780px){.principle-grid{grid-template-columns:1fr}}
+  .principle{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(0,0,0,.2);display:flex;align-items:baseline;gap:14px}
+  .principle .n{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;color:var(--gold2);font-weight:600;min-width:24px;flex-shrink:0}
+  .principle .t{font-size:14px;color:var(--cream);line-height:1.5}
+  .kapitel-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:780px){.kapitel-grid{grid-template-columns:1fr}}
+  .kapitel{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(0,0,0,.2)}
+  .kapitel .n{font-size:10px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;font-weight:700;margin-bottom:4px}
+  .kapitel .t{font-family:'Cormorant Garamond',Georgia,serif;font-size:17px;color:var(--cream);font-weight:600;margin-bottom:4px}
+  .kapitel .l{font-size:13px;color:var(--muted);line-height:1.55;font-style:italic}
+  .sit-filter{width:100%;background:rgba(0,0,0,.3);border:1px solid var(--line2);color:var(--ink);
+    border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;margin-bottom:8px;outline:none;box-sizing:border-box}
+  .sit-filter:focus{border-color:var(--gold)}
+  .sit-row{padding:11px 14px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:34px 1fr;column-gap:10px}
+  .sit-row:last-child{border-bottom:none}
+  .sit-row .n{font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;color:var(--gold2);font-weight:600;grid-row:span 2}
+  .sit-row .q{font-size:14px;color:var(--cream);font-weight:600}
+  .sit-row .a{font-size:13px;color:var(--muted);font-style:italic;margin-top:2px}
+  .sit-row.today{background:rgba(200,130,30,.06)}
+  .sit-today-card{background:linear-gradient(180deg,rgba(200,130,30,.16),rgba(0,0,0,.2));border:1px solid var(--gold);
+    border-radius:14px;padding:14px 18px;margin-bottom:18px}
+  .sit-today-card .label{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:8px}
+  .sit-today-card .body{display:grid;grid-template-columns:34px 1fr;column-gap:10px}
+  .schwur-card{background:linear-gradient(180deg,rgba(200,130,30,.10),rgba(0,0,0,.25));border:1px solid var(--line2);
+    border-radius:18px;padding:22px 24px;margin:18px 0;font-family:'Cormorant Garamond',Georgia,serif;
+    font-size:18px;line-height:1.55;color:var(--cream);font-style:italic}
+  .schwur-card .label{font-style:normal;font-family:'Inter',sans-serif;font-size:10px;letter-spacing:2px;
+    color:var(--gold);font-weight:700;text-transform:uppercase;margin-bottom:10px}
   .ics-btn{display:block;width:100%;background:linear-gradient(180deg,var(--gold2),var(--gold));color:#1a120c;
     border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.3px;font-family:inherit}
   .ics-btn:active{transform:scale(.99)}
@@ -11624,6 +11743,37 @@ _ALEX_JS = r"""
       a.download = 'alex-blue-electric-life.ics';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     });
+  }
+})();
+</script>
+
+<script>
+// Manifest · Situations-Filter + Situation des Tages
+(function(){
+  var rows = document.querySelectorAll('.sit-row');
+  if (!rows.length) return;
+
+  var f = document.getElementById('sit-filter');
+  if (f){
+    f.addEventListener('input', function(){
+      var q = f.value.toLowerCase().trim();
+      rows.forEach(function(r){
+        var t = r.textContent.toLowerCase();
+        r.style.display = (q && t.indexOf(q) === -1) ? 'none' : '';
+      });
+    });
+  }
+
+  var d = new Date();
+  var doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 86400000);
+  var idx = ((doy - 1) % rows.length + rows.length) % rows.length;
+  var pick = rows[idx];
+  pick.classList.add('today');
+
+  var slot = document.getElementById('sit-today');
+  if (slot){
+    slot.innerHTML = '<div class="label">Situation des Tages \\u2014 Nr. ' + (idx+1) + '</div>'
+                   + '<div class="body">' + pick.innerHTML + '</div>';
   }
 })();
 </script>
@@ -11922,6 +12072,53 @@ def _alex_dashboard_panel() -> str:
         <p>{ALEX['frame_rule']}</p>
       </div>
       <div class="schluss">„{ALEX['schlusssatz']}“</div>
+    </section>"""
+
+
+def _alex_manifest_panel() -> str:
+    m = ALEX["manifest"]
+    grund = "".join(
+        f'<div class="principle"><span class="n">{i+1}</span><span class="t">{p}</span></div>'
+        for i, p in enumerate(m["grundprinzipien"])
+    )
+    kapitel = "".join(
+        f'<div class="kapitel"><div class="n">Kapitel {i+1}</div><div class="t">{t}</div><div class="l">{l}</div></div>'
+        for i, (t, l) in enumerate(m["kapitel"])
+    )
+    sit_rows = "".join(
+        f'<div class="sit-row" data-idx="{i}"><span class="n">{i+1}</span><div class="q">{q}</div><div class="a">→ {a}</div></div>'
+        for i, (q, a) in enumerate(m["situationen"])
+    )
+    return f"""
+    <section data-panel="manifest" class="panel">
+      <h2 class="section">159% Manifest</h2>
+      <p class="section-sub">{m['subtitle']}</p>
+      <div class="card"><p>{m['vorwort']}</p></div>
+
+      <div class="sit-today-card" id="sit-today"><div class="label">Situation des Tages</div><div class="body"><span class="n">·</span><div class="q">Lädt …</div><div class="a"></div></div></div>
+
+      <div class="schwur-card">
+        <div class="label">Schwur · Morgen</div>
+        „{m['schwur_morgen']}“
+      </div>
+
+      <h2 class="section" style="margin-top:26px">Die 10 Grundprinzipien</h2>
+      <p class="section-sub">Das Fundament — knapp, klar, kompromisslos.</p>
+      <div class="principle-grid">{grund}</div>
+
+      <h2 class="section" style="margin-top:26px">Die 14 Kapitel · Axl-Rose-Kodex</h2>
+      <p class="section-sub">Rohe Bühnenenergie 1985–1990, in 14 Sätzen verdichtet.</p>
+      <div class="kapitel-grid">{kapitel}</div>
+
+      <h2 class="section" style="margin-top:26px">50 Situationen · der Kodex</h2>
+      <p class="section-sub">Wenn das Leben kippt, schau hier nach. Such nach einem Stichwort — Angst, Geld, Tochter, Fliegen, Streit …</p>
+      <input class="sit-filter" id="sit-filter" type="search" placeholder="Suchen …">
+      <div class="card" style="padding:6px 0">{sit_rows}</div>
+
+      <div class="schwur-card" style="margin-top:24px">
+        <div class="label">Schwur · Abend</div>
+        „{m['schwur_abend']}“
+      </div>
     </section>"""
 
 
@@ -12256,6 +12453,7 @@ def alex_dashboard(request: Request):
     tabs_def = [
         ("heute",       "Heute"),
         ("dashboard",   "Dashboard"),
+        ("manifest",    "Manifest"),
         ("wochenplan",  "Wochenplan"),
         ("tagesplan",   "Tagesplan"),
         ("wien",        "Wien"),
@@ -12319,6 +12517,7 @@ def alex_dashboard(request: Request):
 
     {_alex_heute_panel()}
     {_alex_dashboard_panel()}
+    {_alex_manifest_panel()}
     {_alex_week_panel()}
     {_alex_day_panel()}
     {_alex_wien_panel()}
