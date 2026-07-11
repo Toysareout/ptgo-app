@@ -1,24 +1,29 @@
-// Vercel Edge Middleware — Passwortschutz für geschützte Seiten.
+// Vercel Edge Middleware — GLOBALER Passwortschutz für die gesamte Site.
 // Benutzername beliebig / leer, nur das Passwort zählt.
-//   /alex          → Passwort: 26
-//   /skyworthy     → Passwort: flyptgo (SKYWORTHY — Elite Paragliding Decision Cockpit)
-//   /mastery-rollo → Passwort: fuckit2026 (Rollo Tomassi — Iron Rules)
-// Übrige Site bleibt unberührt.
+//   ALLE Seiten → Passwort: fuckit2026
+//
+// Bewusst NICHT gesperrt (sonst brechen Backend & Ressourcen):
+//   - API-/Function-Endpunkte (/api/*, /.netlify/functions/*):
+//     werden von Stripe/Twilio/Cron ohne Login aufgerufen.
+//   - Statische Assets (Bilder/CSS/JS/Fonts/Manifest/…):
+//     würden sonst Auth-Prompts auslösen bzw. nicht laden.
 
+const SITE_PASSWORD = 'fuckit2026';
+const REALM = 'Protected'; // ASCII-only — Header-tauglich
+
+// Alles matchen AUSSER API-/Function-Routen (die dürfen nie ein 401 bekommen).
 export const config = {
-  matcher: ['/alex', '/alex.html', '/alex-tagesplan.ics', '/skyworthy', '/skyworthy.html', '/mastery-rollo', '/mastery-rollo.html'],
+  matcher: ['/((?!api/|\\.netlify/).*)'],
 };
 
-const ROUTE_PASSWORDS = [
-  { match: (p) => p.startsWith('/alex'), password: '26', realm: 'Blue Electric Life' },
-  { match: (p) => p.startsWith('/skyworthy'), password: 'flyptgo', realm: 'SKYWORTHY' },
-  { match: (p) => p.startsWith('/mastery-rollo'), password: 'fuckit2026', realm: 'Rollo Tomassi - Iron Rules' },
-];
+// Dateiendungen, die ohne Passwort erreichbar bleiben (statische Assets).
+const PUBLIC_ASSET = /\.(?:png|jpe?g|gif|svg|ico|webp|avif|css|js|mjs|json|map|txt|xml|woff2?|ttf|otf|eot|mp3|mp4|webm|ogg|pdf|ics|wasm)$/i;
 
 export default function middleware(req) {
-  const pathname = new URL(req.url).pathname;
-  const route = ROUTE_PASSWORDS.find((r) => r.match(pathname));
-  if (!route) return; // nicht geschützt
+  const { pathname } = new URL(req.url);
+
+  // Statische Assets nicht sperren.
+  if (PUBLIC_ASSET.test(pathname)) return;
 
   const auth = req.headers.get('authorization');
   if (auth) {
@@ -27,16 +32,16 @@ export default function middleware(req) {
       try {
         const decoded = atob(encoded); // "user:pass"
         const pass = decoded.slice(decoded.indexOf(':') + 1);
-        if (pass === route.password) return; // Zugang frei
+        if (pass === SITE_PASSWORD) return; // Zugang frei
       } catch (e) {
         // fällt unten auf 401 zurück
       }
     }
   }
-  return new Response(`Zugang geschützt — ${route.realm}`, {
+  return new Response('Zugang geschuetzt', {
     status: 401,
     headers: {
-      'WWW-Authenticate': `Basic realm="${route.realm}", charset="UTF-8"`,
+      'WWW-Authenticate': `Basic realm="${REALM}", charset="UTF-8"`,
       'Content-Type': 'text/plain; charset=utf-8',
     },
   });
