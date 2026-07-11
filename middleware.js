@@ -1,6 +1,12 @@
 // Vercel Edge Middleware — GLOBALER Passwortschutz für die gesamte Site.
 // Benutzername beliebig / leer, nur das Passwort zählt.
-//   ALLE Seiten → Passwort: fuckit2026
+//
+// Das Passwort steht BEWUSST NICHT im Code, sondern in der Umgebungsvariable
+// SITE_PASSWORD (im Vercel-Dashboard gesetzt). So ist es auch bei einem
+// öffentlichen Repo nicht aus dem Quellcode ablesbar.
+//
+// FAIL-CLOSED: Ist SITE_PASSWORD nicht gesetzt, kommt NIEMAND rein
+// (jede Seite -> 401). Die Site öffnet sich also nie versehentlich.
 //
 // Bewusst NICHT gesperrt (sonst brechen Backend & Ressourcen):
 //   - API-/Function-Endpunkte (/api/*, /.netlify/functions/*):
@@ -8,7 +14,7 @@
 //   - Statische Assets (Bilder/CSS/JS/Fonts/Manifest/…):
 //     würden sonst Auth-Prompts auslösen bzw. nicht laden.
 
-const SITE_PASSWORD = 'fuckit2026';
+const SITE_PASSWORD = process.env.SITE_PASSWORD;
 const REALM = 'Protected'; // ASCII-only — Header-tauglich
 
 // Alles matchen AUSSER API-/Function-Routen (die dürfen nie ein 401 bekommen).
@@ -25,16 +31,19 @@ export default function middleware(req) {
   // Statische Assets nicht sperren.
   if (PUBLIC_ASSET.test(pathname)) return;
 
-  const auth = req.headers.get('authorization');
-  if (auth) {
-    const [scheme, encoded] = auth.split(' ');
-    if (scheme === 'Basic' && encoded) {
-      try {
-        const decoded = atob(encoded); // "user:pass"
-        const pass = decoded.slice(decoded.indexOf(':') + 1);
-        if (pass === SITE_PASSWORD) return; // Zugang frei
-      } catch (e) {
-        // fällt unten auf 401 zurück
+  // Nur prüfen, wenn ein Passwort konfiguriert ist. Sonst fail-closed (401).
+  if (SITE_PASSWORD) {
+    const auth = req.headers.get('authorization');
+    if (auth) {
+      const [scheme, encoded] = auth.split(' ');
+      if (scheme === 'Basic' && encoded) {
+        try {
+          const decoded = atob(encoded); // "user:pass"
+          const pass = decoded.slice(decoded.indexOf(':') + 1);
+          if (pass === SITE_PASSWORD) return; // Zugang frei
+        } catch (e) {
+          // fällt unten auf 401 zurück
+        }
       }
     }
   }
