@@ -1,16 +1,18 @@
 // Vercel Edge Middleware — Passwortschutz für geschützte Seiten.
 // Benutzername beliebig / leer, nur das Passwort zählt.
-//   /alex      → Passwort: 26
-//   /skyworthy → Passwort: flyptgo (SKYWORTHY — Elite Paragliding Decision Cockpit)
+//   /alex          → Passwort: 26
+//   /skyworthy     → Passwort: flyptgo (SKYWORTHY — Elite Paragliding Decision Cockpit)
+//   /mastery-rollo → Passwort: fuckit2026 (Rollo Tomassi — Iron Rules)
 // Übrige Site bleibt unberührt.
 
 export const config = {
-  matcher: ['/alex', '/alex.html', '/alex-tagesplan.ics', '/skyworthy', '/skyworthy.html'],
+  matcher: ['/alex', '/alex.html', '/alex-tagesplan.ics', '/skyworthy', '/skyworthy.html', '/mastery-rollo', '/mastery-rollo.html'],
 };
 
 const ROUTE_PASSWORDS = [
   { match: (p) => p.startsWith('/alex'), password: '26', realm: 'Blue Electric Life' },
   { match: (p) => p.startsWith('/skyworthy'), password: 'flyptgo', realm: 'SKYWORTHY' },
+  { match: (p) => p.startsWith('/mastery-rollo'), password: 'fuckit2026', realm: 'Rollo Tomassi - Iron Rules' },
 ];
 
 export default function middleware(req) {
