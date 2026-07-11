@@ -42,8 +42,8 @@
   status = 200
 
 [[redirects]]
-  from = "/admin"
-  to = "/admin.html"
+  from = "/admin-dbe9fe2e"
+  to = "/admin-dbe9fe2e.html"
   status = 200
 
 [[redirects]]
@@ -68,8 +68,8 @@
   status = 200
 
 [[redirects]]
-  from = "/bot-admin"
-  to = "/bot-admin.html"
+  from = "/bot-admin-e40f02c5"
+  to = "/bot-admin-e40f02c5.html"
   status = 200
 
 [[redirects]]
