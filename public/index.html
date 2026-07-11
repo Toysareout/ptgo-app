@@ -133,21 +133,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 </div>
 
 <script>
-const PASS='zeis2026';
 const TARGET=333333;
 const RK='z_rev';
 const MK='z_msg';
 
-// ── GATE ──
-const gate=document.getElementById('gate');
-const pwEl=document.getElementById('pw');
-if(localStorage.getItem('z_in')==='1'){gate.classList.add('gone');document.getElementById('app').classList.add('on');boot()}
-pwEl.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    if(pwEl.value===PASS){localStorage.setItem('z_in','1');gate.classList.add('gone');document.getElementById('app').classList.add('on');boot()}
-    else{document.getElementById('err').textContent='Falscher Code.';pwEl.value=''}
-  }
-});
+// ── Client-Gate entfernt — Schutz erfolgt serverseitig (Middleware). Direkt starten. ──
+document.getElementById('gate').classList.add('gone');
+document.getElementById('app').classList.add('on');
+boot();
 
 // ── DATA ──
 function gR(){try{return JSON.parse(localStorage.getItem(RK))||{}}catch(e){return{}}}

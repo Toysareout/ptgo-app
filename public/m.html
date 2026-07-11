@@ -114,21 +114,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space 
 
 <script>
 // ── CONFIG ──
-const PASS='matrix2026';
 const DAILY_TARGET=333333;
 const REV_KEY='m_revenue';
 const MSG_KEY='m_messages';
 
-// ── GATE ──
-const gate=document.getElementById('gate');
-const pwInput=document.getElementById('pw');
-if(localStorage.getItem('m_auth')==='1'){gate.classList.add('gone');document.getElementById('app').classList.add('on');init()}
-pwInput.addEventListener('keydown',e=>{
-  if(e.key==='Enter'){
-    if(pwInput.value===PASS){localStorage.setItem('m_auth','1');gate.classList.add('gone');document.getElementById('app').classList.add('on');init()}
-    else{document.getElementById('err').textContent='Falscher Code.';pwInput.value=''}
-  }
-});
+// ── Client-Gate entfernt — Schutz erfolgt serverseitig (Middleware). Direkt starten. ──
+document.getElementById('gate').classList.add('gone');
+document.getElementById('app').classList.add('on');
+init();
 
 // ── DATA ──
 function getRev(){try{return JSON.parse(localStorage.getItem(REV_KEY))||{}}catch(e){return{}}}

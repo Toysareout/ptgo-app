@@ -259,38 +259,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);fon
 const API='/.netlify/functions/nerve-brain';
 const PW_HASH='a7e0d6b5f1c3e2a4b8d9f0c1e2a3b4c5'; // placeholder, real check below
 
-// ── PASSWORD GATE ──
-function hashPw(s){
-  // Simple hash for client-side gate; not crypto-secure but prevents casual access
-  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0}return h;
-}
-const CORRECT_HASH=hashPw('1+1 ist eins');
-
-function tryGate(){
-  const val=document.getElementById('gate-pw').value.trim();
-  if(hashPw(val)===CORRECT_HASH){
-    sessionStorage.setItem('nerve_auth','1');
-    document.getElementById('gate').classList.add('hidden');
-    document.getElementById('app').classList.add('active');
-    init();
-  } else {
-    document.getElementById('gate-err').textContent='Falsche Formel. Versuche es erneut.';
-    document.getElementById('gate-pw').value='';
-    document.getElementById('gate-pw').focus();
-  }
-}
-
-function logout(){
-  sessionStorage.removeItem('nerve_auth');
-  location.reload();
-}
-
-// Auto-login if session exists
-if(sessionStorage.getItem('nerve_auth')==='1'){
+// ── Client-Gate entfernt — Schutz erfolgt serverseitig (Middleware). Direkt starten. ──
+function unlockNerve(){
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('app').classList.add('active');
-  requestAnimationFrame(()=>init());
+  init();
 }
+function tryGate(){ unlockNerve(); }
+function logout(){ location.reload(); }
+
+requestAnimationFrame(()=>unlockNerve());
 
 // ── GRAIN ──
 (function(){
