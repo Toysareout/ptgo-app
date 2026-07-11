@@ -1,0 +1,3 @@
+# Diese Seite ist privat. Keine Indexierung erwünscht.
+User-agent: *
+Disallow: /
