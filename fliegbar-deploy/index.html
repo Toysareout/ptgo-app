@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>FliegBar – Flugwetter für Gleitschirm-Anfänger</title>
+  <!--
+    FliegBar – MVP (Single File)
+    Flugwetter-Ampel für Gleitschirmpiloten mit A-Schein (Bayerische Alpen/Voralpen).
+    Beantwortet eine Frage: "Kann ich heute hier fliegen – und wann?"
+
+    Aufbau der Datei:
+      1) STARTPLATZ-DATEN  (JSON-artige Konstante, im MVP hardcoded)
+      2) AMPEL-REGELN       (konfigurierbare Konstanten -> spätere Einstellungen)
+      3) ampelLogik         (REINE, testbare Funktionen – strikt getrennt vom UI)
+      4) SELBSTTESTS        (5 Beispiel-Wetterlagen)
+      5) DATEN-LAYER        (Open-Meteo fetch + Mapping + In-Memory-Cache)
+      6) UI (React)         (ein einziger Hauptscreen)
+
+    Datenquelle: Open-Meteo (kostenlos, kein Key, CORS-frei, ICON-D2 für DE).
+    Kein Backend, keine Anmeldung, kein Tracking.
+  -->
+  <style>
+    :root{
+      --bg:#0b1220; --bg2:#0f172a; --card:#111c34; --card2:#0d1730;
+      --line:#1e2b48; --text:#e8eefc; --muted:#93a4c8; --muted2:#6c7fa6;
+      --green:#16a34a; --green-b:#22c55e; --yellow:#ca8a04; --yellow-b:#eab308;
+      --red:#dc2626; --red-b:#ef4444; --accent:#3b82f6;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+    html,body{margin:0; padding:0; background:var(--bg); color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      font-size:17px; line-height:1.45; overscroll-behavior-y:none}
+    #root{max-width:520px; margin:0 auto; padding:14px 14px 40px; padding-top:max(14px,env(safe-area-inset-top))}
+    h1{font-size:20px; margin:0; letter-spacing:.2px}
+    .sub{color:var(--muted); font-size:13px; margin-top:2px}
+    .row{display:flex; align-items:center; gap:10px}
+    .between{justify-content:space-between}
+    button{font-family:inherit; font-size:inherit; color:inherit; cursor:pointer}
+    select{
+      appearance:none; -webkit-appearance:none; width:100%;
+      background:var(--card); color:var(--text); border:1px solid var(--line);
+      border-radius:14px; padding:14px 44px 14px 14px; font-size:18px; font-weight:600;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%2393a4c8' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+      background-repeat:no-repeat; background-position:right 12px center;
+    }
+    .star{background:transparent; border:none; font-size:26px; line-height:1; padding:6px 4px}
+    .card{background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow)}
+    /* AMPEL */
+    .ampel{border-radius:22px; padding:20px 18px; margin-top:14px; text-align:center; border:2px solid transparent}
+    .ampel.green{background:linear-gradient(160deg,#0f3d24,#0b2a19); border-color:var(--green-b)}
+    .ampel.yellow{background:linear-gradient(160deg,#3d3006,#2a2205); border-color:var(--yellow-b)}
+    .ampel.red{background:linear-gradient(160deg,#3d0f0f,#2a0b0b); border-color:var(--red-b)}
+    .ampel.na{background:var(--card2); border-color:var(--line)}
+    .ampel .dot{font-size:52px; line-height:1}
+    .ampel .lbl{font-size:30px; font-weight:800; letter-spacing:.5px; margin-top:4px}
+    .ampel.green .lbl{color:#86efac} .ampel.yellow .lbl{color:#fde047} .ampel.red .lbl{color:#fca5a5}
+    .ampel .why{color:var(--muted); font-size:13.5px; margin-top:8px; min-height:18px}
+    /* INFO LINES */
+    .info{margin-top:12px; padding:6px 2px}
+    .info .line{display:flex; gap:10px; align-items:flex-start; padding:9px 4px; border-bottom:1px solid var(--line)}
+    .info .line:last-child{border-bottom:none}
+    .info .ic{width:26px; text-align:center; font-size:19px; flex:0 0 26px}
+    .info .tx{flex:1; font-size:15px}
+    .info .tx b{font-weight:700}
+    .arrow{display:inline-block; font-weight:900; transform-origin:50% 50%}
+    /* TIMELINE */
+    .tl-wrap{margin-top:16px}
+    .tl-title{font-size:13px; color:var(--muted); margin:0 2px 8px; display:flex; justify-content:space-between}
+    .tl{display:flex; gap:4px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none}
+    .tl::-webkit-scrollbar{display:none}
+    .cell{flex:0 0 auto; width:38px; border-radius:10px; padding:8px 0 6px; text-align:center; border:2px solid transparent; background:var(--card2); cursor:pointer}
+    .cell .h{font-size:11px; color:var(--muted); font-weight:600}
+    .cell .sym{font-size:15px; margin-top:3px}
+    .cell.green{background:#123b23; border-color:#1f7a44} .cell.green .sym{color:#86efac}
+    .cell.yellow{background:#3a2f08; border-color:#8a6d10} .cell.yellow .sym{color:#fde047}
+    .cell.red{background:#3a1212; border-color:#9b2c2c} .cell.red .sym{color:#fca5a5}
+    .cell.sel{outline:2px solid var(--accent); outline-offset:1px}
+    .detail{margin-top:10px; padding:12px 14px; font-size:14.5px}
+    .detail .g{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; margin-top:6px}
+    .detail .k{color:var(--muted); font-size:13px}
+    .detail .v{font-weight:600}
+    /* DAY TABS */
+    .tabs{display:flex; gap:8px; margin-top:16px}
+    .tab{flex:1; text-align:center; padding:11px 6px; border-radius:14px; background:var(--card2); border:1px solid var(--line); font-weight:600}
+    .tab .d{font-size:12px; color:var(--muted)}
+    .tab.act{background:var(--accent); border-color:var(--accent); color:#fff}
+    .tab.act .d{color:#dbeafe}
+    .tab .mini{font-size:15px; margin-top:2px}
+    /* FOOTER / MISC */
+    .foot{margin-top:22px; color:var(--muted2); font-size:12px; line-height:1.5}
+    .foot .disc{background:var(--card2); border:1px solid var(--line); border-radius:14px; padding:12px 14px; color:var(--muted)}
+    .pill{display:inline-block; font-size:12px; color:var(--muted); background:var(--card2); border:1px solid var(--line); padding:3px 9px; border-radius:999px}
+    .updated{font-size:12px; color:var(--muted2)}
+    a{color:var(--accent)}
+    /* MODAL */
+    .ov{position:fixed; inset:0; background:rgba(4,8,18,.72); display:flex; align-items:center; justify-content:center; padding:18px; z-index:50}
+    .modal{max-width:440px; width:100%; padding:22px 20px}
+    .modal h2{margin:0 0 8px; font-size:19px}
+    .modal p{color:var(--muted); font-size:15px}
+    .btn{display:block; width:100%; text-align:center; margin-top:16px; padding:14px; border-radius:14px; border:none; background:var(--accent); color:#fff; font-weight:700; font-size:16px}
+    .btn.ghost{background:var(--card2); border:1px solid var(--line); color:var(--text)}
+    .center{text-align:center}
+    .err{background:#2a0b0b; border:1px solid var(--red-b); border-radius:14px; padding:14px; color:#fca5a5; font-size:14px}
+    .tests{margin-top:16px; font-size:13px}
+    .tests .t{display:flex; gap:8px; padding:4px 2px; border-bottom:1px solid var(--line)}
+    .tests .ok{color:#86efac} .tests .no{color:#fca5a5}
+    details summary{cursor:pointer; color:var(--muted); font-size:13px; padding:6px 0}
+    .spin{width:22px;height:22px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:middle}
+    @keyframes sp{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+
+  <script type="text/babel" data-presets="react">
+/* ============================================================================
+   1) STARTPLATZ-DATEN
+   Im MVP hardcoded. Quelle zum Pflegen: DHV-Geländedatenbank / paraglidingspots.
+   Startrichtungen sind Näherungswerte -> vor dem Flug lokal prüfen!
+   launchRanges: Liste erlaubter Richtungssektoren in Grad (from->to, im UZS).
+   ============================================================================ */
+const SITES = [
+  { id:"wallberg",   name:"Wallberg (Tegernsee)",   lat:47.7086, lon:11.7519, top:1620, land:740, dirLabel:"W–N",   launchRanges:[{from:250,to:360}] },
+  { id:"brauneck",   name:"Brauneck (Lenggries)",   lat:47.6650, lon:11.5540, top:1500, land:700, dirLabel:"W–N",   launchRanges:[{from:250,to:360}] },
+  { id:"blomberg",   name:"Blomberg (Bad Tölz)",    lat:47.6739, lon:11.4739, top:1200, land:670, dirLabel:"NO–O",  launchRanges:[{from:20, to:110}] },
+  { id:"hochries",   name:"Hochries (Samerberg)",   lat:47.7333, lon:12.1500, top:1500, land:600, dirLabel:"W–N",   launchRanges:[{from:250,to:360}] },
+  { id:"kampenwand", name:"Kampenwand (Aschau)",    lat:47.7500, lon:12.3500, top:1460, land:620, dirLabel:"S–SW",  launchRanges:[{from:150,to:230}] },
+  { id:"jochberg",   name:"Jochberg (Kochelsee)",   lat:47.6000, lon:11.4000, top:1560, land:600, dirLabel:"NW–NO", launchRanges:[{from:300,to:60}] },
+  { id:"hochfelln",  name:"Hochfelln (Bergen)",     lat:47.7500, lon:12.6000, top:1670, land:540, dirLabel:"N–NW",  launchRanges:[{from:300,to:360}] },
+  { id:"tegelberg",  name:"Tegelberg (Schwangau)",  lat:47.5667, lon:10.7500, top:1720, land:830, dirLabel:"NO–O",  launchRanges:[{from:30, to:120}] },
+];
+
+/* ============================================================================
+   2) AMPEL-REGELN (konfigurierbare Konstanten -> später Einstellungs-Screen)
+   Konservativ ausgelegt: im Zweifel eine Stufe strenger.
+   Alle Windwerte in km/h.
+   ============================================================================ */
+const RULES = {
+  windMean:  { redAbove:20, yellowFrom:15 },      // Mittelwind Start
+  gust:      { redAbove:30, yellowFrom:20 },      // Böen Start
+  gustDiff:  { redAbove:12, greenBelow:8 },       // Böe minus Mittelwind
+  direction: { greenWithin:15, yellowWithin:30 }, // Abweichung vom Startsektor
+  rain:      { redAbove:40 },                      // Regenwahrscheinlichkeit %
+  upperWind: { redAbove:35, yellowFrom:25 },      // Höhenwind ~1500m (850 hPa)
+  cape:      { redAbove:1200, yellowFrom:600 },   // Gewitter-/Thermik-Energie J/kg
+  thermik:   { peakStart:13, peakEnd:15, coreStart:12, coreEnd:16 },
+};
+
+/* ============================================================================
+   3) ampelLogik – REINE FUNKTIONEN (keine Seiteneffekte, testbar)
+   ============================================================================ */
+
+// Winkeldifferenz (0..180)
+function angleDist(a, b){ let d = Math.abs(((a - b) % 360 + 360) % 360); return d > 180 ? 360 - d : d; }
+
+// Liegt Richtung dir im Sektor (from->to, im Uhrzeigersinn, mit 0/360-Umbruch)?
+function inRange(dir, r){
+  const d = ((dir % 360) + 360) % 360;
+  if (r.from <= r.to) return d >= r.from && d <= r.to;
+  return d >= r.from || d <= r.to; // Umbruch über Nord
+}
+
+// Kleinste Abweichung (Grad) einer Richtung zu einer Liste erlaubter Sektoren.
+function directionOffset(dir, ranges){
+  let best = 999;
+  for (const r of ranges){
+    if (inRange(dir, r)) return 0;
+    best = Math.min(best, angleDist(dir, r.from), angleDist(dir, r.to));
+  }
+  return best;
+}
+
+// Richtungsstatus: "good" | "marginal" | "bad"
+function directionStatus(dir, ranges, cfg = RULES.direction){
+  const off = directionOffset(dir, ranges);
+  if (off <= cfg.greenWithin) return "good";
+  if (off <= cfg.yellowWithin) return "marginal";
+  return "bad";
+}
+
+// 16-Punkt-Kompass (deutsch), z.B. 315 -> "NW"
+const COMPASS = ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+function deg2compass(deg){ return COMPASS[Math.round((((deg % 360) + 360) % 360) / 22.5) % 16]; }
+
+// Thermik-Kennzahlen für einen Tag (aus Temperaturverlauf).
+// Thermikeinsatz ~ wenn Temperatur ca. 75% des Tageshubs (min->max) erreicht.
+function computeThermik(hours){
+  const temps = hours.map(h => h.temp).filter(t => t != null);
+  if (!temps.length) return { tmin:null, tmax:null, start:null };
+  const tmin = Math.min(...temps), tmax = Math.max(...temps);
+  const thr = tmin + 0.75 * (tmax - tmin);
+  let start = null;
+  for (const h of hours){
+    if (h.hour >= 8 && h.hour <= 16 && h.temp != null && h.temp >= thr){ start = h.hour; break; }
+  }
+  return { tmin, tmax, thr, start };
+}
+
+// Thermikstärke pro Stunde: "schwach" | "mittel" | "stark"
+function thermikStrength(h, thermik, cfg = RULES){
+  const start = thermik.start == null ? 11 : thermik.start;
+  if (h.hour < start || h.hour > 18) return "schwach";
+  if (h.cape != null && h.cape >= cfg.cape.yellowFrom && h.hour >= cfg.thermik.coreStart && h.hour <= cfg.thermik.coreEnd) return "stark";
+  if (h.cape != null && h.cape >= 250) return "mittel";
+  return "schwach";
+}
+
+// KERN: Bewertung einer einzelnen Stunde -> { color, reasons[], dir }
+// h: { hour, wind, gust, windDir, temp, precipProb, cape, upperWind, ... }
+function evaluateHour(h, site, thermik, cfg = RULES){
+  const red = [], yellow = [];
+  const dir = directionStatus(h.windDir, site.launchRanges);
+  const gustDiff = (h.gust != null && h.wind != null) ? h.gust - h.wind : 0;
+  const therm = thermikStrength(h, thermik, cfg);
+
+  // ---- ROT ----
+  if (h.wind != null && h.wind > cfg.windMean.redAbove) red.push(`Mittelwind ${Math.round(h.wind)} km/h`);
+  if (h.gust != null && h.gust > cfg.gust.redAbove) red.push(`Böen ${Math.round(h.gust)} km/h`);
+  if (gustDiff > cfg.gustDiff.redAbove) red.push(`Böig (Differenz ${Math.round(gustDiff)} km/h)`);
+  if (dir === "bad") red.push("Wind außerhalb Startrichtung – Lee-Gefahr");
+  if (h.precipProb != null && h.precipProb > cfg.rain.redAbove) red.push(`Regen ${Math.round(h.precipProb)} %`);
+  if (h.upperWind != null && h.upperWind > cfg.upperWind.redAbove) red.push(`Höhenwind ${Math.round(h.upperWind)} km/h`);
+  if (h.cape != null && h.cape >= cfg.cape.redAbove) red.push(`Gewitterrisiko (CAPE ${Math.round(h.cape)})`);
+
+  // ---- GELB (nur falls kein Rot) ----
+  if (h.wind != null && h.wind >= cfg.windMean.yellowFrom && h.wind <= cfg.windMean.redAbove) yellow.push(`Mittelwind ${Math.round(h.wind)} km/h`);
+  if (h.gust != null && h.gust >= cfg.gust.yellowFrom && h.gust <= cfg.gust.redAbove) yellow.push(`Böen ${Math.round(h.gust)} km/h`);
+  if (dir === "marginal") yellow.push("Windrichtung grenzwertig zum Startsektor");
+  if (h.upperWind != null && h.upperWind >= cfg.upperWind.yellowFrom && h.upperWind <= cfg.upperWind.redAbove) yellow.push(`Höhenwind ${Math.round(h.upperWind)} km/h`);
+  if (therm === "stark" && h.hour >= cfg.thermik.coreStart && h.hour <= cfg.thermik.coreEnd) yellow.push("Starke Mittagsthermik");
+
+  const color = red.length ? "red" : yellow.length ? "yellow" : "green";
+  return { color, reasons: color === "red" ? red : color === "yellow" ? yellow : ["Ruhige Anfängerbedingungen"], dir, thermik: therm };
+}
+
+// Zusammenhängende Stunden zu Fenstern "9:00–11:00" gruppieren.
+function groupWindows(hoursList){
+  if (!hoursList.length) return [];
+  const sorted = [...hoursList].sort((a,b)=>a-b);
+  const out = []; let start = sorted[0], prev = sorted[0];
+  for (let i=1;i<sorted.length;i++){
+    if (sorted[i] === prev + 1){ prev = sorted[i]; }
+    else { out.push([start, prev]); start = sorted[i]; prev = sorted[i]; }
+  }
+  out.push([start, prev]);
+  return out.map(([a,b]) => `${a}:00–${b+1}:00`);
+}
+
+// Ganzen Tag bewerten -> alles was das UI braucht.
+function evaluateDay(hoursRaw, site, cfg = RULES){
+  const hours = hoursRaw.filter(h => h.hour >= 6 && h.hour <= 21);
+  const thermik = computeThermik(hours);
+  const evals = hours.map(h => ({ ...h, ...evaluateHour(h, site, thermik, cfg) }));
+
+  const flyable = evals.filter(h => h.hour >= 8 && h.hour <= 20);
+  const greens = flyable.filter(h => h.color === "green");
+  const yellows = flyable.filter(h => h.color === "yellow");
+  const dayColor = greens.length ? "green" : yellows.length ? "yellow" : "red";
+
+  // Anfänger-Randzeiten: morgens vor Thermikeinsatz + abends ab 17 Uhr.
+  const tStart = thermik.start == null ? 12 : thermik.start;
+  const morningWin = groupWindows(greens.filter(h => h.hour < tStart).map(h => h.hour));
+  const eveningWin = groupWindows(greens.filter(h => h.hour >= 17).map(h => h.hour));
+  const anyGreenWin = groupWindows(greens.map(h => h.hour));
+
+  // Fokus-Stunde für die Kopfzeilen: erstes grünes Fenster, sonst Mittag.
+  const focus =
+    greens.find(h => h.hour < tStart) ||
+    greens.find(h => h.hour >= 17) ||
+    greens[0] ||
+    flyable.find(h => h.hour === 13) ||
+    flyable.find(h => h.hour === 12) ||
+    flyable[Math.floor(flyable.length/2)] || evals[0];
+
+  return { hours: evals, flyable, thermik, dayColor, greens, morningWin, eveningWin, anyGreenWin, focus };
+}
+
+/* ============================================================================
+   4) SELBSTTESTS – 5 Beispiel-Wetterlagen (DoD)
+   Reine Logik, kein Netz. Ergebnis: Konsole + Dev-Panel im UI.
+   ============================================================================ */
+function makeHour(o){
+  return Object.assign({ hour:11, wind:8, gust:14, windDir:290, temp:20, precipProb:0, cape:100, upperWind:18, upperDir:290 }, o);
+}
+function runSelfTests(){
+  // Test-Startplatz mit W–N Sektor (250°–360°)
+  const site = { launchRanges:[{from:250, to:360}] };
+  const th = { start:11 };
+  const cases = [
+    { name:"Föhn (Südwind, böig, Höhensturm)",  h: makeHour({ windDir:190, wind:18, gust:34, upperWind:62, temp:24 }), expect:"red" },
+    { name:"Ostwind-Lee (Wind aus O)",          h: makeHour({ windDir:90,  wind:12, gust:18, upperWind:16 }),          expect:"red" },
+    { name:"Perfekter Herbsttag (leicht NW)",   h: makeHour({ windDir:300, wind:8,  gust:14, upperWind:18, cape:80 }), expect:"green" },
+    { name:"Gewittertag (CAPE + Regen)",        h: makeHour({ windDir:290, wind:10, gust:16, precipProb:70, cape:2000 }), expect:"red" },
+    { name:"Starkwind (Mittelwind 25 km/h)",    h: makeHour({ windDir:290, wind:25, gust:32, upperWind:30 }),          expect:"red" },
+  ];
+  return cases.map(c => {
+    const got = evaluateHour(c.h, site, th).color;
+    const pass = got === c.expect;
+    if (typeof console !== "undefined") console[pass?"log":"error"](`[FliegBar Test] ${pass?"✓":"✗"} ${c.name} -> ${got} (erwartet ${c.expect})`);
+    return { ...c, got, pass };
+  });
+}
+const TEST_RESULTS = runSelfTests();
+
+/* ============================================================================
+   5) DATEN-LAYER – Open-Meteo (In-Memory-Cache, offline-tolerant)
+   ============================================================================ */
+const WX_CACHE = {}; // siteId -> { fetchedAt, days }
+
+async function fetchWeather(site){
+  if (WX_CACHE[site.id] && (Date.now() - WX_CACHE[site.id].fetchedAt) < 20*60*1000){
+    return WX_CACHE[site.id]; // frisch genug -> Cache
+  }
+  const params = new URLSearchParams({
+    latitude: site.lat, longitude: site.lon,
+    hourly: [
+      "temperature_2m","precipitation_probability","wind_speed_10m","wind_direction_10m",
+      "wind_gusts_10m","cape","cloud_cover",
+      "wind_speed_850hPa","wind_direction_850hPa","wind_speed_700hPa"
+    ].join(","),
+    wind_speed_unit: "kmh", timezone: "Europe/Berlin", forecast_days: "3",
+  });
+  // Kein festes Modell: Open-Meteo "best_match" nutzt für DE kurzfristig ICON-D2
+  // und ergänzt nahtlos für Tag 3 (ICON-D2 reicht nur ~48h).
+  const url = "https://api.open-meteo.com/v1/forecast?" + params.toString();
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Wetterdienst nicht erreichbar (" + res.status + ")");
+  const j = await res.json();
+  const H = j.hourly;
+  const days = {};
+  for (let i=0;i<H.time.length;i++){
+    const t = H.time[i];                 // "2026-07-24T13:00"
+    const date = t.slice(0,10);
+    const hour = parseInt(t.slice(11,13), 10);
+    (days[date] = days[date] || []).push({
+      time:t, hour,
+      temp:H.temperature_2m[i], precipProb:H.precipitation_probability[i],
+      wind:H.wind_speed_10m[i], windDir:H.wind_direction_10m[i], gust:H.wind_gusts_10m[i],
+      cape:H.cape ? H.cape[i] : null, cloud:H.cloud_cover ? H.cloud_cover[i] : null,
+      upperWind:H.wind_speed_850hPa ? H.wind_speed_850hPa[i] : null,
+      upperDir:H.wind_direction_850hPa ? H.wind_direction_850hPa[i] : null,
+      upperWind700:H.wind_speed_700hPa ? H.wind_speed_700hPa[i] : null,
+    });
+  }
+  const list = Object.keys(days).sort().slice(0,3).map(d => ({ date:d, hours:days[d] }));
+  const out = { fetchedAt: Date.now(), days: list };
+  WX_CACHE[site.id] = out;
+  return out;
+}
+
+/* ============================================================================
+   6) UI (React) – EIN Hauptscreen
+   ============================================================================ */
+const { useState, useEffect, useMemo, useRef } = React;
+
+const AMPEL_TEXT = {
+  green:  { icon:"✅", word:"FLIEGBAR",        cls:"green"  },
+  yellow: { icon:"⚠️", word:"EINGESCHRÄNKT",   cls:"yellow" },
+  red:    { icon:"❌", word:"NICHT FLIEGBAR",  cls:"red"    },
+};
+const SYM = { green:"✅", yellow:"⚠️", red:"❌" };
+const THERM_TXT = { schwach:"schwach", mittel:"mittel", stark:"stark" };
+
+function dayLabel(dateStr, idx){
+  if (idx === 0) return "Heute";
+  if (idx === 1) return "Morgen";
+  const wd = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+  const d = new Date(dateStr + "T12:00");
+  return wd[d.getDay()];
+}
+function dayDate(dateStr){
+  const d = new Date(dateStr + "T12:00");
+  return d.getDate() + "." + (d.getMonth()+1) + ".";
+}
+
+// Windpfeil: rotiert in die STRÖMUNGSRICHTUNG (wohin der Wind weht = dir+180).
+function WindArrow({ dir, size=18 }){
+  return (
+    <span className="arrow" style={{ transform:`rotate(${(dir+180)%360}deg)`, fontSize:size }}>↑</span>
+  );
+}
+
+function DisclaimerModal({ onClose }){
+  return (
+    <div className="ov" onClick={onClose}>
+      <div className="card modal" onClick={e=>e.stopPropagation()}>
+        <h2>Bevor du startest</h2>
+        <p>
+          Diese App ersetzt keine eigene Wetterbeurteilung. Die Entscheidung zu starten
+          triffst allein du – nach Sichtprüfung vor Ort (Windfahne, Wolkenbild, andere Piloten).
+          Prognosen können falsch sein. <b>Im Zweifel: nicht fliegen.</b>
+        </p>
+        <button className="btn" onClick={onClose}>Verstanden</button>
+      </div>
+    </div>
+  );
+}
+
+function InfoLines({ day, site }){
+  const f = day.focus;
+  const dir = directionStatus(f.windDir, site.launchRanges);
+  const dirText = dir === "good"
+    ? { ic:"✅", tx:<span>Wind passt zur Startrichtung <b>{site.dirLabel}</b></span> }
+    : dir === "marginal"
+      ? { ic:"⚠️", tx:<span>Windrichtung grenzwertig zum Startsektor <b>{site.dirLabel}</b></span> }
+      : { ic:"❌", tx:<span><b>{deg2compass(f.windDir)}-Wind</b> = außerhalb Startrichtung {site.dirLabel} (Lee!)</span> };
+
+  const th = day.thermik;
+  const thStartTxt = th.start == null ? "kaum Thermik" : `ca. ${th.start}:00 Uhr`;
+
+  // Anfänger-Fenster
+  let fenster;
+  if (day.morningWin.length || day.eveningWin.length){
+    const parts = [];
+    if (day.morningWin.length) parts.push(day.morningWin.join(", "));
+    if (day.eveningWin.length) parts.push("ab " + day.eveningWin[0].split("–")[0] + " Uhr");
+    fenster = parts.join(" oder ");
+  } else if (day.anyGreenWin.length){
+    fenster = day.anyGreenWin.join(", ");
+  } else {
+    fenster = "Heute kein ruhiges Anfängerfenster";
+  }
+
+  return (
+    <div className="info card">
+      <div className="line">
+        <div className="ic"><WindArrow dir={f.windDir} /></div>
+        <div className="tx"><b>{deg2compass(f.windDir)}, {Math.round(f.wind)} km/h</b>, Böen {Math.round(f.gust)} km/h <span className="pill">um {f.hour}:00</span></div>
+      </div>
+      <div className="line">
+        <div className="ic">{dirText.ic}</div>
+        <div className="tx">{dirText.tx}</div>
+      </div>
+      <div className="line">
+        <div className="ic">🌡️</div>
+        <div className="tx">Thermikeinsatz <b>{thStartTxt}</b>, stärkste Thermik {RULES.thermik.peakStart}–{RULES.thermik.peakEnd} Uhr</div>
+      </div>
+      <div className="line">
+        <div className="ic">🪂</div>
+        <div className="tx">Bestes Fenster für Anfänger: <b>{fenster}</b></div>
+      </div>
+    </div>
+  );
+}
+
+function Timeline({ day, sel, onSel }){
+  const cells = day.hours.filter(h => h.hour >= 8 && h.hour <= 20);
+  return (
+    <div className="tl-wrap">
+      <div className="tl-title"><span>Stunden-Timeline (8–20 Uhr)</span><span>Tippen für Details</span></div>
+      <div className="tl">
+        {cells.map(h => (
+          <button key={h.hour} className={`cell ${h.color} ${sel===h.hour?"sel":""}`} onClick={()=>onSel(sel===h.hour?null:h.hour)}>
+            <div className="h">{h.hour}</div>
+            <div className="sym">{SYM[h.color]}</div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function HourDetail({ h }){
+  if (!h) return null;
+  const th = thermikStrength(h, {start:11});
+  return (
+    <div className="card detail">
+      <div className="row between">
+        <b>{h.hour}:00 Uhr</b>
+        <span className={`pill`}>{AMPEL_TEXT[h.color].icon} {AMPEL_TEXT[h.color].word}</span>
+      </div>
+      <div className="g">
+        <div><div className="k">Wind</div><div className="v"><WindArrow dir={h.windDir} size={14} /> {deg2compass(h.windDir)}, {Math.round(h.wind)} km/h</div></div>
+        <div><div className="k">Böen</div><div className="v">{Math.round(h.gust)} km/h</div></div>
+        <div><div className="k">Thermik</div><div className="v">{THERM_TXT[h.thermik] || THERM_TXT[th]}</div></div>
+        <div><div className="k">Regenrisiko</div><div className="v">{h.precipProb==null?"–":Math.round(h.precipProb)+" %"}</div></div>
+        <div><div className="k">Höhenwind ~1500m</div><div className="v">{h.upperWind==null?"–":Math.round(h.upperWind)+" km/h"}</div></div>
+        <div><div className="k">Temperatur</div><div className="v">{h.temp==null?"–":Math.round(h.temp)+" °C"}</div></div>
+      </div>
+      <div className="k" style={{marginTop:10}}>{h.reasons.join(" · ")}</div>
+    </div>
+  );
+}
+
+function TestPanel(){
+  const ok = TEST_RESULTS.every(t=>t.pass);
+  return (
+    <details className="tests card" style={{padding:"6px 14px 12px"}}>
+      <summary>Selbsttest Ampel-Logik: {ok? "5/5 bestanden ✅" : "Fehler ❌"}</summary>
+      {TEST_RESULTS.map((t,i)=>(
+        <div className="t" key={i}>
+          <span className={t.pass?"ok":"no"}>{t.pass?"✓":"✗"}</span>
+          <span style={{flex:1}}>{t.name}</span>
+          <span className="k">{t.got} / {t.expect}</span>
+        </div>
+      ))}
+    </details>
+  );
+}
+
+function App(){
+  const [siteId, setSiteId] = useState(SITES[0].id);
+  const [dayIdx, setDayIdx] = useState(0);
+  const [wx, setWx] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [favs, setFavs] = useState([]);              // In-Memory-Favoriten (MVP)
+  const [showDisc, setShowDisc] = useState(true);
+
+  const site = SITES.find(s => s.id === siteId);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true); setError(null); setSel(null);
+    fetchWeather(site)
+      .then(d => { if (alive){ setWx(d); setLoading(false); } })
+      .catch(e => { if (alive){ setError(e.message || "Fehler beim Laden"); setLoading(false); } });
+    return () => { alive = false; };
+  }, [siteId]);
+
+  const days = wx ? wx.days : [];
+  const curRaw = days[dayIdx];
+  const day = useMemo(() => curRaw ? evaluateDay(curRaw.hours, site) : null, [curRaw, siteId]);
+
+  const toggleFav = () => setFavs(f => f.includes(siteId) ? f.filter(x=>x!==siteId) : [...f, siteId]);
+  const isFav = favs.includes(siteId);
+
+  // Startplätze: Favoriten zuerst
+  const ordered = [...SITES].sort((a,b)=>{
+    const fa = favs.includes(a.id)?0:1, fb = favs.includes(b.id)?0:1;
+    return fa - fb;
+  });
+
+  const selHour = day && sel!=null ? day.hours.find(h=>h.hour===sel) : null;
+
+  return (
+    <div>
+      {showDisc && <DisclaimerModal onClose={()=>setShowDisc(false)} />}
+
+      <div className="row between">
+        <div>
+          <h1>🪂 FliegBar</h1>
+          <div className="sub">Kann ich heute hier fliegen – und wann?</div>
+        </div>
+        <button className="star" onClick={toggleFav} title="Favorit" aria-label="Favorit">{isFav ? "★" : "☆"}</button>
+      </div>
+
+      <div style={{marginTop:14}}>
+        <select value={siteId} onChange={e=>{ setSiteId(e.target.value); setDayIdx(0); }}>
+          {ordered.map(s => (
+            <option key={s.id} value={s.id}>{favs.includes(s.id)?"★ ":""}{s.name}</option>
+          ))}
+        </select>
+        <div className="sub" style={{marginTop:6, marginLeft:2}}>
+          Start {site.top} m · Landung {site.land} m · Startrichtung {site.dirLabel}
+        </div>
+      </div>
+
+      {loading && (
+        <div className="ampel na" style={{marginTop:14}}>
+          <div><span className="spin" /></div>
+          <div className="why" style={{marginTop:10}}>Lade Flugwetter für {site.name} …</div>
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className="err" style={{marginTop:14}}>
+          ⚠️ {error}<br/>
+          <button className="btn ghost" style={{marginTop:10}} onClick={()=>setSiteId(siteId)}>Erneut versuchen</button>
+        </div>
+      )}
+
+      {!loading && !error && day && (
+        <>
+          {/* AMPEL */}
+          <div className={`ampel ${AMPEL_TEXT[day.dayColor].cls}`}>
+            <div className="dot">{AMPEL_TEXT[day.dayColor].icon}</div>
+            <div className="lbl">{AMPEL_TEXT[day.dayColor].word}</div>
+            <div className="why">
+              {day.dayColor === "green" && `Ruhiges Anfängerfenster vorhanden${day.anyGreenWin.length?": "+day.anyGreenWin.join(", "):""}`}
+              {day.dayColor === "yellow" && "Nur für Geübte oder in den Randzeiten – heikle Bedingungen"}
+              {day.dayColor === "red" && (day.flyable[0]? day.flyable.map(h=>h.color==="red"&&h.reasons[0]).find(Boolean) : "Heute zu Hause bleiben")}
+            </div>
+          </div>
+
+          {/* 4 INFO-ZEILEN */}
+          <InfoLines day={day} site={site} />
+
+          {/* TIMELINE */}
+          <Timeline day={day} sel={sel} onSel={setSel} />
+          {selHour && <HourDetail h={selHour} />}
+
+          {/* TAGES-TABS */}
+          <div className="tabs">
+            {days.map((d, i) => {
+              const dc = evaluateDay(d.hours, site).dayColor;
+              return (
+                <button key={d.date} className={`tab ${i===dayIdx?"act":""}`} onClick={()=>{ setDayIdx(i); setSel(null); }}>
+                  <div>{dayLabel(d.date, i)}</div>
+                  <div className="d">{dayDate(d.date)}</div>
+                  <div className="mini">{SYM[dc]}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="updated" style={{marginTop:10}}>
+            Datenquelle: Open-Meteo (ICON-D2) · aktualisiert {new Date(wx.fetchedAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} Uhr
+          </div>
+        </>
+      )}
+
+      <TestPanel />
+
+      {/* FOOTER / DISCLAIMER */}
+      <div className="foot">
+        <div className="disc">
+          Diese App ersetzt keine eigene Wetterbeurteilung. Die Entscheidung zu starten triffst
+          allein du – nach Sichtprüfung vor Ort (Windfahne, Wolkenbild, andere Piloten).
+          Prognosen können falsch sein. Im Zweifel: nicht fliegen.
+        </div>
+        <div style={{marginTop:10}}>
+          Startplatz-Daten (Richtungen/Höhen) sind Näherungswerte fürs MVP – vor dem Flug in der
+          DHV-Geländedatenbank prüfen. Keine Gewähr. · FliegBar MVP v1.0
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
